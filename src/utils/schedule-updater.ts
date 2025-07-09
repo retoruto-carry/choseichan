@@ -23,7 +23,15 @@ export async function updateScheduleMainMessage(
     console.log(`updateScheduleMainMessage called with scheduleId: ${scheduleId}, messageId: ${messageId}`);
     
     // 最新のスケジュール情報を取得
-    const schedule = await storage.getSchedule(scheduleId);
+    let schedule;
+    try {
+      schedule = await storage.getSchedule(scheduleId);
+      console.log(`getSchedule returned:`, schedule ? 'schedule found' : 'null');
+    } catch (error) {
+      console.error(`Error getting schedule:`, error);
+      return false;
+    }
+    
     if (!schedule) {
       console.error(`Schedule not found for ID: ${scheduleId}`);
       return false;

@@ -349,20 +349,20 @@ export async function handleDateSelectMenu(
     } else {
       console.log(`Updating main message ${messageId} for schedule ${scheduleId}`);
       // Update the original message using centralized updater
-      // Run in background to avoid timeout
-      updateScheduleMainMessage(
+      // Wait for the update to complete to see any errors
+      const updateSuccess = await updateScheduleMainMessage(
         scheduleId,
         messageId,
         interaction.token,
         storage,
         env
-      ).then(success => {
-        if (success) {
-          console.log(`Successfully updated main message for schedule ${scheduleId}`);
-        } else {
-          console.error(`Failed to update main message for schedule ${scheduleId}`);
-        }
-      }).catch(error => console.error('Background update failed:', error));
+      );
+      
+      if (updateSuccess) {
+        console.log(`Successfully updated main message for schedule ${scheduleId}`);
+      } else {
+        console.error(`Failed to update main message for schedule ${scheduleId}`);
+      }
     }
   } catch (error) {
     console.error('Failed to initiate message update:', error);
