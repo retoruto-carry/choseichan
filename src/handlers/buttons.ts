@@ -122,13 +122,13 @@ async function handleRespondButton(
     // Set placeholder based on current status
     let placeholder = '';
     if (!existingStatus) {
-      placeholder = `未回答 ${formatDate(date.datetime)}`;
+      placeholder = `未回答 ${date.datetime}`;
     } else if (existingStatus === 'yes') {
-      placeholder = `○ ${formatDate(date.datetime)}`;
+      placeholder = `○ ${date.datetime}`;
     } else if (existingStatus === 'maybe') {
-      placeholder = `△ ${formatDate(date.datetime)}`;
+      placeholder = `△ ${date.datetime}`;
     } else if (existingStatus === 'no') {
-      placeholder = `× ${formatDate(date.datetime)}`;
+      placeholder = `× ${date.datetime}`;
     }
     
     return {
@@ -139,22 +139,22 @@ async function handleRespondButton(
         placeholder,
         options: [
           {
-            label: `未回答 ${formatDate(date.datetime)}`,
+            label: `未回答 ${date.datetime}`,
             value: 'none',
             default: !existingStatus
           },
           {
-            label: `○ ${formatDate(date.datetime)}`,
+            label: `○ ${date.datetime}`,
             value: 'yes',
             default: existingStatus === 'yes'
           },
           {
-            label: `△ ${formatDate(date.datetime)}`,
+            label: `△ ${date.datetime}`,
             value: 'maybe',
             default: existingStatus === 'maybe'
           },
           {
-            label: `× ${formatDate(date.datetime)}`,
+            label: `× ${date.datetime}`,
             value: 'no',
             default: existingStatus === 'no'
           }
@@ -1534,13 +1534,13 @@ async function handleDateSelectMenu(
     // Set placeholder based on current status
     let placeholder = '';
     if (!existingStatus) {
-      placeholder = `未回答 ${formatDate(date.datetime)}`;
+      placeholder = `未回答 ${date.datetime}`;
     } else if (existingStatus === 'yes') {
-      placeholder = `○ ${formatDate(date.datetime)}`;
+      placeholder = `○ ${date.datetime}`;
     } else if (existingStatus === 'maybe') {
-      placeholder = `△ ${formatDate(date.datetime)}`;
+      placeholder = `△ ${date.datetime}`;
     } else if (existingStatus === 'no') {
-      placeholder = `× ${formatDate(date.datetime)}`;
+      placeholder = `× ${date.datetime}`;
     }
     
     return {
@@ -1551,22 +1551,22 @@ async function handleDateSelectMenu(
         placeholder,
         options: [
           {
-            label: `未回答 ${formatDate(date.datetime)}`,
+            label: `未回答 ${date.datetime}`,
             value: 'none',
             default: !existingStatus
           },
           {
-            label: `○ ${formatDate(date.datetime)}`,
+            label: `○ ${date.datetime}`,
             value: 'yes',
             default: existingStatus === 'yes'
           },
           {
-            label: `△ ${formatDate(date.datetime)}`,
+            label: `△ ${date.datetime}`,
             value: 'maybe',
             default: existingStatus === 'maybe'
           },
           {
-            label: `× ${formatDate(date.datetime)}`,
+            label: `× ${date.datetime}`,
             value: 'no',
             default: existingStatus === 'no'
           }
