@@ -5,7 +5,7 @@ import { StorageService } from '../services/storage';
 import { parseButtonId, createButtonId } from '../utils/id';
 import { formatDate } from '../utils/date';
 import { updateOriginalMessage } from '../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './modals';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { 
   createEphemeralResponse, 
   createErrorResponse, 
@@ -81,7 +81,7 @@ export async function handleButtonInteraction(
     case 'show_all':
       return handleShowAllButton(interaction, storage, params);
     case 'complete_vote':
-      return handleCompleteVoteButton(interaction, storage, params);
+      return handleCompleteVoteButton(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -1522,7 +1522,8 @@ async function handleDateSelectMenu(
 async function handleCompleteVoteButton(
   interaction: ButtonInteraction,
   storage: StorageService,
-  params: string[]
+  params: string[],
+  env: Env
 ): Promise<Response> {
   const [scheduleId] = params;
   const userId = interaction.member?.user.id || interaction.user?.id || '';

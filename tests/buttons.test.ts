@@ -404,4 +404,106 @@ describe('Button Interactions', () => {
     expect(parsed.responses[0].dateId).toBe('date1');
     expect(parsed.responses[0].status).toBe('yes');
   });
+
+  it('should handle complete vote button with responses', async () => {
+    // First, save a response
+    await env.RESPONSES.put('response:test_schedule_id:user456', JSON.stringify({
+      scheduleId: 'test_schedule_id',
+      userId: 'user456',
+      userName: 'TestUser',
+      responses: [
+        { dateId: 'date1', status: 'yes' },
+        { dateId: 'date2', status: 'no' }
+      ],
+      updatedAt: new Date()
+    }));
+
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'complete_vote:test_schedule_id',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456',
+          username: 'TestUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.data.content).toContain('回答を完了しました');
+    expect(data.data.content).toContain('✅'); // Should show yes response
+    expect(data.data.content).toContain('❌'); // Should show no response
+    expect(data.data.components).toHaveLength(0); // Components should be removed
+  });
+
+  it('should handle complete vote button without responses', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'complete_vote:test_schedule_id',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user789',
+          username: 'NoResponseUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.data.content).toContain('回答を完了しました');
+    expect(data.data.content).toContain('回答がありません');
+  });
+
+  it('should handle date select menu with invalid schedule', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'dateselect:invalid_schedule_id:date1',
+        component_type: 3,
+        values: ['yes']
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456',
+          username: 'TestUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.content).toContain('日程調整が見つかりません');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+  });
 });

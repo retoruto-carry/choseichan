@@ -4,6 +4,7 @@ import { Schedule, ScheduleDate, STATUS_EMOJI, EMBED_COLORS } from '../types/sch
 import { StorageService } from '../services/storage';
 import { generateId, createButtonId } from '../utils/id';
 import { parseUserInputDate, formatDate } from '../utils/date';
+import { createScheduleEmbed, createScheduleComponents } from '../utils/embeds';
 
 export async function handleScheduleCommand(
   interaction: CommandInteraction,
@@ -238,66 +239,3 @@ async function handleListCommand(
 }
 
 
-function createScheduleEmbed(schedule: Schedule) {
-  // シンプルな表形式の日程表示
-  const dateList = schedule.dates
-    .map((date, index) => `${index + 1}. ${formatDate(date.datetime)}`)
-    .join('\n');
-  
-  return {
-    title: `📅 ${schedule.title}`,
-    description: [
-      schedule.description || '',
-      '',
-      '**候補日時:**',
-      dateList,
-      '',
-      '下の「回答する」ボタンを押して参加可否を入力してください。'
-    ].filter(Boolean).join('\n'),
-    color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
-    fields: [],
-    footer: {
-      text: [
-        `作成: ${schedule.createdBy.username}`,
-        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null
-      ].filter(Boolean).join(' | ')
-    },
-    timestamp: schedule.createdAt.toISOString()
-  };
-}
-
-
-function createScheduleComponents(schedule: Schedule) {
-  if (schedule.status === 'closed') {
-    return [];
-  }
-
-  return [
-    {
-      type: 1,
-      components: [
-        {
-          type: 2,
-          style: 1, // Primary
-          label: '回答する',
-          custom_id: createButtonId('response', schedule.id),
-          emoji: { name: '✏️' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: '状況を見る',
-          custom_id: createButtonId('status', schedule.id),
-          emoji: { name: '📊' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: '編集',
-          custom_id: createButtonId('edit', schedule.id),
-          emoji: { name: '⚙️' }
-        }
-      ]
-    }
-  ];
-}
