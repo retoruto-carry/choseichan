@@ -1,0 +1,35 @@
+{
+  "name": "discord-choseisan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord-interactions": "^4.3.0",
+    "hono": "^4.8.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250708.0",
+    "@types/node": "^24.0.12",
+    "@vitest/ui": "^3.2.4",
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.1.0",
+    "miniflare": "^4.20250705.0",
+    "tweetnacl": "^1.0.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.24.0"
+  }
+}
