@@ -6,6 +6,13 @@ import { parseButtonId, createButtonId } from '../utils/id';
 import { formatDate } from '../utils/date';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './modals';
+import { 
+  createEphemeralResponse, 
+  createErrorResponse, 
+  createUpdateResponse,
+  createModalResponse,
+  createDeferredUpdateResponse 
+} from '../utils/responses';
 
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
@@ -95,23 +102,11 @@ async function handleRespondButton(
   
   const schedule = await storage.getSchedule(scheduleId);
   if (!schedule) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整が見つかりません。',
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+    return createErrorResponse('日程調整が見つかりません。');
   }
 
   if (schedule.status === 'closed') {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: 'この日程調整は締め切られています。',
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+    return createErrorResponse('この日程調整は締め切られています。');
   }
 
   // Get current user's responses
@@ -123,8 +118,17 @@ async function handleRespondButton(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
-    // Set placeholder to show current selection
-    const placeholder = `選択してください`;
+    // Set placeholder based on current status
+    let placeholder = '';
+    if (!existingStatus) {
+      placeholder = `未回答 ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'yes') {
+      placeholder = `○ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'maybe') {
+      placeholder = `△ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'no') {
+      placeholder = `× ${formatDate(date.datetime)}`;
+    }
     
     return {
       type: 1, // Action Row
@@ -180,14 +184,11 @@ async function handleRespondButton(
     }
   ];
   
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      content: `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`,
-      components: componentsWithComplete.slice(0, 5), // Discord limit
-      flags: InteractionResponseFlags.EPHEMERAL
-    }
-  }), { headers: { 'Content-Type': 'application/json' } });
+  return createEphemeralResponse(
+    `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`,
+    undefined,
+    componentsWithComplete.slice(0, 5) // Discord limit
+  );
 }
 
 async function handleResponseButton(
@@ -1436,8 +1437,17 @@ async function handleDateSelectMenu(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
-    // Set placeholder to show current selection
-    const placeholder = `選択してください`;
+    // Set placeholder based on current status
+    let placeholder = '';
+    if (!existingStatus) {
+      placeholder = `未回答 ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'yes') {
+      placeholder = `○ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'maybe') {
+      placeholder = `△ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'no') {
+      placeholder = `× ${formatDate(date.datetime)}`;
+    }
     
     return {
       type: 1,
