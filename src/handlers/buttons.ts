@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../types/discord';
 import { ResponseStatus, STATUS_EMOJI, EMBED_COLORS, ScheduleSummary, Schedule } from '../types/schedule';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { parseButtonId } from '../utils/id';
 import {
   handleEditButton,

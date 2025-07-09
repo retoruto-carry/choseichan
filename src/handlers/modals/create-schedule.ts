@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
 import { Schedule, ScheduleDate } from '../../types/schedule';
-import { StorageService } from '../../services/storage';
+import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
@@ -50,6 +50,8 @@ export async function handleCreateScheduleModal(
     deadlineDate = parsed;
   }
 
+  const guildId = interaction.guild_id || 'default';
+  
   const schedule: Schedule = {
     id: generateId(),
     title,
@@ -64,13 +66,15 @@ export async function handleCreateScheduleModal(
     createdAt: new Date(),
     updatedAt: new Date(),
     channelId: interaction.channel_id || '',
+    guildId,
     notificationSent: false
   };
 
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
 
   // Create response
-  const summary = await storage.getScheduleSummary(schedule.id);
+  const summary = await storage.getScheduleSummary(schedule.id, guildId);
   if (!summary) {
     // Fallback
     return new Response(JSON.stringify({

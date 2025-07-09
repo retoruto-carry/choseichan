@@ -84,6 +84,7 @@ describe('Modal Submit Interactions', () => {
           ]
         },
         channel_id: 'test_channel',
+        guild_id: 'test-guild',
         member: {
           user: {
             id: 'user123',
@@ -107,7 +108,7 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.components).toBeDefined();
       
       // Check schedule was saved
-      const schedules = await env.SCHEDULES.list({ prefix: 'schedule:' });
+      const schedules = await env.SCHEDULES.list({ prefix: 'guild:test-guild:schedule:' });
       expect(schedules.keys.length).toBe(1);
     });
 
@@ -153,6 +154,7 @@ describe('Modal Submit Interactions', () => {
           ]
         },
         channel_id: 'test_channel',
+        guild_id: 'test-guild',
         member: {
           user: {
             id: 'user123',
@@ -187,6 +189,7 @@ describe('Modal Submit Interactions', () => {
         ],
         createdBy: { id: 'user123', username: 'TestUser' },
         channelId: 'test_channel',
+        guildId: 'test-guild',
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
@@ -194,7 +197,7 @@ describe('Modal Submit Interactions', () => {
       };
       
       await env.SCHEDULES.put(
-        `schedule:${schedule.id}`,
+        `guild:test-guild:schedule:${schedule.id}`,
         JSON.stringify(schedule)
       );
     });
@@ -225,6 +228,7 @@ describe('Modal Submit Interactions', () => {
           ]
         },
         channel_id: 'test_channel',
+        guild_id: 'test-guild',
         member: {
           user: {
             id: 'user123',
@@ -245,7 +249,7 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check schedule was updated
-      const updatedSchedule = await env.SCHEDULES.get('schedule:test_schedule_id');
+      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_id');
       const parsed = JSON.parse(updatedSchedule);
       expect(parsed.title).toBe('新年会');
       expect(parsed.description).toBe('新年会の日程調整です');
@@ -269,6 +273,7 @@ describe('Modal Submit Interactions', () => {
           ]
         },
         channel_id: 'test_channel',
+        guild_id: 'test-guild',
         member: {
           user: {
             id: 'user123',
@@ -290,7 +295,7 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check dates were added
-      const updatedSchedule = await env.SCHEDULES.get('schedule:test_schedule_id');
+      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_id');
       const parsed = JSON.parse(updatedSchedule);
       expect(parsed.dates).toHaveLength(4); // Original 2 + new 2
     });

@@ -1,6 +1,6 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../types/discord';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 
 export async function handleToggleDetailsButton(
@@ -9,6 +9,7 @@ export async function handleToggleDetailsButton(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
   // Get the current state from the button label
@@ -18,7 +19,7 @@ export async function handleToggleDetailsButton(
   const isShowingDetails = currentButton?.label === '簡易表示';
   
   // Get schedule summary
-  const summary = await storage.getScheduleSummary(scheduleId);
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
   if (!summary) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.UPDATE_MESSAGE,

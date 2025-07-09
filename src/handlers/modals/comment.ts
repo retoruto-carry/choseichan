@@ -1,16 +1,17 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
 import { EMBED_COLORS } from '../../types/schedule';
-import { StorageService } from '../../services/storage';
+import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 
 export async function handleAddCommentModal(
   interaction: ModalInteraction,
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -25,7 +26,7 @@ export async function handleAddCommentModal(
   const comment = interaction.data.components[0].components[0].value || '';
   
   // Get or create user response
-  let userResponse = await storage.getResponse(scheduleId, userId);
+  let userResponse = await storage.getResponse(scheduleId, userId, guildId);
   
   if (!userResponse) {
     return new Response(JSON.stringify({
@@ -40,7 +41,7 @@ export async function handleAddCommentModal(
   // Update comment
   userResponse.comment = comment;
   userResponse.updatedAt = new Date();
-  await storage.saveResponse(userResponse);
+  await storage.saveResponse(userResponse, guildId);
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -60,9 +61,10 @@ export async function handleDateCommentModal(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, dateId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -77,7 +79,7 @@ export async function handleDateCommentModal(
   const comment = interaction.data.components[0].components[0].value || '';
   
   // Get or create user response
-  let userResponse = await storage.getResponse(scheduleId, userId);
+  let userResponse = await storage.getResponse(scheduleId, userId, guildId);
   
   if (!userResponse) {
     return new Response(JSON.stringify({
@@ -96,7 +98,7 @@ export async function handleDateCommentModal(
   }
   
   userResponse.updatedAt = new Date();
-  await storage.saveResponse(userResponse);
+  await storage.saveResponse(userResponse, guildId);
 
   const dateInfo = schedule.dates.find(d => d.id === dateId);
 

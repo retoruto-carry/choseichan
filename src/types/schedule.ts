@@ -8,12 +8,14 @@ export interface Schedule {
     username: string;
   };
   channelId: string;
+  guildId?: string; // Guild ID for multi-tenant support
   messageId?: string;
   createdAt: Date;
   updatedAt: Date;
   deadline?: Date;
   status: 'open' | 'closed';
   notificationSent: boolean;
+  reminderSent?: boolean; // Track if reminder was sent
 }
 
 export interface ScheduleDate {

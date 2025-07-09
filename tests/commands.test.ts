@@ -49,6 +49,7 @@ describe('Choseichan Commands', () => {
         }]
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user123',
@@ -84,6 +85,7 @@ describe('Choseichan Commands', () => {
         }]
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user123',

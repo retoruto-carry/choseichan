@@ -1,16 +1,17 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction } from '../types/discord';
 import { STATUS_EMOJI, ResponseStatus } from '../types/schedule';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 
 export async function handleExportButton(
   interaction: ButtonInteraction,
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const summary = await storage.getScheduleSummary(scheduleId);
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
   if (!summary) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -53,9 +54,10 @@ export async function handleShowAllButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -67,7 +69,7 @@ export async function handleShowAllButton(
   }
 
   const userId = interaction.member?.user.id || interaction.user?.id || '';
-  const userResponse = await storage.getResponse(scheduleId, userId);
+  const userResponse = await storage.getResponse(scheduleId, userId, guildId);
 
   // Open modal for all dates
   const modal = {

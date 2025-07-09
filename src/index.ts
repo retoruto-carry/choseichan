@@ -4,8 +4,33 @@ import { Env, CommandInteraction, ButtonInteraction } from './types/discord';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Health check endpoint
 app.get('/', (c) => {
-  return c.text('Discord Choseisan Bot is running!');
+  return c.json({
+    status: 'ok',
+    service: 'Discord Choseisan Bot',
+    version: '1.2.1',
+    docs: 'https://discord-choseisan.pages.dev'
+  });
+});
+
+// Cron endpoint for deadline checks
+app.post('/cron/deadline-check', async (c) => {
+  const cronSecret = c.req.header('X-Cron-Secret');
+  
+  // Verify cron secret
+  if (!cronSecret || cronSecret !== c.env.CRON_SECRET) {
+    return c.text('Unauthorized', 401);
+  }
+
+  try {
+    const { sendDeadlineReminders } = await import('./cron/deadline-reminder');
+    await sendDeadlineReminders(c.env);
+    return c.json({ success: true, message: 'Deadline check completed' });
+  } catch (error) {
+    console.error('Deadline check failed:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
 });
 
 app.post('/interactions', async (c) => {

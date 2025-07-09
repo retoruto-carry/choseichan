@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
 import { ResponseStatus, Response as UserResponse, STATUS_EMOJI, EMBED_COLORS } from '../../types/schedule';
-import { StorageService } from '../../services/storage';
+import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 import { updateOriginalMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 import { createErrorResponse } from '../../utils/responses';
@@ -12,9 +12,10 @@ export async function handleInteractiveResponseModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return createErrorResponse('日程調整が見つかりません。');
   }
@@ -54,7 +55,7 @@ export async function handleInteractiveResponseModal(
     });
   }
 
-  await storage.saveResponse(userResponse);
+  await storage.saveResponse(userResponse, guildId);
 
   // Create confirmation embed
   const embed = {
@@ -77,7 +78,7 @@ export async function handleInteractiveResponseModal(
   // Update the original message
   if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
     try {
-      const summary = await storage.getScheduleSummary(scheduleId);
+      const summary = await storage.getScheduleSummary(scheduleId, guildId);
       if (summary) {
         await updateOriginalMessage(
           env.DISCORD_APPLICATION_ID,
@@ -109,9 +110,10 @@ export async function handleBulkResponseModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -159,7 +161,7 @@ export async function handleBulkResponseModal(
     });
   }
 
-  await storage.saveResponse(userResponse);
+  await storage.saveResponse(userResponse, guildId);
 
   // Create confirmation embed
   const confirmEmbed = {

@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../types/discord';
 import { ResponseStatus, STATUS_EMOJI, EMBED_COLORS, ScheduleSummary } from '../types/schedule';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { createButtonId } from '../utils/id';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
@@ -49,15 +49,16 @@ export async function handleStatusButton(
   params: string[]
 ): Promise<Response> {
   const [scheduleId] = params;
+  const guildId = interaction.guild_id || 'default';
   
   // Save message ID if not already saved
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (schedule && interaction.message?.id && !schedule.messageId) {
     const { saveScheduleMessageId } = await import('../utils/schedule-updater');
-    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage, guildId);
   }
   
-  const summary = await storage.getScheduleSummary(scheduleId);
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
   if (!summary) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -84,9 +85,10 @@ export async function handleEditButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -180,9 +182,10 @@ export async function handleDetailsButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const summary = await storage.getScheduleSummary(scheduleId);
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
   if (!summary) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -256,9 +259,10 @@ export async function handleCloseButton(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -282,6 +286,7 @@ export async function handleCloseButton(
 
   schedule.status = 'closed';
   schedule.updatedAt = new Date();
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
 
   // Update the main schedule message
@@ -292,7 +297,8 @@ export async function handleCloseButton(
       schedule.messageId,
       interaction.token,
       storage,
-      env
+      env,
+      guildId
     ).catch(error => console.error('Failed to update main message after closing:', error));
     
     if (env.ctx && typeof env.ctx.waitUntil === 'function') {
@@ -329,9 +335,10 @@ export async function handleReopenButton(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -355,6 +362,7 @@ export async function handleReopenButton(
 
   schedule.status = 'open';
   schedule.updatedAt = new Date();
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
 
   // Update the main schedule message
@@ -365,7 +373,8 @@ export async function handleReopenButton(
       schedule.messageId,
       interaction.token,
       storage,
-      env
+      env,
+      guildId
     ).catch(error => console.error('Failed to update main message after reopening:', error));
     
     if (env.ctx && typeof env.ctx.waitUntil === 'function') {
@@ -387,9 +396,10 @@ export async function handleDeleteButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -411,7 +421,7 @@ export async function handleDeleteButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  await storage.deleteSchedule(scheduleId);
+  await storage.deleteSchedule(scheduleId, guildId);
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.UPDATE_MESSAGE,

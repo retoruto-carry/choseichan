@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../types/discord';
 import { ResponseStatus } from '../types/schedule';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { 
   createEphemeralResponse, 
   createErrorResponse
@@ -19,9 +19,10 @@ export async function handleRespondButton(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return createErrorResponse('日程調整が見つかりません。');
   }
@@ -32,12 +33,12 @@ export async function handleRespondButton(
 
   // Save message ID if not already saved (important for select menu updates later)
   if (interaction.message?.id && !schedule.messageId) {
-    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage, guildId);
   }
 
   // Get current user's responses
   const userId = interaction.member?.user.id || interaction.user?.id || '';
-  const userResponse = await storage.getResponse(scheduleId, userId);
+  const userResponse = await storage.getResponse(scheduleId, userId, guildId);
   
   // Create all select menus (divide into groups of 5 for multiple messages if needed)
   const allComponents = schedule.dates.map((date) => {
@@ -134,6 +135,7 @@ export async function handleDateSelectMenu(
   interaction: ButtonInteraction,
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const parts = interaction.data.custom_id.split(':');
   const [_, scheduleId, dateId] = parts;
   
@@ -146,7 +148,7 @@ export async function handleDateSelectMenu(
     const selectedValue = interaction.data.values?.[0] || 'none';
     
     // Get or create user response
-    let userResponse = await storage.getResponse(scheduleId, userId);
+    let userResponse = await storage.getResponse(scheduleId, userId, guildId);
     
     if (!userResponse) {
       userResponse = {
@@ -181,8 +183,8 @@ export async function handleDateSelectMenu(
     
     // Save response and get schedule in parallel
     const [schedule] = await Promise.all([
-      storage.getSchedule(scheduleId),
-      storage.saveResponse(userResponse)
+      storage.getSchedule(scheduleId, guildId),
+      storage.saveResponse(userResponse, guildId)
     ]);
     
     // Only proceed with update if we have the necessary data
@@ -193,7 +195,8 @@ export async function handleDateSelectMenu(
         schedule.messageId,
         interaction.token,
         storage,
-        env
+        env,
+        guildId
       ).catch(error => console.error('Failed to update main message:', error));
       
       // Use waitUntil if available to ensure the update completes

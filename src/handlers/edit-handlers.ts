@@ -1,6 +1,6 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction } from '../types/discord';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { createButtonId } from '../utils/id';
 
 export async function handleEditInfoButton(
@@ -8,9 +8,10 @@ export async function handleEditInfoButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, originalMessageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -66,9 +67,10 @@ export async function handleUpdateDatesButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, originalMessageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -118,9 +120,10 @@ export async function handleAddDatesButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -161,9 +164,10 @@ export async function handleRemoveDatesButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -201,9 +205,10 @@ export async function handleConfirmRemoveDateButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, dateId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -219,13 +224,14 @@ export async function handleConfirmRemoveDateButton(
   schedule.dates = schedule.dates.filter(d => d.id !== dateId);
   schedule.updatedAt = new Date();
   
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
 
   // Remove all responses for this date
   const responses = await storage.listResponsesBySchedule(scheduleId);
   for (const response of responses) {
     response.responses = response.responses.filter(r => r.dateId !== dateId);
-    await storage.saveResponse(response);
+    await storage.saveResponse(response, guildId);
   }
 
   return new Response(JSON.stringify({
@@ -241,9 +247,10 @@ export async function handleEditDeadlineButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, originalMessageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

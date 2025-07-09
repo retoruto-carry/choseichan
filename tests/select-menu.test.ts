@@ -7,10 +7,12 @@ vi.mock('../src/utils/discord', () => ({
 }));
 
 // Mock the storage service module
-vi.mock('../src/services/storage');
+vi.mock('../src/services/storage-v2', () => ({
+  StorageServiceV2: vi.fn()
+}));
 
 import { handleButtonInteraction } from '../src/handlers/buttons';
-import { StorageService } from '../src/services/storage';
+import { StorageServiceV2 } from '../src/services/storage-v2';
 import { Schedule, ResponseStatus } from '../src/types/schedule';
 import { ButtonInteraction, Env } from '../src/types/discord';
 import { updateOriginalMessage } from '../src/utils/discord';
@@ -19,7 +21,7 @@ const mockUpdateOriginalMessage = updateOriginalMessage as any;
 
 describe('Select Menu Interactions', () => {
   let mockEnv: Env;
-  let mockStorage: StorageService;
+  let mockStorage: any;
   let mockSchedule: Schedule;
 
   beforeEach(() => {
@@ -42,6 +44,7 @@ describe('Select Menu Interactions', () => {
       ],
       createdBy: { id: 'user-123', username: 'TestUser' },
       channelId: 'channel-123',
+      guildId: 'test-guild',
       messageId: 'message-456', // Pre-saved message ID
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -49,32 +52,39 @@ describe('Select Menu Interactions', () => {
       notificationSent: false
     };
 
+    // Create a mock storage instance
     mockStorage = {
-      getSchedule: vi.fn().mockResolvedValue(mockSchedule),
+      getSchedule: vi.fn(),
       saveSchedule: vi.fn(),
-      getResponse: vi.fn().mockResolvedValue(null),
+      getResponse: vi.fn(),
       saveResponse: vi.fn(),
-      getScheduleSummary: vi.fn().mockResolvedValue({
-        schedule: mockSchedule,
-        responseCounts: {
-          'date-1': { yes: 0, maybe: 0, no: 0, total: 0 },
-          'date-2': { yes: 0, maybe: 0, no: 0, total: 0 }
-        },
-        userResponses: []
-      }),
+      getScheduleSummary: vi.fn(),
       listSchedulesByChannel: vi.fn(),
       listResponsesBySchedule: vi.fn(),
       deleteSchedule: vi.fn(),
-      deleteResponse: vi.fn()
-    } as any;
+      deleteResponse: vi.fn(),
+      updateSchedule: vi.fn()
+    };
 
-    // Mock the StorageService constructor
-    (StorageService as any).mockImplementation(() => mockStorage);
+    // Set default mock implementations
+    mockStorage.getSchedule.mockResolvedValue(mockSchedule);
+    mockStorage.getResponse.mockResolvedValue(null);
+    mockStorage.getScheduleSummary.mockResolvedValue({
+      schedule: mockSchedule,
+      responseCounts: {
+        'date-1': { yes: 0, maybe: 0, no: 0, total: 0 },
+        'date-2': { yes: 0, maybe: 0, no: 0, total: 0 }
+      },
+      userResponses: []
+    });
+
+    // Make StorageServiceV2 return our mock
+    (StorageServiceV2 as any).mockImplementation(() => mockStorage);
   });
 
   it('should save message ID when respond button is clicked', async () => {
     const scheduleWithoutMessageId = { ...mockSchedule, messageId: undefined };
-    mockStorage.getSchedule = vi.fn().mockResolvedValue(scheduleWithoutMessageId);
+    mockStorage.getSchedule.mockResolvedValue(scheduleWithoutMessageId);
 
     const interaction: ButtonInteraction = {
       id: 'interaction-1',
@@ -121,6 +131,8 @@ describe('Select Menu Interactions', () => {
         component_type: 3, // Select menu
         values: ['yes']
       },
+      channel_id: 'channel-123',
+      guild_id: 'test-guild',
       member: {
         user: { id: 'user-456', username: 'SelectUser', discriminator: '0' },
         roles: []
@@ -141,7 +153,8 @@ describe('Select Menu Interactions', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'yes' }]
-      })
+      }),
+      'test-guild'
     );
 
     // Should update the main message using the stored message ID
@@ -158,7 +171,7 @@ describe('Select Menu Interactions', () => {
 
   it('should handle select menu when no message ID is stored', async () => {
     const scheduleWithoutMessageId = { ...mockSchedule, messageId: undefined };
-    mockStorage.getSchedule = vi.fn().mockResolvedValue(scheduleWithoutMessageId);
+    mockStorage.getSchedule.mockResolvedValue(scheduleWithoutMessageId);
 
     const interaction: ButtonInteraction = {
       id: 'interaction-3',
@@ -168,6 +181,8 @@ describe('Select Menu Interactions', () => {
         component_type: 3,
         values: ['maybe']
       },
+      channel_id: 'channel-123',
+      guild_id: 'test-guild',
       member: {
         user: { id: 'user-789', username: 'NoMessageIdUser', discriminator: '0' },
         roles: []

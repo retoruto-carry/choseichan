@@ -1,13 +1,14 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { CommandInteraction, Env } from '../types/discord';
 import { STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { formatDate } from '../utils/date';
 
 export async function handleChoseichanCommand(
   interaction: CommandInteraction,
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const subcommand = interaction.data.options?.[0];
   
   if (!subcommand) {
@@ -111,6 +112,8 @@ async function handleListCommand(
   storage: StorageService
 ): Promise<Response> {
   const channelId = interaction.channel_id;
+  const guildId = interaction.guild_id || 'default';
+  
   if (!channelId) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -121,7 +124,7 @@ async function handleListCommand(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const schedules = await storage.listSchedulesByChannel(channelId);
+  const schedules = await storage.listSchedulesByChannel(channelId, guildId);
   
   if (schedules.length === 0) {
     return new Response(JSON.stringify({

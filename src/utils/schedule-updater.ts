@@ -1,5 +1,5 @@
 import { Env } from '../types/discord';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { updateOriginalMessage } from './discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './embeds';
 
@@ -10,6 +10,7 @@ import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './
  * @param interactionToken インタラクショントークン
  * @param storage StorageService インスタンス
  * @param env 環境変数
+ * @param guildId ギルドID
  * @returns 更新が成功したかどうか
  */
 export async function updateScheduleMainMessage(
@@ -17,11 +18,12 @@ export async function updateScheduleMainMessage(
   messageId: string | undefined,
   interactionToken: string,
   storage: StorageService,
-  env: Env
+  env: Env,
+  guildId: string = 'default'
 ): Promise<boolean> {
   try {
     // 最新のスケジュール情報を取得
-    const schedule = await storage.getSchedule(scheduleId);
+    const schedule = await storage.getSchedule(scheduleId, guildId);
     if (!schedule) {
       console.error(`Schedule not found for ID: ${scheduleId}`);
       return false;
@@ -36,7 +38,7 @@ export async function updateScheduleMainMessage(
     }
 
     // 最新のスケジュールサマリーを取得
-    const summary = await storage.getScheduleSummary(scheduleId);
+    const summary = await storage.getScheduleSummary(scheduleId, guildId);
     if (!summary) {
       console.error(`Schedule summary not found for ID: ${scheduleId}`);
       return false;
@@ -63,6 +65,7 @@ export async function updateScheduleMainMessage(
     // メッセージIDが新しく指定された場合は保存
     if (messageId && messageId !== schedule.messageId) {
       schedule.messageId = messageId;
+      if (!schedule.guildId) schedule.guildId = guildId;
       await storage.saveSchedule(schedule);
     }
 
@@ -100,15 +103,18 @@ export function getMessageIdFromInteraction(interaction: any): string {
  * @param scheduleId スケジュールID
  * @param messageId メッセージID
  * @param storage StorageService インスタンス
+ * @param guildId ギルドID
  */
 export async function saveScheduleMessageId(
   scheduleId: string,
   messageId: string,
-  storage: StorageService
+  storage: StorageService,
+  guildId: string = 'default'
 ): Promise<void> {
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (schedule && schedule.messageId !== messageId) {
     schedule.messageId = messageId;
+    if (!schedule.guildId) schedule.guildId = guildId;
     await storage.saveSchedule(schedule);
   }
 }

@@ -1,6 +1,6 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
-import { StorageService } from '../../services/storage';
+import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 import { parseButtonId } from '../../utils/id';
 import { handleCreateScheduleModal } from './create-schedule';
 import { handleInteractiveResponseModal, handleBulkResponseModal } from './response';

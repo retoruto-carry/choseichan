@@ -2,6 +2,9 @@ name = "discord-choseisan"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
+# Note: Static files are served via Cloudflare Pages
+# See pages/ directory for landing pages
+
 [env.development]
 vars = { ENVIRONMENT = "development" }
 

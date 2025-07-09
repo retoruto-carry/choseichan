@@ -1,17 +1,18 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { ButtonInteraction } from '../types/discord';
-import { StorageService } from '../services/storage';
+import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 
 export async function handleAddCommentButton(
   interaction: ButtonInteraction,
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   
   // 現在のコメントを取得
-  const userResponse = await storage.getResponse(scheduleId, userId);
+  const userResponse = await storage.getResponse(scheduleId, userId, guildId);
   const currentComment = userResponse?.comment || '';
 
   // モーダルを表示
@@ -44,15 +45,16 @@ export async function handleCommentButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, dateId] = params;
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   
   // Get current comment for this specific date
-  const userResponse = await storage.getResponse(scheduleId, userId);
+  const userResponse = await storage.getResponse(scheduleId, userId, guildId);
   const dateResponse = userResponse?.responses.find(r => r.dateId === dateId);
   const currentComment = dateResponse?.comment || '';
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   const date = schedule?.dates.find(d => d.id === dateId);
   
   // Show modal for adding/editing comment for specific date

@@ -1,5 +1,5 @@
 import { Schedule, ScheduleSummary } from '../types/schedule';
-import { StorageService } from './storage';
+import { StorageServiceV2 as StorageService } from './storage-v2';
 import { formatDate } from '../utils/date';
 import { STATUS_EMOJI } from '../types/schedule';
 
@@ -50,7 +50,7 @@ export class NotificationService {
     // Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
     // 現在は自動的な締切リマインダー機能は実装していません
     
-    const summary = await this.storage.getScheduleSummary(schedule.id);
+    const summary = await this.storage.getScheduleSummary(schedule.id, schedule.guildId || 'default');
     if (!summary) return;
 
     const nonRespondents = await this.getNonRespondents(summary);
@@ -121,8 +121,8 @@ export class NotificationService {
     }
   }
 
-  async sendSummaryMessage(scheduleId: string): Promise<void> {
-    const summary = await this.storage.getScheduleSummary(scheduleId);
+  async sendSummaryMessage(scheduleId: string, guildId: string = 'default'): Promise<void> {
+    const summary = await this.storage.getScheduleSummary(scheduleId, guildId);
     if (!summary) return;
 
     const { schedule, responseCounts, userResponses, bestDateId } = summary;
@@ -155,5 +155,35 @@ export class NotificationService {
     };
 
     await this.sendChannelMessage(schedule.channelId, message);
+  }
+
+  async sendPRMessage(schedule: Schedule): Promise<void> {
+    const prMessages = [
+      '🎉 Discord調整ちゃんは無料でご利用いただけます！もっと多くの機能が必要な場合は、プレミアムプランをご検討ください。',
+      '📅 チーム運営を効率化！Discord調整ちゃんで簡単日程調整。詳しくは https://discord-choseisan.com をチェック！',
+      '✨ より高度な集計機能やカスタマイズが必要ですか？エンタープライズプランもご用意しています！',
+      '🚀 Discord調整ちゃんをご利用いただきありがとうございます！フィードバックは GitHub Issues までお寄せください。'
+    ];
+
+    const randomMessage = prMessages[Math.floor(Math.random() * prMessages.length)];
+
+    const message = {
+      content: `[PR] ${randomMessage}`,
+      embeds: [{
+        color: 0x7289da,
+        footer: {
+          text: 'この広告は無料版をご利用の場合に表示されます'
+        }
+      }]
+    };
+
+    // Send PR message 5 seconds after summary
+    setTimeout(async () => {
+      try {
+        await this.sendChannelMessage(schedule.channelId, message);
+      } catch (error) {
+        console.error('Failed to send PR message:', error);
+      }
+    }, 5000);
   }
 }

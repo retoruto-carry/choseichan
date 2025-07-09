@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StorageService } from '../src/services/storage';
+import { StorageServiceV2 as StorageService } from '../src/services/storage-v2';
 import { Schedule, Response, ScheduleSummary } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
 
@@ -43,6 +43,7 @@ describe('Response Management', () => {
       ],
       createdBy: { id: 'creator_id', username: 'Creator' },
       channelId: 'test_channel',
+      guildId: 'test-guild',
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -66,8 +67,8 @@ describe('Response Management', () => {
       updatedAt: new Date()
     };
 
-    await storage.saveResponse(userResponse);
-    const retrieved = await storage.getResponse(testSchedule.id, 'user1');
+    await storage.saveResponse(userResponse, 'test-guild');
+    const retrieved = await storage.getResponse(testSchedule.id, 'user1', 'test-guild');
     
     expect(retrieved).toBeDefined();
     expect(retrieved?.userName).toBe('User One');
@@ -87,7 +88,7 @@ describe('Response Management', () => {
       updatedAt: new Date()
     };
 
-    await storage.saveResponse(initialResponse);
+    await storage.saveResponse(initialResponse, 'test-guild');
 
     // Update response
     const updatedResponse: Response = {
@@ -100,8 +101,8 @@ describe('Response Management', () => {
       updatedAt: new Date()
     };
 
-    await storage.saveResponse(updatedResponse);
-    const retrieved = await storage.getResponse(testSchedule.id, 'user1');
+    await storage.saveResponse(updatedResponse, 'test-guild');
+    const retrieved = await storage.getResponse(testSchedule.id, 'user1', 'test-guild');
     
     expect(retrieved?.responses).toHaveLength(2);
     expect(retrieved?.responses[0].status).toBe('no');
@@ -147,10 +148,10 @@ describe('Response Management', () => {
     ];
 
     for (const response of responses) {
-      await storage.saveResponse(response);
+      await storage.saveResponse(response, 'test-guild');
     }
 
-    const summary = await storage.getScheduleSummary(testSchedule.id);
+    const summary = await storage.getScheduleSummary(testSchedule.id, 'test-guild');
     
     expect(summary).toBeDefined();
     expect(summary?.userResponses).toHaveLength(3);
@@ -182,7 +183,7 @@ describe('Response Management', () => {
   });
 
   it('should handle empty responses', async () => {
-    const summary = await storage.getScheduleSummary(testSchedule.id);
+    const summary = await storage.getScheduleSummary(testSchedule.id, 'test-guild');
     
     expect(summary).toBeDefined();
     expect(summary?.userResponses).toHaveLength(0);
@@ -217,10 +218,10 @@ describe('Response Management', () => {
     ];
 
     for (const response of responses) {
-      await storage.saveResponse(response);
+      await storage.saveResponse(response, 'test-guild');
     }
 
-    const list = await storage.listResponsesBySchedule(testSchedule.id);
+    const list = await storage.listResponsesBySchedule(testSchedule.id, 'test-guild');
     
     expect(list).toHaveLength(2);
     // Should be sorted by userName
@@ -239,14 +240,15 @@ describe('Response Management', () => {
     });
 
     // Delete schedule
-    await storage.deleteSchedule(testSchedule.id);
+    const guildId = 'test-guild';
+    await storage.deleteSchedule(testSchedule.id, guildId);
     
     // Check that schedule is deleted
-    const schedule = await storage.getSchedule(testSchedule.id);
+    const schedule = await storage.getSchedule(testSchedule.id, guildId);
     expect(schedule).toBeNull();
     
     // Check that responses are deleted
-    const responses = await storage.listResponsesBySchedule(testSchedule.id);
+    const responses = await storage.listResponsesBySchedule(testSchedule.id, guildId);
     expect(responses).toHaveLength(0);
   });
 });

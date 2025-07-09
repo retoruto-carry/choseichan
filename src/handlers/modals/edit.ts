@@ -1,7 +1,7 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
 import { ScheduleDate, EMBED_COLORS } from '../../types/schedule';
-import { StorageService } from '../../services/storage';
+import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
 import { updateScheduleMainMessage, saveScheduleMessageId } from '../../utils/schedule-updater';
@@ -13,9 +13,10 @@ export async function handleEditInfoModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, messageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -31,11 +32,12 @@ export async function handleEditInfoModal(
   schedule.description = interaction.data.components[1].components[0].value || undefined;
   schedule.updatedAt = new Date();
   
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
   
   // Save message ID if provided
   if (messageId) {
-    await saveScheduleMessageId(scheduleId, messageId, storage);
+    await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
   }
 
   // Update main message in background
@@ -66,9 +68,10 @@ export async function handleUpdateDatesModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, messageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -116,11 +119,12 @@ export async function handleUpdateDatesModal(
   schedule.dates = newDates;
   schedule.updatedAt = new Date();
   
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
   
   // Save message ID if provided
   if (messageId) {
-    await saveScheduleMessageId(scheduleId, messageId, storage);
+    await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
   }
 
   // Delete responses for removed dates and update main message in background
@@ -140,7 +144,7 @@ export async function handleUpdateDatesModal(
               if (filteredResponses.length !== response.responses.length) {
                 // Update response with filtered dates
                 response.responses = filteredResponses;
-                await storage.saveResponse(response);
+                await storage.saveResponse(response, guildId);
               }
             }
           }
@@ -185,9 +189,10 @@ export async function handleAddDatesModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, messageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -221,11 +226,12 @@ export async function handleAddDatesModal(
   schedule.dates = [...schedule.dates, ...additionalDates];
   schedule.updatedAt = new Date();
   
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
   
   // Save message ID if provided
   if (messageId) {
-    await saveScheduleMessageId(scheduleId, messageId, storage);
+    await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
   }
 
   // Update main message in background
@@ -263,9 +269,10 @@ export async function handleEditDeadlineModal(
   params: string[],
   env: Env
 ): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
   const [scheduleId, messageId] = params;
   
-  const schedule = await storage.getSchedule(scheduleId);
+  const schedule = await storage.getSchedule(scheduleId, guildId);
   if (!schedule) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -311,6 +318,7 @@ export async function handleEditDeadlineModal(
   
   schedule.updatedAt = new Date();
   
+  if (!schedule.guildId) schedule.guildId = guildId;
   await storage.saveSchedule(schedule);
   
   // Send summary message if schedule was just closed
@@ -336,7 +344,7 @@ export async function handleEditDeadlineModal(
   
   // Save message ID if provided
   if (messageId) {
-    await saveScheduleMessageId(scheduleId, messageId, storage);
+    await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
   }
 
   // Update main message

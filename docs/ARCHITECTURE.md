@@ -150,16 +150,19 @@ Discord 調整ちゃんは、Cloudflare Workers 上で動作するサーバー�
 
 ### KV ストレージ設計
 
-#### キー設計
+#### キー設計（マルチテナント対応）
 
-- スケジュール: `schedule:{scheduleId}`
-- 回答: `response:{scheduleId}:{userId}`
-- チャンネルインデックス: `channel:{channelId}:{scheduleId}`
+- スケジュール: `guild:{guildId}:schedule:{scheduleId}`
+- 回答: `guild:{guildId}:response:{scheduleId}:{userId}`
+- チャンネルインデックス: `guild:{guildId}:channel:{channelId}:{scheduleId}`
+- 締切インデックス: `deadline:{timestamp}:{guildId}:{scheduleId}`
 
 #### インデックス戦略
 
+- ギルド別のデータ分離（マルチテナント対応）
 - チャンネル別のスケジュール一覧取得のためのプレフィックススキャン
 - 日程調整別の回答一覧取得のためのプレフィックススキャン
+- 締切時刻別のスケジュール取得（リマインダー用）
 
 ### 将来的な D1 移行の可能性
 

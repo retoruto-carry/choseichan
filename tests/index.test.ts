@@ -54,7 +54,9 @@ describe('Discord Bot', () => {
     );
     
     expect(res.status).toBe(200);
-    expect(await res.text()).toBe('Discord Choseisan Bot is running!');
+    const json = await res.json();
+    expect(json.status).toBe('ok');
+    expect(json.service).toBe('Discord Choseisan Bot');
   });
 
   it('should respond to PING interaction', async () => {

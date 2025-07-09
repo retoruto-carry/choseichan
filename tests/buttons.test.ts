@@ -53,6 +53,7 @@ describe('Button Interactions', () => {
       ],
       createdBy: { id: 'user123', username: 'TestUser' },
       channelId: 'test_channel',
+      guildId: 'test-guild',
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -60,7 +61,7 @@ describe('Button Interactions', () => {
     };
     
     await env.SCHEDULES.put(
-      `schedule:${testSchedule.id}`,
+      `guild:test-guild:schedule:${testSchedule.id}`,
       JSON.stringify(testSchedule)
     );
   });
@@ -74,6 +75,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456',
@@ -110,6 +112,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456',
@@ -144,6 +147,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user123', // Owner
@@ -177,6 +181,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user123', // Owner
@@ -207,6 +212,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456', // Not owner
@@ -236,6 +242,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456',
@@ -266,6 +273,7 @@ describe('Button Interactions', () => {
         component_type: 2
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456', // Not owner
@@ -300,6 +308,7 @@ describe('Button Interactions', () => {
         values: ['yes']
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456',
@@ -325,7 +334,7 @@ describe('Button Interactions', () => {
     expect(data.data).toBeUndefined();
     
     // Check that response was saved
-    const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');
+    const savedResponse = await env.RESPONSES.get('guild:test-guild:response:test_schedule_id:user456');
     expect(savedResponse).toBeTruthy();
     const parsed = JSON.parse(savedResponse);
     expect(parsed.responses).toHaveLength(1);
@@ -351,6 +360,7 @@ describe('Button Interactions', () => {
         values: ['yes']
       },
       channel_id: 'test_channel',
+      guild_id: 'test-guild',
       member: {
         user: {
           id: 'user456',
