@@ -245,6 +245,9 @@ export async function handleEditDeadlineModal(
     
   }
 
+  // Save previous status to check if it changed
+  const previousStatus = schedule.status;
+  
   // Update schedule
   schedule.deadline = newDeadline || undefined;
   
@@ -260,6 +263,23 @@ export async function handleEditDeadlineModal(
   schedule.updatedAt = new Date();
   
   await storage.saveSchedule(schedule);
+  
+  // Send summary message if schedule was just closed
+  if (previousStatus === 'open' && schedule.status === 'closed' && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
+    const { NotificationService } = await import('../../services/notification');
+    const notificationService = new NotificationService(
+      storage,
+      env.DISCORD_TOKEN,
+      env.DISCORD_APPLICATION_ID
+    );
+    
+    const summaryPromise = notificationService.sendSummaryMessage(scheduleId)
+      .catch(error => console.error('Failed to send summary message:', error));
+    
+    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+      env.ctx.waitUntil(summaryPromise);
+    }
+  }
   
   // Save message ID if provided
   if (messageId) {

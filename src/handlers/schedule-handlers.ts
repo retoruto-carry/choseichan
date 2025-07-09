@@ -298,6 +298,23 @@ export async function handleCloseButton(
       env.ctx.waitUntil(updatePromise);
     }
   }
+  
+  // Send summary message to channel
+  if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
+    const { NotificationService } = await import('../services/notification');
+    const notificationService = new NotificationService(
+      storage,
+      env.DISCORD_TOKEN,
+      env.DISCORD_APPLICATION_ID
+    );
+    
+    const summaryPromise = notificationService.sendSummaryMessage(scheduleId)
+      .catch(error => console.error('Failed to send summary message:', error));
+    
+    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+      env.ctx.waitUntil(summaryPromise);
+    }
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
