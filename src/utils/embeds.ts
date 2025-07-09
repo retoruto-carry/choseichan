@@ -7,23 +7,28 @@ export function createScheduleEmbed(schedule: Schedule) {
     .map((date, index) => `${index + 1}. ${date.datetime}`)
     .join('\n');
   
+  const descriptionParts = [
+    schedule.description || '',
+    ''
+  ];
+  
+  if (schedule.deadline) {
+    descriptionParts.push(`⏰ 締切: ${formatDate(schedule.deadline.toISOString())}`);
+    descriptionParts.push('');
+  }
+  
+  descriptionParts.push('**候補日時:**');
+  descriptionParts.push(dateList);
+  descriptionParts.push('');
+  descriptionParts.push('下の「回答する」ボタンを押して参加可否を入力してください。');
+  
   return {
     title: `📅 ${schedule.title}`,
-    description: [
-      schedule.description || '',
-      '',
-      '**候補日時:**',
-      dateList,
-      '',
-      '下の「回答する」ボタンを押して参加可否を入力してください。'
-    ].filter(Boolean).join('\n'),
+    description: descriptionParts.filter(Boolean).join('\n'),
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: [],
     footer: {
-      text: [
-        `作成: ${schedule.createdBy.username}`,
-        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null
-      ].filter(Boolean).join(' | ')
+      text: `作成: ${schedule.createdBy.username}`
     },
     timestamp: schedule.createdAt.toISOString()
   };
@@ -65,20 +70,27 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
       inline: false
     };
   });
+
+  // 締切情報を description に追加
+  const descriptionParts = [
+    schedule.description || '',
+    ''
+  ];
+  
+  if (schedule.deadline) {
+    descriptionParts.push(`⏰ 締切: ${formatDate(schedule.deadline.toISOString())}`);
+  }
+  
+  descriptionParts.push(`回答者: ${userResponses.length}人`);
   
   return {
     title: `📅 ${schedule.title}`,
-    description: [
-      schedule.description || '',
-      '',
-      `回答者: ${userResponses.length}人`
-    ].filter(Boolean).join('\n'),
+    description: descriptionParts.filter(Boolean).join('\n'),
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
       text: [
         `作成: ${schedule.createdBy.username}`,
-        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null,
         '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
