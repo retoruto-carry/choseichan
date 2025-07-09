@@ -314,7 +314,20 @@ export async function handleEditDeadlineModal(
   // Parse and validate reminder timings
   if (reminderTimingsStr.trim()) {
     const timings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
-    const validTimings = timings.filter(t => /^\d+[dhm]$/.test(t));
+    const validTimings = timings.filter(t => {
+      const match = t.match(/^(\d+)([dhm])$/);
+      if (!match) return false;
+      
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      
+      // Validate reasonable ranges
+      if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
+      if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
+      if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
+      
+      return true;
+    });
     if (validTimings.length > 0) {
       schedule.reminderTimings = validTimings;
     }
@@ -412,6 +425,16 @@ export async function handleEditDeadlineModal(
   
   if (schedule.status === 'closed') {
     message += '\n⚠️ 締切日が過去のため、日程調整は締め切られました。';
+  }
+  
+  if (reminderTimingsStr.trim()) {
+    const originalTimings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
+    const invalidTimings = originalTimings.filter(t => !schedule.reminderTimings?.includes(t));
+    
+    if (invalidTimings.length > 0) {
+      message += `\n⚠️ 無効なリマインダー設定は無視されました: ${invalidTimings.join(', ')}`;
+      message += '\n（有効な範囲: 1-30日, 1-720時間, 5-1440分）';
+    }
   }
   
   if (schedule.reminderTimings && schedule.reminderTimings.length > 0) {

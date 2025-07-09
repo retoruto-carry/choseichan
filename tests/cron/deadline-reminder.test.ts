@@ -314,9 +314,13 @@ describe('Deadline Reminder', () => {
 
   it('should skip old reminders (more than 8 hours late)', async () => {
     const now = new Date();
-    const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
+    const deadlineIn10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000);
     
-    // Create a schedule where we missed the 3d and 1d reminders by more than 8 hours
+    // Create a schedule where 3d and 1d reminders would be more than 8 hours late
+    // With deadline in 10 hours:
+    // - 3d reminder should have been sent 62 hours ago (too old)
+    // - 1d reminder should have been sent 14 hours ago (too old)  
+    // - 8h reminder is still 2 hours in the future (not ready yet)
     const schedule: Schedule = {
       id: 'test-old-reminder',
       title: 'Old Reminder Test',
@@ -325,7 +329,7 @@ describe('Deadline Reminder', () => {
       authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
-      deadline: deadlineIn30Min,
+      deadline: deadlineIn10Hours,
       reminderSent: false,
       remindersSent: [], // No reminders sent yet
       createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // Created 4 days ago
@@ -340,7 +344,7 @@ describe('Deadline Reminder', () => {
     );
     
     // Add deadline index entry
-    const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
+    const deadlineTimestamp = Math.floor(deadlineIn10Hours.getTime() / 1000);
     await mockKV.put(
       `guild:guild123:deadline:${deadlineTimestamp}:test-old-reminder`,
       ''
@@ -348,7 +352,9 @@ describe('Deadline Reminder', () => {
 
     await sendDeadlineReminders(mockEnv);
 
-    // Should not send any reminders because 3d, 1d, and 8h are all too old (more than 8 hours late)
+    // Should not send any reminders because:
+    // - 3d and 1d reminders are more than 8 hours late (skipped)
+    // - 8h reminder is not due yet (deadline is in 10 hours)
     expect(mockNotificationService.sendDeadlineReminder).not.toHaveBeenCalled();
   });
 });

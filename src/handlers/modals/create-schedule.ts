@@ -66,7 +66,20 @@ export async function handleCreateScheduleModal(
       if (line.startsWith('リマインダー:') || line.startsWith('reminder:')) {
         const timingsStr = line.replace(/^(リマインダー|reminder):/, '').trim();
         const timings = timingsStr.split(',').map(t => t.trim()).filter(t => t);
-        const validTimings = timings.filter(t => /^\d+[dhm]$/.test(t));
+        const validTimings = timings.filter(t => {
+          const match = t.match(/^(\d+)([dhm])$/);
+          if (!match) return false;
+          
+          const value = parseInt(match[1]);
+          const unit = match[2];
+          
+          // Validate reasonable ranges
+          if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
+          if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
+          if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
+          
+          return true;
+        });
         if (validTimings.length > 0) {
           reminderTimings = validTimings;
         }

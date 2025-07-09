@@ -14,6 +14,18 @@ export class StorageServiceV2 {
   async saveSchedule(schedule: Schedule): Promise<void> {
     const guildId = schedule.guildId || 'default';
     
+    // Check for existing schedule to clean up old deadline index
+    const existingSchedule = await this.getSchedule(schedule.id, guildId);
+    if (existingSchedule?.deadline) {
+      const oldTimestamp = Math.floor(existingSchedule.deadline.getTime() / 1000);
+      const newTimestamp = schedule.deadline ? Math.floor(schedule.deadline.getTime() / 1000) : null;
+      
+      // If deadline was removed or changed, delete old index entry
+      if (!schedule.deadline || oldTimestamp !== newTimestamp) {
+        await this.schedules.delete(`guild:${guildId}:deadline:${oldTimestamp}:${schedule.id}`);
+      }
+    }
+    
     await this.schedules.put(
       `guild:${guildId}:schedule:${schedule.id}`,
       JSON.stringify(schedule),

@@ -22,6 +22,10 @@ const DEFAULT_REMINDER_TIMINGS = [
   { type: '8h', hours: 8, message: '締切まで8時間' }
 ];
 
+// 古いリマインダーをスキップする閾値（8時間）
+// この時間以上遅れているリマインダーは送信しない
+const OLD_REMINDER_THRESHOLD_MS = 8 * 60 * 60 * 1000;
+
 // カスタムタイミングの文字列（例: '3d', '8h', '30m'）を時間に変換
 function parseTimingToHours(timing: string): number | null {
   const match = timing.match(/^(\d+)([dhm])$/);
@@ -134,7 +138,7 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
                 // Skip if reminder is too old (more than 8 hours past the reminder time)
                 // 8時間以上前のリマインダーはスキップ（大幅に過ぎている場合）
                 const timeSinceReminder = now.getTime() - reminderTime;
-                if (timeSinceReminder > 8 * 60 * 60 * 1000) {
+                if (timeSinceReminder > OLD_REMINDER_THRESHOLD_MS) {
                   console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${Math.floor(timeSinceReminder / (60 * 60 * 1000))} hours late`);
                   continue;
                 }
@@ -155,7 +159,7 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
             // Skip if deadline is too old (more than 8 hours past)
             // 締切を8時間以上過ぎている場合はスキップ
             const timeSinceDeadline = now.getTime() - deadlineTime;
-            if (timeSinceDeadline > 8 * 60 * 60 * 1000) {
+            if (timeSinceDeadline > OLD_REMINDER_THRESHOLD_MS) {
               console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
               continue;
             }
