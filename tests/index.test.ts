@@ -83,7 +83,12 @@ describe('Discord Bot', () => {
     expect(json.type).toBe(InteractionResponseType.PONG);
   });
 
-  it.skip('should reject invalid signatures', async () => {
+  it('should reject invalid signatures', async () => {
+    const mockExecutionContext = {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn()
+    } as unknown as ExecutionContext;
+    
     const wrongKeyPair = nacl.sign.keyPair();
     const wrongPublicKey = Buffer.from(wrongKeyPair.publicKey).toString('hex');
     
