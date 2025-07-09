@@ -3,7 +3,7 @@ import { Env, ModalInteraction } from '../types/discord';
 import { Response as ScheduleResponse, ResponseStatus, STATUS_EMOJI, EMBED_COLORS, Schedule, ScheduleDate, ScheduleSummary } from '../types/schedule';
 import { StorageService } from '../services/storage';
 import { formatDate, parseUserInputDate } from '../utils/date';
-import { createScheduleEmbed, createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
+import { createScheduleEmbed, createScheduleEmbedWithTable, createSimpleScheduleComponents, createScheduleComponents } from '../utils/embeds';
 import { updateOriginalMessage } from '../utils/discord';
 import { updateScheduleMainMessage } from '../utils/schedule-updater';
 import { createButtonId, generateId } from '../utils/id';
