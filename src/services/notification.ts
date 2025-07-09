@@ -46,25 +46,51 @@ export class NotificationService {
   }
 
   async sendDeadlineReminder(schedule: Schedule): Promise<void> {
-    // NOTE: この機能は未実装です
-    // Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
-    // 現在は自動的な締切リマインダー機能は実装していません
+    if (!schedule.deadline) return;
     
-    const summary = await this.storage.getScheduleSummary(schedule.id, schedule.guildId || 'default');
-    if (!summary) return;
-
-    const nonRespondents = await this.getNonRespondents(summary);
-    if (nonRespondents.length === 0) return;
-
-    const message = this.createReminderMessage(schedule, nonRespondents);
+    const deadlineDate = new Date(schedule.deadline);
+    const messageLink = `https://discord.com/channels/${schedule.guildId}/${schedule.channelId}/${schedule.messageId}`;
     
-    // Send message to channel
+    // Send DM to schedule author
+    try {
+      await this.sendDirectMessage(
+        schedule.authorId,
+        `⏰ **リマインダー**: 「${schedule.title}」の締切が1時間以内に迫っています！\n\n` +
+        `締切: ${deadlineDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n` +
+        `現在の回答者数: ${schedule.totalResponses || 0}人\n\n` +
+        `[スケジュールを確認](${messageLink})`
+      );
+    } catch (error) {
+      console.error(`Failed to send DM to author ${schedule.authorId}:`, error);
+    }
+    
+    // Send reminder to channel
+    const message = {
+      content: `⏰ **締切リマインダー**: 「${schedule.title}」の締切が1時間以內です！`,
+      embeds: [{
+        color: 0xffcc00,
+        fields: [
+          {
+            name: '締切時刻',
+            value: deadlineDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+            inline: true
+          },
+          {
+            name: '現在の回答者数',
+            value: `${schedule.totalResponses || 0}人`,
+            inline: true
+          }
+        ],
+        footer: {
+          text: 'まだ回答していない方は早めに回答をお願いします！'
+        }
+      }],
+      message_reference: {
+        message_id: schedule.messageId
+      }
+    };
+    
     await this.sendChannelMessage(schedule.channelId, message);
-    
-    // Mark notification as sent
-    schedule.notificationSent = true;
-    schedule.updatedAt = new Date();
-    await this.storage.saveSchedule(schedule);
   }
 
   private async getNonRespondents(summary: ScheduleSummary): Promise<string[]> {
@@ -119,6 +145,27 @@ export class NotificationService {
     if (!response.ok) {
       throw new Error(`Failed to send message: ${response.status}`);
     }
+  }
+
+  async sendDirectMessage(userId: string, content: string): Promise<void> {
+    // First, create or get DM channel
+    const dmChannelResponse = await fetch('https://discord.com/api/v10/users/@me/channels', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bot ${this.discordToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ recipient_id: userId })
+    });
+
+    if (!dmChannelResponse.ok) {
+      throw new Error(`Failed to create DM channel: ${dmChannelResponse.status}`);
+    }
+
+    const dmChannel = await dmChannelResponse.json();
+    
+    // Send message to DM channel
+    await this.sendChannelMessage(dmChannel.id, { content });
   }
 
   async sendSummaryMessage(scheduleId: string, guildId: string = 'default'): Promise<void> {
