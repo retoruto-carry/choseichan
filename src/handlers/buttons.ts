@@ -15,6 +15,8 @@ export async function handleButtonInteraction(
   const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
 
   switch (action) {
+    case 'respond':
+      return handleRespondButton(interaction, storage, params);
     case 'response':
       return handleResponseButton(interaction, storage, params);
     case 'vote':
@@ -69,6 +71,71 @@ export async function handleButtonInteraction(
         }
       }), { headers: { 'Content-Type': 'application/json' } });
   }
+}
+
+async function handleRespondButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  if (schedule.status === 'closed') {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: 'この日程調整は締め切られています。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Get current user's responses
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userResponse = await storage.getResponse(scheduleId, userId);
+  
+  // Create modal with fields for each date
+  const modal = {
+    title: schedule.title.length > 40 ? schedule.title.substring(0, 40) + '...' : schedule.title,
+    custom_id: `modal:interactive_response:${scheduleId}`,
+    components: schedule.dates.slice(0, 5).map((date, idx) => {
+      const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
+      const existingStatus = existingResponse?.status;
+      const existingComment = existingResponse?.comment || '';
+      
+      return {
+        type: 1, // Action Row
+        components: [{
+          type: 4, // Text Input
+          custom_id: `date_${date.id}`,
+          label: `${idx + 1}. ${formatDate(date.datetime)}`,
+          style: 1, // Short
+          placeholder: '○、△、× のいずれかと、必要ならコメント',
+          value: existingStatus ? 
+            `${STATUS_EMOJI[existingStatus]} ${existingComment}`.trim() : 
+            '',
+          required: false,
+          max_length: 100
+        }]
+      };
+    })
+  };
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: modal
+  }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleResponseButton(

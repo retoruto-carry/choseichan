@@ -66,6 +66,8 @@ export async function handleModalSubmit(
       return handleResponseModal(interaction, storage, params, env);
     case 'bulk_response':
       return handleBulkResponseModal(interaction, storage, params, env);
+    case 'interactive_response':
+      return handleInteractiveResponseModal(interaction, storage, params, env);
     case 'create_schedule':
       return handleCreateScheduleModal(interaction, storage, env);
     case 'edit_info':
@@ -85,6 +87,134 @@ export async function handleModalSubmit(
         }
       }), { headers: { 'Content-Type': 'application/json' } });
   }
+}
+
+async function handleInteractiveResponseModal(
+  interaction: ModalSubmitInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userName = interaction.member?.user.username || interaction.user?.username || '';
+
+  // Get or create user response
+  let userResponse = await storage.getResponse(scheduleId, userId);
+  
+  if (!userResponse) {
+    userResponse = {
+      scheduleId,
+      userId,
+      userName,
+      responses: [],
+      comment: '',
+      updatedAt: new Date()
+    };
+  }
+
+  // Parse each date field
+  const newResponses: Array<{ dateId: string; status: ResponseStatus; comment?: string }> = [];
+  
+  for (const date of schedule.dates) {
+    const fieldValue = interaction.data.components
+      .flatMap(row => row.components)
+      .find(c => c.custom_id === `date_${date.id}`)?.value || '';
+    
+    if (fieldValue.trim()) {
+      let status: ResponseStatus | null = null;
+      let comment = '';
+      
+      // Extract status and comment
+      const trimmed = fieldValue.trim();
+      if (trimmed.includes('✅') || trimmed.includes('○') || trimmed.includes('o') || trimmed.includes('O')) {
+        status = 'yes';
+        comment = trimmed.replace(/[✅○oO]/g, '').trim();
+      } else if (trimmed.includes('🟡') || trimmed.includes('△') || trimmed.includes('▲') || trimmed.includes('?')) {
+        status = 'maybe';
+        comment = trimmed.replace(/[🟡△▲?]/g, '').trim();
+      } else if (trimmed.includes('❌') || trimmed.includes('×') || trimmed.includes('x') || trimmed.includes('X')) {
+        status = 'no';
+        comment = trimmed.replace(/[❌×xX]/g, '').trim();
+      } else {
+        // Try to parse the first character
+        const firstChar = trimmed[0];
+        if (['○', 'o', 'O'].includes(firstChar)) {
+          status = 'yes';
+          comment = trimmed.substring(1).trim();
+        } else if (['△', '▲', '?'].includes(firstChar)) {
+          status = 'maybe';
+          comment = trimmed.substring(1).trim();
+        } else if (['×', 'x', 'X'].includes(firstChar)) {
+          status = 'no';
+          comment = trimmed.substring(1).trim();
+        }
+      }
+      
+      if (status) {
+        newResponses.push({
+          dateId: date.id,
+          status,
+          comment: comment || undefined
+        });
+      }
+    }
+  }
+
+  // Update responses
+  userResponse.responses = newResponses;
+  userResponse.updatedAt = new Date();
+  await storage.saveResponse(userResponse);
+
+  // Get updated summary and update main message
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整の更新に失敗しました。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Update the original message
+  if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        interaction.message.id,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(schedule)
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
+  
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ 回答を更新しました！`,
+      embeds: [createResponseConfirmationEmbed(userResponse, summary)],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleBulkResponseModal(
@@ -355,7 +485,8 @@ function createResponseConfirmationEmbed(
   const responseDetails = schedule.dates.map(date => {
     const response = userResponse.responses.find(r => r.dateId === date.id);
     if (!response) return null;
-    return `${formatDate(date.datetime)}: ${STATUS_EMOJI[response.status]}`;
+    const comment = response.comment ? ` - ${response.comment}` : '';
+    return `${formatDate(date.datetime)}: ${STATUS_EMOJI[response.status]}${comment}`;
   }).filter(Boolean);
 
   return {
@@ -540,7 +671,8 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary) {
       .map(ur => {
         const response = ur.responses.find(r => r.dateId === date.id);
         if (!response) return null;
-        return `${STATUS_EMOJI[response.status]} ${ur.userName}`;
+        const comment = response.comment ? ` (${response.comment})` : '';
+        return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
       })
       .filter(Boolean);
     
@@ -592,53 +724,16 @@ export function createSimpleScheduleComponents(schedule: Schedule) {
 
   const rows = [];
   
-  // 各日程の投票ボタンを作成（最大5行）
-  schedule.dates.slice(0, 5).forEach((date, idx) => {
-    rows.push({
-      type: 1,
-      components: [
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: `${idx + 1}. ${formatDate(date.datetime)}`,
-          custom_id: `date_label_${date.id}`,
-          disabled: true
-        },
-        {
-          type: 2,
-          style: 3, // Success
-          label: '○',
-          custom_id: createButtonId('direct_vote', schedule.id, date.id, 'yes'),
-          emoji: { name: '⭕' }
-        },
-        {
-          type: 2,
-          style: 1, // Primary
-          label: '△',
-          custom_id: createButtonId('direct_vote', schedule.id, date.id, 'maybe'),
-          emoji: { name: '🔺' }
-        },
-        {
-          type: 2,
-          style: 4, // Danger
-          label: '×',
-          custom_id: createButtonId('direct_vote', schedule.id, date.id, 'no'),
-          emoji: { name: '❌' }
-        }
-      ]
-    });
-  });
-
-  // 管理ボタン
+  // メインボタン
   rows.push({
     type: 1,
     components: [
       {
         type: 2,
-        style: 2,
-        label: 'コメントを追加',
-        custom_id: createButtonId('add_comment', schedule.id),
-        emoji: { name: '💬' }
+        style: 1, // Primary
+        label: '回答する',
+        custom_id: createButtonId('respond', schedule.id),
+        emoji: { name: '✏️' }
       },
       {
         type: 2,

@@ -34,6 +34,7 @@ export interface Response {
 export interface DateResponse {
   dateId: string;
   status: ResponseStatus;
+  comment?: string;
 }
 
 export type ResponseStatus = 'yes' | 'maybe' | 'no';
