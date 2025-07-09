@@ -79,110 +79,13 @@ export async function handleRespondButton(
     };
   });
 
-  const message = `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n選択するとすぐに反映されます。`;
-
-  // If there are more than 4 dates, schedule follow-up messages after response
-  if (schedule.dates.length > 4) {
-    // Send follow-up messages after the main response
-    setTimeout(() => {
-      sendAdditionalDateMessages(interaction, schedule, userResponse, scheduleId, env);
-    }, 100); // Small delay to ensure main response is sent first
-  }
+  const message = `**${schedule.title}** の回答を選択してください:\n`
 
   return createEphemeralResponse(
     message,
     undefined,
     components
   );
-}
-
-export async function sendAdditionalDateMessages(
-  interaction: ButtonInteraction,
-  schedule: Schedule,
-  userResponse: any,
-  scheduleId: string,
-  env: Env
-): Promise<void> {
-  const remainingDates = schedule.dates.slice(4);
-  const chunks = [];
-  
-  // Split remaining dates into chunks of 4
-  for (let i = 0; i < remainingDates.length; i += 4) {
-    chunks.push(remainingDates.slice(i, i + 4));
-  }
-
-  // Send each chunk as a follow-up message
-  for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-    const chunk = chunks[chunkIndex];
-    const components = chunk.map((date: any, idx: number) => {
-      const existingResponse = userResponse?.responses.find((r: any) => r.dateId === date.id);
-      const existingStatus = existingResponse?.status;
-      
-      // Set placeholder based on current status
-      let placeholder = '';
-      if (!existingStatus) {
-        placeholder = `未回答 ${date.datetime}`;
-      } else if (existingStatus === 'yes') {
-        placeholder = `○ ${date.datetime}`;
-      } else if (existingStatus === 'maybe') {
-        placeholder = `△ ${date.datetime}`;
-      } else if (existingStatus === 'no') {
-        placeholder = `× ${date.datetime}`;
-      }
-      
-      return {
-        type: 1, // Action Row
-        components: [{
-          type: 3, // Select Menu
-          custom_id: `dateselect:${scheduleId}:${date.id}`,
-          placeholder,
-          options: [
-            {
-              label: `未回答 ${date.datetime}`,
-              value: 'none',
-              default: !existingStatus
-            },
-            {
-              label: `○ ${date.datetime}`,
-              value: 'yes',
-              default: existingStatus === 'yes'
-            },
-            {
-              label: `△ ${date.datetime}`,
-              value: 'maybe',
-              default: existingStatus === 'maybe'
-            },
-            {
-              label: `× ${date.datetime}`,
-              value: 'no',
-              default: existingStatus === 'no'
-            }
-          ]
-        }]
-      };
-    });
-
-    const startIndex = 4 + chunkIndex * 4;
-    const endIndex = Math.min(startIndex + 4, schedule.dates.length);
-    const messageContent = `**${schedule.title}** の回答を選択してください (${startIndex + 1}-${endIndex}件目):`;
-
-    // Send follow-up message
-    try {
-      await fetch(`https://discord.com/api/v10/webhooks/${env.DISCORD_APPLICATION_ID}/${interaction.token}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          content: messageContent,
-          components: components,
-          flags: 64 // Ephemeral
-        })
-      });
-    } catch (error) {
-      console.error('Failed to send additional date message:', error);
-    }
-  }
 }
 
 export async function handleResponseButton(
@@ -423,88 +326,17 @@ export async function handleDateSelectMenu(
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
   
-  // Update the original message with latest schedule status
-  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
-    try {
-      const summary = await storage.getScheduleSummary(scheduleId);
-      if (summary) {
-        const originalMessageId = interaction.message.message_reference.message_id;
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          originalMessageId,
-          {
-            embeds: [createScheduleEmbedWithTable(summary)],
-            components: createSimpleScheduleComponents(summary.schedule)
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Failed to update original message after date selection:', error);
-    }
-  }
+  // Skip original message update for select menu interactions to avoid timeout
+  // The original message will be updated when user completes voting
   
-  // Update the current message with new selection
-  const components = schedule.dates.slice(0, 4).map((date, idx) => {
-    const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
-    const existingStatus = existingResponse?.status;
-    
-    // Set placeholder based on current status
-    let placeholder = '';
-    if (!existingStatus) {
-      placeholder = `未回答 ${date.datetime}`;
-    } else if (existingStatus === 'yes') {
-      placeholder = `○ ${date.datetime}`;
-    } else if (existingStatus === 'maybe') {
-      placeholder = `△ ${date.datetime}`;
-    } else if (existingStatus === 'no') {
-      placeholder = `× ${date.datetime}`;
-    }
-    
-    return {
-      type: 1, // Action Row
-      components: [{
-        type: 3, // Select Menu
-        custom_id: `dateselect:${scheduleId}:${date.id}`,
-        placeholder,
-        options: [
-          {
-            label: `未回答 ${date.datetime}`,
-            value: 'none',
-            default: !existingStatus
-          },
-          {
-            label: `○ ${date.datetime}`,
-            value: 'yes',
-            default: existingStatus === 'yes'
-          },
-          {
-            label: `△ ${date.datetime}`,
-            value: 'maybe',
-            default: existingStatus === 'maybe'
-          },
-          {
-            label: `× ${date.datetime}`,
-            value: 'no',
-            default: existingStatus === 'no'
-          }
-        ]
-      }]
-    };
-  });
-  
-  // メインメッセージの更新は完了ボタンを押した時に行う
-  
+  // Simple acknowledgment without updating components
   const date = schedule.dates.find(d => d.id === dateId);
   const statusText = selectedValue === 'none' ? '未回答' : 
     selectedValue === 'yes' ? '○ 参加可能' :
     selectedValue === 'maybe' ? '△ 調整中' : '× 参加不可';
   
+  // Use type 6 for DEFERRED_UPDATE_MESSAGE to immediately acknowledge
   return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
-    data: {
-      content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? date.datetime : '日程'} を ${statusText} に更新しました`,
-      components: components.slice(0, 4) // Discord limit
-    }
+    type: 6
   }), { headers: { 'Content-Type': 'application/json' } });
 }

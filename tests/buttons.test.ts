@@ -393,8 +393,8 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(data.data.content).toContain('更新しました');
+    expect(data.type).toBe(6); // DEFERRED_UPDATE_MESSAGE
+    expect(data.data).toBeUndefined();
     
     // Check that response was saved
     const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');

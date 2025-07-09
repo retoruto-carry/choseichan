@@ -21,11 +21,14 @@ export async function handleEditInfoButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  // Get original message ID for later updates
+  const originalMessageId = interaction.message?.message_reference?.message_id || interaction.message?.id || '';
+  
   // Show modal for editing title and description
   return new Response(JSON.stringify({
     type: InteractionResponseType.MODAL,
     data: {
-      custom_id: `modal:edit_info:${scheduleId}`,
+      custom_id: `modal:edit_info:${scheduleId}:${originalMessageId}`,
       title: '日程調整の編集',
       components: [
         {
@@ -81,11 +84,14 @@ export async function handleUpdateDatesButton(
     .map(date => date.datetime)
     .join('\n');
 
+  // Get original message ID for later updates
+  const originalMessageId = interaction.message?.message_reference?.message_id || interaction.message?.id || '';
+
   // Show modal for updating all dates
   return new Response(JSON.stringify({
     type: InteractionResponseType.MODAL,
     data: {
-      custom_id: `modal:update_dates:${scheduleId}`,
+      custom_id: `modal:update_dates:${scheduleId}:${originalMessageId}`,
       title: '日程を一括更新',
       components: [
         {

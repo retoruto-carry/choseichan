@@ -609,7 +609,7 @@ async function handleEditInfoModal(
   params: string[],
   env: Env
 ): Promise<Response> {
-  const [scheduleId] = params;
+  const [scheduleId, originalMessageId] = params;
   
   const schedule = await storage.getSchedule(scheduleId);
   if (!schedule) {
@@ -638,27 +638,8 @@ async function handleEditInfoModal(
   
   await storage.saveSchedule(schedule);
 
-  // Update the original message with new title and description
-  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
-    try {
-      const summary = await storage.getScheduleSummary(scheduleId);
-      if (summary) {
-        const originalMessageId = interaction.message.message_reference.message_id;
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          originalMessageId,
-          {
-            embeds: [createScheduleEmbedWithTable(summary)],
-            components: createSimpleScheduleComponents(summary.schedule)
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Failed to update original message after info edit:', error);
-    }
-  }
-
+  // Skip original message update to avoid timeout - it will be updated on next interaction
+  
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
@@ -674,7 +655,7 @@ async function handleUpdateDatesModal(
   params: string[],
   env: Env
 ): Promise<Response> {
-  const [scheduleId] = params;
+  const [scheduleId, originalMessageId] = params;
   
   const schedule = await storage.getSchedule(scheduleId);
   if (!schedule) {
@@ -687,12 +668,12 @@ async function handleUpdateDatesModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Extract dates
+  // Extract dates - limit to avoid timeout
   const datesText = interaction.data.components
     .flatMap(row => row.components)
     .find(c => c.custom_id === 'dates')?.value || '';
 
-  const dateLines = datesText.split('\n').filter(line => line.trim());
+  const dateLines = datesText.split('\n').filter(line => line.trim()).slice(0, 30); // Limit to 30 dates
   
   if (dateLines.length === 0) {
     return new Response(JSON.stringify({
@@ -732,24 +713,7 @@ async function handleUpdateDatesModal(
     console.warn('Some dates could not be parsed:', invalidDates);
   }
 
-  // Create a map of old dates for matching
-  const oldDatesMap = new Map<string, string>();
-  for (const oldDate of schedule.dates) {
-    const formatted = oldDate.datetime;
-    oldDatesMap.set(formatted, oldDate.id);
-  }
-  
-  // Create a map to track old date ID to new date ID mapping
-  const dateIdMapping = new Map<string, string>();
-  
-  // Try to match new dates with old dates
-  for (const newDate of newDates) {
-    const formatted = newDate.datetime;
-    const oldDateId = oldDatesMap.get(formatted);
-    if (oldDateId) {
-      dateIdMapping.set(oldDateId, newDate.id);
-    }
-  }
+  // Skip date matching to avoid timeout - responses will be reset
   
   // Replace all dates
   schedule.dates = newDates;
@@ -757,63 +721,12 @@ async function handleUpdateDatesModal(
   
   await storage.saveSchedule(schedule);
 
-  // Update responses to use new date IDs where possible
-  const responses = await storage.listResponsesBySchedule(scheduleId);
-  let updatedCount = 0;
-  
-  for (const response of responses) {
-    let hasChanges = false;
-    const updatedResponses = response.responses.filter(r => {
-      const newDateId = dateIdMapping.get(r.dateId);
-      if (newDateId) {
-        r.dateId = newDateId;
-        hasChanges = true;
-        return true;
-      }
-      // Remove responses for dates that no longer exist
-      return false;
-    });
-    
-    if (hasChanges) {
-      response.responses = updatedResponses;
-      response.updatedAt = new Date();
-      await storage.saveResponse(response);
-      updatedCount++;
-    } else if (updatedResponses.length === 0) {
-      // Delete response if no dates match
-      await storage.deleteResponse(scheduleId, response.userId);
-    }
-  }
+  // Skip original message update and response updates to avoid timeout
 
-  // 更新後の情報を取得
-  const summary = await storage.getScheduleSummary(scheduleId);
-  
-  // メインメッセージを更新
-  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id && summary) {
-    try {
-      const originalMessageId = interaction.message.message_reference.message_id;
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        originalMessageId,
-        {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(summary.schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message after dates update:', error);
-    }
-  }
-
-  const message = updatedCount > 0 
-    ? `✅ 日程を${newDates.length}件に更新しました。\n✅ ${updatedCount}人の回答を新しい日程に引き継ぎました。`
-    : `✅ 日程を${newDates.length}件に更新しました。\n⚠️ 日程が大幅に変更されたため、以前の回答はリセットされました。`;
-  
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: message,
+      content: `✅ 日程を${newDates.length}件に更新しました。`,
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });

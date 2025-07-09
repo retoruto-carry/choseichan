@@ -27,8 +27,6 @@ import {
   handleCommentButton
 } from './comment-handlers';
 import {
-  handleQuickVoteButton,
-  handleQuickVoteStatusButton,
   handleDirectVoteButton
 } from './quick-vote-handlers';
 import {
@@ -92,10 +90,6 @@ export async function handleButtonInteraction(
           flags: InteractionResponseFlags.EPHEMERAL
         }
       }), { headers: { 'Content-Type': 'application/json' } });
-    case 'quick_vote':
-      return handleQuickVoteButton(interaction, storage, params, env);
-    case 'quick_vote_status':
-      return handleQuickVoteStatusButton(interaction, storage, params, env);
     case 'direct_vote':
       return handleDirectVoteButton(interaction, storage, params, env);
     case 'add_comment':
