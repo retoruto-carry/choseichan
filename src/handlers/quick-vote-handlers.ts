@@ -4,6 +4,7 @@ import { ResponseStatus, STATUS_EMOJI } from '../types/schedule';
 import { StorageService } from '../services/storage';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
+import { saveScheduleMessageId } from '../utils/schedule-updater';
 
 export async function handleDirectVoteButton(
   interaction: ButtonInteraction,
@@ -52,6 +53,11 @@ export async function handleDirectVoteButton(
   
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
+
+  // Save message ID if not already saved
+  if (interaction.message?.id && !schedule.messageId) {
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
+  }
 
   // Update the message
   const summary = await storage.getScheduleSummary(scheduleId);

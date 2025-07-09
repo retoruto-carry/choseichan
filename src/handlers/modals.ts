@@ -5,6 +5,7 @@ import { StorageService } from '../services/storage';
 import { formatDate, parseUserInputDate } from '../utils/date';
 import { createScheduleEmbed, createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { updateOriginalMessage } from '../utils/discord';
+import { updateScheduleMainMessage } from '../utils/schedule-updater';
 import { createButtonId, generateId } from '../utils/id';
 
 interface ModalSubmitInteraction extends ModalInteraction {
@@ -638,23 +639,15 @@ async function handleEditInfoModal(
   
   await storage.saveSchedule(schedule);
 
-  // Update the original message with new information
-  const summary = await storage.getScheduleSummary(scheduleId);
-  if (summary && originalMessageId && env.DISCORD_APPLICATION_ID) {
-    try {
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        originalMessageId,
-        {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message:', error);
-    }
-  }
+  // Update the original message using the centralized updater
+  // originalMessageIdがなくてもschedule.messageIdから取得可能
+  await updateScheduleMainMessage(
+    scheduleId,
+    originalMessageId,
+    interaction.token,
+    storage,
+    env
+  );
   
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -753,23 +746,14 @@ async function handleUpdateDatesModal(
     }
   }
 
-  // Update the original message with new dates
-  const summary = await storage.getScheduleSummary(scheduleId);
-  if (summary && originalMessageId && env.DISCORD_APPLICATION_ID) {
-    try {
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        originalMessageId,
-        {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message:', error);
-    }
-  }
+  // Update the original message using the centralized updater
+  await updateScheduleMainMessage(
+    scheduleId,
+    originalMessageId,
+    interaction.token,
+    storage,
+    env
+  );
 
   const preservedCount = preservedDateIds.size;
   const newCount = newDates.length - preservedCount;
