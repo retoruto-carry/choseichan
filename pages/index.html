@@ -382,43 +382,23 @@
                 force3D: true
             });
             
-            // Hero section animations with smoother timing
-            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-            
-            // All animations start almost immediately with overlap
-            tl.from(".hero-title:first-child", { 
-                opacity: 0, 
-                y: 15, 
-                duration: 0.6
-            })
-            .from(".hero-title h2", { 
+            // Hero section animations - all elements fade in together
+            gsap.from([".hero-title:first-child", ".hero-title h2", ".hero-subtitle", ".hero-buttons > *"], { 
                 opacity: 0, 
                 y: 20, 
-                duration: 0.8
-            }, 0.1)
-            .from(".hero-subtitle", { 
+                duration: 1.2,
+                ease: "power1.out",
+                stagger: 0
+            });
+            
+            // Demo visual slightly delayed
+            gsap.from(".demo-visual", { 
                 opacity: 0, 
-                y: 15, 
-                duration: 0.6
-            }, 0.2)
-            .from(".hero-buttons > *", { 
-                opacity: 0, 
-                y: 10, 
-                duration: 0.8, 
-                stagger: 0.12,
-                ease: "power1.out"
-            }, 0.25)
-            .from(".demo-visual", { 
-                opacity: 0, 
-                y: 15,
-                duration: 0.6
-            }, 0.4)
-            .from(".demo-visual .bg-gray-700", {
-                opacity: 0,
-                y: 10,
-                duration: 0.4,
-                stagger: 0.08
-            }, 0.6);
+                y: 20,
+                duration: 1.2,
+                ease: "power1.out",
+                delay: 0.2
+            });
         });
         
         // Feature cards fade in on scroll
