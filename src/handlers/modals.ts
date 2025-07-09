@@ -672,6 +672,27 @@ async function handleEditInfoModal(
   
   await storage.saveSchedule(schedule);
 
+  // Update the original message with new title and description
+  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
+    try {
+      const summary = await storage.getScheduleSummary(scheduleId);
+      if (summary) {
+        const originalMessageId = interaction.message.message_reference.message_id;
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          originalMessageId,
+          {
+            embeds: [createScheduleEmbedWithTable(summary)],
+            components: createSimpleScheduleComponents(summary.schedule)
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update original message after info edit:', error);
+    }
+  }
+
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
@@ -801,22 +822,21 @@ async function handleUpdateDatesModal(
   // 更新後の情報を取得
   const summary = await storage.getScheduleSummary(scheduleId);
   
-  // メインメッセージを更新（schedule.messageIdがある場合）
-  if (schedule.messageId && env.DISCORD_APPLICATION_ID && summary) {
+  // メインメッセージを更新
+  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id && summary) {
     try {
-      // フォローアップメッセージを送信して、メインメッセージの更新を促す
-      await fetch(`https://discord.com/api/v10/webhooks/${env.DISCORD_APPLICATION_ID}/${interaction.token}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: '日程が更新されました。メインメッセージを確認してください。',
-          flags: InteractionResponseFlags.EPHEMERAL
-        })
-      });
+      const originalMessageId = interaction.message.message_reference.message_id;
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        originalMessageId,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(summary.schedule)
+        }
+      );
     } catch (error) {
-      console.error('Failed to send follow-up message:', error);
+      console.error('Failed to update original message after dates update:', error);
     }
   }
 

@@ -1525,6 +1525,27 @@ async function handleDateSelectMenu(
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
   
+  // Update the original message with latest schedule status
+  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
+    try {
+      const summary = await storage.getScheduleSummary(scheduleId);
+      if (summary) {
+        const originalMessageId = interaction.message.message_reference.message_id;
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          originalMessageId,
+          {
+            embeds: [createScheduleEmbedWithTable(summary)],
+            components: createSimpleScheduleComponents(summary.schedule)
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update original message after date selection:', error);
+    }
+  }
+  
   // Update the current message with new selection
   const components = schedule.dates.slice(0, 5).map((date, idx) => {
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
@@ -1636,25 +1657,23 @@ async function handleCompleteVoteButton(
     responsesSummary = '\n\n回答がありません。';
   }
   
-  // メインメッセージを更新するため、チャンネルにフォローアップメッセージを送信
-  if (env.DISCORD_APPLICATION_ID && interaction.channel_id) {
+  // メインメッセージを更新するため、元のメッセージを更新
+  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
     const summary = await storage.getScheduleSummary(scheduleId);
     if (summary) {
       try {
-        // 最新の状態を反映したメッセージを送信
-        await fetch(`https://discord.com/api/v10/webhooks/${env.DISCORD_APPLICATION_ID}/${interaction.token}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            content: `📊 **${schedule.title}** の最新状況:`,
+        const originalMessageId = interaction.message.message_reference.message_id;
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          originalMessageId,
+          {
             embeds: [createScheduleEmbedWithTable(summary)],
             components: createSimpleScheduleComponents(summary.schedule)
-          })
-        });
+          }
+        );
       } catch (error) {
-        console.error('Failed to send follow-up message:', error);
+        console.error('Failed to update original message:', error);
       }
     }
   }
