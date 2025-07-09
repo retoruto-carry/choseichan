@@ -52,6 +52,8 @@ export async function handleCreateScheduleModal(
 
   const guildId = interaction.guild_id || 'default';
   
+  const authorId = interaction.member?.user.id || interaction.user?.id || '';
+  
   const schedule: Schedule = {
     id: generateId(),
     title,
@@ -60,14 +62,17 @@ export async function handleCreateScheduleModal(
     deadline: deadlineDate,
     status: 'open',
     createdBy: {
-      id: interaction.member?.user.id || interaction.user?.id || '',
+      id: authorId,
       username: interaction.member?.user.username || interaction.user?.username || ''
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    authorId,
     channelId: interaction.channel_id || '',
     guildId,
-    notificationSent: false
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    notificationSent: false,
+    reminderSent: false,
+    totalResponses: 0
   };
 
   if (!schedule.guildId) schedule.guildId = guildId;

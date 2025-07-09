@@ -7,6 +7,7 @@ export interface Schedule {
     id: string;
     username: string;
   };
+  authorId: string; // For notification service compatibility
   channelId: string;
   guildId?: string; // Guild ID for multi-tenant support
   messageId?: string;
@@ -16,6 +17,7 @@ export interface Schedule {
   status: 'open' | 'closed';
   notificationSent: boolean;
   reminderSent?: boolean; // Track if reminder was sent
+  totalResponses?: number; // Total number of responses
 }
 
 export interface ScheduleDate {

@@ -86,6 +86,12 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
   // Send reminders for upcoming deadlines with rate limiting
   await processBatches(upcoming, async (schedule) => {
     try {
+      // Get current response count
+      const summary = await storage.getScheduleSummary(schedule.id, schedule.guildId || 'default');
+      if (summary) {
+        schedule.totalResponses = summary.userResponses.length;
+      }
+      
       await notificationService.sendDeadlineReminder(schedule);
       
       // Mark reminder as sent
