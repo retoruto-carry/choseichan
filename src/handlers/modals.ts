@@ -870,6 +870,7 @@ async function handleEditDeadlineModal(
   env: Env
 ): Promise<Response> {
   const [scheduleId, messageId] = params;
+  console.log('handleEditDeadlineModal - scheduleId:', scheduleId, 'messageId:', messageId);
   const deadlineInput = interaction.data.components[0].components[0].value?.trim() || '';
   
   const schedule = await storage.getSchedule(scheduleId);

@@ -54,6 +54,7 @@ export async function updateScheduleMainMessage(
       interactionToken,
       targetMessageId,
       {
+        content: '', // Discord requires at least empty content
         embeds: [createScheduleEmbedWithTable(summary, false)],
         components: createSimpleScheduleComponents(summary.schedule, false)
       }

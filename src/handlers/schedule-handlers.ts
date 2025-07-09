@@ -283,26 +283,27 @@ export async function handleCloseButton(
   schedule.updatedAt = new Date();
   await storage.saveSchedule(schedule);
 
-  // Update the original message
-  const summary = await storage.getScheduleSummary(scheduleId);
-  if (!summary) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整の更新に失敗しました。',
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+  // Update the main schedule message
+  if (schedule.messageId && env.DISCORD_APPLICATION_ID) {
+    const { updateScheduleMainMessage } = await import('../utils/schedule-updater');
+    const updatePromise = updateScheduleMainMessage(
+      scheduleId,
+      schedule.messageId,
+      interaction.token,
+      storage,
+      env
+    ).catch(error => console.error('Failed to update main message after closing:', error));
+    
+    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+      env.ctx.waitUntil(updatePromise);
+    }
   }
 
-  const embed = createScheduleEmbedWithTable(summary, false);
-  const components = createSimpleScheduleComponents(schedule, false);
-
   return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      embeds: [embed],
-      components
+      content: '✅ 日程調整を締め切りました。',
+      flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
@@ -341,26 +342,27 @@ export async function handleReopenButton(
   schedule.updatedAt = new Date();
   await storage.saveSchedule(schedule);
 
-  // Update the original message
-  const summary = await storage.getScheduleSummary(scheduleId);
-  if (!summary) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整の更新に失敗しました。',
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+  // Update the main schedule message
+  if (schedule.messageId && env.DISCORD_APPLICATION_ID) {
+    const { updateScheduleMainMessage } = await import('../utils/schedule-updater');
+    const updatePromise = updateScheduleMainMessage(
+      scheduleId,
+      schedule.messageId,
+      interaction.token,
+      storage,
+      env
+    ).catch(error => console.error('Failed to update main message after reopening:', error));
+    
+    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+      env.ctx.waitUntil(updatePromise);
+    }
   }
 
-  const embed = createScheduleEmbedWithTable(summary, false);
-  const components = createSimpleScheduleComponents(schedule, false);
-
   return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      embeds: [embed],
-      components
+      content: '✅ 日程調整を再開しました。',
+      flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
