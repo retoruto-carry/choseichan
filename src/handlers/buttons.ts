@@ -82,6 +82,8 @@ export async function handleButtonInteraction(
       return handleShowAllButton(interaction, storage, params);
     case 'complete_vote':
       return handleCompleteVoteButton(interaction, storage, params, env);
+    case 'view_more_dates':
+      return handleViewMoreDatesButton(interaction, storage, params);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -162,29 +164,43 @@ async function handleRespondButton(
     };
   });
 
-  // Add complete button at the end
-  const componentsWithComplete = [
+  // Add buttons at the end
+  const finalButtons = [];
+  
+  // Add "see more dates" button if there are more than 4 dates
+  if (schedule.dates.length > 4) {
+    finalButtons.push({
+      type: 2,
+      style: 2, // Secondary
+      label: `残り${schedule.dates.length - 4}件の日程を見る`,
+      custom_id: `view_more_dates:${scheduleId}:4`,
+      emoji: { name: '👀' }
+    });
+  }
+  
+  // Always add complete button
+  finalButtons.push({
+    type: 2,
+    style: 3, // Success
+    label: '回答を完了',
+    custom_id: `complete_vote:${scheduleId}`,
+    emoji: { name: '✅' }
+  });
+
+  const componentsWithButtons = [
     ...components,
     {
       type: 1,
-      components: [{
-        type: 2,
-        style: 3, // Success
-        label: '回答を完了',
-        custom_id: `complete_vote:${scheduleId}`,
-        emoji: { name: '✅' }
-      }]
+      components: finalButtons
     }
   ];
   
-  const message = schedule.dates.length > 4 
-    ? `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n⚠️ 日程が多いため、最初の4つの日程のみ表示されています。\n回答が完了したら「回答を完了」ボタンを押してください。`
-    : `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
+  const message = `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
 
   return createEphemeralResponse(
     message,
     undefined,
-    componentsWithComplete // Now limited to 5 components total
+    componentsWithButtons
   );
 }
 
