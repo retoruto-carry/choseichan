@@ -5,6 +5,7 @@ import { StorageService } from '../../services/storage';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
 import { updateScheduleMainMessage, saveScheduleMessageId } from '../../utils/schedule-updater';
+import { NotificationService } from '../../services/notification';
 
 export async function handleEditInfoModal(
   interaction: ModalInteraction,
@@ -265,20 +266,24 @@ export async function handleEditDeadlineModal(
   await storage.saveSchedule(schedule);
   
   // Send summary message if schedule was just closed
-  if (previousStatus === 'open' && schedule.status === 'closed' && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
-    const { NotificationService } = await import('../../services/notification');
+  if (previousStatus === 'open' && schedule.status === 'closed' && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
     const notificationService = new NotificationService(
       storage,
       env.DISCORD_TOKEN,
       env.DISCORD_APPLICATION_ID
     );
     
-    const summaryPromise = notificationService.sendSummaryMessage(scheduleId)
-      .catch(error => console.error('Failed to send summary message:', error));
-    
-    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-      env.ctx.waitUntil(summaryPromise);
-    }
+    env.ctx.waitUntil(
+      notificationService.sendSummaryMessage(scheduleId)
+        .catch(error => {
+          console.error('Failed to send summary message:', error);
+          console.error('Error details:', {
+            scheduleId,
+            previousStatus,
+            currentStatus: schedule.status
+          });
+        })
+    );
   }
   
   // Save message ID if provided
@@ -286,14 +291,22 @@ export async function handleEditDeadlineModal(
     await saveScheduleMessageId(scheduleId, messageId, storage);
   }
 
-  // Update main message
-  const updated = await updateScheduleMainMessage(
-    scheduleId,
-    messageId,
-    interaction.token,
-    storage,
-    env
-  );
+  // Update main message in background
+  let updateSuccess = true;
+  if (env.ctx) {
+    env.ctx.waitUntil(
+      updateScheduleMainMessage(
+        scheduleId,
+        messageId,
+        interaction.token,
+        storage,
+        env
+      ).catch(error => {
+        console.error('Failed to update main message:', error);
+        updateSuccess = false;
+      })
+    );
+  }
 
   const message = !newDeadline 
     ? '✅ 締切日を削除しました（無期限になりました）。'
@@ -302,7 +315,7 @@ export async function handleEditDeadlineModal(
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: updated ? message : message + '\n（メイン画面の更新には失敗しました）',
+      content: message,
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });

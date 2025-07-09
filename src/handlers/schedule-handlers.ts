@@ -6,6 +6,7 @@ import { createButtonId } from '../utils/id';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { createErrorResponse } from '../utils/responses';
+import { NotificationService } from '../services/notification';
 
 export function createResponseTableEmbed(summary: ScheduleSummary) {
   const { schedule, userResponses, responseCounts, bestDateId } = summary;
@@ -300,20 +301,17 @@ export async function handleCloseButton(
   }
   
   // Send summary message to channel
-  if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
-    const { NotificationService } = await import('../services/notification');
+  if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
     const notificationService = new NotificationService(
       storage,
       env.DISCORD_TOKEN,
       env.DISCORD_APPLICATION_ID
     );
     
-    const summaryPromise = notificationService.sendSummaryMessage(scheduleId)
-      .catch(error => console.error('Failed to send summary message:', error));
-    
-    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-      env.ctx.waitUntil(summaryPromise);
-    }
+    env.ctx.waitUntil(
+      notificationService.sendSummaryMessage(scheduleId)
+        .catch(error => console.error('Failed to send summary message:', error))
+    );
   }
 
   return new Response(JSON.stringify({
