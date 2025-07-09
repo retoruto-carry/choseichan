@@ -47,7 +47,8 @@ app.post('/interactions', async (c) => {
     switch (command.data.name) {
       case 'schedule':
         const { handleScheduleCommand } = await import('./handlers/commands');
-        return handleScheduleCommand(command, c.env);
+        const envWithContext = { ...c.env, ctx: c.executionCtx };
+        return handleScheduleCommand(command, envWithContext);
       
       case 'help':
         const { handleHelpCommand } = await import('./handlers/help');
@@ -67,13 +68,16 @@ app.post('/interactions', async (c) => {
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
     const button = interaction as ButtonInteraction;
     const { handleButtonInteraction } = await import('./handlers/buttons');
-    return handleButtonInteraction(button, c.env);
+    // Pass execution context through env
+    const envWithContext = { ...c.env, ctx: c.executionCtx };
+    return handleButtonInteraction(button, envWithContext);
   }
 
   // Handle modal submits
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
     const { handleModalSubmit } = await import('./handlers/modals');
-    return handleModalSubmit(interaction, c.env);
+    const envWithContext = { ...c.env, ctx: c.executionCtx };
+    return handleModalSubmit(interaction, envWithContext);
   }
 
   return c.text('Unknown interaction type', 400);

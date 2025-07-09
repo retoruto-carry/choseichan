@@ -327,14 +327,22 @@ export async function handleDateSelectMenu(
     
     // Only proceed with update if we have the necessary data
     if (schedule?.messageId) {
-      // Fire and forget - don't wait for completion
-      updateScheduleMainMessage(
+      // Create the update promise
+      const updatePromise = updateScheduleMainMessage(
         scheduleId,
         schedule.messageId,
         interaction.token,
         storage,
         env
       ).catch(error => console.error('Failed to update main message:', error));
+      
+      // Use waitUntil if available to ensure the update completes
+      if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+        console.log('Using ctx.waitUntil for background update');
+        env.ctx.waitUntil(updatePromise);
+      } else {
+        console.log('ctx.waitUntil not available');
+      }
     }
   } catch (error) {
     console.error('Failed to process vote:', error);

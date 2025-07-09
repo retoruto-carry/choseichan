@@ -6,6 +6,7 @@ export interface Env {
   DISCORD_TOKEN: string;
   SCHEDULES: KVNamespace;
   RESPONSES: KVNamespace;
+  ctx?: ExecutionContext;
 }
 
 export interface DiscordUser {
