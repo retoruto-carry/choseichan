@@ -180,20 +180,19 @@ async function handleRespondButton(
   
   const message = `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
 
-  // Send the first response with first 4 dates
-  const firstResponse = createEphemeralResponse(
+  // If there are more than 4 dates, schedule follow-up messages after response
+  if (schedule.dates.length > 4) {
+    // Send follow-up messages after the main response
+    setTimeout(() => {
+      sendAdditionalDateMessages(interaction, schedule, userResponse, scheduleId, env);
+    }, 100); // Small delay to ensure main response is sent first
+  }
+
+  return createEphemeralResponse(
     message,
     undefined,
     componentsWithButton
   );
-
-  // If there are more than 4 dates, send additional follow-up messages
-  if (schedule.dates.length > 4) {
-    // Send follow-up messages for remaining dates
-    sendAdditionalDateMessages(interaction, schedule, userResponse, scheduleId, env);
-  }
-
-  return firstResponse;
 }
 
 async function sendAdditionalDateMessages(
