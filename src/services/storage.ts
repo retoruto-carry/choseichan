@@ -119,6 +119,24 @@ export class StorageService {
     return responses.sort((a, b) => a.userName.localeCompare(b.userName));
   }
 
+  async getUserResponses(scheduleId: string, userId: string): Promise<Response[]> {
+    const list = await this.responses.list({ prefix: `response:${scheduleId}:` });
+    const responses: Response[] = [];
+    
+    for (const key of list.keys) {
+      if (key.name.includes(userId)) {
+        const data = await this.responses.get(key.name);
+        if (data) {
+          const response = JSON.parse(data) as Response;
+          response.updatedAt = new Date(response.updatedAt);
+          responses.push(response);
+        }
+      }
+    }
+    
+    return responses;
+  }
+
   // Summary operations
   async getScheduleSummary(scheduleId: string): Promise<ScheduleSummary | null> {
     const schedule = await this.getSchedule(scheduleId);

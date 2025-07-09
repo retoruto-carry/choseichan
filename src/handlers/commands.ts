@@ -25,13 +25,9 @@ export async function handleScheduleCommand(
 
   switch (subcommand.name) {
     case 'create':
-      return handleCreateCommand(interaction, storage);
+      return handleCreateCommandSimple(interaction, storage);
     case 'list':
       return handleListCommand(interaction, storage);
-    case 'status':
-      return handleStatusCommand(interaction, storage);
-    case 'close':
-      return handleCloseCommand(interaction, storage);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -41,6 +37,72 @@ export async function handleScheduleCommand(
         }
       }), { headers: { 'Content-Type': 'application/json' } });
   }
+}
+
+async function handleCreateCommandSimple(
+  interaction: CommandInteraction,
+  storage: StorageService
+): Promise<Response> {
+  // モーダルを表示して対話的に作成
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: {
+      custom_id: 'modal:create_schedule',
+      title: '日程調整を作成',
+      components: [
+        {
+          type: 1, // Action Row
+          components: [{
+            type: 4, // Text Input
+            custom_id: 'title',
+            label: 'タイトル',
+            style: 1, // Short
+            placeholder: '例: 忘年会',
+            required: true,
+            min_length: 1,
+            max_length: 100
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'description',
+            label: '説明（任意）',
+            style: 2, // Paragraph
+            placeholder: '例: 今年の忘年会の日程を決めます',
+            required: false,
+            max_length: 500
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'dates',
+            label: '候補日時（1行に1つずつ）',
+            style: 2, // Paragraph
+            placeholder: '例:\n12/25 19:00\n12/26 18:00\n12/27 19:00',
+            required: true,
+            min_length: 1,
+            max_length: 1000
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'deadline',
+            label: '回答締切（任意）',
+            style: 1, // Short
+            placeholder: '例: 12/20 23:59',
+            required: false,
+            max_length: 50
+          }]
+        }
+      ]
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleCreateCommand(
@@ -175,203 +237,67 @@ async function handleListCommand(
   }), { headers: { 'Content-Type': 'application/json' } });
 }
 
-async function handleStatusCommand(
-  interaction: CommandInteraction,
-  storage: StorageService
-): Promise<Response> {
-  const options = interaction.data.options?.[0]?.options;
-  const scheduleId = options?.find(o => o.name === 'id')?.value as string | undefined;
-
-  if (!scheduleId) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整IDを指定してください。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  const summary = await storage.getScheduleSummary(scheduleId);
-  
-  if (!summary) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '指定された日程調整が見つかりません。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  const embed = createSummaryEmbed(summary);
-
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      embeds: [embed],
-      flags: 64
-    }
-  }), { headers: { 'Content-Type': 'application/json' } });
-}
-
-async function handleCloseCommand(
-  interaction: CommandInteraction,
-  storage: StorageService
-): Promise<Response> {
-  const options = interaction.data.options?.[0]?.options;
-  const scheduleId = options?.find(o => o.name === 'id')?.value as string | undefined;
-
-  if (!scheduleId) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整IDを指定してください。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  const schedule = await storage.getSchedule(scheduleId);
-  
-  if (!schedule) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '指定された日程調整が見つかりません。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  // Check permission
-  const userId = interaction.member?.user.id || interaction.user?.id;
-  if (schedule.createdBy.id !== userId) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整を締め切ることができるのは作成者のみです。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  schedule.status = 'closed';
-  schedule.updatedAt = new Date();
-  await storage.saveSchedule(schedule);
-
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      content: `日程調整「${schedule.title}」を締め切りました。`,
-      embeds: [createScheduleEmbed(schedule)]
-    }
-  }), { headers: { 'Content-Type': 'application/json' } });
-}
 
 function createScheduleEmbed(schedule: Schedule) {
+  // シンプルな表形式の日程表示
+  const dateList = schedule.dates
+    .map((date, index) => `${index + 1}. ${formatDate(date.datetime)}`)
+    .join('\n');
+  
   return {
     title: `📅 ${schedule.title}`,
-    description: schedule.description || '日程調整にご協力ください',
+    description: [
+      schedule.description || '',
+      '',
+      '**候補日時:**',
+      dateList,
+      '',
+      '下の「回答する」ボタンを押して参加可否を入力してください。'
+    ].filter(Boolean).join('\n'),
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
-    fields: [
-      {
-        name: '状態',
-        value: schedule.status === 'open' ? '🟢 受付中' : '🔴 締切',
-        inline: true
-      },
-      {
-        name: '作成者',
-        value: schedule.createdBy.username,
-        inline: true
-      },
-      {
-        name: 'ID',
-        value: schedule.id,
-        inline: true
-      },
-      ...schedule.dates.map(date => ({
-        name: formatDate(date.datetime),
-        value: `${STATUS_EMOJI.yes} 0人　${STATUS_EMOJI.maybe} 0人　${STATUS_EMOJI.no} 0人`,
-        inline: false
-      }))
-    ],
+    fields: [],
     footer: {
-      text: schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : ''
+      text: [
+        `作成: ${schedule.createdBy.username}`,
+        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null
+      ].filter(Boolean).join(' | ')
     },
     timestamp: schedule.createdAt.toISOString()
   };
 }
 
-function createSummaryEmbed(summary: import('../types/schedule').ScheduleSummary) {
-  const { schedule, responseCounts, userResponses, bestDateId } = summary;
-  
-  return {
-    title: `📊 ${schedule.title} - 集計結果`,
-    color: EMBED_COLORS.INFO,
-    fields: [
-      {
-        name: '回答者数',
-        value: `${userResponses.length}人`,
-        inline: true
-      },
-      {
-        name: '状態',
-        value: schedule.status === 'open' ? '🟢 受付中' : '🔴 締切',
-        inline: true
-      },
-      ...schedule.dates.map(date => {
-        const count = responseCounts[date.id];
-        const isBest = date.id === bestDateId;
-        return {
-          name: `${isBest ? '⭐ ' : ''}${formatDate(date.datetime)}`,
-          value: `${STATUS_EMOJI.yes} ${count.yes}人　${STATUS_EMOJI.maybe} ${count.maybe}人　${STATUS_EMOJI.no} ${count.no}人`,
-          inline: false
-        };
-      })
-    ],
-    footer: {
-      text: `作成: ${schedule.createdBy.username}`
-    },
-    timestamp: schedule.updatedAt.toISOString()
-  };
-}
 
 function createScheduleComponents(schedule: Schedule) {
   if (schedule.status === 'closed') {
     return [];
   }
 
-  const rows = [];
-  const dateButtons = schedule.dates.map(date => ({
-    type: 2,
-    style: 2, // Secondary
-    label: formatDate(date.datetime),
-    custom_id: createButtonId('response', schedule.id, date.id),
-    emoji: { name: '📝' }
-  }));
-
-  // Split buttons into rows (max 5 per row)
-  for (let i = 0; i < dateButtons.length; i += 5) {
-    rows.push({
+  return [
+    {
       type: 1,
-      components: dateButtons.slice(i, i + 5)
-    });
-  }
-
-  // Add action buttons
-  rows.push({
-    type: 1,
-    components: [
-      {
-        type: 2,
-        style: 1, // Primary
-        label: '詳細を見る',
-        custom_id: createButtonId('details', schedule.id),
-        emoji: { name: '📋' }
-      }
-    ]
-  });
-
-  return rows;
+      components: [
+        {
+          type: 2,
+          style: 1, // Primary
+          label: '回答する',
+          custom_id: createButtonId('response', schedule.id),
+          emoji: { name: '✏️' }
+        },
+        {
+          type: 2,
+          style: 2, // Secondary
+          label: '状況を見る',
+          custom_id: createButtonId('status', schedule.id),
+          emoji: { name: '📊' }
+        },
+        {
+          type: 2,
+          style: 2, // Secondary
+          label: '編集',
+          custom_id: createButtonId('edit', schedule.id),
+          emoji: { name: '⚙️' }
+        }
+      ]
+    }
+  ];
 }

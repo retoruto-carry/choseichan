@@ -11,7 +11,8 @@
     "test:coverage": "vitest --coverage",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "register": "node scripts/register-commands.js"
   },
   "keywords": [],
   "author": "",

@@ -60,12 +60,12 @@ describe('Button Interactions', () => {
     );
   });
 
-  it('should handle response button click and show modal', async () => {
+  it('should handle response button click and show voting interface', async () => {
     const interaction: ButtonInteraction = {
       id: 'test_id',
       type: 3,
       data: {
-        custom_id: 'response:test_schedule_id:date1',
+        custom_id: 'response:test_schedule_id',
         component_type: 2
       },
       channel_id: 'test_channel',
@@ -88,9 +88,12 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.MODAL);
-    expect(data.data.title).toContain('Test Event');
-    expect(data.data.components).toHaveLength(2);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.content).toContain('Test Event');
+    expect(data.data.content).toContain('回答を選択してください');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data.components).toBeDefined();
+    expect(data.data.embeds).toHaveLength(1);
   });
 
   it('should handle details button click', async () => {
@@ -198,6 +201,131 @@ describe('Button Interactions', () => {
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.embeds).toHaveLength(1);
     expect(data.data.components).toHaveLength(0); // Buttons removed
+  });
+
+  it('should handle vote button click', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'vote:test_schedule_id:date1:yes',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456',
+          username: 'VoteUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.data.content).toContain('更新しました');
+    
+    // Check that response was saved
+    const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');
+    expect(savedResponse).toBeTruthy();
+    const parsed = JSON.parse(savedResponse);
+    expect(parsed.responses).toHaveLength(1);
+    expect(parsed.responses[0].dateId).toBe('date1');
+    expect(parsed.responses[0].status).toBe('yes');
+  });
+
+  it('should handle edit button click for owner', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'edit:test_schedule_id',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user123', // Owner
+          username: 'TestUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.content).toContain('編集する項目を選択してください');
+    expect(data.data.components).toHaveLength(2);
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+  });
+
+  it('should reject edit button by non-owner', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'edit:test_schedule_id',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456', // Not owner
+          username: 'OtherUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.content).toContain('編集できるのは作成者のみです');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+  });
+
+  it('should handle status button click', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'status:test_schedule_id',
+        component_type: 2
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456',
+          username: 'StatusUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token'
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.embeds).toHaveLength(1);
+    expect(data.data.embeds[0].title).toContain('Test Event');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should reject close button by non-owner', async () => {
