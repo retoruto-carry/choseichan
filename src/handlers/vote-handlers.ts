@@ -181,11 +181,14 @@ export async function handleDateSelectMenu(
     
     userResponse.updatedAt = new Date();
     
-    // Save response and get schedule in parallel
-    const [schedule] = await Promise.all([
-      storage.getSchedule(scheduleId, guildId),
-      storage.saveResponse(userResponse, guildId)
-    ]);
+    // Save response first and ensure it completes
+    await storage.saveResponse(userResponse, guildId);
+    
+    // Small delay to ensure KV write propagation
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Get schedule after save is complete
+    const schedule = await storage.getSchedule(scheduleId, guildId);
     
     // Only proceed with update if we have the necessary data
     if (schedule?.messageId) {
