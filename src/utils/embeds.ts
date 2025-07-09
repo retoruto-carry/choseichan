@@ -98,7 +98,7 @@ export function createScheduleComponents(schedule: Schedule) {
           type: 2,
           style: 1, // Primary
           label: '回答する',
-          custom_id: createButtonId('response', schedule.id),
+          custom_id: createButtonId('respond', schedule.id),
           emoji: { name: '✏️' }
         },
         {

@@ -134,6 +134,15 @@ node scripts/register-commands.js
 - 🔒 **締切/再開**: 回答の受付を締切・再開
 - 🗑️ **削除**: 日程調整を削除
 
+## ドキュメント
+
+- [アーキテクチャ](./docs/ARCHITECTURE.md) - システム構成と技術スタック
+- [デザイン](./docs/DESIGN.md) - UI/UX設計とユーザーフロー
+- [デプロイ](./docs/DEPLOY.md) - Cloudflare Workersへのデプロイ手順
+- [Discord API制限](./docs/DISCORD_API_LIMITS.md) - Discord APIの仕様と制限事項
+- [変更履歴](./docs/CHANGELOG.md) - リリースノートと変更内容
+- [貢献ガイド](./docs/CONTRIBUTING.md) - 開発に参加する際のガイドライン
+
 ## 開発
 
 ### 必要な環境
