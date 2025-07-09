@@ -49,6 +49,13 @@ export async function handleStatusButton(
 ): Promise<Response> {
   const [scheduleId] = params;
   
+  // Save message ID if not already saved
+  const schedule = await storage.getSchedule(scheduleId);
+  if (schedule && interaction.message?.id && !schedule.messageId) {
+    const { saveScheduleMessageId } = await import('../utils/schedule-updater');
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
+  }
+  
   const summary = await storage.getScheduleSummary(scheduleId);
   if (!summary) {
     return new Response(JSON.stringify({
@@ -87,6 +94,12 @@ export async function handleEditButton(
         flags: InteractionResponseFlags.EPHEMERAL
       }
     }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Save message ID if not already saved
+  if (interaction.message?.id && !schedule.messageId) {
+    const { saveScheduleMessageId } = await import('../utils/schedule-updater');
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
   }
 
   // Check if user is the owner
