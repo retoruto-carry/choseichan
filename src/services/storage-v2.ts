@@ -40,7 +40,7 @@ export class StorageServiceV2 {
     if (schedule.deadline) {
       const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
       await this.schedules.put(
-        `deadline:${timestamp}:${guildId}:${schedule.id}`,
+        `guild:${guildId}:deadline:${timestamp}:${schedule.id}`,
         schedule.id
       );
     }
@@ -93,7 +93,7 @@ export class StorageServiceV2 {
     // Delete from deadline index
     if (schedule.deadline) {
       const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
-      await this.schedules.delete(`deadline:${timestamp}:${guildId}:${scheduleId}`);
+      await this.schedules.delete(`guild:${guildId}:deadline:${timestamp}:${scheduleId}`);
     }
   }
 

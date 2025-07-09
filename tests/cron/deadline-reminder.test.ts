@@ -60,6 +60,7 @@ describe('Deadline Reminder', () => {
       title: 'テストイベント',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn30Min,
@@ -78,7 +79,7 @@ describe('Deadline Reminder', () => {
     // Add deadline index entry
     const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
     await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:test-schedule-1`,
+      `guild:guild123:deadline:${deadlineTimestamp}:test-schedule-1`,
       ''
     );
 
@@ -106,6 +107,7 @@ describe('Deadline Reminder', () => {
       title: 'Already Reminded Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn30Min,
@@ -135,6 +137,7 @@ describe('Deadline Reminder', () => {
       title: 'Closed Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: pastDeadline,
@@ -153,7 +156,7 @@ describe('Deadline Reminder', () => {
     // Add deadline index entry for past deadline
     const deadlineTimestamp = Math.floor(pastDeadline.getTime() / 1000);
     await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:test-schedule-3`,
+      `guild:guild123:deadline:${deadlineTimestamp}:test-schedule-3`,
       ''
     );
 
@@ -179,6 +182,7 @@ describe('Deadline Reminder', () => {
       title: 'Already Notified Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: pastDeadline,
@@ -205,6 +209,7 @@ describe('Deadline Reminder', () => {
       title: 'No Deadline Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: undefined, // No deadline
@@ -235,6 +240,7 @@ describe('Deadline Reminder', () => {
       title: 'Guild 1 Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn30Min,
@@ -251,6 +257,7 @@ describe('Deadline Reminder', () => {
       title: 'Guild 2 Event',
       dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user456', username: 'TestUser2' },
+      authorId: 'user456',
       channelId: 'channel456',
       guildId: 'guild456',
       deadline: deadlineIn30Min,
@@ -273,11 +280,11 @@ describe('Deadline Reminder', () => {
     // Add deadline index entries
     const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
     await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:multi-guild-1`,
+      `guild:guild123:deadline:${deadlineTimestamp}:multi-guild-1`,
       ''
     );
     await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild456:multi-guild-2`,
+      `guild:guild456:deadline:${deadlineTimestamp}:multi-guild-2`,
       ''
     );
 

@@ -21,39 +21,56 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
   };
 
   // Scan deadline index for schedules within past hour to next hour
-  const startTimestamp = Math.floor(oneHourAgo.getTime() / 1000);
-  const endTimestamp = Math.floor(oneHourFromNow.getTime() / 1000);
+  const startTime = oneHourAgo.getTime();
+  const endTime = oneHourFromNow.getTime();
   
-  const deadlineKeys = await env.SCHEDULES.list({
-    prefix: 'deadline:',
+  // List all guilds first
+  const guildKeys = await env.SCHEDULES.list({
+    prefix: 'guild:',
     limit: 1000
   });
 
-  for (const key of deadlineKeys.keys) {
+  // Extract unique guild IDs
+  const guildIds = new Set<string>();
+  for (const key of guildKeys.keys) {
     const parts = key.name.split(':');
-    const timestamp = parseInt(parts[1]);
-    
-    if (timestamp >= startTimestamp && timestamp <= endTimestamp) {
-      const guildId = parts[2];
-      const scheduleId = parts[3];
+    if (parts[1]) {
+      guildIds.add(parts[1]);
+    }
+  }
+
+  // Check deadline index for each guild
+  for (const guildId of guildIds) {
+    const deadlineKeys = await env.SCHEDULES.list({
+      prefix: `guild:${guildId}:deadline:`,
+      limit: 1000
+    });
+
+    for (const key of deadlineKeys.keys) {
+      const parts = key.name.split(':');
+      const timestamp = parseInt(parts[3]) * 1000; // Convert to milliseconds
       
-      const schedule = await storage.getSchedule(scheduleId, guildId);
-      if (schedule && schedule.deadline) {
-        // Add guildId to schedule
-        schedule.guildId = guildId;
-        const deadlineTime = schedule.deadline.getTime();
+      if (timestamp >= startTime && timestamp <= endTime) {
+        const scheduleId = parts[4];
         
-        // Check if it's about to close (within next hour) and hasn't been reminded
-        if (schedule.status === 'open' && 
-            deadlineTime > now.getTime() && 
-            deadlineTime <= oneHourFromNow.getTime() &&
-            !schedule.reminderSent) {
-          result.upcoming.push(schedule);
-        }
-        
-        // Check if it just closed (past deadline but still open status)
-        if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
-          result.justClosed.push(schedule);
+        const schedule = await storage.getSchedule(scheduleId, guildId);
+        if (schedule && schedule.deadline) {
+          // Add guildId to schedule
+          schedule.guildId = guildId;
+          const deadlineTime = schedule.deadline.getTime();
+          
+          // Check if it's about to close (within next hour) and hasn't been reminded
+          if (schedule.status === 'open' && 
+              deadlineTime > now.getTime() && 
+              deadlineTime <= oneHourFromNow.getTime() &&
+              !schedule.reminderSent) {
+            result.upcoming.push(schedule);
+          }
+          
+          // Check if it just closed (past deadline but still open status)
+          if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
+            result.justClosed.push(schedule);
+          }
         }
       }
     }

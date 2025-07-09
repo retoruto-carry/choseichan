@@ -6,14 +6,8 @@ import { STATUS_EMOJI } from '../types/schedule';
 /**
  * 通知サービス
  * 
- * NOTE: 自動締切リマインダーと自動締切機能は未実装です
- * Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
- * 以下の機能は実装していません：
- * - 締切前の自動リマインダー通知
- * - 締切時刻での自動締切処理
- * 
- * 必要に応じて有料プランにアップグレードするか、
- * 外部のcronサービス（GitHub Actions等）を利用してください
+ * 締切リマインダーと自動締切通知を管理します。
+ * GitHub Actionsのcronジョブから呼び出されます。
  */
 export class NotificationService {
   constructor(
@@ -23,12 +17,8 @@ export class NotificationService {
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
-    // NOTE: この機能は未実装です
-    // Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
-    // 現在は自動的な締切リマインダーや自動締切機能は実装していません
-    // 必要に応じて有料プランにアップグレードするか、外部のcronサービスを利用してください
-    
-    // This would be called by a cron job or scheduled worker
+    // This method is currently not used, as notifications are handled
+    // by the deadline-reminder.ts module called from GitHub Actions
     const schedules = await this.getSchedulesNearingDeadline();
     
     for (const schedule of schedules) {
@@ -39,9 +29,8 @@ export class NotificationService {
   }
 
   private async getSchedulesNearingDeadline(): Promise<Schedule[]> {
-    // NOTE: この機能は未実装です
-    // 実際の実装では、締切が近い（例：24時間以内）すべてのスケジュールを取得します
-    // Cloudflare Workers の無料プランでは cron triggers が制限されているため未実装
+    // This method is not currently used
+    // Deadline checking is handled by deadline-reminder.ts
     return [];
   }
 
@@ -162,7 +151,7 @@ export class NotificationService {
       throw new Error(`Failed to create DM channel: ${dmChannelResponse.status}`);
     }
 
-    const dmChannel = await dmChannelResponse.json();
+    const dmChannel = await dmChannelResponse.json() as { id: string };
     
     // Send message to DM channel
     await this.sendChannelMessage(dmChannel.id, { content });
@@ -214,7 +203,7 @@ export class NotificationService {
 
     const randomMessage = prMessages[Math.floor(Math.random() * prMessages.length)];
 
-    const message = {
+    const message: any = {
       content: `[PR] ${randomMessage}`,
       embeds: [{
         color: 0x7289da,
@@ -223,6 +212,13 @@ export class NotificationService {
         }
       }]
     };
+
+    // Add message reference if messageId exists
+    if (schedule.messageId) {
+      message.message_reference = {
+        message_id: schedule.messageId
+      };
+    }
 
     // Send PR message 5 seconds after summary
     setTimeout(async () => {
