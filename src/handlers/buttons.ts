@@ -1532,12 +1532,7 @@ async function handleCompleteVoteButton(
   const schedule = await storage.getSchedule(scheduleId);
   
   if (!schedule) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.UPDATE_MESSAGE,
-      data: {
-        content: '日程調整が見つかりません。'
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+    return createUpdateResponse('日程調整が見つかりません。');
   }
   
   let responsesSummary = '';
@@ -1554,12 +1549,33 @@ async function handleCompleteVoteButton(
     responsesSummary = '\n\n回答がありません。';
   }
   
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
-    data: {
-      content: `✅ **${schedule.title}** の回答を完了しました！${responsesSummary}\n\n回答を変更する場合は、もう一度「回答する」ボタンを押してください。`,
-      components: [] // Remove all components
+  // メインメッセージを更新するため、チャンネルにフォローアップメッセージを送信
+  if (env.DISCORD_APPLICATION_ID && interaction.channel_id) {
+    const summary = await storage.getScheduleSummary(scheduleId);
+    if (summary) {
+      try {
+        // 最新の状態を反映したメッセージを送信
+        await fetch(`https://discord.com/api/v10/webhooks/${env.DISCORD_APPLICATION_ID}/${interaction.token}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: `📊 **${schedule.title}** の最新状況:`,
+            embeds: [createScheduleEmbedWithTable(summary)],
+            components: createSimpleScheduleComponents(summary.schedule)
+          })
+        });
+      } catch (error) {
+        console.error('Failed to send follow-up message:', error);
+      }
     }
-  }), { headers: { 'Content-Type': 'application/json' } });
+  }
+  
+  return createUpdateResponse(
+    `✅ **${schedule.title}** の回答を完了しました！${responsesSummary}\n\n回答を変更する場合は、もう一度「回答する」ボタンを押してください。`,
+    undefined,
+    []
+  );
 }
 
