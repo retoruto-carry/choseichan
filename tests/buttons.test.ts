@@ -60,12 +60,12 @@ describe('Button Interactions', () => {
     );
   });
 
-  it('should handle response button click and show voting interface', async () => {
+  it('should handle respond button click and show voting interface', async () => {
     const interaction: ButtonInteraction = {
       id: 'test_id',
       type: 3,
       data: {
-        custom_id: 'response:test_schedule_id',
+        custom_id: 'respond:test_schedule_id',
         component_type: 2
       },
       channel_id: 'test_channel',
@@ -93,7 +93,7 @@ describe('Button Interactions', () => {
     expect(data.data.content).toContain('回答を選択してください');
     expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
     expect(data.data.components).toBeDefined();
-    expect(data.data.embeds).toHaveLength(1);
+    expect(data.data.embeds).toBeUndefined();
   });
 
   it('should handle details button click', async () => {

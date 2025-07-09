@@ -172,15 +172,10 @@ async function handleRespondButton(
     };
   });
 
-  // Get summary for display
-  const summary = await storage.getScheduleSummary(scheduleId);
-  const tableEmbed = createResponseTableEmbed(summary!);
-
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。`,
-      embeds: [tableEmbed],
       components,
       flags: InteractionResponseFlags.EPHEMERAL
     }
@@ -1513,24 +1508,24 @@ async function handleDateSelectMenu(
     };
   });
   
-  const summary = await storage.getScheduleSummary(scheduleId);
-  const tableEmbed = createResponseTableEmbed(summary!);
-  
   // Update main message if possible
   const mainMessageId = interaction.message?.message_reference?.message_id;
   if (mainMessageId && env.DISCORD_APPLICATION_ID) {
-    try {
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        mainMessageId,
-        {
-          embeds: [createScheduleEmbedWithTable(summary!)],
-          components: createSimpleScheduleComponents(schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message:', error);
+    const summary = await storage.getScheduleSummary(scheduleId);
+    if (summary) {
+      try {
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          mainMessageId,
+          {
+            embeds: [createScheduleEmbedWithTable(summary)],
+            components: createSimpleScheduleComponents(schedule)
+          }
+        );
+      } catch (error) {
+        console.error('Failed to update original message:', error);
+      }
     }
   }
   
@@ -1543,7 +1538,6 @@ async function handleDateSelectMenu(
     type: InteractionResponseType.UPDATE_MESSAGE,
     data: {
       content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? formatDate(date.datetime) : '日程'} を ${statusText} に更新しました`,
-      embeds: [tableEmbed],
       components
     }
   }), { headers: { 'Content-Type': 'application/json' } });
