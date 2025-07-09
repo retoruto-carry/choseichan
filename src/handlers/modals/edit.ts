@@ -38,19 +38,23 @@ export async function handleEditInfoModal(
     await saveScheduleMessageId(scheduleId, messageId, storage);
   }
 
-  // Update main message
-  const updated = await updateScheduleMainMessage(
-    scheduleId,
-    messageId,
-    interaction.token,
-    storage,
-    env
-  );
+  // Update main message in background
+  if (env.ctx) {
+    env.ctx.waitUntil(
+      updateScheduleMainMessage(
+        scheduleId,
+        messageId,
+        interaction.token,
+        storage,
+        env
+      ).catch(error => console.error('Failed to update main message:', error))
+    );
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: updated ? '✅ タイトルと説明を更新しました。' : '✅ タイトルと説明を更新しました。\n（メイン画面の更新には失敗しました）',
+      content: '✅ タイトルと説明を更新しました。',
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
@@ -89,41 +93,81 @@ export async function handleUpdateDatesModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Update dates
-  schedule.dates = dates.map((date: string) => ({
-    id: generateId(),
-    datetime: date.trim()
-  }));
+  // Store old dates for comparison
+  const oldDates = schedule.dates;
+  const oldDateMap = new Map(oldDates.map(d => [d.datetime, d.id]));
+  
+  // Update dates, preserving IDs for existing dates
+  const newDates = dates.map((date: string) => {
+    const trimmedDate = date.trim();
+    const existingId = oldDateMap.get(trimmedDate);
+    return {
+      id: existingId || generateId(),
+      datetime: trimmedDate
+    };
+  });
+  
+  // Find removed date IDs
+  const newDateTexts = new Set(newDates.map(d => d.datetime));
+  const removedDateIds = oldDates
+    .filter(d => !newDateTexts.has(d.datetime))
+    .map(d => d.id);
+  
+  schedule.dates = newDates;
   schedule.updatedAt = new Date();
   
   await storage.saveSchedule(schedule);
-  
-  // Delete all responses when dates are updated
-  const responses = await storage.listResponsesBySchedule(scheduleId);
-  for (const response of responses) {
-    await storage.deleteResponse(response.scheduleId, response.userId);
-  }
   
   // Save message ID if provided
   if (messageId) {
     await saveScheduleMessageId(scheduleId, messageId, storage);
   }
 
-  // Update main message
-  const updated = await updateScheduleMainMessage(
-    scheduleId,
-    messageId,
-    interaction.token,
-    storage,
-    env
-  );
+  // Delete responses for removed dates and update main message in background
+  if (env.ctx) {
+    env.ctx.waitUntil(
+      (async () => {
+        try {
+          // Delete responses only for removed dates
+          if (removedDateIds.length > 0) {
+            const responses = await storage.listResponsesBySchedule(scheduleId);
+            for (const response of responses) {
+              // Filter out responses for removed dates
+              const filteredResponses = response.responses.filter(
+                r => !removedDateIds.includes(r.dateId)
+              );
+              
+              if (filteredResponses.length !== response.responses.length) {
+                // Update response with filtered dates
+                response.responses = filteredResponses;
+                await storage.saveResponse(response);
+              }
+            }
+          }
+          
+          // Update main message
+          await updateScheduleMainMessage(
+            scheduleId,
+            messageId,
+            interaction.token,
+            storage,
+            env
+          );
+        } catch (error) {
+          console.error('Failed to update schedule after date change:', error);
+        }
+      })()
+    );
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       embeds: [{
         title: '✅ 日程を更新しました',
-        description: '既存の回答はすべてリセットされました。',
+        description: removedDateIds.length > 0 
+          ? `${removedDateIds.length}件の削除された日程の回答がリセットされました。既存の日程への回答は保持されています。`
+          : '既存の日程への回答は保持されています。',
         color: EMBED_COLORS.INFO,
         fields: [{
           name: '新しい日程候補',
@@ -184,14 +228,18 @@ export async function handleAddDatesModal(
     await saveScheduleMessageId(scheduleId, messageId, storage);
   }
 
-  // Update main message
-  const updated = await updateScheduleMainMessage(
-    scheduleId,
-    messageId,
-    interaction.token,
-    storage,
-    env
-  );
+  // Update main message in background
+  if (env.ctx) {
+    env.ctx.waitUntil(
+      updateScheduleMainMessage(
+        scheduleId,
+        messageId,
+        interaction.token,
+        storage,
+        env
+      ).catch(error => console.error('Failed to update main message:', error))
+    );
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -291,21 +339,26 @@ export async function handleEditDeadlineModal(
     await saveScheduleMessageId(scheduleId, messageId, storage);
   }
 
-  // Update main message in background
-  let updateSuccess = true;
-  if (env.ctx) {
-    env.ctx.waitUntil(
-      updateScheduleMainMessage(
-        scheduleId,
-        messageId,
-        interaction.token,
-        storage,
-        env
-      ).catch(error => {
-        console.error('Failed to update main message:', error);
-        updateSuccess = false;
-      })
-    );
+  // Update main message
+  const updatePromise = updateScheduleMainMessage(
+    scheduleId,
+    messageId,
+    interaction.token,
+    storage,
+    env
+  );
+
+  // Try to wait for update, but don't block response for too long
+  const updateResult = await Promise.race([
+    updatePromise.then(() => true).catch(() => false),
+    new Promise<boolean>(resolve => setTimeout(() => resolve(true), 1000)) // 1秒に短縮
+  ]);
+
+  // Continue any remaining work in background
+  if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+    env.ctx.waitUntil(updatePromise.catch(error => {
+      console.error('Failed to update main message:', error);
+    }));
   }
 
   const message = !newDeadline 
