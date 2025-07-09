@@ -337,19 +337,24 @@ export async function handleDateSelectMenu(
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
   
-  // Try to update the main message but don't let it block the response
-  try {
-    // For select menus from ephemeral messages, we MUST use the stored message ID
-    // because ephemeral messages don't have a message_reference back to the original message
-    // and the interaction.message.id would be the ephemeral message ID, not the main message
-    const messageId = schedule.messageId;
-    
-    if (!messageId) {
-      console.error(`No stored message ID available for schedule ${scheduleId}`);
-    } else {
+  // Immediately acknowledge the interaction to avoid timeout
+  const immediateResponse = new Response(JSON.stringify({
+    type: 6 // DEFERRED_UPDATE_MESSAGE
+  }), { headers: { 'Content-Type': 'application/json' } });
+  
+  // Update the main message in the background after returning the response
+  // Use waitUntil to ensure the update completes even after the response is sent
+  const updatePromise = (async () => {
+    try {
+      const messageId = schedule.messageId;
+      
+      if (!messageId) {
+        console.error(`No stored message ID available for schedule ${scheduleId}`);
+        return;
+      }
+      
       console.log(`Updating main message ${messageId} for schedule ${scheduleId}`);
-      // Update the original message using centralized updater
-      // Wait for the update to complete to see any errors
+      
       const updateSuccess = await updateScheduleMainMessage(
         scheduleId,
         messageId,
@@ -363,19 +368,16 @@ export async function handleDateSelectMenu(
       } else {
         console.error(`Failed to update main message for schedule ${scheduleId}`);
       }
+    } catch (error) {
+      console.error('Failed to update main message:', error);
     }
-  } catch (error) {
-    console.error('Failed to initiate message update:', error);
+  })();
+  
+  // If we have access to the execution context, use waitUntil
+  // Otherwise, just let it run in the background
+  if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+    env.ctx.waitUntil(updatePromise);
   }
   
-  // Simple acknowledgment without updating components
-  const date = schedule.dates.find(d => d.id === dateId);
-  const statusText = selectedValue === 'none' ? '未回答' : 
-    selectedValue === 'yes' ? '○ 参加可能' :
-    selectedValue === 'maybe' ? '△ 調整中' : '× 参加不可';
-  
-  // Use type 6 for DEFERRED_UPDATE_MESSAGE to immediately acknowledge
-  return new Response(JSON.stringify({
-    type: 6
-  }), { headers: { 'Content-Type': 'application/json' } });
+  return immediateResponse;
 }
