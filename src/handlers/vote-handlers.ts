@@ -38,8 +38,8 @@ export async function handleRespondButton(
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   const userResponse = await storage.getResponse(scheduleId, userId);
   
-  // Create ephemeral message with select menus for each date (limit to 4 to leave room for complete button)
-  const components = schedule.dates.slice(0, 4).map((date) => {
+  // Create ephemeral message with select menus for each date (limit to 5 - Discord API limit)
+  const components = schedule.dates.slice(0, 5).map((date) => {
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
@@ -81,17 +81,14 @@ export async function handleRespondButton(
     };
   });
 
-  if (schedule.dates.length > 4) {
-    components.push({
-      type: 1,
-      components: [{
-        type: 2,
-        style: 2,
-        label: `他 ${schedule.dates.length - 4} 件の日程があります`,
-        custom_id: 'info_more_dates',
-        disabled: true
-      }]
-    });
+  if (schedule.dates.length > 5) {
+    // 5件を超える場合は「一括回答」ボタンで対応することを案内
+    const message = `\n\n⚠️ 日程が${schedule.dates.length}件あります。最初の5件のみ表示しています。\nすべての日程に回答するには「一括回答」ボタンをご利用ください。`;
+    return createEphemeralResponse(
+      `**${schedule.title}** の回答を選択してください:${message}`,
+      undefined,
+      components
+    );
   }
 
   const message = `**${schedule.title}** の回答を選択してください:\n`;
