@@ -108,90 +108,62 @@ async function handleRespondButton(
   // Get current user's responses
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   const userResponse = await storage.getResponse(scheduleId, userId);
-  const userResponseMap = new Map<string, { status: ResponseStatus; comment?: string }>();
   
-  // Create a map of dateId to response for easier lookup
-  if (userResponse) {
-    for (const response of userResponse.responses) {
-      userResponseMap.set(response.dateId, response);
-    }
-  }
-  
-  // Create voting interface with buttons for each date
-  const components = schedule.dates.slice(0, 4).map(date => {
-    const currentResponse = userResponseMap.get(date.id);
-    const currentStatus = currentResponse?.status;
-    const currentComment = currentResponse?.comment;
-    const dateLabel = formatDate(date.datetime);
-    
-    return {
-      type: 1, // Action Row
-      components: [
-        {
-          type: 2, // Button
-          style: 2, // Secondary
-          label: dateLabel.length > 40 ? dateLabel.substring(0, 40) + '...' : dateLabel,
-          custom_id: `date_label:${scheduleId}:${date.id}`,
-          disabled: true
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:yes`,
-          label: '○',
-          style: currentStatus === 'yes' ? 3 : 2, // Success if selected
-          emoji: { name: '⭕' }
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:maybe`,
-          label: '△',
-          style: currentStatus === 'maybe' ? 1 : 2, // Primary if selected
-          emoji: { name: '🔺' }
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:no`,
-          label: '×',
-          style: currentStatus === 'no' ? 4 : 2, // Danger if selected
-          emoji: { name: '❌' }
-        },
-        {
-          type: 2,
-          custom_id: `comment:${scheduleId}:${date.id}`,
-          label: currentComment ? '💬' : '➕',
-          style: 2, // Secondary
-          emoji: currentComment ? { name: '💬' } : { name: '💭' }
-        }
-      ]
-    };
-  });
+  // Create modal with select menus for each date
+  const modal = {
+    title: schedule.title.length > 40 ? schedule.title.substring(0, 40) + '...' : schedule.title,
+    custom_id: `modal:select_response:${scheduleId}`,
+    components: schedule.dates.slice(0, 5).map((date, idx) => {
+      const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
+      const existingStatus = existingResponse?.status;
+      const existingComment = existingResponse?.comment || '';
+      
+      // Create select menu for this date
+      return {
+        type: 1, // Action Row
+        components: [{
+          type: 3, // Select Menu
+          custom_id: `select_${date.id}`,
+          placeholder: `${idx + 1}. ${formatDate(date.datetime)}`,
+          options: [
+            {
+              label: '未回答',
+              value: 'none',
+              description: 'この日程への回答をクリア',
+              default: !existingStatus
+            },
+            {
+              label: '参加可能',
+              value: 'yes',
+              description: '○ この日程に参加できます',
+              emoji: { name: '⭕' },
+              default: existingStatus === 'yes'
+            },
+            {
+              label: '調整中',
+              value: 'maybe',
+              description: '△ 参加できるか調整中です',
+              emoji: { name: '🔺' },
+              default: existingStatus === 'maybe'
+            },
+            {
+              label: '参加不可',
+              value: 'no',
+              description: '× この日程は参加できません',
+              emoji: { name: '❌' },
+              default: existingStatus === 'no'
+            }
+          ]
+        }]
+      };
+    })
+  };
 
-  // Add action row for additional dates if there are more than 4
-  if (schedule.dates.length > 4) {
-    components.push({
-      type: 1,
-      components: [{
-        type: 2,
-        style: 2,
-        label: `他 ${schedule.dates.length - 4} 件の日程を表示`,
-        custom_id: `show_all:${scheduleId}`,
-        emoji: { name: '📋' }
-      }]
-    });
-  }
-
-  // Get summary for display
-  const summary = await storage.getScheduleSummary(scheduleId);
-  const tableEmbed = createResponseTableEmbed(summary!);
+  // Note: Discord modals can only have up to 5 components
 
   return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      content: `**${schedule.title}** の回答を選択してください:\n\n各日程のボタンをクリックして回答し、💬ボタンでコメントを追加できます。`,
-      embeds: [tableEmbed],
-      components,
-      flags: InteractionResponseFlags.EPHEMERAL
-    }
+    type: InteractionResponseType.MODAL,
+    data: modal
   }), { headers: { 'Content-Type': 'application/json' } });
 }
 

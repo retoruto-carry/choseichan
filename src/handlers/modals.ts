@@ -16,7 +16,8 @@ interface ModalSubmitInteraction {
       components: Array<{
         type: number;
         custom_id: string;
-        value: string;
+        value?: string;
+        values?: string[];
       }>;
     }>;
   };
@@ -80,6 +81,8 @@ export async function handleModalSubmit(
       return handleAddCommentModal(interaction, storage, params, env);
     case 'date_comment':
       return handleDateCommentModal(interaction, storage, params, env);
+    case 'select_response':
+      return handleSelectResponseModal(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -1031,6 +1034,114 @@ async function handleDateCommentModal(
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: `✅ コメントを${comment ? '更新' : '削除'}しました。`,
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+async function handleSelectResponseModal(
+  interaction: ModalSubmitInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userName = interaction.member?.user.username || interaction.user?.username || '';
+
+  // Get or create user response
+  let userResponse = await storage.getResponse(scheduleId, userId);
+  
+  if (!userResponse) {
+    userResponse = {
+      scheduleId,
+      userId,
+      userName,
+      responses: [],
+      comment: '',
+      updatedAt: new Date()
+    };
+  }
+
+  // Parse select menu responses
+  const newResponses: Array<{ dateId: string; status: ResponseStatus; comment?: string }> = [];
+  
+  // Get all select components from the interaction
+  const components = interaction.data.components || [];
+  
+  for (const actionRow of components) {
+    for (const component of actionRow.components) {
+      // Check if this is a select menu component
+      if (component.custom_id?.startsWith('select_')) {
+        const dateId = component.custom_id.replace('select_', '');
+        // For select menus in modals, the value is in component.values[0]
+        const selectedValue = (component as any).values?.[0] || (component as any).value;
+        
+        if (selectedValue && selectedValue !== 'none') {
+          const status = selectedValue as ResponseStatus;
+          // Preserve existing comment for this date
+          const existingResponse = userResponse.responses.find(r => r.dateId === dateId);
+          newResponses.push({
+            dateId,
+            status,
+            comment: existingResponse?.comment
+          });
+        }
+      }
+    }
+  }
+
+  // Update responses
+  userResponse.responses = newResponses;
+  userResponse.updatedAt = new Date();
+  await storage.saveResponse(userResponse);
+
+  // Get updated summary and update main message
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整の更新に失敗しました。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Update the original message if possible
+  if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        interaction.message.id,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(schedule)
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
+  
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ 回答を更新しました！`,
+      embeds: [createResponseConfirmationEmbed(userResponse, summary)],
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
