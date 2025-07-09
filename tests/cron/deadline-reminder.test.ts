@@ -51,7 +51,7 @@ describe('Deadline Reminder', () => {
     };
   });
 
-  it('should send reminder for schedule with deadline in 30 minutes', async () => {
+  it('should send 1h reminder for schedule with deadline in 30 minutes', async () => {
     const now = new Date();
     const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
     
@@ -65,6 +65,7 @@ describe('Deadline Reminder', () => {
       guildId: 'guild123',
       deadline: deadlineIn30Min,
       reminderSent: false,
+      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -89,7 +90,8 @@ describe('Deadline Reminder', () => {
       expect.objectContaining({
         id: 'test-schedule-1',
         title: 'テストイベント'
-      })
+      }),
+      '締切まで1時間'
     );
     
     // Check that reminderSent was updated
@@ -112,6 +114,7 @@ describe('Deadline Reminder', () => {
       guildId: 'guild123',
       deadline: deadlineIn30Min,
       reminderSent: true, // Already sent
+      remindersSent: ['3d', '1d', '8h', '1h'], // All reminders already sent
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -245,6 +248,7 @@ describe('Deadline Reminder', () => {
       guildId: 'guild123',
       deadline: deadlineIn30Min,
       reminderSent: false,
+      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -262,6 +266,7 @@ describe('Deadline Reminder', () => {
       guildId: 'guild456',
       deadline: deadlineIn30Min,
       reminderSent: false,
+      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -295,13 +300,15 @@ describe('Deadline Reminder', () => {
       expect.objectContaining({
         id: 'multi-guild-1',
         title: 'Guild 1 Event'
-      })
+      }),
+      '締切まで1時間'
     );
     expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'multi-guild-2',
         title: 'Guild 2 Event'
-      })
+      }),
+      '締切まで1時間'
     );
   });
 });

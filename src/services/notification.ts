@@ -34,7 +34,7 @@ export class NotificationService {
     return [];
   }
 
-  async sendDeadlineReminder(schedule: Schedule): Promise<void> {
+  async sendDeadlineReminder(schedule: Schedule, customMessage: string = '締切が1時間以内'): Promise<void> {
     if (!schedule.deadline) return;
     
     const deadlineDate = new Date(schedule.deadline);
@@ -44,7 +44,7 @@ export class NotificationService {
     try {
       await this.sendDirectMessage(
         schedule.authorId,
-        `⏰ **リマインダー**: 「${schedule.title}」の締切が1時間以内に迫っています！\n\n` +
+        `⏰ **リマインダー**: 「${schedule.title}」の${customMessage}です！\n\n` +
         `締切: ${deadlineDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n` +
         `現在の回答者数: ${schedule.totalResponses || 0}人\n\n` +
         `[スケジュールを確認](${messageLink})`
@@ -55,7 +55,7 @@ export class NotificationService {
     
     // Send reminder to channel
     const message = {
-      content: `⏰ **締切リマインダー**: 「${schedule.title}」の締切が1時間以內です！`,
+      content: `⏰ **締切リマインダー**: 「${schedule.title}」の${customMessage}です！`,
       embeds: [{
         color: 0xffcc00,
         fields: [

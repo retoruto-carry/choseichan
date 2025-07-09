@@ -16,7 +16,8 @@ export interface Schedule {
   deadline?: Date;
   status: 'open' | 'closed';
   notificationSent: boolean;
-  reminderSent?: boolean; // Track if reminder was sent
+  reminderSent?: boolean; // Track if reminder was sent (deprecated, use remindersSent)
+  remindersSent?: string[]; // Track which reminders have been sent (e.g., ['3d', '1d', '8h', '1h'])
   totalResponses?: number; // Total number of responses
 }
 
