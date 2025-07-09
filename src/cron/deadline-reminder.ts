@@ -91,6 +91,14 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
               // Check if this reminder should be sent now
               // リマインダー時刻を過ぎていて、まだ送信していない場合
               if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
+                // Skip if reminder is too old (more than 8 hours past the reminder time)
+                // 8時間以上前のリマインダーはスキップ（大幅に過ぎている場合）
+                const timeSinceReminder = now.getTime() - reminderTime;
+                if (timeSinceReminder > 8 * 60 * 60 * 1000) {
+                  console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${Math.floor(timeSinceReminder / (60 * 60 * 1000))} hours late`);
+                  continue;
+                }
+                
                 console.log(`Adding ${scheduleId} to upcoming reminders (${timing.type})`);
                 result.upcomingReminders.push({
                   schedule,
@@ -104,6 +112,14 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
           // Check if it's past deadline but still open
           // 締切を過ぎているがまだ開いている場合（自動クローズ対象）
           if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
+            // Skip if deadline is too old (more than 8 hours past)
+            // 締切を8時間以上過ぎている場合はスキップ
+            const timeSinceDeadline = now.getTime() - deadlineTime;
+            if (timeSinceDeadline > 8 * 60 * 60 * 1000) {
+              console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
+              continue;
+            }
+            
             console.log(`Adding ${scheduleId} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
             result.justClosed.push(schedule);
           }

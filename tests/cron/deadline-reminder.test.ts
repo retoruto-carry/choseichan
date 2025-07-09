@@ -311,4 +311,50 @@ describe('Deadline Reminder', () => {
       '締切まで1時間'
     );
   });
+
+  it('should skip old reminders (more than 8 hours late)', async () => {
+    const now = new Date();
+    const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
+    
+    // Create a schedule where we missed the 3d reminder by 10 hours
+    const schedule: Schedule = {
+      id: 'test-old-reminder',
+      title: 'Old Reminder Test',
+      dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+      createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
+      channelId: 'channel123',
+      guildId: 'guild123',
+      deadline: deadlineIn30Min,
+      reminderSent: false,
+      remindersSent: ['8h'], // 8h reminder already sent to test that only 1h is sent
+      createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // Created 4 days ago
+      updatedAt: new Date(),
+      status: 'open',
+      notificationSent: false
+    };
+
+    await mockKV.put(
+      `guild:guild123:schedule:test-old-reminder`,
+      JSON.stringify(schedule)
+    );
+    
+    // Add deadline index entry
+    const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
+    await mockKV.put(
+      `guild:guild123:deadline:${deadlineTimestamp}:test-old-reminder`,
+      ''
+    );
+
+    await sendDeadlineReminders(mockEnv);
+
+    // Should only send the 1h reminder, not the old 3d, 1d, 8h reminders
+    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledTimes(1);
+    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'test-old-reminder'
+      }),
+      '締切まで1時間'
+    );
+  });
 });

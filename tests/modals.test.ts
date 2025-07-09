@@ -300,4 +300,189 @@ describe('Modal Submit Interactions', () => {
       expect(parsed.dates).toHaveLength(4); // Original 2 + new 2
     });
   });
+
+  describe('Edit Deadline Modal', () => {
+    beforeEach(async () => {
+      // Create a test schedule with deadline and reminders
+      const schedule = {
+        id: 'test_schedule_deadline',
+        title: 'Deadline Test Event',
+        description: 'Testing deadline changes',
+        dates: [
+          { id: 'date1', datetime: '2024-12-25 19:00' },
+          { id: 'date2', datetime: '2024-12-26 18:00' }
+        ],
+        createdBy: { id: 'user123', username: 'TestUser' },
+        authorId: 'user123',
+        channelId: 'test_channel',
+        guildId: 'test-guild',
+        deadline: new Date('2024-12-20T23:59:00Z'),
+        reminderSent: true,
+        remindersSent: ['3d', '1d'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'open',
+        notificationSent: false
+      };
+      
+      await env.SCHEDULES.put(
+        `guild:test-guild:schedule:${schedule.id}`,
+        JSON.stringify(schedule)
+      );
+    });
+
+    it('should reset reminders when deadline is changed', async () => {
+      const interaction = {
+        id: 'test_id',
+        type: 5,
+        data: {
+          custom_id: 'modal:edit_deadline:test_schedule_deadline:test_message_id',
+          components: [
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'deadline',
+                value: '12/24 23:59' // New deadline
+              }]
+            }
+          ]
+        },
+        channel_id: 'test_channel',
+        guild_id: 'test-guild',
+        member: {
+          user: {
+            id: 'user123',
+            username: 'TestUser',
+            discriminator: '0001'
+          },
+          roles: []
+        },
+        token: 'test_token'
+      };
+
+      const response = await handleModalSubmit(interaction, env);
+      const data = await response.json();
+      
+      expect(response.status).toBe(200);
+      expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(data.data.content).toContain('締切日を');
+      expect(data.data.content).toContain('更新しました');
+      
+      // Check reminders were reset
+      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_deadline');
+      const parsed = JSON.parse(updatedSchedule);
+      expect(parsed.reminderSent).toBe(false);
+      expect(parsed.remindersSent).toEqual([]);
+    });
+
+    it('should reset reminders when deadline is removed', async () => {
+      const interaction = {
+        id: 'test_id',
+        type: 5,
+        data: {
+          custom_id: 'modal:edit_deadline:test_schedule_deadline:test_message_id',
+          components: [
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'deadline',
+                value: '' // Remove deadline
+              }]
+            }
+          ]
+        },
+        channel_id: 'test_channel',
+        guild_id: 'test-guild',
+        member: {
+          user: {
+            id: 'user123',
+            username: 'TestUser',
+            discriminator: '0001'
+          },
+          roles: []
+        },
+        token: 'test_token'
+      };
+
+      const response = await handleModalSubmit(interaction, env);
+      const data = await response.json();
+      
+      expect(response.status).toBe(200);
+      expect(data.data.content).toContain('締切日を削除しました');
+      
+      // Check reminders were reset
+      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_deadline');
+      const parsed = JSON.parse(updatedSchedule);
+      expect(parsed.deadline).toBeUndefined();
+      expect(parsed.reminderSent).toBe(false);
+      expect(parsed.remindersSent).toEqual([]);
+    });
+
+    it('should reset reminders when adding deadline to schedule without one', async () => {
+      // Create schedule without deadline
+      const scheduleWithoutDeadline = {
+        id: 'test_schedule_no_deadline',
+        title: 'No Deadline Event',
+        dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+        createdBy: { id: 'user123', username: 'TestUser' },
+        authorId: 'user123',
+        channelId: 'test_channel',
+        guildId: 'test-guild',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'open',
+        notificationSent: false
+      };
+      
+      await env.SCHEDULES.put(
+        `guild:test-guild:schedule:${scheduleWithoutDeadline.id}`,
+        JSON.stringify(scheduleWithoutDeadline)
+      );
+
+      const interaction = {
+        id: 'test_id',
+        type: 5,
+        data: {
+          custom_id: 'modal:edit_deadline:test_schedule_no_deadline:test_message_id',
+          components: [
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'deadline',
+                value: '12/20 23:59' // Add deadline
+              }]
+            }
+          ]
+        },
+        channel_id: 'test_channel',
+        guild_id: 'test-guild',
+        member: {
+          user: {
+            id: 'user123',
+            username: 'TestUser',
+            discriminator: '0001'
+          },
+          roles: []
+        },
+        token: 'test_token'
+      };
+
+      const response = await handleModalSubmit(interaction, env);
+      const data = await response.json();
+      
+      expect(response.status).toBe(200);
+      expect(data.data.content).toContain('締切日を');
+      expect(data.data.content).toContain('更新しました');
+      
+      // Check reminders were initialized
+      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_no_deadline');
+      const parsed = JSON.parse(updatedSchedule);
+      expect(parsed.deadline).toBeDefined();
+      expect(parsed.reminderSent).toBe(false);
+      expect(parsed.remindersSent).toEqual([]);
+    });
+  });
 });

@@ -191,6 +191,7 @@ describe('Notification Flow Integration Tests', () => {
         status: 'open' as const,
         notificationSent: false,
         reminderSent: false,
+        remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
         totalResponses: 0
       }));
 
@@ -272,6 +273,7 @@ describe('Notification Flow Integration Tests', () => {
         status: 'open',
         notificationSent: false,
         reminderSent: true, // Already sent!
+        remindersSent: ['3d', '1d', '8h', '1h'], // All reminders already sent
         totalResponses: 5
       };
 

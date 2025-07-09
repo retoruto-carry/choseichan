@@ -301,11 +301,22 @@ export async function handleEditDeadlineModal(
     
   }
 
-  // Save previous status to check if it changed
+  // Save previous status and deadline to check if they changed
   const previousStatus = schedule.status;
+  const previousDeadline = schedule.deadline;
   
   // Update schedule
   schedule.deadline = newDeadline || undefined;
+  
+  // Reset reminder status if deadline changed
+  if ((!previousDeadline && newDeadline) || 
+      (previousDeadline && newDeadline && previousDeadline.getTime() !== newDeadline.getTime()) ||
+      (previousDeadline && !newDeadline)) {
+    // Deadline was added, changed, or removed - reset all reminders
+    schedule.reminderSent = false;
+    schedule.remindersSent = [];
+    console.log(`Reset reminders for schedule ${scheduleId}: deadline changed from ${previousDeadline?.toISOString()} to ${newDeadline?.toISOString()}`);
+  }
   
   // Update status based on deadline
   if (!newDeadline) {
