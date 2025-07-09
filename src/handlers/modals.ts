@@ -685,48 +685,74 @@ async function handleUpdateDatesModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  // Create a map of existing dates by their text for matching
+  const originalDateCount = schedule.dates.length;
+  const existingDateMap = new Map<string, ScheduleDate>();
+  for (const date of schedule.dates) {
+    existingDateMap.set(date.datetime, date);
+  }
+
+  // Get all existing responses to preserve them
+  const allResponses = await storage.listResponsesBySchedule(scheduleId);
+  
   const newDates: ScheduleDate[] = [];
-  const invalidDates: string[] = [];
+  const preservedDateIds = new Set<string>();
   
   for (const line of dateLines) {
     const trimmedLine = line.trim();
-    const parsedDate = parseUserInputDate(trimmedLine);
     
-    if (parsedDate) {
-      newDates.push({
-        id: generateId(),
-        datetime: parsedDate.toISOString(),
-        description: undefined
-      });
+    // Check if this exact text exists in current dates
+    const existingDate = existingDateMap.get(trimmedLine);
+    
+    if (existingDate) {
+      // Preserve the existing date with its ID
+      newDates.push(existingDate);
+      preservedDateIds.add(existingDate.id);
     } else {
-      // If parsing fails, keep as-is
+      // Create new date
       newDates.push({
         id: generateId(),
         datetime: trimmedLine,
         description: undefined
       });
-      invalidDates.push(trimmedLine);
     }
   }
   
-  if (invalidDates.length > 0) {
-    console.warn('Some dates could not be parsed:', invalidDates);
-  }
-
-  // Skip date matching to avoid timeout - responses will be reset
-  
-  // Replace all dates
+  // Update schedule with new dates
   schedule.dates = newDates;
   schedule.updatedAt = new Date();
   
   await storage.saveSchedule(schedule);
 
+  // Update responses to remove dates that no longer exist
+  for (const response of allResponses) {
+    const filteredResponses = response.responses.filter(r => 
+      preservedDateIds.has(r.dateId)
+    );
+    
+    if (filteredResponses.length !== response.responses.length) {
+      response.responses = filteredResponses;
+      response.updatedAt = new Date();
+      await storage.saveResponse(response);
+    }
+  }
+
   // Skip original message update and response updates to avoid timeout
 
+  const preservedCount = preservedDateIds.size;
+  const newCount = newDates.length - preservedCount;
+  const removedCount = originalDateCount - preservedCount;
+  
+  let message = `✅ 日程を更新しました\n`;
+  message += `・合計: ${newDates.length}件\n`;
+  if (preservedCount > 0) message += `・維持: ${preservedCount}件（回答も保持）\n`;
+  if (newCount > 0) message += `・追加: ${newCount}件\n`;
+  if (removedCount > 0) message += `・削除: ${removedCount}件`;
+  
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `✅ 日程を${newDates.length}件に更新しました。`,
+      content: message,
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
