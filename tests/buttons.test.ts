@@ -5,6 +5,11 @@ import { ButtonInteraction, Env } from '../src/types/discord';
 import { Schedule } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
 
+// Mock the discord utils
+vi.mock('../src/utils/discord', () => ({
+  updateOriginalMessage: vi.fn(async () => {})
+}));
+
 // Mock KVNamespace
 const createMockKVNamespace = () => {
   const storage = new Map();

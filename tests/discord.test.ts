@@ -43,13 +43,14 @@ describe('Discord Utilities', () => {
     it('should throw error on non-ok response', async () => {
       const mockResponse = {
         ok: false,
-        status: 404
+        status: 404,
+        text: vi.fn().mockResolvedValueOnce('Not Found')
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
       await expect(
         updateOriginalMessage('app123', 'token456', 'msg789', {})
-      ).rejects.toThrow('Failed to update message: 404');
+      ).rejects.toThrow('Failed to update message: 404 - Not Found');
     });
 
     it('should handle complex data structures', async () => {

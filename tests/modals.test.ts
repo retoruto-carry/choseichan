@@ -3,6 +3,11 @@ import { InteractionResponseType, InteractionResponseFlags } from 'discord-inter
 import { handleModalSubmit } from '../src/handlers/modals';
 import { Env } from '../src/types/discord';
 
+// Mock the discord utils
+vi.mock('../src/utils/discord', () => ({
+  updateOriginalMessage: vi.fn(async () => {})
+}));
+
 // Mock KVNamespace
 const createMockKVNamespace = () => {
   const storage = new Map();
@@ -198,7 +203,7 @@ describe('Modal Submit Interactions', () => {
         id: 'test_id',
         type: 5,
         data: {
-          custom_id: 'modal:edit_info:test_schedule_id',
+          custom_id: 'modal:edit_info:test_schedule_id:test_message_id',
           components: [
             {
               type: 1,

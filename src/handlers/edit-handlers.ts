@@ -8,7 +8,7 @@ export async function handleEditInfoButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
-  const [scheduleId] = params;
+  const [scheduleId, originalMessageId] = params;
   
   const schedule = await storage.getSchedule(scheduleId);
   if (!schedule) {
@@ -21,14 +21,14 @@ export async function handleEditInfoButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Get original message ID for later updates
-  const originalMessageId = interaction.message?.message_reference?.message_id || interaction.message?.id || '';
+  // Use the original message ID passed from the edit menu
+  const messageId = originalMessageId || interaction.message?.id || '';
   
   // Show modal for editing title and description
   return new Response(JSON.stringify({
     type: InteractionResponseType.MODAL,
     data: {
-      custom_id: `modal:edit_info:${scheduleId}:${originalMessageId}`,
+      custom_id: `modal:edit_info:${scheduleId}:${messageId}`,
       title: '日程調整の編集',
       components: [
         {
@@ -66,7 +66,7 @@ export async function handleUpdateDatesButton(
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
-  const [scheduleId] = params;
+  const [scheduleId, originalMessageId] = params;
   
   const schedule = await storage.getSchedule(scheduleId);
   if (!schedule) {
@@ -84,14 +84,14 @@ export async function handleUpdateDatesButton(
     .map(date => date.datetime)
     .join('\n');
 
-  // Get original message ID for later updates
-  const originalMessageId = interaction.message?.message_reference?.message_id || interaction.message?.id || '';
+  // Use the original message ID passed from the edit menu
+  const messageId = originalMessageId || interaction.message?.id || '';
 
   // Show modal for updating all dates
   return new Response(JSON.stringify({
     type: InteractionResponseType.MODAL,
     data: {
-      custom_id: `modal:update_dates:${scheduleId}:${originalMessageId}`,
+      custom_id: `modal:update_dates:${scheduleId}:${messageId}`,
       title: '日程を一括更新',
       components: [
         {

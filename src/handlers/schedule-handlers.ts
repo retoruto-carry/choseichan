@@ -101,6 +101,9 @@ export async function handleEditButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  // Get the original message ID (the schedule message)
+  const originalMessageId = interaction.message?.id || '';
+
   // Show edit menu
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -114,14 +117,14 @@ export async function handleEditButton(
               type: 2,
               style: 2,
               label: 'タイトル・説明を編集',
-              custom_id: createButtonId('edit_info', scheduleId),
+              custom_id: createButtonId('edit_info', scheduleId, originalMessageId),
               emoji: { name: '📝' }
             },
             {
               type: 2,
               style: 2,
               label: '日程を一括更新',
-              custom_id: createButtonId('update_dates', scheduleId),
+              custom_id: createButtonId('update_dates', scheduleId, originalMessageId),
               emoji: { name: '📅' }
             }
           ]

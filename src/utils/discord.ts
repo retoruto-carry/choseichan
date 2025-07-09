@@ -15,7 +15,8 @@ export async function updateOriginalMessage(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to update message: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`Failed to update message: ${response.status} - ${errorText}`);
   }
 }
 
