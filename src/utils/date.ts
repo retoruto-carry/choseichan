@@ -29,12 +29,8 @@ export function parseUserInputDate(input: string): Date | null {
   
   const now = new Date();
   const currentYear = now.getFullYear();
-  
-  // Try native Date parsing first (handles many formats)
-  const nativeDate = new Date(input);
-  if (!isNaN(nativeDate.getTime())) {
-    return nativeDate;
-  }
+  const currentMonth = now.getMonth();
+  const currentDay = now.getDate();
   
   // Common Japanese formats
   // MM月DD日 HH:mm
@@ -59,18 +55,40 @@ export function parseUserInputDate(input: string): Date | null {
   const match1 = input.match(/^(\d{1,2})[\/\-](\d{1,2})\s+(\d{1,2})[:\s](\d{2})$/);
   if (match1) {
     const [, month, day, hour, minute] = match1;
-    const date = new Date(currentYear, parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
-    if (date < now) date.setFullYear(currentYear + 1);
-    return date;
+    const monthNum = parseInt(month);
+    const dayNum = parseInt(day);
+    
+    // Validate month and day
+    if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
+      const date = new Date(currentYear, monthNum - 1, dayNum, parseInt(hour), parseInt(minute));
+      
+      // If the date is in the past, assume next year
+      if (date < now) {
+        date.setFullYear(currentYear + 1);
+      }
+      
+      return date;
+    }
   }
   
   // MM/DD or MM-DD
   const match2 = input.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
   if (match2) {
     const [, month, day] = match2;
-    const date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
-    if (date < now) date.setFullYear(currentYear + 1);
-    return date;
+    const monthNum = parseInt(month);
+    const dayNum = parseInt(day);
+    
+    // Validate month and day
+    if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
+      const date = new Date(currentYear, monthNum - 1, dayNum);
+      
+      // If the date is in the past, assume next year
+      if (date < now) {
+        date.setFullYear(currentYear + 1);
+      }
+      
+      return date;
+    }
   }
   
   // YYYY/MM/DD HH:mm or YYYY-MM-DD HH:mm
@@ -87,9 +105,27 @@ export function parseUserInputDate(input: string): Date | null {
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
   
-  // Try with chrono-like parsing for natural language
-  // "明日 19時", "来週月曜日", etc.
-  // For now, return null - could be enhanced later
+  // Try native Date parsing as last resort, but only for specific formats
+  // to avoid parsing "invalid" as a valid date
+  if (input.match(/^[a-zA-Z]+ \d{1,2}$/i) || input.match(/^\d{1,2} [a-zA-Z]+$/i)) {
+    // Formats like "July 11", "11 Jul"
+    const nativeDate = new Date(input + ' ' + currentYear);
+    if (!isNaN(nativeDate.getTime())) {
+      // If the date is in the past, try next year
+      if (nativeDate < now) {
+        nativeDate.setFullYear(currentYear + 1);
+      }
+      return nativeDate;
+    }
+  }
+  
+  // For ISO dates and other specific formats
+  if (input.match(/^\d{4}-\d{2}-\d{2}T/) || input.match(/^\d{4}\/\d{2}\/\d{2}T/)) {
+    const nativeDate = new Date(input);
+    if (!isNaN(nativeDate.getTime())) {
+      return nativeDate;
+    }
+  }
   
   return null;
 }

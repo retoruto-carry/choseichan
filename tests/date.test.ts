@@ -97,6 +97,23 @@ describe('Date Utilities', () => {
       expect(parseUserInputDate('')).toBeNull();
       expect(parseUserInputDate('  ')).toBeNull();
     });
+    
+    it('should parse single number with slash as month/day (e.g. 7/11)', () => {
+      const currentYear = new Date().getFullYear();
+      const result = parseUserInputDate('7/11');
+      expect(result).toBeInstanceOf(Date);
+      expect(result?.getMonth()).toBe(6); // July is month 6 (0-based)
+      expect(result?.getDate()).toBe(11);
+      // Should be current year or next year if past
+      expect(result?.getFullYear()).toBeGreaterThanOrEqual(currentYear);
+    });
+    
+    it('should validate month and day ranges', () => {
+      expect(parseUserInputDate('13/1')).toBeNull(); // Invalid month
+      expect(parseUserInputDate('12/32')).toBeNull(); // Invalid day
+      expect(parseUserInputDate('0/15')).toBeNull(); // Invalid month
+      expect(parseUserInputDate('6/0')).toBeNull(); // Invalid day
+    });
 
     it('should handle various time separators', () => {
       const result1 = parseUserInputDate('12/25 19:00');
