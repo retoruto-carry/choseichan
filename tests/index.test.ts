@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
 import app from '../src/index';
 import nacl from 'tweetnacl';
@@ -58,6 +58,11 @@ describe('Discord Bot', () => {
   });
 
   it('should respond to PING interaction', async () => {
+    const mockExecutionContext = {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn()
+    } as unknown as ExecutionContext;
+    
     const env = {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
@@ -101,7 +106,7 @@ describe('Discord Bot', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should handle choseisan command without subcommand', async () => {
+  it('should handle choseichan command without subcommand', async () => {
     const mockExecutionContext = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn()
@@ -120,7 +125,7 @@ describe('Discord Bot', () => {
       id: 'test_id',
       data: {
         id: 'cmd_id',
-        name: 'choseisan'
+        name: 'choseichan'
       },
       token: 'test_token'
     };

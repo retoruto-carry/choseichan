@@ -6,7 +6,7 @@ import { generateId, createButtonId } from '../utils/id';
 import { parseUserInputDate, formatDate } from '../utils/date';
 import { createScheduleEmbed, createScheduleComponents } from '../utils/embeds';
 
-export async function handleChoseisanCommand(
+export async function handleChoseichanCommand(
   interaction: CommandInteraction,
   env: Env
 ): Promise<Response> {

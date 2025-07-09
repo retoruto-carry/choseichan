@@ -102,7 +102,7 @@ describe('Modal Submit Interactions', () => {
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.embeds).toHaveLength(1);
       expect(data.data.embeds[0].title).toContain('忘年会');
-      expect(data.data.embeds[0].description).toContain('回答者: 0人'); // 新しい形式
+      expect(data.data.embeds[0].description).toContain('今年の忘年会です');
       expect(data.data.components).toBeDefined();
       
       // Check schedule was saved

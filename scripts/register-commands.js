@@ -5,7 +5,7 @@ dotenv.config();
 
 const commands = [
   {
-    name: "choseisan",
+    name: "choseichan",
     description: "日程調整を管理します",
     options: [
       {

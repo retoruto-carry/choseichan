@@ -45,10 +45,10 @@ app.post('/interactions', async (c) => {
     const command = interaction as CommandInteraction;
     
     switch (command.data.name) {
-      case 'choseisan':
-        const { handleChoseisanCommand } = await import('./handlers/commands');
+      case 'choseichan':
+        const { handleChoseichanCommand } = await import('./handlers/commands');
         const envWithContext = { ...c.env, ctx: c.executionCtx };
-        return handleChoseisanCommand(command, envWithContext);
+        return handleChoseichanCommand(command, envWithContext);
       
       default:
         return c.json({

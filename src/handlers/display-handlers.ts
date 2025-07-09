@@ -12,8 +12,8 @@ export async function handleToggleDetailsButton(
   const [scheduleId] = params;
   
   // Get the current state from the button label
-  const currentButton = interaction.message?.components?.[0]?.components?.find(
-    c => c.custom_id === interaction.data.custom_id
+  const currentButton = (interaction.message as any)?.components?.[0]?.components?.find(
+    (c: any) => c.custom_id === interaction.data.custom_id
   );
   const isShowingDetails = currentButton?.label === '簡易表示';
   

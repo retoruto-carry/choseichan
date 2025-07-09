@@ -177,15 +177,17 @@ async function handleResponseModal(
   if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
     try {
       const summary = await storage.getScheduleSummary(scheduleId);
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        interaction.message.id,
-        {
-          embeds: [createScheduleEmbedWithTable(summary, false)],
-          components: createSimpleScheduleComponents(schedule, false)
-        }
-      );
+      if (summary) {
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          interaction.message.id,
+          {
+            embeds: [createScheduleEmbedWithTable(summary, false)],
+            components: createSimpleScheduleComponents(schedule, false)
+          }
+        );
+      }
     } catch (error) {
       console.error('Failed to update original message:', error);
     }
@@ -239,10 +241,10 @@ async function handleCreateScheduleModal(
   }));
 
   // Parse deadline if provided
-  let deadlineDate: Date | null = null;
+  let deadlineDate: Date | undefined = undefined;
   if (deadline) {
-    deadlineDate = parseUserInputDate(deadline);
-    if (!deadlineDate) {
+    const parsed = parseUserInputDate(deadline);
+    if (!parsed) {
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -251,6 +253,7 @@ async function handleCreateScheduleModal(
         }
       }), { headers: { 'Content-Type': 'application/json' } });
     }
+    deadlineDate = parsed;
   }
 
   const schedule: Schedule = {
@@ -265,7 +268,9 @@ async function handleCreateScheduleModal(
       username: interaction.member?.user.username || interaction.user?.username || ''
     },
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    channelId: interaction.channel_id || '',
+    notificationSent: false
   };
 
   await storage.saveSchedule(schedule);
@@ -343,7 +348,7 @@ async function handleBulkResponseModal(
   // Create confirmation embed
   const confirmEmbed = {
     title: '✅ 回答を受け付けました',
-    color: EMBED_COLORS.SUCCESS,
+    color: EMBED_COLORS.INFO,
     fields: schedule.dates.map((date, idx) => {
       const response = userResponse.responses.find(r => r.dateId === date.id);
       return {
@@ -743,7 +748,7 @@ function createResponseConfirmationEmbed(userResponse: ScheduleResponse, summary
   
   return {
     title: `✅ ${schedule.title}への回答`,
-    color: EMBED_COLORS.SUCCESS,
+    color: EMBED_COLORS.INFO,
     fields,
     footer: {
       text: userResponse.comment ? `💬 ${userResponse.comment}` : undefined
@@ -901,7 +906,7 @@ async function handleEditDeadlineModal(
   }
 
   // Update schedule
-  schedule.deadline = newDeadline;
+  schedule.deadline = newDeadline || undefined;
   
   // Update status based on deadline
   if (!newDeadline) {

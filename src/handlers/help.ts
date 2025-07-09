@@ -9,17 +9,17 @@ export function createHelpEmbed() {
     fields: [
       {
         name: '📝 日程調整を作成',
-        value: '`/choseisan create`\n対話形式で日程調整を作成します',
+        value: '`/choseichan create`\n対話形式で日程調整を作成します',
         inline: false
       },
       {
         name: '📋 日程調整一覧を表示',
-        value: '`/choseisan list`\nチャンネル内の日程調整を一覧表示します',
+        value: '`/choseichan list`\nチャンネル内の日程調整を一覧表示します',
         inline: false
       },
       {
         name: '🆘 ヘルプを表示',
-        value: '`/choseisan help`\nこのヘルプメッセージを表示します',
+        value: '`/choseichan help`\nこのヘルプメッセージを表示します',
         inline: false
       },
       {

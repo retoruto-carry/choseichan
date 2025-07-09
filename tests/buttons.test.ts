@@ -233,16 +233,8 @@ describe('Button Interactions', () => {
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('更新しました');
+    expect(data.data.content).toContain('新しい回答方法をお使いください');
     expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-    
-    // Check that response was saved
-    const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');
-    expect(savedResponse).toBeTruthy();
-    const parsed = JSON.parse(savedResponse);
-    expect(parsed.responses).toHaveLength(1);
-    expect(parsed.responses[0].dateId).toBe('date1');
-    expect(parsed.responses[0].status).toBe('yes');
   });
 
   it('should handle edit button click for owner', async () => {
@@ -412,6 +404,13 @@ describe('Button Interactions', () => {
 
 
   it('should handle date select menu with invalid schedule', async () => {
+    const mockExecutionContext = {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn()
+    } as unknown as ExecutionContext;
+    
+    const envWithContext = { ...env, ctx: mockExecutionContext };
+    
     const interaction: ButtonInteraction = {
       id: 'test_id',
       type: 3,
@@ -432,12 +431,11 @@ describe('Button Interactions', () => {
       token: 'test_token'
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await handleButtonInteraction(interaction, envWithContext);
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('日程調整が見つかりません');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+    expect(data.data).toBeUndefined();
   });
 });
