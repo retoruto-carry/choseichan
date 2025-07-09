@@ -1586,3 +1586,127 @@ async function handleCompleteVoteButton(
   );
 }
 
+async function handleViewMoreDatesButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId, startIndexStr] = params;
+  const startIndex = parseInt(startIndexStr) || 0;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return createErrorResponse('日程調整が見つかりません。');
+  }
+
+  if (schedule.status === 'closed') {
+    return createErrorResponse('この日程調整は締め切られています。');
+  }
+
+  // Get current user's responses
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userResponse = await storage.getResponse(scheduleId, userId);
+  
+  // Create select menus for remaining dates (next 4 dates)
+  const remainingDates = schedule.dates.slice(startIndex, startIndex + 4);
+  const components = remainingDates.map((date, idx) => {
+    const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
+    const existingStatus = existingResponse?.status;
+    
+    // Set placeholder based on current status
+    let placeholder = '';
+    if (!existingStatus) {
+      placeholder = `未回答 ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'yes') {
+      placeholder = `○ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'maybe') {
+      placeholder = `△ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'no') {
+      placeholder = `× ${formatDate(date.datetime)}`;
+    }
+    
+    return {
+      type: 1, // Action Row
+      components: [{
+        type: 3, // Select Menu
+        custom_id: `dateselect:${scheduleId}:${date.id}`,
+        placeholder,
+        options: [
+          {
+            label: `未回答 ${formatDate(date.datetime)}`,
+            value: 'none',
+            default: !existingStatus
+          },
+          {
+            label: `○ ${formatDate(date.datetime)}`,
+            value: 'yes',
+            default: existingStatus === 'yes'
+          },
+          {
+            label: `△ ${formatDate(date.datetime)}`,
+            value: 'maybe',
+            default: existingStatus === 'maybe'
+          },
+          {
+            label: `× ${formatDate(date.datetime)}`,
+            value: 'no',
+            default: existingStatus === 'no'
+          }
+        ]
+      }]
+    };
+  });
+
+  // Add navigation and complete buttons
+  const finalButtons = [];
+  
+  // Add "see more dates" button if there are still more dates
+  const nextStartIndex = startIndex + 4;
+  if (nextStartIndex < schedule.dates.length) {
+    finalButtons.push({
+      type: 2,
+      style: 2, // Secondary
+      label: `残り${schedule.dates.length - nextStartIndex}件の日程を見る`,
+      custom_id: `view_more_dates:${scheduleId}:${nextStartIndex}`,
+      emoji: { name: '👀' }
+    });
+  }
+  
+  // Add back button if not showing first page
+  if (startIndex > 0) {
+    finalButtons.push({
+      type: 2,
+      style: 2, // Secondary
+      label: '前の日程に戻る',
+      custom_id: `view_more_dates:${scheduleId}:${Math.max(0, startIndex - 4)}`,
+      emoji: { name: '⬅️' }
+    });
+  }
+  
+  // Always add complete button
+  finalButtons.push({
+    type: 2,
+    style: 3, // Success
+    label: '回答を完了',
+    custom_id: `complete_vote:${scheduleId}`,
+    emoji: { name: '✅' }
+  });
+
+  const componentsWithButtons = [
+    ...components,
+    {
+      type: 1,
+      components: finalButtons
+    }
+  ];
+  
+  const pageInfo = `(${startIndex + 1}-${Math.min(startIndex + 4, schedule.dates.length)}件目 / 全${schedule.dates.length}件)`;
+  const message = `**${schedule.title}** の回答を選択してください ${pageInfo}:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
+
+  return createEphemeralResponse(
+    message,
+    undefined,
+    componentsWithButtons
+  );
+}
+
