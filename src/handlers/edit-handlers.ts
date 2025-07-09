@@ -235,3 +235,60 @@ export async function handleConfirmRemoveDateButton(
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
+
+export async function handleEditDeadlineButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId, originalMessageId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Format current deadline for display
+  const currentDeadline = schedule.deadline 
+    ? new Date(schedule.deadline).toLocaleString('ja-JP', { 
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).replace(/\//g, '-')
+    : '';
+
+  // Use the original message ID passed from the edit menu
+  const messageId = originalMessageId || interaction.message?.id || '';
+
+  // Show modal for editing deadline
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: {
+      custom_id: `modal:edit_deadline:${scheduleId}:${messageId}`,
+      title: '締切日を編集',
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'deadline',
+            label: '締切日時（空白で無期限）',
+            style: 1,
+            value: currentDeadline,
+            placeholder: '例: 2024-04-01 19:00',
+            required: false,
+            max_length: 50
+          }]
+        }
+      ]
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}

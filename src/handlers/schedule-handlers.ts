@@ -126,6 +126,13 @@ export async function handleEditButton(
               label: '日程を一括更新',
               custom_id: createButtonId('update_dates', scheduleId, originalMessageId),
               emoji: { name: '📅' }
+            },
+            {
+              type: 2,
+              style: 2,
+              label: '締切日を編集',
+              custom_id: createButtonId('edit_deadline', scheduleId, originalMessageId),
+              emoji: { name: '⏰' }
             }
           ]
         },

@@ -19,7 +19,8 @@ import {
   handleUpdateDatesButton,
   handleAddDatesButton,
   handleRemoveDatesButton,
-  handleConfirmRemoveDateButton
+  handleConfirmRemoveDateButton,
+  handleEditDeadlineButton
 } from './edit-handlers';
 import {
   handleExportButton,
@@ -84,6 +85,8 @@ export async function handleButtonInteraction(
       return handleRemoveDatesButton(interaction, storage, params);
     case 'confirm_remove_date':
       return handleConfirmRemoveDateButton(interaction, storage, params);
+    case 'edit_deadline':
+      return handleEditDeadlineButton(interaction, storage, params);
     case 'direct_vote':
       return handleDirectVoteButton(interaction, storage, params, env);
     case 'add_comment':
