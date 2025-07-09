@@ -1,5 +1,5 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalSubmitInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../types/discord';
 import { ScheduleDate, EMBED_COLORS } from '../../types/schedule';
 import { StorageService } from '../../services/storage';
 import { generateId } from '../../utils/id';
@@ -7,7 +7,7 @@ import { parseUserInputDate } from '../../utils/date';
 import { updateScheduleMainMessage, saveScheduleMessageId } from '../../utils/schedule-updater';
 
 export async function handleEditInfoModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env
@@ -56,7 +56,7 @@ export async function handleEditInfoModal(
 }
 
 export async function handleUpdateDatesModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env
@@ -76,7 +76,7 @@ export async function handleUpdateDatesModal(
 
   // Parse dates
   const datesText = interaction.data.components[0].components[0].value;
-  const dates = datesText.split('\n').filter(line => line.trim());
+  const dates = datesText.split('\n').filter((line: string) => line.trim());
   
   if (dates.length === 0) {
     return new Response(JSON.stringify({
@@ -89,7 +89,7 @@ export async function handleUpdateDatesModal(
   }
 
   // Update dates
-  schedule.dates = dates.map((date) => ({
+  schedule.dates = dates.map((date: string) => ({
     id: generateId(),
     datetime: date.trim()
   }));
@@ -135,7 +135,7 @@ export async function handleUpdateDatesModal(
 }
 
 export async function handleAddDatesModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env
@@ -155,7 +155,7 @@ export async function handleAddDatesModal(
 
   // Parse dates
   const datesText = interaction.data.components[0].components[0].value;
-  const newDates = datesText.split('\n').filter(line => line.trim());
+  const newDates = datesText.split('\n').filter((line: string) => line.trim());
   
   if (newDates.length === 0) {
     return new Response(JSON.stringify({
@@ -168,7 +168,7 @@ export async function handleAddDatesModal(
   }
 
   // Add new dates
-  const additionalDates: ScheduleDate[] = newDates.map((date) => ({
+  const additionalDates: ScheduleDate[] = newDates.map((date: string) => ({
     id: generateId(),
     datetime: date.trim()
   }));
@@ -209,7 +209,7 @@ export async function handleAddDatesModal(
 }
 
 export async function handleEditDeadlineModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env

@@ -1,13 +1,13 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalSubmitInteraction, Env } from '../../types/discord';
-import { ResponseStatus, ScheduleResponse as UserResponse, STATUS_EMOJI, EMBED_COLORS } from '../../types/schedule';
+import { ModalInteraction, Env } from '../../types/discord';
+import { ResponseStatus, Response as UserResponse, STATUS_EMOJI, EMBED_COLORS } from '../../types/schedule';
 import { StorageService } from '../../services/storage';
 import { updateOriginalMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 import { createErrorResponse } from '../../utils/responses';
 
 export async function handleInteractiveResponseModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env
@@ -65,7 +65,7 @@ export async function handleInteractiveResponseModal(
       const response = userResponse.responses[idx];
       return {
         name: date.datetime,
-        value: STATUS_EMOJI[response.status],
+        value: STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI],
         inline: true
       };
     }),
@@ -104,7 +104,7 @@ export async function handleInteractiveResponseModal(
 }
 
 export async function handleBulkResponseModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[],
   env: Env
@@ -128,7 +128,7 @@ export async function handleBulkResponseModal(
   const comment = interaction.data.components[1]?.components[0]?.value || '';
 
   // Parse responses
-  const responseLines = responses.split('\n').filter(line => line.trim());
+  const responseLines = responses.split('\n').filter((line: string) => line.trim());
   
   // Build user response
   const userResponse: UserResponse = {
@@ -166,10 +166,10 @@ export async function handleBulkResponseModal(
     title: '✅ 回答を受け付けました',
     color: EMBED_COLORS.INFO,
     fields: schedule.dates.map((date, idx) => {
-      const response = userResponse.responses.find(r => r.dateId === date.id);
+      const response = userResponse.responses.find((r: any) => r.dateId === date.id);
       return {
         name: `${idx + 1}. ${date.datetime}`,
-        value: response ? STATUS_EMOJI[response.status] : STATUS_EMOJI.no,
+        value: response ? STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI] : STATUS_EMOJI.no,
         inline: true
       };
     })

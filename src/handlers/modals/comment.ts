@@ -1,10 +1,10 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalSubmitInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../types/discord';
 import { EMBED_COLORS } from '../../types/schedule';
 import { StorageService } from '../../services/storage';
 
 export async function handleAddCommentModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[]
 ): Promise<Response> {
@@ -56,7 +56,7 @@ export async function handleAddCommentModal(
 }
 
 export async function handleDateCommentModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   params: string[]
 ): Promise<Response> {

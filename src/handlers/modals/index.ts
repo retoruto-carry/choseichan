@@ -1,5 +1,5 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalSubmitInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../types/discord';
 import { StorageService } from '../../services/storage';
 import { parseButtonId } from '../../utils/id';
 import { handleCreateScheduleModal } from './create-schedule';
@@ -13,7 +13,7 @@ import {
 import { handleAddCommentModal, handleDateCommentModal } from './comment';
 
 export async function handleModalSubmit(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   env: Env
 ): Promise<Response> {
   const customId = interaction.data.custom_id;

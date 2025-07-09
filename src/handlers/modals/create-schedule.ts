@@ -1,5 +1,5 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalSubmitInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../types/discord';
 import { Schedule, ScheduleDate } from '../../types/schedule';
 import { StorageService } from '../../services/storage';
 import { generateId } from '../../utils/id';
@@ -7,7 +7,7 @@ import { parseUserInputDate } from '../../utils/date';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 
 export async function handleCreateScheduleModal(
-  interaction: ModalSubmitInteraction,
+  interaction: ModalInteraction,
   storage: StorageService,
   env: Env
 ): Promise<Response> {
@@ -18,7 +18,7 @@ export async function handleCreateScheduleModal(
   const deadline = interaction.data.components[3].components[0].value || undefined;
 
   // Parse dates
-  const dates = datesText.split('\n').filter(line => line.trim());
+  const dates = datesText.split('\n').filter((line: string) => line.trim());
   if (dates.length === 0) {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -29,7 +29,7 @@ export async function handleCreateScheduleModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const scheduleDates: ScheduleDate[] = dates.map((date) => ({
+  const scheduleDates: ScheduleDate[] = dates.map((date: string) => ({
     id: generateId(),
     datetime: date.trim()
   }));
