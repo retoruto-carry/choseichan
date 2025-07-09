@@ -103,6 +103,11 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
+        
+        /* Ensure elements are visible before GSAP animation */
+        .hero-title, .hero-subtitle, .hero-buttons > *, .demo-visual {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-x-hidden">
@@ -361,33 +366,36 @@
         // GSAP Animations
         gsap.registerPlugin(ScrollTrigger);
         
-        // Hero section animations
-        gsap.timeline()
-            .from(".hero-title", { 
-                opacity: 0, 
-                y: 30, 
-                duration: 1, 
-                ease: "power3.out" 
-            })
-            .from(".hero-subtitle", { 
-                opacity: 0, 
-                y: 20, 
-                duration: 0.8, 
-                ease: "power3.out" 
-            }, "-=0.5")
-            .from(".hero-buttons > *", { 
-                opacity: 0, 
-                y: 20, 
-                duration: 0.6, 
-                stagger: 0.2, 
-                ease: "power3.out" 
-            }, "-=0.3")
-            .from(".demo-visual", { 
-                opacity: 0, 
-                scale: 0.9, 
-                duration: 1, 
-                ease: "power3.out" 
-            }, "-=0.5");
+        // Wait for DOM to be ready
+        window.addEventListener('load', () => {
+            // Hero section animations
+            gsap.timeline()
+                .from(".hero-title", { 
+                    opacity: 0, 
+                    y: 30, 
+                    duration: 1, 
+                    ease: "power3.out" 
+                })
+                .from(".hero-subtitle", { 
+                    opacity: 0, 
+                    y: 20, 
+                    duration: 0.8, 
+                    ease: "power3.out" 
+                }, "-=0.5")
+                .from(".hero-buttons > *", { 
+                    opacity: 0, 
+                    y: 20, 
+                    duration: 0.6, 
+                    stagger: 0.2, 
+                    ease: "power3.out" 
+                }, "-=0.3")
+                .from(".demo-visual", { 
+                    opacity: 0, 
+                    scale: 0.9, 
+                    duration: 1, 
+                    ease: "power3.out" 
+                }, "-=0.5");
+        });
         
         // Feature cards fade in on scroll
         gsap.utils.toArray(".feature-card").forEach(card => {
