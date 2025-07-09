@@ -29,12 +29,7 @@ export async function handleRespondButton(
 
   // Save message ID if not already saved (important for select menu updates later)
   if (interaction.message?.id && !schedule.messageId) {
-    console.log(`Saving message ID ${interaction.message.id} for schedule ${scheduleId}`);
     await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
-  } else if (interaction.message?.id) {
-    console.log(`Message ID already saved: ${schedule.messageId} for schedule ${scheduleId}`);
-  } else {
-    console.log(`No message ID available in interaction for schedule ${scheduleId}`);
   }
 
   // Get current user's responses
@@ -283,87 +278,69 @@ export async function handleDateSelectMenu(
   const parts = interaction.data.custom_id.split(':');
   const [_, scheduleId, dateId] = parts;
   
-  // Process in background to avoid blocking
-  const processVote = async () => {
-    try {
-      const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
-      const schedule = await storage.getSchedule(scheduleId);
-      
-      if (!schedule) {
-        console.error('Schedule not found:', scheduleId);
-        return;
-      }
-      
-      const userId = interaction.member?.user.id || interaction.user?.id || '';
-      const userName = interaction.member?.user.username || interaction.user?.username || '';
-      const selectedValue = interaction.data.values?.[0] || 'none';
-      
-      // Get or create user response
-      let userResponse = await storage.getResponse(scheduleId, userId);
-      
-      if (!userResponse) {
-        userResponse = {
-          scheduleId,
-          userId,
-          userName,
-          responses: [],
-          comment: '',
-          updatedAt: new Date()
-        };
-      }
-      
-      // Update the specific date response
-      if (selectedValue === 'none') {
-        userResponse.responses = userResponse.responses.filter(r => r.dateId !== dateId);
-      } else {
-        const status = selectedValue as ResponseStatus;
-        const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
-        
-        if (existingIndex >= 0) {
-          userResponse.responses[existingIndex].status = status;
-        } else {
-          userResponse.responses.push({
-            dateId,
-            status
-          });
-        }
-      }
-      
-      userResponse.updatedAt = new Date();
-      await storage.saveResponse(userResponse);
-      
-      // Update the main message if we have a stored message ID
-      const messageId = schedule.messageId;
-      
-      if (!messageId) {
-        console.error(`No stored message ID available for schedule ${scheduleId}`);
-        return;
-      }
-      
-      console.log(`Updating main message ${messageId} for schedule ${scheduleId}`);
-      
-      const updateSuccess = await updateScheduleMainMessage(
+  try {
+    const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+    
+    // Quick operations only - save the vote
+    const userId = interaction.member?.user.id || interaction.user?.id || '';
+    const userName = interaction.member?.user.username || interaction.user?.username || '';
+    const selectedValue = interaction.data.values?.[0] || 'none';
+    
+    // Get or create user response
+    let userResponse = await storage.getResponse(scheduleId, userId);
+    
+    if (!userResponse) {
+      userResponse = {
         scheduleId,
-        messageId,
+        userId,
+        userName,
+        responses: [],
+        comment: '',
+        updatedAt: new Date()
+      };
+    }
+    
+    // Update the specific date response
+    if (selectedValue === 'none') {
+      userResponse.responses = userResponse.responses.filter(r => r.dateId !== dateId);
+    } else {
+      const status = selectedValue as ResponseStatus;
+      const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
+      
+      if (existingIndex >= 0) {
+        userResponse.responses[existingIndex].status = status;
+      } else {
+        userResponse.responses.push({
+          dateId,
+          status
+        });
+      }
+    }
+    
+    userResponse.updatedAt = new Date();
+    
+    // Save response and update message in parallel
+    const [schedule] = await Promise.all([
+      storage.getSchedule(scheduleId),
+      storage.saveResponse(userResponse)
+    ]);
+    
+    // Only proceed with update if we have the necessary data
+    if (schedule?.messageId) {
+      // Fire and forget - don't wait for completion
+      updateScheduleMainMessage(
+        scheduleId,
+        schedule.messageId,
         interaction.token,
         storage,
         env
-      );
-      
-      if (updateSuccess) {
-        console.log(`Successfully updated main message for schedule ${scheduleId}`);
-      } else {
-        console.error(`Failed to update main message for schedule ${scheduleId}`);
-      }
-    } catch (error) {
-      console.error('Failed to process vote:', error);
+      ).catch(error => console.error('Failed to update main message:', error));
     }
-  };
+  } catch (error) {
+    console.error('Failed to process vote:', error);
+  }
   
-  // Start processing in background
-  processVote().catch(err => console.error('Background vote processing failed:', err));
-  
-  // Return DEFERRED_UPDATE_MESSAGE immediately to avoid timeout
+  // Always return success immediately
   return new Response(JSON.stringify({
     type: 6 // DEFERRED_UPDATE_MESSAGE
   }), { headers: { 'Content-Type': 'application/json' } });
