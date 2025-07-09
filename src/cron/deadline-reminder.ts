@@ -19,8 +19,7 @@ interface DeadlineCheckResult {
 const DEFAULT_REMINDER_TIMINGS = [
   { type: '3d', hours: 72, message: '締切まで3日' },
   { type: '1d', hours: 24, message: '締切まで1日' },
-  { type: '8h', hours: 8, message: '締切まで8時間' },
-  { type: '1h', hours: 1, message: '締切まで1時間' }
+  { type: '8h', hours: 8, message: '締切まで8時間' }
 ];
 
 // カスタムタイミングの文字列（例: '3d', '8h', '30m'）を時間に変換
@@ -214,7 +213,7 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
       schedule.remindersSent = remindersSent;
       
       // Keep backward compatibility
-      if (reminderType === '1h') {
+      if (reminderType === '8h') {
         schedule.reminderSent = true;
       }
       

@@ -51,9 +51,9 @@ describe('Deadline Reminder', () => {
     };
   });
 
-  it('should send 1h reminder for schedule with deadline in 30 minutes', async () => {
+  it('should send 8h reminder for schedule with deadline in 4 hours', async () => {
     const now = new Date();
-    const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
+    const deadlineIn4Hours = new Date(now.getTime() + 4 * 60 * 60 * 1000);
     
     const schedule: Schedule = {
       id: 'test-schedule-1',
@@ -63,9 +63,9 @@ describe('Deadline Reminder', () => {
       authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
-      deadline: deadlineIn30Min,
+      deadline: deadlineIn4Hours,
       reminderSent: false,
-      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
+      remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -78,7 +78,7 @@ describe('Deadline Reminder', () => {
     );
     
     // Add deadline index entry
-    const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
+    const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
     await mockKV.put(
       `guild:guild123:deadline:${deadlineTimestamp}:test-schedule-1`,
       ''
@@ -91,7 +91,7 @@ describe('Deadline Reminder', () => {
         id: 'test-schedule-1',
         title: 'テストイベント'
       }),
-      '締切まで1時間'
+      '締切まで8時間'
     );
     
     // Check that reminderSent was updated
@@ -235,7 +235,7 @@ describe('Deadline Reminder', () => {
 
   it('should handle multiple guilds independently', async () => {
     const now = new Date();
-    const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
+    const deadlineIn4Hours = new Date(now.getTime() + 4 * 60 * 60 * 1000);
     
     // Guild 1 schedule
     const schedule1: Schedule = {
@@ -246,9 +246,9 @@ describe('Deadline Reminder', () => {
       authorId: 'user123',
       channelId: 'channel123',
       guildId: 'guild123',
-      deadline: deadlineIn30Min,
+      deadline: deadlineIn4Hours,
       reminderSent: false,
-      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
+      remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -264,9 +264,9 @@ describe('Deadline Reminder', () => {
       authorId: 'user456',
       channelId: 'channel456',
       guildId: 'guild456',
-      deadline: deadlineIn30Min,
+      deadline: deadlineIn4Hours,
       reminderSent: false,
-      remindersSent: ['3d', '1d', '8h'], // Already sent other reminders
+      remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
@@ -283,7 +283,7 @@ describe('Deadline Reminder', () => {
     );
     
     // Add deadline index entries
-    const deadlineTimestamp = Math.floor(deadlineIn30Min.getTime() / 1000);
+    const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
     await mockKV.put(
       `guild:guild123:deadline:${deadlineTimestamp}:multi-guild-1`,
       ''
@@ -301,14 +301,14 @@ describe('Deadline Reminder', () => {
         id: 'multi-guild-1',
         title: 'Guild 1 Event'
       }),
-      '締切まで1時間'
+      '締切まで8時間'
     );
     expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'multi-guild-2',
         title: 'Guild 2 Event'
       }),
-      '締切まで1時間'
+      '締切まで8時間'
     );
   });
 
@@ -316,7 +316,7 @@ describe('Deadline Reminder', () => {
     const now = new Date();
     const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
     
-    // Create a schedule where we missed the 3d reminder by 10 hours
+    // Create a schedule where we missed the 3d and 1d reminders by more than 8 hours
     const schedule: Schedule = {
       id: 'test-old-reminder',
       title: 'Old Reminder Test',
@@ -327,7 +327,7 @@ describe('Deadline Reminder', () => {
       guildId: 'guild123',
       deadline: deadlineIn30Min,
       reminderSent: false,
-      remindersSent: ['8h'], // 8h reminder already sent to test that only 1h is sent
+      remindersSent: [], // No reminders sent yet
       createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // Created 4 days ago
       updatedAt: new Date(),
       status: 'open',
@@ -348,13 +348,7 @@ describe('Deadline Reminder', () => {
 
     await sendDeadlineReminders(mockEnv);
 
-    // Should only send the 1h reminder, not the old 3d, 1d, 8h reminders
-    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledTimes(1);
-    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'test-old-reminder'
-      }),
-      '締切まで1時間'
-    );
+    // Should not send any reminders because 3d, 1d, and 8h are all too old (more than 8 hours late)
+    expect(mockNotificationService.sendDeadlineReminder).not.toHaveBeenCalled();
   });
 });

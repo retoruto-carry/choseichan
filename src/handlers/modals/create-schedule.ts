@@ -42,23 +42,26 @@ export async function handleCreateScheduleModal(
   if (deadlineAndReminders) {
     const lines = deadlineAndReminders.split('\n').map(l => l.trim()).filter(l => l);
     
-    // First line should be the deadline
-    if (lines.length > 0) {
-      const parsed = parseUserInputDate(lines[0]);
-      if (!parsed) {
-        return new Response(JSON.stringify({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            content: '締切日時の形式が正しくありません。',
-            flags: InteractionResponseFlags.EPHEMERAL
-          }
-        }), { headers: { 'Content-Type': 'application/json' } });
+    // Check if first line is a deadline or reminder setting
+    let deadlineLineIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.startsWith('リマインダー:') && !line.startsWith('reminder:') && 
+          !line.startsWith('通知先:') && !line.startsWith('mention:')) {
+        // This line might be a deadline
+        const parsed = parseUserInputDate(line);
+        if (parsed) {
+          deadlineDate = parsed;
+          deadlineLineIndex = i;
+          break;
+        }
       }
-      deadlineDate = parsed;
     }
     
-    // Parse additional lines for reminder settings
-    for (let i = 1; i < lines.length; i++) {
+    // Parse reminder settings from all lines
+    for (let i = 0; i < lines.length; i++) {
+      if (i === deadlineLineIndex) continue; // Skip the deadline line
+      
       const line = lines[i];
       if (line.startsWith('リマインダー:') || line.startsWith('reminder:')) {
         const timingsStr = line.replace(/^(リマインダー|reminder):/, '').trim();
@@ -100,8 +103,8 @@ export async function handleCreateScheduleModal(
     notificationSent: false,
     reminderSent: false,
     remindersSent: [],
-    reminderTimings,
-    reminderMentions,
+    reminderTimings: deadlineDate ? reminderTimings : undefined,
+    reminderMentions: deadlineDate ? reminderMentions : undefined,
     totalResponses: 0
   };
 

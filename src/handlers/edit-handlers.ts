@@ -276,8 +276,8 @@ export async function handleEditDeadlineButton(
   const messageId = originalMessageId || interaction.message?.id || '';
 
   // Current reminder settings
-  const currentTimings = schedule.reminderTimings?.join(', ') || '3d, 1d, 8h, 1h';
-  const currentMentions = schedule.reminderMentions?.join(', ') || '';
+  const currentTimings = schedule.reminderTimings?.join(', ') || '3d, 1d, 8h';
+  const currentMentions = schedule.reminderMentions?.join(', ') || '@here';
 
   // Show modal for editing deadline
   return new Response(JSON.stringify({

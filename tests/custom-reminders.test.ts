@@ -247,7 +247,7 @@ describe('Custom Reminder Settings', () => {
         status: 'open',
         notificationSent: false,
         reminderSent: false,
-        remindersSent: ['3d', '1d', '8h', '1h'], // All default reminders already sent
+        remindersSent: ['3d', '1d', '8h'], // All default reminders already sent
         totalResponses: 0
       };
 
