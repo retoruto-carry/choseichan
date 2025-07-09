@@ -861,8 +861,24 @@ async function handleUpdateDatesModal(
     console.warn('Some dates could not be parsed:', invalidDates);
   }
 
-  // 古い日程IDを保存（回答の移行用）
-  const oldDateIds = schedule.dates.map(d => d.id);
+  // Create a map of old dates for matching
+  const oldDatesMap = new Map<string, string>();
+  for (const oldDate of schedule.dates) {
+    const formatted = formatDate(oldDate.datetime);
+    oldDatesMap.set(formatted, oldDate.id);
+  }
+  
+  // Create a map to track old date ID to new date ID mapping
+  const dateIdMapping = new Map<string, string>();
+  
+  // Try to match new dates with old dates
+  for (const newDate of newDates) {
+    const formatted = formatDate(newDate.datetime);
+    const oldDateId = oldDatesMap.get(formatted);
+    if (oldDateId) {
+      dateIdMapping.set(oldDateId, newDate.id);
+    }
+  }
   
   // Replace all dates
   schedule.dates = newDates;
@@ -870,10 +886,32 @@ async function handleUpdateDatesModal(
   
   await storage.saveSchedule(schedule);
 
-  // すべての回答を削除（日程が変わったため）
+  // Update responses to use new date IDs where possible
   const responses = await storage.listResponsesBySchedule(scheduleId);
+  let updatedCount = 0;
+  
   for (const response of responses) {
-    await storage.deleteResponse(scheduleId, response.userId);
+    let hasChanges = false;
+    const updatedResponses = response.responses.filter(r => {
+      const newDateId = dateIdMapping.get(r.dateId);
+      if (newDateId) {
+        r.dateId = newDateId;
+        hasChanges = true;
+        return true;
+      }
+      // Remove responses for dates that no longer exist
+      return false;
+    });
+    
+    if (hasChanges) {
+      response.responses = updatedResponses;
+      response.updatedAt = new Date();
+      await storage.saveResponse(response);
+      updatedCount++;
+    } else if (updatedResponses.length === 0) {
+      // Delete response if no dates match
+      await storage.deleteResponse(scheduleId, response.userId);
+    }
   }
 
   // 更新後の情報を取得
@@ -898,10 +936,14 @@ async function handleUpdateDatesModal(
     }
   }
 
+  const message = updatedCount > 0 
+    ? `✅ 日程を${newDates.length}件に更新しました。\n✅ ${updatedCount}人の回答を新しい日程に引き継ぎました。`
+    : `✅ 日程を${newDates.length}件に更新しました。\n⚠️ 日程が大幅に変更されたため、以前の回答はリセットされました。`;
+  
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `✅ 日程を${newDates.length}件に更新しました。\n⚠️ 以前の回答はリセットされました。`,
+      content: message,
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });

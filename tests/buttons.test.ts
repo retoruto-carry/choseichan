@@ -227,8 +227,9 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(data.data.content).toContain('更新しました');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
     
     // Check that response was saved
     const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');

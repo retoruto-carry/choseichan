@@ -121,12 +121,24 @@ async function handleRespondButton(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
+    // Set placeholder based on current status
+    let placeholder = '';
+    if (!existingStatus) {
+      placeholder = `未回答 - ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'yes') {
+      placeholder = `○ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'maybe') {
+      placeholder = `△ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'no') {
+      placeholder = `× ${formatDate(date.datetime)}`;
+    }
+    
     return {
       type: 1, // Action Row
       components: [{
         type: 3, // Select Menu
         custom_id: `dateselect:${scheduleId}:${date.id}`,
-        placeholder: `${idx + 1}. ${formatDate(date.datetime)}`,
+        placeholder,
         options: [
           {
             label: '未回答',
@@ -335,94 +347,32 @@ async function handleVoteButton(
   userResponse!.updatedAt = new Date();
   await storage.saveResponse(userResponse!);
 
-  // Update the message with new response data
+  // Update the main message
   const summary = await storage.getScheduleSummary(scheduleId);
-  const tableEmbed = createResponseTableEmbed(summary!);
-  
-  // Get updated user responses
-  const updatedUserResponses = await storage.getUserResponses(scheduleId, userId);
-  const updatedResponseMap = new Map<string, ResponseStatus>();
-  
-  // Create a map of dateId to status for easier lookup
-  for (const response of updatedUserResponses) {
-    for (const dateResponse of response.responses) {
-      updatedResponseMap.set(dateResponse.dateId, dateResponse.status);
-    }
-  }
-  
-  // Re-create voting buttons with updated state
-  const updatedUserResponse = await storage.getResponse(scheduleId, userId);
-  const components = schedule.dates.slice(0, 4).map(date => {
-    const currentResponse = updatedUserResponse?.responses.find(r => r.dateId === date.id);
-    const currentStatus = currentResponse?.status;
-    const currentComment = currentResponse?.comment;
-    const dateLabel = formatDate(date.datetime);
-    
-    return {
-      type: 1,
-      components: [
+  if (summary && interaction.message?.message_reference?.message_id && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        interaction.message.message_reference.message_id,
         {
-          type: 2,
-          style: 2,
-          label: dateLabel.length > 40 ? dateLabel.substring(0, 40) + '...' : dateLabel,
-          custom_id: `date_label:${scheduleId}:${date.id}`,
-          disabled: true
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:yes`,
-          label: '○',
-          style: currentStatus === 'yes' ? 3 : 2,
-          emoji: { name: '⭕' }
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:maybe`,
-          label: '△',
-          style: currentStatus === 'maybe' ? 1 : 2,
-          emoji: { name: '🔺' }
-        },
-        {
-          type: 2,
-          custom_id: `vote:${scheduleId}:${date.id}:no`,
-          label: '×',
-          style: currentStatus === 'no' ? 4 : 2,
-          emoji: { name: '❌' }
-        },
-        {
-          type: 2,
-          custom_id: `comment:${scheduleId}:${date.id}`,
-          label: currentComment ? '💬' : '➕',
-          style: 2,
-          emoji: currentComment ? { name: '💬' } : { name: '💭' }
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(summary.schedule)
         }
-      ]
-    };
-  });
-  
-  // Add action row for additional dates if there are more than 4
-  if (schedule.dates.length > 4) {
-    components.push({
-      type: 1,
-      components: [{
-        type: 2,
-        style: 2,
-        label: `他 ${schedule.dates.length - 4} 件の日程を表示`,
-        custom_id: `show_all:${scheduleId}`,
-        emoji: { name: '📋' }
-      }]
-    });
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
   }
 
   const date = schedule.dates.find(d => d.id === dateId);
   const statusText = status === 'clear' ? 'クリアしました' : STATUS_EMOJI[status as ResponseStatus];
   
   return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? formatDate(date.datetime) : '日程'} を ${statusText} に更新しました`,
-      embeds: [tableEmbed],
-      components
+      content: `✅ ${date ? formatDate(date.datetime) : '日程'} を ${statusText} に更新しました`,
+      flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
@@ -1512,12 +1462,24 @@ async function handleDateSelectMenu(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
+    // Set placeholder based on current status
+    let placeholder = '';
+    if (!existingStatus) {
+      placeholder = `未回答 - ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'yes') {
+      placeholder = `○ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'maybe') {
+      placeholder = `△ ${formatDate(date.datetime)}`;
+    } else if (existingStatus === 'no') {
+      placeholder = `× ${formatDate(date.datetime)}`;
+    }
+    
     return {
       type: 1,
       components: [{
         type: 3,
         custom_id: `dateselect:${scheduleId}:${date.id}`,
-        placeholder: `${idx + 1}. ${formatDate(date.datetime)}`,
+        placeholder,
         options: [
           {
             label: '未回答',
@@ -1586,3 +1548,4 @@ async function handleDateSelectMenu(
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
+
