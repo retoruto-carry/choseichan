@@ -127,13 +127,6 @@ export function createSimpleScheduleComponents(schedule: Schedule) {
         {
           type: 2,
           style: 2, // Secondary
-          label: '詳細を見る',
-          custom_id: createButtonId('details', schedule.id),
-          emoji: { name: '📊' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
           label: '編集',
           custom_id: createButtonId('edit', schedule.id),
           emoji: { name: '⚙️' }

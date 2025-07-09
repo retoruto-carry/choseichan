@@ -113,8 +113,8 @@ async function handleRespondButton(
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   const userResponse = await storage.getResponse(scheduleId, userId);
   
-  // Create ephemeral message with select menus for each date
-  const components = schedule.dates.slice(0, 5).map((date, idx) => {
+  // Create ephemeral message with select menus for each date (limit to 4 to leave room for complete button)
+  const components = schedule.dates.slice(0, 4).map((date, idx) => {
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
@@ -138,30 +138,23 @@ async function handleRespondButton(
         placeholder,
         options: [
           {
-            label: '未回答',
+            label: `未回答 ${formatDate(date.datetime)}`,
             value: 'none',
-            description: formatDate(date.datetime),
             default: !existingStatus
           },
           {
-            label: '○ 参加可能',
+            label: `○ ${formatDate(date.datetime)}`,
             value: 'yes',
-            description: formatDate(date.datetime),
-            emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: '△ 調整中',
+            label: `△ ${formatDate(date.datetime)}`,
             value: 'maybe',
-            description: formatDate(date.datetime),
-            emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: '× 参加不可',
+            label: `× ${formatDate(date.datetime)}`,
             value: 'no',
-            description: formatDate(date.datetime),
-            emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
         ]
@@ -184,10 +177,14 @@ async function handleRespondButton(
     }
   ];
   
+  const message = schedule.dates.length > 4 
+    ? `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n⚠️ 日程が多いため、最初の4つの日程のみ表示されています。\n回答が完了したら「回答を完了」ボタンを押してください。`
+    : `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
+
   return createEphemeralResponse(
-    `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`,
+    message,
     undefined,
-    componentsWithComplete.slice(0, 5) // Discord limit
+    componentsWithComplete // Now limited to 5 components total
   );
 }
 
@@ -1457,30 +1454,23 @@ async function handleDateSelectMenu(
         placeholder,
         options: [
           {
-            label: '未回答',
+            label: `未回答 ${formatDate(date.datetime)}`,
             value: 'none',
-            description: formatDate(date.datetime),
             default: !existingStatus
           },
           {
-            label: '○ 参加可能',
+            label: `○ ${formatDate(date.datetime)}`,
             value: 'yes',
-            description: formatDate(date.datetime),
-            emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: '△ 調整中',
+            label: `△ ${formatDate(date.datetime)}`,
             value: 'maybe',
-            description: formatDate(date.datetime),
-            emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: '× 参加不可',
+            label: `× ${formatDate(date.datetime)}`,
             value: 'no',
-            description: formatDate(date.datetime),
-            emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
         ]
