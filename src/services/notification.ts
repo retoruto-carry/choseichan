@@ -120,7 +120,7 @@ export class NotificationService {
             const count = responseCounts[date.id];
             const isBest = date.id === bestDateId;
             return {
-              name: `${isBest ? '⭐ ' : ''}${formatDate(date.datetime)}`,
+              name: `${isBest ? '⭐ ' : ''}${date.datetime}`,
               value: `${STATUS_EMOJI.yes} ${count.yes}人　${STATUS_EMOJI.maybe} ${count.maybe}人　${STATUS_EMOJI.no} ${count.no}人`,
               inline: false
             };

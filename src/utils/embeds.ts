@@ -1,10 +1,10 @@
 import { Schedule, ScheduleSummary, STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
-import { formatDate } from './date';
 import { createButtonId } from './id';
+import { formatDate } from './date';
 
 export function createScheduleEmbed(schedule: Schedule) {
   const dateList = schedule.dates
-    .map((date, index) => `${index + 1}. ${formatDate(date.datetime)}`)
+    .map((date, index) => `${index + 1}. ${date.datetime}`)
     .join('\n');
   
   return {
@@ -36,7 +36,7 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary) {
   const dateFields = schedule.dates.map((date, idx) => {
     const count = responseCounts[date.id];
     const isBest = date.id === bestDateId && userResponses.length > 0;
-    const dateStr = formatDate(date.datetime);
+    const dateStr = date.datetime;
     
     // 各ユーザーの回答をまとめる
     const responses = userResponses

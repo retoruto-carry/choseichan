@@ -1,5 +1,5 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { Env } from '../types/discord';
+import { Env, ModalInteraction } from '../types/discord';
 import { Response as ScheduleResponse, ResponseStatus, STATUS_EMOJI, EMBED_COLORS, Schedule, ScheduleDate, ScheduleSummary } from '../types/schedule';
 import { StorageService } from '../services/storage';
 import { formatDate, parseUserInputDate } from '../utils/date';
@@ -7,41 +7,7 @@ import { createScheduleEmbed, createScheduleEmbedWithTable, createSimpleSchedule
 import { updateOriginalMessage } from '../utils/discord';
 import { createButtonId, generateId } from '../utils/id';
 
-interface ModalSubmitInteraction {
-  id: string;
-  type: number;
-  data: {
-    custom_id: string;
-    components: Array<{
-      type: number;
-      components: Array<{
-        type: number;
-        custom_id: string;
-        value?: string;
-        values?: string[];
-      }>;
-    }>;
-  };
-  guild_id?: string;
-  channel_id?: string;
-  member?: {
-    user: {
-      id: string;
-      username: string;
-      discriminator: string;
-    };
-    roles: string[];
-  };
-  user?: {
-    id: string;
-    username: string;
-    discriminator: string;
-  };
-  token: string;
-  message?: {
-    id: string;
-    embeds: any[];
-  };
+interface ModalSubmitInteraction extends ModalInteraction {
 }
 
 export async function handleModalSubmit(
@@ -469,7 +435,7 @@ function createUpdatedScheduleEmbed(summary: import('../types/schedule').Schedul
         const count = responseCounts[date.id];
         const isBest = date.id === bestDateId && userResponses.length > 0;
         return {
-          name: `${isBest ? '⭐ ' : ''}${formatDate(date.datetime)}`,
+          name: `${isBest ? '⭐ ' : ''}${date.datetime}`,
           value: `${STATUS_EMOJI.yes} ${count.yes}人　${STATUS_EMOJI.maybe} ${count.maybe}人　${STATUS_EMOJI.no} ${count.no}人`,
           inline: false
         };
@@ -492,7 +458,7 @@ function createResponseConfirmationEmbed(
     const response = userResponse.responses.find(r => r.dateId === date.id);
     if (!response) return null;
     const comment = response.comment ? ` - ${response.comment}` : '';
-    return `${formatDate(date.datetime)}: ${STATUS_EMOJI[response.status]}${comment}`;
+    return `${date.datetime}: ${STATUS_EMOJI[response.status]}${comment}`;
   }).filter(Boolean);
 
   return {
@@ -530,7 +496,7 @@ function createScheduleComponents(schedule: import('../types/schedule').Schedule
   const dateButtons = schedule.dates.map(date => ({
     type: 2,
     style: 2, // Secondary
-    label: formatDate(date.datetime),
+    label: date.datetime,
     custom_id: createButtonId('response', schedule.id, date.id),
     emoji: { name: '📝' }
   }));
@@ -769,7 +735,7 @@ async function handleUpdateDatesModal(
   // Create a map of old dates for matching
   const oldDatesMap = new Map<string, string>();
   for (const oldDate of schedule.dates) {
-    const formatted = formatDate(oldDate.datetime);
+    const formatted = oldDate.datetime;
     oldDatesMap.set(formatted, oldDate.id);
   }
   
@@ -778,7 +744,7 @@ async function handleUpdateDatesModal(
   
   // Try to match new dates with old dates
   for (const newDate of newDates) {
-    const formatted = formatDate(newDate.datetime);
+    const formatted = newDate.datetime;
     const oldDateId = oldDatesMap.get(formatted);
     if (oldDateId) {
       dateIdMapping.set(oldDateId, newDate.id);

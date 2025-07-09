@@ -65,6 +65,37 @@ export interface ButtonInteraction {
   };
 }
 
+export interface ModalInteraction {
+  id: string;
+  type: InteractionType;
+  data: {
+    custom_id: string;
+    components: Array<{
+      type: number;
+      components: Array<{
+        type: number;
+        custom_id: string;
+        value: string;
+      }>;
+    }>;
+  };
+  guild_id?: string;
+  channel_id?: string;
+  member?: {
+    user: DiscordUser;
+    roles: string[];
+  };
+  user?: DiscordUser;
+  token: string;
+  message?: {
+    id: string;
+    embeds: any[];
+    message_reference?: {
+      message_id: string;
+    };
+  };
+}
+
 export interface InteractionResponse {
   type: InteractionResponseType;
   data?: any;

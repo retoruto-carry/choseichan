@@ -1,0 +1,381 @@
+import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { ButtonInteraction, Env } from '../types/discord';
+import { ResponseStatus, STATUS_EMOJI, EMBED_COLORS, ScheduleSummary } from '../types/schedule';
+import { StorageService } from '../services/storage';
+import { createButtonId } from '../utils/id';
+import { updateOriginalMessage } from '../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
+import { createErrorResponse } from '../utils/responses';
+
+export function createResponseTableEmbed(summary: ScheduleSummary) {
+  const { schedule, userResponses, responseCounts, bestDateId } = summary;
+  
+  return {
+    title: `📊 ${schedule.title}`,
+    color: EMBED_COLORS.INFO,
+    fields: schedule.dates.slice(0, 10).map((date, idx) => {
+      const count = responseCounts[date.id];
+      const isBest = date.id === bestDateId && userResponses.length > 0;
+      
+      // Get responses for this date
+      const dateResponses = userResponses
+        .map(ur => {
+          const response = ur.responses.find(r => r.dateId === date.id);
+          if (!response) return null;
+          const comment = response.comment ? ` (${response.comment})` : '';
+          return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
+        })
+        .filter(Boolean);
+      
+      return {
+        name: `${isBest ? '⭐ ' : ''}${idx + 1}. ${date.datetime}`,
+        value: [
+          `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`,
+          dateResponses.length > 0 ? dateResponses.join(', ') : '回答なし'
+        ].join('\n'),
+        inline: false
+      };
+    }),
+    footer: {
+      text: `回答者: ${userResponses.length}人`
+    }
+  };
+}
+
+export async function handleStatusButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const tableEmbed = createResponseTableEmbed(summary);
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      embeds: [tableEmbed],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleEditButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Check if user is the owner
+  const userId = interaction.member?.user.id || interaction.user?.id;
+  if (schedule.createdBy.id !== userId) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整を編集できるのは作成者のみです。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Show edit menu
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: '編集する項目を選択してください：',
+      components: [
+        {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 2,
+              label: 'タイトル・説明を編集',
+              custom_id: createButtonId('edit_info', scheduleId),
+              emoji: { name: '📝' }
+            },
+            {
+              type: 2,
+              style: 2,
+              label: '日程を一括更新',
+              custom_id: createButtonId('update_dates', scheduleId),
+              emoji: { name: '📅' }
+            }
+          ]
+        },
+        {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 4, // Danger
+              label: '締め切る',
+              custom_id: createButtonId('close', scheduleId),
+              emoji: { name: '🔒' }
+            },
+            {
+              type: 2,
+              style: 4, // Danger
+              label: '削除する',
+              custom_id: createButtonId('delete', scheduleId),
+              emoji: { name: '🗑️' }
+            }
+          ]
+        }
+      ],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleDetailsButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const { schedule, responseCounts, userResponses, bestDateId } = summary;
+  
+  // Create detailed embed
+  const embed = {
+    title: `📊 ${schedule.title} - 詳細`,
+    color: EMBED_COLORS.INFO,
+    fields: [
+      {
+        name: '基本情報',
+        value: [
+          `作成者: ${schedule.createdBy.username}`,
+          `作成日: ${schedule.createdAt.toISOString()}`,
+          `状態: ${schedule.status === 'open' ? '🟢 受付中' : '🔴 締切'}`,
+          schedule.deadline ? `締切: ${schedule.deadline.toISOString()}` : '',
+          `回答者数: ${userResponses.length}人`
+        ].filter(Boolean).join('\n'),
+        inline: false
+      },
+      ...schedule.dates.map(date => {
+        const count = responseCounts[date.id];
+        const isBest = date.id === bestDateId;
+        const respondents = userResponses
+          .map(ur => {
+            const response = ur.responses.find(r => r.dateId === date.id);
+            if (!response) return null;
+            return `${STATUS_EMOJI[response.status]} ${ur.userName}`;
+          })
+          .filter(Boolean);
+        
+        return {
+          name: `${isBest ? '⭐ ' : ''}${date.datetime}`,
+          value: [
+            `${STATUS_EMOJI.yes} ${count.yes}人　${STATUS_EMOJI.maybe} ${count.maybe}人　${STATUS_EMOJI.no} ${count.no}人`,
+            respondents.length > 0 ? respondents.join(', ') : '回答なし'
+          ].join('\n'),
+          inline: false
+        };
+      })
+    ],
+    footer: {
+      text: `ID: ${schedule.id}`
+    },
+    timestamp: schedule.updatedAt.toISOString()
+  };
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      embeds: [embed],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleCloseButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id;
+  if (schedule.createdBy.id !== userId) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整を締め切ることができるのは作成者のみです。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  schedule.status = 'closed';
+  schedule.updatedAt = new Date();
+  await storage.saveSchedule(schedule);
+
+  // Update the original message
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整の更新に失敗しました。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const embed = createScheduleEmbedWithTable(summary);
+  const components = createSimpleScheduleComponents(schedule);
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: {
+      embeds: [embed],
+      components
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleReopenButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id;
+  if (schedule.createdBy.id !== userId) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整を再開できるのは作成者のみです。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  schedule.status = 'open';
+  schedule.updatedAt = new Date();
+  await storage.saveSchedule(schedule);
+
+  // Update the original message
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (!summary) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整の更新に失敗しました。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const embed = createScheduleEmbedWithTable(summary);
+  const components = createSimpleScheduleComponents(schedule);
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: {
+      embeds: [embed],
+      components
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleDeleteButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id;
+  if (schedule.createdBy.id !== userId) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整を削除できるのは作成者のみです。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  await storage.deleteSchedule(scheduleId);
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: {
+      content: `日程調整「${schedule.title}」を削除しました。`,
+      embeds: [],
+      components: []
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
