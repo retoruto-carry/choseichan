@@ -275,6 +275,10 @@ export async function handleEditDeadlineButton(
   // Use the original message ID passed from the edit menu
   const messageId = originalMessageId || interaction.message?.id || '';
 
+  // Current reminder settings
+  const currentTimings = schedule.reminderTimings?.join(', ') || '3d, 1d, 8h, 1h';
+  const currentMentions = schedule.reminderMentions?.join(', ') || '';
+
   // Show modal for editing deadline
   return new Response(JSON.stringify({
     type: InteractionResponseType.MODAL,
@@ -293,6 +297,32 @@ export async function handleEditDeadlineButton(
             placeholder: '例: 2024-04-01 19:00',
             required: false,
             max_length: 50
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_timings',
+            label: 'リマインダー（カンマ区切り）',
+            style: 1,
+            value: currentTimings,
+            placeholder: '例: 3d, 1d, 8h, 30m',
+            required: false,
+            max_length: 100
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_mentions',
+            label: '通知先（カンマ区切り）',
+            style: 1,
+            value: currentMentions,
+            placeholder: '例: @everyone, @here, @username',
+            required: false,
+            max_length: 200
           }]
         }
       ]

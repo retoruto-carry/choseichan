@@ -18,6 +18,8 @@ export interface Schedule {
   notificationSent: boolean;
   reminderSent?: boolean; // Track if reminder was sent (deprecated, use remindersSent)
   remindersSent?: string[]; // Track which reminders have been sent (e.g., ['3d', '1d', '8h', '1h'])
+  reminderTimings?: string[]; // Custom reminder timings (e.g., ['3d', '1d', '8h', '30m'])
+  reminderMentions?: string[]; // Who to mention in reminders (e.g., ['@everyone', '@here', '@username'])
   totalResponses?: number; // Total number of responses
 }
 

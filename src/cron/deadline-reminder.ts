@@ -15,13 +15,45 @@ interface DeadlineCheckResult {
   justClosed: Schedule[]; // 締切を過ぎたがまだ開いているスケジュール（自動クローズ対象）
 }
 
-// リマインダーのタイミング定義
-const REMINDER_TIMINGS = [
+// デフォルトのリマインダータイミング定義
+const DEFAULT_REMINDER_TIMINGS = [
   { type: '3d', hours: 72, message: '締切まで3日' },
   { type: '1d', hours: 24, message: '締切まで1日' },
   { type: '8h', hours: 8, message: '締切まで8時間' },
   { type: '1h', hours: 1, message: '締切まで1時間' }
 ];
+
+// カスタムタイミングの文字列（例: '3d', '8h', '30m'）を時間に変換
+function parseTimingToHours(timing: string): number | null {
+  const match = timing.match(/^(\d+)([dhm])$/);
+  if (!match) return null;
+  
+  const value = parseInt(match[1]);
+  const unit = match[2];
+  
+  switch (unit) {
+    case 'd': return value * 24;
+    case 'h': return value;
+    case 'm': return value / 60;
+    default: return null;
+  }
+}
+
+// タイミングに基づいたメッセージを生成
+function getTimingMessage(timing: string): string {
+  const match = timing.match(/^(\d+)([dhm])$/);
+  if (!match) return `締切まで${timing}`;
+  
+  const value = parseInt(match[1]);
+  const unit = match[2];
+  
+  switch (unit) {
+    case 'd': return `締切まで${value}日`;
+    case 'h': return `締切まで${value}時間`;
+    case 'm': return `締切まで${value}分`;
+    default: return `締切まで${timing}`;
+  }
+}
 
 export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
   const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
@@ -85,7 +117,16 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
           if (schedule.status === 'open' && deadlineTime > now.getTime()) {
             const remindersSent = schedule.remindersSent || [];
             
-            for (const timing of REMINDER_TIMINGS) {
+            // Use custom timings if available, otherwise use defaults
+            const timings = schedule.reminderTimings && schedule.reminderTimings.length > 0
+              ? schedule.reminderTimings.map(t => ({
+                  type: t,
+                  hours: parseTimingToHours(t) || 0,
+                  message: getTimingMessage(t)
+                })).filter(t => t.hours > 0)
+              : DEFAULT_REMINDER_TIMINGS;
+            
+            for (const timing of timings) {
               const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
               
               // Check if this reminder should be sent now

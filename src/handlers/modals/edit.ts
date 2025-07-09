@@ -284,6 +284,8 @@ export async function handleEditDeadlineModal(
   }
 
   const newDeadlineStr = interaction.data.components[0].components[0].value || '';
+  const reminderTimingsStr = interaction.data.components[1]?.components[0]?.value || '';
+  const reminderMentionsStr = interaction.data.components[2]?.components[0]?.value || '';
   
   // Parse deadline
   let newDeadline: Date | null = null;
@@ -301,21 +303,45 @@ export async function handleEditDeadlineModal(
     
   }
 
-  // Save previous status and deadline to check if they changed
+  // Save previous status and settings to check if they changed
   const previousStatus = schedule.status;
   const previousDeadline = schedule.deadline;
+  const previousTimings = schedule.reminderTimings;
   
   // Update schedule
   schedule.deadline = newDeadline || undefined;
   
-  // Reset reminder status if deadline changed
+  // Parse and validate reminder timings
+  if (reminderTimingsStr.trim()) {
+    const timings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
+    const validTimings = timings.filter(t => /^\d+[dhm]$/.test(t));
+    if (validTimings.length > 0) {
+      schedule.reminderTimings = validTimings;
+    }
+  } else if (!newDeadline) {
+    // Clear timings if no deadline
+    schedule.reminderTimings = undefined;
+  }
+  
+  // Parse reminder mentions
+  if (reminderMentionsStr.trim()) {
+    const mentions = reminderMentionsStr.split(',').map(m => m.trim()).filter(m => m);
+    schedule.reminderMentions = mentions;
+  } else if (!newDeadline) {
+    // Clear mentions if no deadline
+    schedule.reminderMentions = undefined;
+  }
+  
+  // Reset reminder status if deadline or timings changed
+  const timingsChanged = JSON.stringify(schedule.reminderTimings) !== JSON.stringify(previousTimings);
   if ((!previousDeadline && newDeadline) || 
       (previousDeadline && newDeadline && previousDeadline.getTime() !== newDeadline.getTime()) ||
-      (previousDeadline && !newDeadline)) {
-    // Deadline was added, changed, or removed - reset all reminders
+      (previousDeadline && !newDeadline) ||
+      timingsChanged) {
+    // Deadline or timings were changed - reset all reminders
     schedule.reminderSent = false;
     schedule.remindersSent = [];
-    console.log(`Reset reminders for schedule ${scheduleId}: deadline changed from ${previousDeadline?.toISOString()} to ${newDeadline?.toISOString()}`);
+    console.log(`Reset reminders for schedule ${scheduleId}: deadline or timings changed`);
   }
   
   // Update status based on deadline
@@ -380,9 +406,21 @@ export async function handleEditDeadlineModal(
     }));
   }
 
-  const message = !newDeadline 
+  let message = !newDeadline 
     ? '✅ 締切日を削除しました（無期限になりました）。'
-    : `✅ 締切日を ${newDeadline.toLocaleString('ja-JP')} に更新しました。${schedule.status === 'closed' ? '\n⚠️ 締切日が過去のため、日程調整は締め切られました。' : ''}`;
+    : `✅ 締切日を ${newDeadline.toLocaleString('ja-JP')} に更新しました。`;
+  
+  if (schedule.status === 'closed') {
+    message += '\n⚠️ 締切日が過去のため、日程調整は締め切られました。';
+  }
+  
+  if (schedule.reminderTimings && schedule.reminderTimings.length > 0) {
+    message += `\n⏰ リマインダー: ${schedule.reminderTimings.join(', ')}`;
+  }
+  
+  if (schedule.reminderMentions && schedule.reminderMentions.length > 0) {
+    message += `\n👥 通知先: ${schedule.reminderMentions.join(', ')}`;
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

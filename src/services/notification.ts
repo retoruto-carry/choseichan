@@ -53,9 +53,25 @@ export class NotificationService {
       console.error(`Failed to send DM to author ${schedule.authorId}:`, error);
     }
     
+    // Build mentions string
+    let mentions = '';
+    if (schedule.reminderMentions && schedule.reminderMentions.length > 0) {
+      // Convert mentions array to Discord mention format
+      mentions = schedule.reminderMentions.map(mention => {
+        if (mention === '@everyone') return '@everyone';
+        if (mention === '@here') return '@here';
+        // For user mentions, assume format is @username or <@userId>
+        if (mention.startsWith('<@') && mention.endsWith('>')) {
+          return mention; // Already in correct format
+        }
+        // TODO: In a real implementation, we would need to resolve username to user ID
+        return mention;
+      }).join(' ') + ' ';
+    }
+    
     // Send reminder to channel
     const message = {
-      content: `⏰ **締切リマインダー**: 「${schedule.title}」の${customMessage}です！`,
+      content: `${mentions}⏰ **締切リマインダー**: 「${schedule.title}」の${customMessage}です！`,
       embeds: [{
         color: 0xffcc00,
         fields: [

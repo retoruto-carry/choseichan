@@ -96,11 +96,11 @@ async function handleCreateCommandSimple(
           components: [{
             type: 4,
             custom_id: 'deadline',
-            label: '回答締切（任意）',
-            style: 1, // Short
-            placeholder: '12/20 23:59',
+            label: '締切とリマインダー（任意）',
+            style: 2, // Paragraph
+            placeholder: '12/20 23:59\nリマインダー: 3d,1d,8h,30m\n通知先: @everyone',
             required: false,
-            max_length: 50
+            max_length: 200
           }]
         }
       ]
