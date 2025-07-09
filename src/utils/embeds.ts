@@ -29,7 +29,7 @@ export function createScheduleEmbed(schedule: Schedule) {
   };
 }
 
-export function createScheduleEmbedWithTable(summary: ScheduleSummary) {
+export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetails: boolean = false) {
   const { schedule, userResponses, responseCounts, bestDateId } = summary;
   
   // 日程リストを作成（番号付き）
@@ -38,22 +38,30 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary) {
     const isBest = date.id === bestDateId && userResponses.length > 0;
     const dateStr = date.datetime;
     
-    // 各ユーザーの回答をまとめる
-    const responses = userResponses
-      .map(ur => {
-        const response = ur.responses.find(r => r.dateId === date.id);
-        if (!response) return null;
-        const comment = response.comment ? ` (${response.comment})` : '';
-        return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
-      })
-      .filter(Boolean);
+    // 集計のみ（詳細なし）
+    let fieldValue = `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
+    
+    // 詳細表示の場合は各ユーザーの回答も含める
+    if (showDetails) {
+      const responses = userResponses
+        .map(ur => {
+          const response = ur.responses.find(r => r.dateId === date.id);
+          if (!response) return null;
+          const comment = response.comment ? ` (${response.comment})` : '';
+          return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
+        })
+        .filter(Boolean);
+      
+      if (responses.length > 0) {
+        fieldValue += '\n' + responses.join(', ');
+      } else {
+        fieldValue += '\n回答なし';
+      }
+    }
     
     return {
       name: `${isBest ? '⭐ ' : ''}${idx + 1}. ${dateStr}`,
-      value: [
-        `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`,
-        responses.length > 0 ? responses.join(', ') : '回答なし'
-      ].join('\n'),
+      value: fieldValue,
       inline: false
     };
   });
@@ -112,26 +120,39 @@ export function createScheduleComponents(schedule: Schedule) {
   ];
 }
 
-export function createSimpleScheduleComponents(schedule: Schedule) {
+export function createSimpleScheduleComponents(schedule: Schedule, showDetails: boolean = false) {
+  const components = [
+    {
+      type: 2,
+      style: 1, // Primary
+      label: '回答する',
+      custom_id: createButtonId('respond', schedule.id),
+      emoji: { name: '✏️' }
+    }
+  ];
+
+  // Add details toggle button
+  components.push({
+    type: 2,
+    style: 2, // Secondary
+    label: showDetails ? '簡易表示' : '詳細',
+    custom_id: createButtonId('toggle_details', schedule.id),
+    emoji: { name: showDetails ? '📊' : '📋' }
+  });
+
+  // Add edit button
+  components.push({
+    type: 2,
+    style: 2, // Secondary
+    label: '編集',
+    custom_id: createButtonId('edit', schedule.id),
+    emoji: { name: '⚙️' }
+  });
+
   return [
     {
       type: 1,
-      components: [
-        {
-          type: 2,
-          style: 1, // Primary
-          label: '回答する',
-          custom_id: createButtonId('respond', schedule.id),
-          emoji: { name: '✏️' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: '編集',
-          custom_id: createButtonId('edit', schedule.id),
-          emoji: { name: '⚙️' }
-        },
-      ]
+      components
     }
   ];
 }

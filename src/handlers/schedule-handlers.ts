@@ -272,8 +272,8 @@ export async function handleCloseButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const embed = createScheduleEmbedWithTable(summary);
-  const components = createSimpleScheduleComponents(schedule);
+  const embed = createScheduleEmbedWithTable(summary, false);
+  const components = createSimpleScheduleComponents(schedule, false);
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.UPDATE_MESSAGE,
@@ -330,8 +330,8 @@ export async function handleReopenButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const embed = createScheduleEmbedWithTable(summary);
-  const components = createSimpleScheduleComponents(schedule);
+  const embed = createScheduleEmbedWithTable(summary, false);
+  const components = createSimpleScheduleComponents(schedule, false);
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.UPDATE_MESSAGE,

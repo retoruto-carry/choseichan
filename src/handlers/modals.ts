@@ -171,8 +171,8 @@ async function handleInteractiveResponseModal(
         interaction.token,
         interaction.message.id,
         {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(schedule)
+          embeds: [createScheduleEmbedWithTable(summary, false)],
+          components: createSimpleScheduleComponents(schedule, false)
         }
       );
     } catch (error) {
@@ -591,7 +591,7 @@ async function handleCreateScheduleModal(
 
   // Get empty summary for initial display
   const summary = await storage.getScheduleSummary(schedule.id);
-  const embed = createScheduleEmbedWithTable(summary!);
+  const embed = createScheduleEmbedWithTable(summary!, false);
   const components = createSimpleScheduleComponents(schedule);
 
   return new Response(JSON.stringify({
@@ -1055,8 +1055,8 @@ async function handleSelectResponseModal(
         interaction.token,
         interaction.message.id,
         {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(schedule)
+          embeds: [createScheduleEmbedWithTable(summary, false)],
+          components: createSimpleScheduleComponents(schedule, false)
         }
       );
     } catch (error) {

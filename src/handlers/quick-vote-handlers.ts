@@ -68,7 +68,7 @@ export async function handleDirectVoteButton(
         interaction.token,
         interaction.message.id,
         {
-          embeds: [createScheduleEmbedWithTable(summary)],
+          embeds: [createScheduleEmbedWithTable(summary, false)],
           components: createSimpleScheduleComponents(summary.schedule)
         }
       );

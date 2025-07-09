@@ -12,7 +12,7 @@
 
 1. [Discord Developer Portal](https://discord.com/developers/applications) にアクセス
 2. "New Application" をクリック
-3. アプリケーション名を入力（例: ちょうせいちゃん）
+3. アプリケーション名を入力（例: 調整ちゃん）
 4. 作成されたアプリケーションの情報をメモ:
    - Application ID
    - Public Key (General Information タブ)

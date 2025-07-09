@@ -1,23 +1,23 @@
-# Contributing to Discord ちょうせいちゃん
+# Contributing to Discord 調整ちゃん
 
-Discord ちょうせいちゃんへの貢献を検討いただきありがとうございます！
+Discord 調整ちゃんへの貢献を検討いただきありがとうございます！
 
 ## 貢献の方法
 
 ### バグ報告
 
-バグを見つけた場合は、GitHubのIssuesで報告してください。以下の情報を含めていただけると助かります：
+バグを見つけた場合は、GitHub の Issues で報告してください。以下の情報を含めていただけると助かります：
 
 - バグの詳細な説明
 - 再現手順
 - 期待される動作
 - 実際の動作
 - スクリーンショット（可能であれば）
-- 環境情報（Discord版、ブラウザなど）
+- 環境情報（Discord 版、ブラウザなど）
 
 ### 機能要望
 
-新機能のアイデアがある場合は、Issuesで提案してください：
+新機能のアイデアがある場合は、Issues で提案してください：
 
 - 機能の詳細な説明
 - なぜその機能が必要か
@@ -70,6 +70,7 @@ npm run dev
 - `chore:` ビルドプロセスやツールの変更
 
 例：
+
 ```
 feat: 日程調整のリマインダー機能を追加
 fix: セレクトメニューのタイムアウトエラーを修正
@@ -78,7 +79,7 @@ docs: READMEに使用例を追加
 
 ### コードスタイル
 
-- インデント：スペース2つ
+- インデント：スペース 2 つ
 - セミコロン：なし
 - クォート：シングルクォート
 - 行末の空白：削除
@@ -89,13 +90,15 @@ docs: READMEに使用例を追加
 新しいハンドラーや機能を追加する場合：
 
 1. 適切なディレクトリに配置
+
    - ハンドラー: `src/handlers/`
    - サービス: `src/services/`
    - ユーティリティ: `src/utils/`
    - 型定義: `src/types/`
 
 2. 機能別にファイルを分割
-   - 1つのファイルが大きくなりすぎないように
+
+   - 1 つのファイルが大きくなりすぎないように
    - 関連する機能はグループ化
 
 3. エクスポート/インポートを整理
@@ -125,41 +128,49 @@ npm run test:coverage
 - テストファイルは対象ファイルと同じ構造で`tests/`に配置
 
 例：
+
 ```typescript
-describe('handleVoteButton', () => {
-  it('should save user response correctly', async () => {
+describe("handleVoteButton", () => {
+  it("should save user response correctly", async () => {
     // Arrange
-    const interaction = createMockInteraction()
-    const storage = createMockStorage()
-    
+    const interaction = createMockInteraction();
+    const storage = createMockStorage();
+
     // Act
-    const response = await handleVoteButton(interaction, storage, ['schedule1', 'date1', 'yes'], env)
-    
+    const response = await handleVoteButton(
+      interaction,
+      storage,
+      ["schedule1", "date1", "yes"],
+      env
+    );
+
     // Assert
-    expect(response.status).toBe(200)
-    expect(storage.saveResponse).toHaveBeenCalledWith(expect.objectContaining({
-      scheduleId: 'schedule1',
-      responses: expect.arrayContaining([
-        expect.objectContaining({ dateId: 'date1', status: 'yes' })
-      ])
-    }))
-  })
-})
+    expect(response.status).toBe(200);
+    expect(storage.saveResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scheduleId: "schedule1",
+        responses: expect.arrayContaining([
+          expect.objectContaining({ dateId: "date1", status: "yes" }),
+        ]),
+      })
+    );
+  });
+});
 ```
 
 ## Discord API
 
 ### インタラクション処理
 
-- 3秒以内に応答を返す（Cloudflare Workers制限）
+- 3 秒以内に応答を返す（Cloudflare Workers 制限）
 - 重い処理は`DEFERRED_UPDATE_MESSAGE`を使用
 - エフェメラルメッセージを適切に使用
 
 ### コンポーネント制限
 
-- メッセージあたり最大5行
-- 1行あたり最大5コンポーネント
-- セレクトメニューのオプションは最大25個
+- メッセージあたり最大 5 行
+- 1 行あたり最大 5 コンポーネント
+- セレクトメニューのオプションは最大 25 個
 
 ## デプロイ前のチェックリスト
 
@@ -167,7 +178,7 @@ describe('handleVoteButton', () => {
 - [ ] 型チェックが通る (`npm run typecheck`)
 - [ ] ローカルで動作確認済み
 - [ ] 必要なドキュメントを更新
-- [ ] CHANGELOGを更新
+- [ ] CHANGELOG を更新
 
 ## 質問・サポート
 
@@ -178,4 +189,4 @@ describe('handleVoteButton', () => {
 
 ## ライセンス
 
-このプロジェクトに貢献することで、あなたの貢献がMITライセンスの下でライセンスされることに同意したものとみなされます。
+このプロジェクトに貢献することで、あなたの貢献が MIT ライセンスの下でライセンスされることに同意したものとみなされます。

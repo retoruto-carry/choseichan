@@ -12,6 +12,9 @@ import {
   handleDeleteButton,
 } from './schedule-handlers';
 import {
+  handleToggleDetailsButton
+} from './display-handlers';
+import {
   handleEditInfoButton,
   handleUpdateDatesButton,
   handleAddDatesButton,
@@ -81,15 +84,6 @@ export async function handleButtonInteraction(
       return handleRemoveDatesButton(interaction, storage, params);
     case 'confirm_remove_date':
       return handleConfirmRemoveDateButton(interaction, storage, params);
-    case 'date_label':
-      // 日付ラベルボタンは非活性だが、念のためハンドラーを追加
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: 'このボタンは表示用です。○△×ボタンで回答してください。',
-          flags: InteractionResponseFlags.EPHEMERAL
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
     case 'direct_vote':
       return handleDirectVoteButton(interaction, storage, params, env);
     case 'add_comment':
@@ -98,6 +92,8 @@ export async function handleButtonInteraction(
       return handleCommentButton(interaction, storage, params);
     case 'show_all':
       return handleShowAllButton(interaction, storage, params);
+    case 'toggle_details':
+      return handleToggleDetailsButton(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

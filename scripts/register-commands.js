@@ -22,7 +22,7 @@ const commands = [
   },
   {
     name: "help",
-    description: "ちょうせいちゃんの使い方を表示",
+    description: "調整ちゃんの使い方を表示",
   },
 ];
 

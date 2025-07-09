@@ -48,14 +48,14 @@ export async function updateScheduleMainMessage(
       return false;
     }
 
-    // メイン画面を更新
+    // メイン画面を更新 (デフォルトは簡易表示)
     await updateOriginalMessage(
       env.DISCORD_APPLICATION_ID,
       interactionToken,
       targetMessageId,
       {
-        embeds: [createScheduleEmbedWithTable(summary)],
-        components: createSimpleScheduleComponents(summary.schedule)
+        embeds: [createScheduleEmbedWithTable(summary, false)],
+        components: createSimpleScheduleComponents(summary.schedule, false)
       }
     );
 
