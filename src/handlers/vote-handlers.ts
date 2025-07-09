@@ -7,6 +7,7 @@ import {
   createErrorResponse
 } from '../utils/responses';
 import { updateScheduleMainMessage, saveScheduleMessageId } from '../utils/schedule-updater';
+import { sendFollowupMessage } from '../utils/discord-webhook';
 
 /**
  * 「回答する」ボタンのハンドラー
@@ -38,8 +39,8 @@ export async function handleRespondButton(
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   const userResponse = await storage.getResponse(scheduleId, userId);
   
-  // Create ephemeral message with select menus for each date (limit to 5 - Discord API limit)
-  const components = schedule.dates.slice(0, 5).map((date) => {
+  // Create all select menus (divide into groups of 5 for multiple messages if needed)
+  const allComponents = schedule.dates.map((date) => {
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
@@ -81,22 +82,47 @@ export async function handleRespondButton(
     };
   });
 
-  if (schedule.dates.length > 5) {
-    // 5件を超える場合は「一括回答」ボタンで対応することを案内
-    const message = `\n\n⚠️ 日程が${schedule.dates.length}件あります。最初の5件のみ表示しています。\nすべての日程に回答するには「一括回答」ボタンをご利用ください。`;
-    return createEphemeralResponse(
-      `**${schedule.title}** の回答を選択してください:${message}`,
-      undefined,
-      components
-    );
+  // Discord allows max 5 components per message
+  const componentGroups: any[][] = [];
+  for (let i = 0; i < allComponents.length; i += 5) {
+    componentGroups.push(allComponents.slice(i, i + 5));
   }
 
-  const message = `**${schedule.title}** の回答を選択してください:\n`;
-
+  // Prepare initial response
+  const totalGroups = componentGroups.length;
+  const initialMessage = totalGroups === 1 
+    ? `**${schedule.title}** の回答を選択してください:\n`
+    : `**${schedule.title}** の回答を選択してください (1/${totalGroups}):\n\n📝 日程が${schedule.dates.length}件あります。`;
+  
+  // Send followup messages for additional groups
+  if (totalGroups > 1 && env.DISCORD_APPLICATION_ID) {
+    // Schedule followup messages to be sent after the initial response
+    const sendFollowups = async () => {
+      for (let i = 1; i < componentGroups.length; i++) {
+        await sendFollowupMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          `続き (${i + 1}/${totalGroups}):`,
+          componentGroups[i],
+          env
+        );
+      }
+    };
+    
+    // Use waitUntil if available
+    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+      env.ctx.waitUntil(sendFollowups());
+    } else {
+      // Fallback: try to send immediately
+      sendFollowups().catch(err => console.error('Failed to send followup messages:', err));
+    }
+  }
+  
+  // Return the first message with components
   return createEphemeralResponse(
-    message,
+    initialMessage,
     undefined,
-    components
+    componentGroups[0]
   );
 }
 
