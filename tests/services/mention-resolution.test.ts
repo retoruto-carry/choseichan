@@ -32,9 +32,27 @@ describe('Mention Resolution', () => {
         { user: { id: '555555555', username: 'TestUser3', discriminator: '0003' } }
       ];
       
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockMembers
+      // Mock all fetch calls
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/users/@me/channels')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ id: 'dm-channel-123' })
+          });
+        }
+        if (url.includes('/guilds') && url.includes('/members')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockMembers
+          });
+        }
+        if (url.includes('/messages')) {
+          return Promise.resolve({ 
+            ok: true,
+            json: async () => ({ id: 'message-sent' })
+          });
+        }
+        return Promise.resolve({ ok: false });
       });
       
       const schedule: Schedule = {
@@ -53,14 +71,6 @@ describe('Mention Resolution', () => {
         notificationSent: false,
         totalResponses: 0
       };
-      
-      // Mock channel message endpoint
-      (global.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/messages')) {
-          return Promise.resolve({ ok: true });
-        }
-        return Promise.resolve({ ok: false });
-      });
       
       await notificationService.sendDeadlineReminder(schedule, '締切まで1時間');
       
@@ -107,7 +117,21 @@ describe('Mention Resolution', () => {
         totalResponses: 0
       };
       
-      (global.fetch as any).mockResolvedValue({ ok: true });
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/users/@me/channels')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ id: 'dm-channel-123' })
+          });
+        }
+        if (url.includes('/messages')) {
+          return Promise.resolve({ 
+            ok: true,
+            json: async () => ({ id: 'message-sent' })
+          });
+        }
+        return Promise.resolve({ ok: false });
+      });
       
       await notificationService.sendDeadlineReminder(schedule, '締切まで1時間');
       
@@ -144,7 +168,21 @@ describe('Mention Resolution', () => {
         totalResponses: 0
       };
       
-      (global.fetch as any).mockResolvedValue({ ok: true });
+      (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/users/@me/channels')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ id: 'dm-channel-123' })
+          });
+        }
+        if (url.includes('/messages')) {
+          return Promise.resolve({ 
+            ok: true,
+            json: async () => ({ id: 'message-sent' })
+          });
+        }
+        return Promise.resolve({ ok: false });
+      });
       
       await notificationService.sendDeadlineReminder(schedule, '締切まで1時間');
       
@@ -178,16 +216,22 @@ describe('Mention Resolution', () => {
         { user: { id: '2000000', username: 'TargetUser', discriminator: '9999' } }
       ];
       
-      let callCount = 0;
+      let memberCallCount = 0;
       (global.fetch as any).mockImplementation((url: string) => {
+        if (url.includes('/users/@me/channels')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ id: 'dm-channel-123' })
+          });
+        }
         if (url.includes('/guilds') && url.includes('/members')) {
-          callCount++;
-          if (callCount === 1) {
+          memberCallCount++;
+          if (memberCallCount === 1) {
             return Promise.resolve({
               ok: true,
               json: async () => firstPage
             });
-          } else if (callCount === 2) {
+          } else if (memberCallCount === 2) {
             return Promise.resolve({
               ok: true,
               json: async () => secondPage
@@ -195,7 +239,10 @@ describe('Mention Resolution', () => {
           }
         }
         if (url.includes('/messages')) {
-          return Promise.resolve({ ok: true });
+          return Promise.resolve({ 
+            ok: true,
+            json: async () => ({ id: 'message-sent' })
+          });
         }
         return Promise.resolve({ ok: false });
       });
@@ -219,8 +266,8 @@ describe('Mention Resolution', () => {
       
       await notificationService.sendDeadlineReminder(schedule, '締切まで1時間');
       
-      // Should have made two requests
-      expect(callCount).toBe(3); // 2 for members + 1 for message
+      // Should have made 2 member fetch requests
+      expect(memberCallCount).toBe(2);
       
       // Check that second request included 'after' parameter
       expect(global.fetch).toHaveBeenCalledWith(
