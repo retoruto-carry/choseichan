@@ -123,17 +123,8 @@ async function handleRespondButton(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
-    // Set placeholder based on current status
-    let placeholder = '';
-    if (!existingStatus) {
-      placeholder = `未回答 - ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'yes') {
-      placeholder = `○ ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'maybe') {
-      placeholder = `△ ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'no') {
-      placeholder = `× ${formatDate(date.datetime)}`;
-    }
+    // Set placeholder to show current selection
+    const placeholder = `選択してください`;
     
     return {
       type: 1, // Action Row
@@ -143,29 +134,29 @@ async function handleRespondButton(
         placeholder,
         options: [
           {
-            label: '未回答',
+            label: `未回答 ${formatDate(date.datetime)}`,
             value: 'none',
             description: 'この日程への回答をクリア',
             default: !existingStatus
           },
           {
-            label: '参加可能',
+            label: `○ ${formatDate(date.datetime)}`,
             value: 'yes',
-            description: '○ この日程に参加できます',
+            description: '参加可能',
             emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: '調整中',
+            label: `△ ${formatDate(date.datetime)}`,
             value: 'maybe',
-            description: '△ 参加できるか調整中です',
+            description: '調整中',
             emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: '参加不可',
+            label: `× ${formatDate(date.datetime)}`,
             value: 'no',
-            description: '× この日程は参加できません',
+            description: '参加不可',
             emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
@@ -1474,17 +1465,8 @@ async function handleDateSelectMenu(
     const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
     const existingStatus = existingResponse?.status;
     
-    // Set placeholder based on current status
-    let placeholder = '';
-    if (!existingStatus) {
-      placeholder = `未回答 - ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'yes') {
-      placeholder = `○ ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'maybe') {
-      placeholder = `△ ${formatDate(date.datetime)}`;
-    } else if (existingStatus === 'no') {
-      placeholder = `× ${formatDate(date.datetime)}`;
-    }
+    // Set placeholder to show current selection
+    const placeholder = `選択してください`;
     
     return {
       type: 1,
@@ -1494,29 +1476,29 @@ async function handleDateSelectMenu(
         placeholder,
         options: [
           {
-            label: '未回答',
+            label: `未回答 ${formatDate(date.datetime)}`,
             value: 'none',
             description: 'この日程への回答をクリア',
             default: !existingStatus
           },
           {
-            label: '参加可能',
+            label: `○ ${formatDate(date.datetime)}`,
             value: 'yes',
-            description: '○ この日程に参加できます',
+            description: '参加可能',
             emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: '調整中',
+            label: `△ ${formatDate(date.datetime)}`,
             value: 'maybe',
-            description: '△ 参加できるか調整中です',
+            description: '調整中',
             emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: '参加不可',
+            label: `× ${formatDate(date.datetime)}`,
             value: 'no',
-            description: '× この日程は参加できません',
+            description: '参加不可',
             emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
