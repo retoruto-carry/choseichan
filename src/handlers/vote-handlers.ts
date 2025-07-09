@@ -46,7 +46,7 @@ export async function handleRespondButton(
     
     // Set placeholder based on current status
     const statusSymbol = existingStatus === 'yes' ? '✅' : 
-                        existingStatus === 'maybe' ? '🟡' : 
+                        existingStatus === 'maybe' ? '🔺' : 
                         existingStatus === 'no' ? '❌' : '未回答';
     const placeholder = `${statusSymbol} ${date.datetime}`;
     
@@ -68,7 +68,7 @@ export async function handleRespondButton(
             default: existingStatus === 'yes'
           },
           {
-            label: `🟡 ${date.datetime}`,
+            label: `🔺 ${date.datetime}`,
             value: 'maybe',
             default: existingStatus === 'maybe'
           },
