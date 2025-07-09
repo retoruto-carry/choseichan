@@ -8,6 +8,7 @@ import {
   createEphemeralResponse, 
   createErrorResponse
 } from '../utils/responses';
+import { updateScheduleMainMessage, saveScheduleMessageId, getMessageIdFromInteraction } from '../utils/schedule-updater';
 
 export async function handleRespondButton(
   interaction: ButtonInteraction,
@@ -326,22 +327,25 @@ export async function handleDateSelectMenu(
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
   
-  // Update the original message with new vote counts
-  const summary = await storage.getScheduleSummary(scheduleId);
-  if (summary && interaction.message?.message_reference?.message_id && env.DISCORD_APPLICATION_ID) {
-    try {
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        interaction.message.message_reference.message_id,
-        {
-          embeds: [createScheduleEmbedWithTable(summary)],
-          components: createSimpleScheduleComponents(summary.schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message:', error);
+  // Try to update the main message but don't let it block the response
+  try {
+    // Save message ID if not already saved
+    const messageId = getMessageIdFromInteraction(interaction);
+    if (messageId && !schedule.messageId) {
+      await saveScheduleMessageId(scheduleId, messageId, storage);
     }
+    
+    // Update the original message using centralized updater
+    // Run in background to avoid timeout
+    updateScheduleMainMessage(
+      scheduleId,
+      messageId,
+      interaction.token,
+      storage,
+      env
+    ).catch(error => console.error('Background update failed:', error));
+  } catch (error) {
+    console.error('Failed to initiate message update:', error);
   }
   
   // Simple acknowledgment without updating components
