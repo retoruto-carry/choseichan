@@ -200,7 +200,7 @@ describe('Button Interactions', () => {
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.embeds).toHaveLength(1);
-    expect(data.data.components).toHaveLength(0); // Buttons removed
+    expect(data.data.components).toHaveLength(1); // Reopen button is shown
   });
 
   it('should handle vote button click', async () => {

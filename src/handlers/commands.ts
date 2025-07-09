@@ -80,9 +80,9 @@ async function handleCreateCommandSimple(
           components: [{
             type: 4,
             custom_id: 'dates',
-            label: '候補日時（1行に1つずつ）',
+            label: '候補（1行に1つずつ）',
             style: 2, // Paragraph
-            placeholder: '例:\n12/25 19:00\n12/26 18:00\n12/27 19:00',
+            placeholder: '12/25 19:00\n12/26(土) 18:00〜20:00\n忘年会予定日',
             required: true,
             min_length: 1,
             max_length: 1000
@@ -95,7 +95,7 @@ async function handleCreateCommandSimple(
             custom_id: 'deadline',
             label: '回答締切（任意）',
             style: 1, // Short
-            placeholder: '例: 12/20 23:59',
+            placeholder: '12/20 23:59',
             required: false,
             max_length: 50
           }]

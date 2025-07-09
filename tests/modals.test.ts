@@ -97,7 +97,7 @@ describe('Modal Submit Interactions', () => {
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.embeds).toHaveLength(1);
       expect(data.data.embeds[0].title).toContain('忘年会');
-      expect(data.data.embeds[0].description).toContain('回答がありません'); // 表形式では初期状態で表示される
+      expect(data.data.embeds[0].description).toContain('回答者: 0人'); // 新しい形式
       expect(data.data.components).toBeDefined();
       
       // Check schedule was saved
@@ -105,7 +105,7 @@ describe('Modal Submit Interactions', () => {
       expect(schedules.keys.length).toBe(1);
     });
 
-    it('should handle invalid dates in modal submission', async () => {
+    it('should handle empty dates in modal submission', async () => {
       const interaction = {
         id: 'test_id',
         type: 5,
@@ -133,7 +133,7 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'dates',
-                value: 'invalid date\nanother invalid'
+                value: ''  // Empty dates
               }]
             },
             {
@@ -163,7 +163,7 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.content).toContain('有効な日程が入力されていません');
+      expect(data.data.content).toContain('日程候補を入力してください');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
     });
   });

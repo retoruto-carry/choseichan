@@ -3,7 +3,7 @@ import { EMBED_COLORS } from '../types/schedule';
 
 export function createHelpEmbed() {
   return {
-    title: '📚 ちょうせいくん - 使い方',
+    title: '📚 ちょうせいちゃん - 使い方',
     description: 'Discord上で簡単に日程調整ができるボットです',
     color: EMBED_COLORS.INFO,
     fields: [
@@ -44,7 +44,7 @@ export function createHelpEmbed() {
       }
     ],
     footer: {
-      text: 'ちょうせいくん v1.0.0'
+      text: 'ちょうせいちゃん v1.0.0'
     }
   };
 }

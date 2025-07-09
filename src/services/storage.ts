@@ -136,6 +136,10 @@ export class StorageService {
     
     return responses;
   }
+  
+  async deleteResponse(scheduleId: string, userId: string): Promise<void> {
+    await this.responses.delete(`response:${scheduleId}:${userId}`);
+  }
 
   // Summary operations
   async getScheduleSummary(scheduleId: string): Promise<ScheduleSummary | null> {

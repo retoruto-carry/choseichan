@@ -12,7 +12,7 @@
 
 1. [Discord Developer Portal](https://discord.com/developers/applications) にアクセス
 2. "New Application" をクリック
-3. アプリケーション名を入力（例: ちょうせいくん）
+3. アプリケーション名を入力（例: ちょうせいちゃん）
 4. 作成されたアプリケーションの情報をメモ:
    - Application ID
    - Public Key (General Information タブ)
@@ -35,7 +35,7 @@
    - Embed Links
    - Read Message History
    - Add Reactions
-4. 生成されたURLをコピーしてブラウザで開き、ボットを招待
+4. 生成された URL をコピーしてブラウザで開き、ボットを招待
 
 ### 4. 環境変数の設定
 
@@ -44,6 +44,7 @@ cp .env.example .env
 ```
 
 `.env` ファイルを編集:
+
 ```env
 DISCORD_APPLICATION_ID=<Application ID>
 DISCORD_PUBLIC_KEY=<Public Key>
@@ -62,15 +63,17 @@ wrangler kv:namespace create "RESPONSES"
 ```
 
 出力例:
+
 ```
 ✅ Successfully created KV namespace "SCHEDULES"
 id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-✅ Successfully created KV namespace "RESPONSES"  
+✅ Successfully created KV namespace "RESPONSES"
 id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
 ```
 
 `wrangler.toml` を編集して、作成された ID を設定:
+
 ```toml
 [[kv_namespaces]]
 binding = "SCHEDULES"
@@ -103,6 +106,7 @@ npm run deploy
 ```
 
 デプロイ成功後、Worker の URL が表示されます:
+
 ```
 https://discord-choseisan.<your-subdomain>.workers.dev
 ```
@@ -126,6 +130,7 @@ node scripts/register-commands.js
 ### 10. 動作確認
 
 Discord サーバーで以下を実行:
+
 ```
 /help
 ```
@@ -135,26 +140,31 @@ Discord サーバーで以下を実行:
 ## トラブルシューティング
 
 ### "Invalid Interaction" エラー
+
 - Public Key が正しく設定されているか確認
 - Interactions Endpoint URL が正しいか確認
 
 ### コマンドが表示されない
+
 - Bot が正しい権限でサーバーに招待されているか確認
 - `register-commands.js` が正常に実行されたか確認
 - Discord クライアントを再起動
 
 ### KV エラー
+
 - wrangler.toml の KV binding ID が正しいか確認
 - KV namespace が作成されているか確認
 
 ## 運用
 
 ### ログの確認
+
 ```bash
 wrangler tail
 ```
 
 ### KV データの確認
+
 ```bash
 # 全ての key を表示
 wrangler kv:key list --binding=SCHEDULES
@@ -164,6 +174,7 @@ wrangler kv:key get --binding=SCHEDULES "schedule:xxxxx"
 ```
 
 ### 更新のデプロイ
+
 ```bash
 npm run deploy
 ```

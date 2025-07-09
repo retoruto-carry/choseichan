@@ -9,7 +9,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy && npm run register",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "register": "node scripts/register-commands.js"
