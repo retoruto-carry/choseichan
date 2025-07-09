@@ -106,8 +106,9 @@
         }
         
         /* Ensure elements are visible before GSAP animation */
-        .hero-title, .hero-subtitle, .hero-buttons > *, .demo-visual {
-            opacity: 1;
+        .hero-title, .hero-subtitle, .hero-buttons, .hero-buttons > *, .demo-visual {
+            opacity: 1 !important;
+            visibility: visible !important;
         }
     </style>
 </head>
@@ -368,33 +369,43 @@
         gsap.registerPlugin(ScrollTrigger);
         
         // Wait for DOM to be ready
-        window.addEventListener('load', () => {
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set initial visibility
+            gsap.set([".hero-title", ".hero-subtitle", ".hero-buttons > *", ".demo-visual"], { 
+                visibility: "visible", 
+                opacity: 1 
+            });
+            
             // Hero section animations
             gsap.timeline()
                 .from(".hero-title", { 
                     opacity: 0, 
                     y: 30, 
                     duration: 1, 
-                    ease: "power3.out" 
+                    ease: "power3.out",
+                    clearProps: "all"
                 })
                 .from(".hero-subtitle", { 
                     opacity: 0, 
                     y: 20, 
                     duration: 0.8, 
-                    ease: "power3.out" 
+                    ease: "power3.out",
+                    clearProps: "all"
                 }, "-=0.5")
                 .from(".hero-buttons > *", { 
                     opacity: 0, 
                     y: 20, 
                     duration: 0.6, 
                     stagger: 0.2, 
-                    ease: "power3.out" 
+                    ease: "power3.out",
+                    clearProps: "all"
                 }, "-=0.3")
                 .from(".demo-visual", { 
                     opacity: 0, 
                     scale: 0.9, 
                     duration: 1, 
-                    ease: "power3.out" 
+                    ease: "power3.out",
+                    clearProps: "all"
                 }, "-=0.5");
         });
         
