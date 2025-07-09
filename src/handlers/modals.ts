@@ -833,11 +833,33 @@ async function handleUpdateDatesModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const newDates: ScheduleDate[] = dateLines.map((line) => ({
-    id: generateId(),
-    datetime: line.trim(),
-    description: undefined
-  }));
+  const newDates: ScheduleDate[] = [];
+  const invalidDates: string[] = [];
+  
+  for (const line of dateLines) {
+    const trimmedLine = line.trim();
+    const parsedDate = parseUserInputDate(trimmedLine);
+    
+    if (parsedDate) {
+      newDates.push({
+        id: generateId(),
+        datetime: parsedDate.toISOString(),
+        description: undefined
+      });
+    } else {
+      // If parsing fails, keep as-is
+      newDates.push({
+        id: generateId(),
+        datetime: trimmedLine,
+        description: undefined
+      });
+      invalidDates.push(trimmedLine);
+    }
+  }
+  
+  if (invalidDates.length > 0) {
+    console.warn('Some dates could not be parsed:', invalidDates);
+  }
 
   // 古い日程IDを保存（回答の移行用）
   const oldDateIds = schedule.dates.map(d => d.id);
@@ -854,23 +876,25 @@ async function handleUpdateDatesModal(
     await storage.deleteResponse(scheduleId, response.userId);
   }
 
-  // メインメッセージを更新
-  if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
-    const summary = await storage.getScheduleSummary(scheduleId);
-    if (summary) {
-      try {
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          interaction.message.id,
-          {
-            embeds: [createScheduleEmbedWithTable(summary)],
-            components: createSimpleScheduleComponents(summary.schedule)
-          }
-        );
-      } catch (error) {
-        console.error('Failed to update original message:', error);
-      }
+  // 更新後の情報を取得
+  const summary = await storage.getScheduleSummary(scheduleId);
+  
+  // メインメッセージを更新（schedule.messageIdがある場合）
+  if (schedule.messageId && env.DISCORD_APPLICATION_ID && summary) {
+    try {
+      // フォローアップメッセージを送信して、メインメッセージの更新を促す
+      await fetch(`https://discord.com/api/v10/webhooks/${env.DISCORD_APPLICATION_ID}/${interaction.token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: '日程が更新されました。メインメッセージを確認してください。',
+          flags: InteractionResponseFlags.EPHEMERAL
+        })
+      });
+    } catch (error) {
+      console.error('Failed to send follow-up message:', error);
     }
   }
 
@@ -919,11 +943,33 @@ async function handleAddDatesModal(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const newDates: ScheduleDate[] = dateLines.map((line) => ({
-    id: generateId(),
-    datetime: line.trim(),
-    description: undefined
-  }));
+  const newDates: ScheduleDate[] = [];
+  const invalidDates: string[] = [];
+  
+  for (const line of dateLines) {
+    const trimmedLine = line.trim();
+    const parsedDate = parseUserInputDate(trimmedLine);
+    
+    if (parsedDate) {
+      newDates.push({
+        id: generateId(),
+        datetime: parsedDate.toISOString(),
+        description: undefined
+      });
+    } else {
+      // If parsing fails, keep as-is
+      newDates.push({
+        id: generateId(),
+        datetime: trimmedLine,
+        description: undefined
+      });
+      invalidDates.push(trimmedLine);
+    }
+  }
+  
+  if (invalidDates.length > 0) {
+    console.warn('Some dates could not be parsed:', invalidDates);
+  }
 
   // Add new dates
   schedule.dates.push(...newDates);
