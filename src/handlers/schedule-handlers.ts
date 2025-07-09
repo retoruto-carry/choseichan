@@ -237,11 +237,14 @@ export async function handleDetailsButton(
     timestamp: schedule.updatedAt.toISOString()
   };
 
+  // Update the main message with detailed view
+  const components = createSimpleScheduleComponents(schedule, true); // true = showing details
+  
   return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    type: InteractionResponseType.UPDATE_MESSAGE,
     data: {
       embeds: [embed],
-      flags: InteractionResponseFlags.EPHEMERAL
+      components
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }

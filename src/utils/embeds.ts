@@ -104,7 +104,7 @@ export function createScheduleComponents(schedule: Schedule) {
         {
           type: 2,
           style: 2, // Secondary
-          label: '状況を見る',
+          label: '詳細',
           custom_id: createButtonId('details', schedule.id),
           emoji: { name: '📊' }
         },
