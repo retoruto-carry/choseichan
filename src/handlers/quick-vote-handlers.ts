@@ -54,17 +54,14 @@ export async function handleDirectVoteButton(
   
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse, guildId);
-  
-  // Small delay to ensure KV write propagation
-  await new Promise(resolve => setTimeout(resolve, 100));
 
   // Save message ID if not already saved
   if (interaction.message?.id && !schedule.messageId) {
     await saveScheduleMessageId(scheduleId, interaction.message.id, storage, guildId);
   }
 
-  // Update the message with fresh data
-  const summary = await storage.getScheduleSummary(scheduleId, guildId);
+  // Update the message with optimistic update
+  const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
   if (summary && interaction.message?.id && env.DISCORD_APPLICATION_ID) {
     try {
       await updateOriginalMessage(

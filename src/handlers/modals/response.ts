@@ -57,10 +57,6 @@ export async function handleInteractiveResponseModal(
 
   // Save response and wait for it to complete
   await storage.saveResponse(userResponse, guildId);
-  
-  // Wait a moment to ensure KV write is propagated
-  // This helps with eventual consistency in distributed KV storage
-  await new Promise(resolve => setTimeout(resolve, 100));
 
   // Create confirmation embed
   const embed = {
@@ -80,11 +76,11 @@ export async function handleInteractiveResponseModal(
     }
   };
 
-  // Update the original message after ensuring data is saved
+  // Update the original message with optimistic update
   if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
     try {
-      // Get fresh summary after save is complete
-      const summary = await storage.getScheduleSummary(scheduleId, guildId);
+      // Get summary with optimistic update to avoid KV propagation delay
+      const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
       if (summary) {
         await updateOriginalMessage(
           env.DISCORD_APPLICATION_ID,

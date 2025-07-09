@@ -181,26 +181,37 @@ export async function handleDateSelectMenu(
     
     userResponse.updatedAt = new Date();
     
-    // Save response first and ensure it completes
-    await storage.saveResponse(userResponse, guildId);
-    
-    // Small delay to ensure KV write propagation
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Get schedule after save is complete
-    const schedule = await storage.getSchedule(scheduleId, guildId);
+    // Save response and get schedule in parallel for efficiency
+    const [schedule] = await Promise.all([
+      storage.getSchedule(scheduleId, guildId),
+      storage.saveResponse(userResponse, guildId)
+    ]);
     
     // Only proceed with update if we have the necessary data
     if (schedule?.messageId) {
-      // Create the update promise
-      const updatePromise = updateScheduleMainMessage(
-        scheduleId,
-        schedule.messageId,
-        interaction.token,
-        storage,
-        env,
-        guildId
-      ).catch(error => console.error('Failed to update main message:', error));
+      // Create the update promise with optimistic update
+      const updatePromise = (async () => {
+        try {
+          // Get summary with optimistic update to avoid KV propagation delay
+          const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
+          if (summary && env.DISCORD_APPLICATION_ID) {
+            const { updateOriginalMessage } = await import('../utils/discord');
+            const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import('../utils/embeds');
+            
+            await updateOriginalMessage(
+              env.DISCORD_APPLICATION_ID,
+              interaction.token,
+              schedule.messageId,
+              {
+                embeds: [createScheduleEmbedWithTable(summary, false)],
+                components: createSimpleScheduleComponents(summary.schedule, false)
+              }
+            );
+          }
+        } catch (error) {
+          console.error('Failed to update main message:', error);
+        }
+      })();
       
       // Use waitUntil if available to ensure the update completes
       if (env.ctx && typeof env.ctx.waitUntil === 'function') {

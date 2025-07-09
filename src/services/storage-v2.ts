@@ -187,4 +187,65 @@ export class StorageServiceV2 {
       bestDateId
     };
   }
+
+  /**
+   * Get schedule summary with optimistic update for a specific user response
+   * This is used to immediately reflect changes without waiting for KV propagation
+   */
+  async getScheduleSummaryWithOptimisticUpdate(
+    scheduleId: string, 
+    guildId: string,
+    optimisticResponse: Response
+  ): Promise<ScheduleSummary | null> {
+    const schedule = await this.getSchedule(scheduleId, guildId);
+    if (!schedule) return null;
+    
+    const userResponses = await this.listResponsesBySchedule(scheduleId, guildId);
+    
+    // Apply optimistic update
+    const existingIndex = userResponses.findIndex(r => r.userId === optimisticResponse.userId);
+    if (existingIndex >= 0) {
+      userResponses[existingIndex] = optimisticResponse;
+    } else {
+      userResponses.push(optimisticResponse);
+    }
+    
+    // Initialize response counts
+    const responseCounts: { [dateId: string]: { yes: number; maybe: number; no: number; total: number } } = {};
+    
+    for (const date of schedule.dates) {
+      responseCounts[date.id] = { yes: 0, maybe: 0, no: 0, total: 0 };
+    }
+    
+    // Count responses with optimistic data
+    for (const userResponse of userResponses) {
+      for (const dateResponse of userResponse.responses) {
+        if (responseCounts[dateResponse.dateId]) {
+          responseCounts[dateResponse.dateId][dateResponse.status]++;
+          responseCounts[dateResponse.dateId].total++;
+        }
+      }
+    }
+    
+    // Find best date
+    let bestDateId: string | undefined = undefined;
+    let maxScore = -1;
+    
+    for (const date of schedule.dates) {
+      const count = responseCounts[date.id];
+      const score = count.yes * 2 + count.maybe;
+      
+      if (score > maxScore) {
+        maxScore = score;
+        bestDateId = date.id;
+      }
+    }
+    
+    return {
+      schedule,
+      userResponses,
+      responseCounts,
+      bestDateId
+    };
+  }
 }
