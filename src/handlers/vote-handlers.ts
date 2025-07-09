@@ -8,7 +8,7 @@ import {
   createEphemeralResponse, 
   createErrorResponse
 } from '../utils/responses';
-import { updateScheduleMainMessage, saveScheduleMessageId, getMessageIdFromInteraction } from '../utils/schedule-updater';
+import { updateScheduleMainMessage, saveScheduleMessageId } from '../utils/schedule-updater';
 
 export async function handleRespondButton(
   interaction: ButtonInteraction,
@@ -25,6 +25,11 @@ export async function handleRespondButton(
 
   if (schedule.status === 'closed') {
     return createErrorResponse('この日程調整は締め切られています。');
+  }
+
+  // Save message ID if not already saved (important for select menu updates later)
+  if (interaction.message?.id && !schedule.messageId) {
+    await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
   }
 
   // Get current user's responses
@@ -329,21 +334,24 @@ export async function handleDateSelectMenu(
   
   // Try to update the main message but don't let it block the response
   try {
-    // Save message ID if not already saved
-    const messageId = getMessageIdFromInteraction(interaction);
-    if (messageId && !schedule.messageId) {
-      await saveScheduleMessageId(scheduleId, messageId, storage);
-    }
+    // For select menus from ephemeral messages, we MUST use the stored message ID
+    // because ephemeral messages don't have a message_reference back to the original message
+    // and the interaction.message.id would be the ephemeral message ID, not the main message
+    const messageId = schedule.messageId;
     
-    // Update the original message using centralized updater
-    // Run in background to avoid timeout
-    updateScheduleMainMessage(
-      scheduleId,
-      messageId,
-      interaction.token,
-      storage,
-      env
-    ).catch(error => console.error('Background update failed:', error));
+    if (!messageId) {
+      console.error('No stored message ID available for updating the main message');
+    } else {
+      // Update the original message using centralized updater
+      // Run in background to avoid timeout
+      updateScheduleMainMessage(
+        scheduleId,
+        messageId,
+        interaction.token,
+        storage,
+        env
+      ).catch(error => console.error('Background update failed:', error));
+    }
   } catch (error) {
     console.error('Failed to initiate message update:', error);
   }
