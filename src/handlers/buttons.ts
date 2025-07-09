@@ -134,29 +134,29 @@ async function handleRespondButton(
         placeholder,
         options: [
           {
-            label: `未回答 ${formatDate(date.datetime)}`,
+            label: '未回答',
             value: 'none',
-            description: 'この日程への回答をクリア',
+            description: formatDate(date.datetime),
             default: !existingStatus
           },
           {
-            label: `○ ${formatDate(date.datetime)}`,
+            label: '○ 参加可能',
             value: 'yes',
-            description: '参加可能',
+            description: formatDate(date.datetime),
             emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: `△ ${formatDate(date.datetime)}`,
+            label: '△ 調整中',
             value: 'maybe',
-            description: '調整中',
+            description: formatDate(date.datetime),
             emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: `× ${formatDate(date.datetime)}`,
+            label: '× 参加不可',
             value: 'no',
-            description: '参加不可',
+            description: formatDate(date.datetime),
             emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
@@ -710,35 +710,6 @@ async function handleReopenButton(
       components
     }
   }), { headers: { 'Content-Type': 'application/json' } });
-}
-
-function createClosedScheduleEmbed(schedule: import('../types/schedule').Schedule) {
-  return {
-    title: `📅 ${schedule.title}`,
-    description: schedule.description || '日程調整は締め切られました',
-    color: EMBED_COLORS.CLOSED,
-    fields: [
-      {
-        name: '状態',
-        value: '🔴 締切',
-        inline: true
-      },
-      {
-        name: '作成者',
-        value: schedule.createdBy.username,
-        inline: true
-      },
-      {
-        name: 'ID',
-        value: schedule.id,
-        inline: true
-      }
-    ],
-    footer: {
-      text: '締め切られた日程調整です'
-    },
-    timestamp: schedule.updatedAt.toISOString()
-  };
 }
 
 async function handleDeleteButton(
@@ -1476,29 +1447,29 @@ async function handleDateSelectMenu(
         placeholder,
         options: [
           {
-            label: `未回答 ${formatDate(date.datetime)}`,
+            label: '未回答',
             value: 'none',
-            description: 'この日程への回答をクリア',
+            description: formatDate(date.datetime),
             default: !existingStatus
           },
           {
-            label: `○ ${formatDate(date.datetime)}`,
+            label: '○ 参加可能',
             value: 'yes',
-            description: '参加可能',
+            description: formatDate(date.datetime),
             emoji: { name: '⭕' },
             default: existingStatus === 'yes'
           },
           {
-            label: `△ ${formatDate(date.datetime)}`,
+            label: '△ 調整中',
             value: 'maybe',
-            description: '調整中',
+            description: formatDate(date.datetime),
             emoji: { name: '🔺' },
             default: existingStatus === 'maybe'
           },
           {
-            label: `× ${formatDate(date.datetime)}`,
+            label: '× 参加不可',
             value: 'no',
-            description: '参加不可',
+            description: formatDate(date.datetime),
             emoji: { name: '❌' },
             default: existingStatus === 'no'
           }
@@ -1507,26 +1478,7 @@ async function handleDateSelectMenu(
     };
   });
   
-  // Update main message if possible
-  const mainMessageId = interaction.message?.message_reference?.message_id;
-  if (mainMessageId && env.DISCORD_APPLICATION_ID) {
-    const summary = await storage.getScheduleSummary(scheduleId);
-    if (summary) {
-      try {
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          mainMessageId,
-          {
-            embeds: [createScheduleEmbedWithTable(summary)],
-            components: createSimpleScheduleComponents(schedule)
-          }
-        );
-      } catch (error) {
-        console.error('Failed to update original message:', error);
-      }
-    }
-  }
+  // メインメッセージの更新は完了ボタンを押した時に行う
   
   const date = schedule.dates.find(d => d.id === dateId);
   const statusText = selectedValue === 'none' ? '未回答' : 
