@@ -226,33 +226,72 @@
     <!-- How it works -->
     <section id="how-it-works" class="relative z-10 py-20 px-4">
         <div class="max-w-4xl mx-auto">
-            <h3 class="text-3xl font-bold text-center mb-12">使い方はとってもシンプル</h3>
+            <div class="text-center mb-16">
+                <h3 class="text-4xl font-bold mb-4">
+                    使い方は
+                    <span class="relative inline-block mx-2">
+                        <span class="absolute -inset-1 bg-discord-yellow blur opacity-50"></span>
+                        <span class="relative bg-discord-yellow text-gray-900 px-4 py-1 rounded-lg inline-block font-black transform -rotate-1">
+                            とってもシンプル
+                        </span>
+                    </span>
+                </h3>
+                <p class="text-gray-400 mt-4">たった3ステップで日程調整完了！</p>
+            </div>
             
-            <div class="space-y-8">
-                <div class="flex items-start space-x-4">
-                    <div class="bg-discord-blurple text-white w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0">1</div>
-                    <div>
-                        <h4 class="text-xl font-bold mb-2">/choseichan create で作成</h4>
-                        <p class="text-gray-400">コマンドを打つとフォームが出てくるよ。タイトルと日程候補を入力しよう</p>
-                        <div class="bg-gray-800 rounded-lg p-3 mt-2 inline-block">
-                            <code class="text-discord-green">/choseichan create</code>
+            <div class="space-y-12">
+                <div class="flex items-start gap-6 group">
+                    <div class="relative flex-shrink-0">
+                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
+                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">1</div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
+                            <span>/choseichan create</span>
+                            <span class="text-discord-yellow">で作成</span>
+                            <span class="text-2xl">✨</span>
+                        </h4>
+                        <p class="text-gray-300 mb-3">コマンドを打つとフォームが出てくるよ。タイトルと日程候補を入力しよう</p>
+                        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-4 inline-block backdrop-blur">
+                            <code class="text-discord-green font-mono">/choseichan create</code>
                         </div>
                     </div>
                 </div>
                 
-                <div class="flex items-start space-x-4">
-                    <div class="bg-discord-blurple text-white w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0">2</div>
-                    <div>
-                        <h4 class="text-xl font-bold mb-2">みんなが「回答する」ボタンをクリック</h4>
-                        <p class="text-gray-400">各日程に○△×で回答。迷ったときはコメントも書けるよ</p>
+                <div class="flex items-start gap-6 group">
+                    <div class="relative flex-shrink-0">
+                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
+                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">2</div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
+                            みんなが<span class="bg-discord-green/20 text-discord-green px-3 py-1 rounded-lg">「回答する」</span>ボタンをクリック
+                            <span class="text-2xl">🙋</span>
+                        </h4>
+                        <p class="text-gray-300 mb-3">各日程に○△×で回答。シンプルで分かりやすい！</p>
+                        <div class="flex gap-3">
+                            <span class="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg font-bold">○ いける！</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-lg font-bold">△ 微妙...</span>
+                            <span class="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg font-bold">× 無理！</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="flex items-start space-x-4">
-                    <div class="bg-discord-blurple text-white w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0">3</div>
-                    <div>
-                        <h4 class="text-xl font-bold mb-2">結果をチェック！</h4>
-                        <p class="text-gray-400">「集計を見る」ボタンでいつでも確認。一番人気の日程には⭐がつくよ</p>
+                <div class="flex items-start gap-6 group">
+                    <div class="relative flex-shrink-0">
+                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
+                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">3</div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
+                            結果をチェック！
+                            <span class="text-2xl">📊</span>
+                        </h4>
+                        <p class="text-gray-300 mb-3">「詳細」ボタンでいつでも確認。一番人気の日程には⭐がつくよ</p>
+                        <div class="bg-gradient-to-r from-discord-yellow/10 to-transparent border-l-4 border-discord-yellow rounded-r-lg p-4">
+                            <p class="text-discord-yellow font-bold">💡 ヒント</p>
+                            <p class="text-gray-400 text-sm mt-1">最新の集計を見たいときは「🔄 更新」ボタンをクリック！</p>
+                        </div>
                     </div>
                 </div>
             </div>
