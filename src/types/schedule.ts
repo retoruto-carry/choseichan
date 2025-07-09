@@ -65,7 +65,7 @@ export const BUTTON_ID_FORMATS = {
 // Emoji mappings
 export const STATUS_EMOJI = {
   yes: '✅',
-  maybe: '🔺',
+  maybe: '❔',
   no: '❌'
 } as const;
 

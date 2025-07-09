@@ -30,7 +30,7 @@ describe('Embed Display', () => {
 
   it('should display correct status emoji', () => {
     expect(STATUS_EMOJI.yes).toBe('✅');
-    expect(STATUS_EMOJI.maybe).toBe('🔺');
+    expect(STATUS_EMOJI.maybe).toBe('❔');
     expect(STATUS_EMOJI.no).toBe('❌');
   });
 
