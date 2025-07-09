@@ -47,14 +47,22 @@ Discord 調整ちゃんは、Cloudflare Workers 上で動作するサーバー�
 #### メインハンドラー
 
 - **commands.ts**: スラッシュコマンド処理
-- **buttons.ts**: ボタンインタラクション処理（ディスパッチャー）
-- **modals.ts**: モーダルサブミット処理
+- **buttons.ts**: ボタンインタラクション処理（ルーティングのみ）
+- **select-menu.ts**: セレクトメニューインタラクション処理
+
+#### モーダルハンドラー (`src/handlers/modals/`)
+
+- **index.ts**: モーダルサブミットのルーティング
+- **create-schedule.ts**: スケジュール作成モーダル
+- **response.ts**: 回答モーダル（インタラクティブ、一括）
+- **edit.ts**: 編集モーダル（タイトル、日程、締切）
+- **comment.ts**: コメントモーダル
 
 #### 機能別ハンドラー
 
-- **vote-handlers.ts**: 投票関連（respond, response, vote, dateselect）
+- **vote-handlers.ts**: 投票関連（respond, response, vote）
 - **schedule-handlers.ts**: スケジュール管理（edit, close, reopen, delete, status, details）
-- **edit-handlers.ts**: 編集機能（edit_info, update_dates, add_dates, remove_dates）
+- **edit-handlers.ts**: 編集機能（edit_info, update_dates, add_dates, remove_dates, edit_deadline）
 - **export-handlers.ts**: エクスポート機能（export, show_all）
 - **comment-handlers.ts**: コメント機能（add_comment, comment）
 - **quick-vote-handlers.ts**: ダイレクト投票機能（direct_vote）

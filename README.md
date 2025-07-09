@@ -158,26 +158,41 @@ npm run deploy
 
 ```
 src/
-├── handlers/       # コマンドやインタラクションのハンドラー
-│   ├── buttons.ts  # ボタンインタラクションのメインハンドラー
-│   ├── commands.ts # スラッシュコマンドハンドラー
-│   ├── modals.ts   # モーダルサブミットハンドラー
-│   └── *-handlers.ts # 機能別ハンドラー
-├── services/       # ビジネスロジック
-│   └── storage.ts  # KVストレージサービス
-├── types/          # TypeScript型定義
-│   ├── discord.ts  # Discord API型定義
-│   └── schedule.ts # スケジュール関連型定義
-├── utils/          # ユーティリティ関数
-│   ├── embeds.ts   # Discord Embed作成
-│   ├── date.ts     # 日付処理
-│   └── discord.ts  # Discord API呼び出し
-├── middleware/     # ミドルウェア
-│   └── verify.ts   # リクエスト検証
-└── index.ts        # エントリーポイント
+├── handlers/          # コマンドやインタラクションのハンドラー
+│   ├── modals/        # モーダルハンドラー
+│   │   ├── index.ts   # モーダルのルーティング
+│   │   ├── create-schedule.ts # スケジュール作成
+│   │   ├── response.ts # 回答モーダル
+│   │   ├── edit.ts    # 編集モーダル
+│   │   └── comment.ts # コメントモーダル
+│   ├── buttons.ts     # ボタンインタラクションのルーティング
+│   ├── commands.ts    # スラッシュコマンドハンドラー
+│   ├── select-menu.ts # セレクトメニューハンドラー
+│   ├── vote-handlers.ts      # 投票関連
+│   ├── schedule-handlers.ts  # スケジュール管理
+│   ├── edit-handlers.ts      # 編集機能
+│   ├── export-handlers.ts    # エクスポート機能
+│   ├── comment-handlers.ts   # コメント機能
+│   └── quick-vote-handlers.ts # ダイレクト投票
+├── services/          # ビジネスロジック
+│   ├── storage.ts     # KVストレージサービス
+│   └── notification.ts # 通知サービス
+├── types/             # TypeScript型定義
+│   ├── discord.ts     # Discord API型定義
+│   └── schedule.ts    # スケジュール関連型定義
+├── utils/             # ユーティリティ関数
+│   ├── embeds.ts      # Discord Embed作成
+│   ├── date.ts        # 日付処理
+│   ├── discord.ts     # Discord API呼び出し
+│   ├── id.ts          # ID生成・パース
+│   ├── responses.ts   # レスポンス作成ヘルパー
+│   └── schedule-updater.ts # スケジュール更新
+├── middleware/        # ミドルウェア
+│   └── verify.ts      # リクエスト検証
+└── index.ts           # エントリーポイント
 
-tests/              # テストファイル
-scripts/            # ユーティリティスクリプト
+tests/                 # テストファイル
+scripts/               # ユーティリティスクリプト
 └── register-commands.js # コマンド登録スクリプト
 ```
 
