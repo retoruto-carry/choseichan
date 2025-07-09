@@ -163,7 +163,7 @@
             
             <p class="hero-subtitle text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
                 Discord内で完結する日程調整Bot。<br>
-                面倂な外部サイト登録は一切不要！<br>
+                面倒な外部サイト登録は一切不要！<br>
                 いつものDiscordで、みんなで楽しく予定を決めよう
             </p>
             
@@ -371,42 +371,42 @@
         // Wait for DOM to be ready
         window.addEventListener('DOMContentLoaded', () => {
             // Set initial visibility
-            gsap.set([".hero-title", ".hero-subtitle", ".hero-buttons > *", ".demo-visual"], { 
+            gsap.set([".hero-title", ".hero-subtitle", ".hero-buttons", ".hero-buttons > *", ".demo-visual"], { 
                 visibility: "visible", 
-                opacity: 1 
+                opacity: 1,
+                force3D: true
             });
             
-            // Hero section animations
-            gsap.timeline()
-                .from(".hero-title", { 
-                    opacity: 0, 
-                    y: 30, 
-                    duration: 1, 
-                    ease: "power3.out",
-                    clearProps: "all"
-                })
-                .from(".hero-subtitle", { 
-                    opacity: 0, 
-                    y: 20, 
-                    duration: 0.8, 
-                    ease: "power3.out",
-                    clearProps: "all"
-                }, "-=0.5")
-                .from(".hero-buttons > *", { 
-                    opacity: 0, 
-                    y: 20, 
-                    duration: 0.6, 
-                    stagger: 0.2, 
-                    ease: "power3.out",
-                    clearProps: "all"
-                }, "-=0.3")
-                .from(".demo-visual", { 
-                    opacity: 0, 
-                    scale: 0.9, 
-                    duration: 1, 
-                    ease: "power3.out",
-                    clearProps: "all"
-                }, "-=0.5");
+            // Hero section animations with better timing
+            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+            
+            tl.from(".hero-title:first-child", { 
+                opacity: 0, 
+                y: 20, 
+                duration: 0.8
+            })
+            .from(".hero-title h2", { 
+                opacity: 0, 
+                y: 30, 
+                duration: 1
+            }, "-=0.4")
+            .from(".hero-subtitle", { 
+                opacity: 0, 
+                y: 20, 
+                duration: 0.8
+            }, "-=0.6")
+            .from(".hero-buttons > *", { 
+                opacity: 0, 
+                y: 20, 
+                duration: 0.6, 
+                stagger: 0.15
+            }, "-=0.4")
+            .from(".demo-visual", { 
+                opacity: 0, 
+                y: 20,
+                scale: 0.95, 
+                duration: 0.8
+            }, "-=0.3");
         });
         
         // Feature cards fade in on scroll
