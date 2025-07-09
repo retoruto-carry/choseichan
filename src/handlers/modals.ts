@@ -897,24 +897,21 @@ async function handleEditDeadlineModal(
       }), { headers: { 'Content-Type': 'application/json' } });
     }
     
-    // Check if deadline is in the past
-    if (newDeadline < new Date()) {
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: '締切日時は現在より未来の日時を指定してください。',
-          flags: InteractionResponseFlags.EPHEMERAL
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
-    }
   }
 
   // Update schedule
   schedule.deadline = newDeadline;
   
-  // Reopen schedule if it was closed and deadline is extended
-  if (schedule.status === 'closed' && newDeadline && newDeadline > new Date()) {
+  // Update status based on deadline
+  if (!newDeadline) {
+    // No deadline = always open
     schedule.status = 'open';
+  } else if (newDeadline > new Date()) {
+    // Future deadline = open
+    schedule.status = 'open';
+  } else {
+    // Past deadline = closed
+    schedule.status = 'closed';
   }
   
   schedule.updatedAt = new Date();
@@ -936,7 +933,16 @@ async function handleEditDeadlineModal(
   }
 
   const deadlineText = newDeadline ? formatDate(newDeadline.toISOString()) : '無期限';
-  const statusText = schedule.status === 'open' ? '受付を再開しました' : '';
+  
+  // Determine status message
+  let statusText = '';
+  if (!newDeadline && schedule.status === 'open') {
+    statusText = ' 受付中です。';
+  } else if (newDeadline && newDeadline > new Date() && schedule.status === 'open') {
+    statusText = ' 受付中です。';
+  } else if (newDeadline && newDeadline <= new Date() && schedule.status === 'closed') {
+    statusText = ' 締切済みです。';
+  }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
