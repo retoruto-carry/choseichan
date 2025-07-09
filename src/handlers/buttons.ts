@@ -80,8 +80,6 @@ export async function handleButtonInteraction(
       return handleCommentButton(interaction, storage, params);
     case 'show_all':
       return handleShowAllButton(interaction, storage, params);
-    case 'complete_vote':
-      return handleCompleteVoteButton(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -163,22 +161,7 @@ async function handleRespondButton(
     };
   });
 
-  // Add complete button
-  const componentsWithButton = [
-    ...components,
-    {
-      type: 1,
-      components: [{
-        type: 2,
-        style: 3, // Success
-        label: '回答を完了',
-        custom_id: `complete_vote:${scheduleId}`,
-        emoji: { name: '✅' }
-      }]
-    }
-  ];
-  
-  const message = `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n回答が完了したら「回答を完了」ボタンを押してください。`;
+  const message = `**${schedule.title}** の回答を選択してください:\n\n各日程のドロップダウンから選択してください。\n選択するとすぐに反映されます。`;
 
   // If there are more than 4 dates, schedule follow-up messages after response
   if (schedule.dates.length > 4) {
@@ -191,7 +174,7 @@ async function handleRespondButton(
   return createEphemeralResponse(
     message,
     undefined,
-    componentsWithButton
+    components
   );
 }
 
@@ -1602,85 +1585,14 @@ async function handleDateSelectMenu(
     selectedValue === 'yes' ? '○ 参加可能' :
     selectedValue === 'maybe' ? '△ 調整中' : '× 参加不可';
   
-  // Add complete button at the end
-  const componentsWithComplete = [
-    ...components,
-    {
-      type: 1,
-      components: [{
-        type: 2,
-        style: 3, // Success
-        label: '回答を完了',
-        custom_id: `complete_vote:${scheduleId}`,
-        emoji: { name: '✅' }
-      }]
-    }
-  ];
-  
   return new Response(JSON.stringify({
     type: InteractionResponseType.UPDATE_MESSAGE,
     data: {
-      content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? formatDate(date.datetime) : '日程'} を ${statusText} に更新しました\n\n回答が完了したら「回答を完了」ボタンを押してください。`,
-      components: componentsWithComplete.slice(0, 5) // Discord limit
+      content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? date.datetime : '日程'} を ${statusText} に更新しました`,
+      components: components.slice(0, 5) // Discord limit
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
 
-async function handleCompleteVoteButton(
-  interaction: ButtonInteraction,
-  storage: StorageService,
-  params: string[],
-  env: Env
-): Promise<Response> {
-  const [scheduleId] = params;
-  const userId = interaction.member?.user.id || interaction.user?.id || '';
-  
-  // Get user's response summary
-  const userResponse = await storage.getResponse(scheduleId, userId);
-  const schedule = await storage.getSchedule(scheduleId);
-  
-  if (!schedule) {
-    return createUpdateResponse('日程調整が見つかりません。');
-  }
-  
-  let responsesSummary = '';
-  if (userResponse && userResponse.responses.length > 0) {
-    responsesSummary = '\n\n**あなたの回答:**\n';
-    for (const date of schedule.dates) {
-      const response = userResponse.responses.find(r => r.dateId === date.id);
-      if (response) {
-        const emoji = STATUS_EMOJI[response.status];
-        responsesSummary += `${emoji} ${formatDate(date.datetime)}\n`;
-      }
-    }
-  } else {
-    responsesSummary = '\n\n回答がありません。';
-  }
-  
-  // メインメッセージを更新するため、元のメッセージを更新
-  if (env.DISCORD_APPLICATION_ID && interaction.message?.message_reference?.message_id) {
-    const summary = await storage.getScheduleSummary(scheduleId);
-    if (summary) {
-      try {
-        const originalMessageId = interaction.message.message_reference.message_id;
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          originalMessageId,
-          {
-            embeds: [createScheduleEmbedWithTable(summary)],
-            components: createSimpleScheduleComponents(summary.schedule)
-          }
-        );
-      } catch (error) {
-        console.error('Failed to update original message:', error);
-      }
-    }
-  }
-  
-  return createEphemeralResponse(
-    `✅ **${schedule.title}** の回答を完了しました！${responsesSummary}\n\n回答を変更する場合は、もう一度「回答する」ボタンを押してください。`
-  );
-}
 
 
