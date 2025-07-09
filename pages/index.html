@@ -38,6 +38,33 @@
         }
         .wiggle { animation: wiggle 0.5s ease-in-out infinite; }
         
+        /* Emoji rain animation */
+        @keyframes emojifall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .emoji-rain {
+            position: fixed;
+            top: -100px;
+            animation: emojifall linear infinite;
+            pointer-events: none;
+            z-index: 1;
+            font-size: 24px;
+        }
+        
         /* Blob backgrounds */
         .blob {
             border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
@@ -76,6 +103,36 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white overflow-x-hidden">
+    <!-- Emoji Rain -->
+    <div id="emoji-rain-container"></div>
+    <script>
+        // Create emoji rain effect
+        const emojis = ['📅', '✨', '🎉', '🎊', '⭐', '💫', '🌟'];
+        const container = document.getElementById('emoji-rain-container');
+        
+        function createEmoji() {
+            const emoji = document.createElement('div');
+            emoji.className = 'emoji-rain';
+            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 100 + '%';
+            emoji.style.animationDuration = (Math.random() * 3 + 5) + 's';
+            emoji.style.animationDelay = Math.random() * 2 + 's';
+            container.appendChild(emoji);
+            
+            // Remove emoji after animation
+            setTimeout(() => {
+                emoji.remove();
+            }, 8000);
+        }
+        
+        // Create initial emojis
+        for (let i = 0; i < 10; i++) {
+            setTimeout(createEmoji, i * 300);
+        }
+        
+        // Continue creating emojis
+        setInterval(createEmoji, 2000);
+    </script>
     <!-- Animated background -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-40 -left-40 w-80 h-80 blob discord-blurple"></div>
@@ -91,7 +148,7 @@
                     <span class="text-4xl bounce">📅</span>
                     <h1 class="text-2xl font-bold">調整ちゃん</h1>
                 </div>
-                <a href="#install" class="discord-button hidden sm:inline-flex items-center">
+                <a href="#install" class="hidden sm:inline-flex items-center bg-discord-blurple hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-200 transform hover:scale-105 shadow-lg">
                     <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
                     </svg>
@@ -115,8 +172,8 @@
                 <span class="inline-flex items-center gap-3 mt-4">
                     <span class="text-4xl">📅</span>
                     <span class="relative inline-block">
-                        <span class="absolute -inset-1 bg-discord-yellow blur-lg opacity-70"></span>
-                        <span class="relative inline-block font-black text-5xl md:text-6xl transform -rotate-1 hover:rotate-1 transition-all duration-300 shadow-2xl" style="background-color: #fee75c; color: #111827; padding: 1rem 2rem; border-radius: 1rem; border: 4px solid rgba(255,255,255,0.2);">
+                        <span class="absolute -inset-1 bg-yellow-400 blur-lg opacity-70"></span>
+                        <span class="relative inline-block font-black text-5xl md:text-6xl transform -rotate-1 hover:rotate-1 transition-all duration-300" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #111827; padding: 1rem 2rem; border-radius: 1rem; border: 4px solid rgba(255,255,255,0.4); box-shadow: 0 12px 40px rgba(255,215,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);">
                             サクッと調整
                         </span>
                     </span>
@@ -131,10 +188,11 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <a href="#install" class="discord-button text-lg">
-                    今すぐ使ってみる →
+                <a href="#install" class="bg-discord-blurple hover:bg-purple-600 text-white font-bold text-lg px-10 py-5 rounded-full transition-all duration-200 transform hover:scale-105 shadow-xl hover:shadow-2xl inline-flex items-center justify-center">
+                    <span>今すぐ使ってみる</span>
+                    <span class="ml-2">→</span>
                 </a>
-                <a href="#how-it-works" class="bg-gray-800 hover:bg-gray-700 text-white font-medium px-8 py-4 rounded-full transition">
+                <a href="#how-it-works" class="bg-gray-800 hover:bg-gray-700 text-white font-medium px-8 py-4 rounded-full transition inline-flex items-center justify-center">
                     使い方を見る
                 </a>
             </div>
@@ -207,7 +265,7 @@
                 </div>
             </div>
             
-            <div class="grid md:grid-cols-2 gap-6 mt-6">
+            <div class="grid md:grid-cols-3 gap-6 mt-6">
                 <div class="feature-card p-6 rounded-2xl text-center group">
                     <div class="text-5xl mb-4 transform group-hover:scale-110 transition">⏰</div>
                     <h4 class="text-xl font-bold mb-2">締切リマインダー</h4>
@@ -218,6 +276,12 @@
                     <div class="text-5xl mb-4 transform group-hover:scale-110 transition">🎯</div>
                     <h4 class="text-xl font-bold mb-2">Discord内で完結</h4>
                     <p class="text-gray-400">外部サイト不要。いつものDiscordだけで日程調整できる</p>
+                </div>
+                
+                <div class="feature-card p-6 rounded-2xl text-center group">
+                    <div class="text-5xl mb-4 transform group-hover:scale-110 transition">📸</div>
+                    <h4 class="text-xl font-bold mb-2">スクショで質問OK</h4>
+                    <p class="text-gray-400">画像をアップロードするだけで日程候補を自動認識！</p>
                 </div>
             </div>
         </div>
@@ -230,8 +294,8 @@
                 <h3 class="text-4xl font-bold mb-4">
                     使い方は
                     <span class="relative inline-block mx-2">
-                        <span class="absolute -inset-1 bg-discord-yellow blur opacity-50"></span>
-                        <span class="relative bg-discord-yellow text-gray-900 px-4 py-1 rounded-lg inline-block font-black transform -rotate-1">
+                        <span class="absolute -inset-1 blur opacity-50" style="background-color: #ffd700;"></span>
+                        <span class="relative text-gray-900 px-4 py-1 rounded-lg inline-block font-black transform -rotate-1" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); box-shadow: 0 4px 16px rgba(255,215,0,0.3);">
                             とってもシンプル
                         </span>
                     </span>
@@ -242,13 +306,12 @@
             <div class="space-y-12">
                 <div class="flex items-start gap-6 group">
                     <div class="relative flex-shrink-0">
-                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
-                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">1</div>
+                        <div class="absolute -inset-1 blur opacity-0 group-hover:opacity-70 transition-opacity" style="background-color: #ffd700;"></div>
+                        <div class="relative text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); box-shadow: 0 4px 12px rgba(255,215,0,0.3);">1</div>
                     </div>
                     <div class="flex-1">
                         <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
-                            <span>/choseichan create</span>
-                            <span class="text-discord-yellow">で作成</span>
+                            <span>コマンドで予定を作成</span>
                             <span class="text-2xl">✨</span>
                         </h4>
                         <p class="text-gray-300 mb-3">コマンドを打つとフォームが出てくるよ。タイトルと日程候補を入力しよう</p>
@@ -260,8 +323,8 @@
                 
                 <div class="flex items-start gap-6 group">
                     <div class="relative flex-shrink-0">
-                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
-                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">2</div>
+                        <div class="absolute -inset-1 blur opacity-0 group-hover:opacity-70 transition-opacity" style="background-color: #ffd700;"></div>
+                        <div class="relative text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); box-shadow: 0 4px 12px rgba(255,215,0,0.3);">2</div>
                     </div>
                     <div class="flex-1">
                         <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
@@ -279,8 +342,8 @@
                 
                 <div class="flex items-start gap-6 group">
                     <div class="relative flex-shrink-0">
-                        <div class="absolute -inset-1 bg-discord-yellow blur opacity-0 group-hover:opacity-70 transition-opacity"></div>
-                        <div class="relative bg-discord-yellow text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform">3</div>
+                        <div class="absolute -inset-1 blur opacity-0 group-hover:opacity-70 transition-opacity" style="background-color: #ffd700;"></div>
+                        <div class="relative text-gray-900 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform group-hover:scale-110 transition-transform" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); box-shadow: 0 4px 12px rgba(255,215,0,0.3);">3</div>
                     </div>
                     <div class="flex-1">
                         <h4 class="text-2xl font-bold mb-3 flex items-center gap-2">
@@ -288,10 +351,6 @@
                             <span class="text-2xl">📊</span>
                         </h4>
                         <p class="text-gray-300 mb-3">「詳細」ボタンでいつでも確認。一番人気の日程には⭐がつくよ</p>
-                        <div class="bg-gradient-to-r from-discord-yellow/10 to-transparent border-l-4 border-discord-yellow rounded-r-lg p-4">
-                            <p class="text-discord-yellow font-bold">💡 ヒント</p>
-                            <p class="text-gray-400 text-sm mt-1">最新の集計を見たいときは「🔄 更新」ボタンをクリック！</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -301,29 +360,43 @@
     <!-- CTA Section -->
     <section id="install" class="relative z-10 py-20 px-4">
         <div class="max-w-4xl mx-auto text-center">
-            <div class="bg-gradient-to-r from-discord-blurple/20 to-discord-green/20 rounded-3xl p-12 backdrop-blur-sm border border-white/10">
-                <h3 class="text-4xl font-bold mb-4">準備OK？今すぐ始めよう！</h3>
-                <p class="text-xl text-gray-300 mb-8">
-                    インストールは10秒で完了。すぐに使えるよ！
-                </p>
+            <div class="relative overflow-hidden bg-gradient-to-br from-discord-blurple/30 via-purple-600/20 to-discord-green/30 rounded-3xl p-12 backdrop-blur-sm border border-white/20 shadow-2xl">
+                <!-- Animated background elements -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-discord-yellow/20 rounded-full blur-3xl animate-pulse"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-discord-green/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
                 
-                <a href="https://discord.com/api/oauth2/authorize?client_id=1392384546560802947&permissions=2147485696&scope=bot%20applications.commands" 
-                   class="discord-button text-xl inline-flex items-center">
-                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-                    </svg>
-                    Discordに追加
-                </a>
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 mb-6">
+                        <span class="text-5xl">🚀</span>
+                        <h3 class="text-4xl md:text-5xl font-black text-white">
+                            準備OK？今すぐ始めよう！
+                        </h3>
+                        <span class="text-5xl">✨</span>
+                    </div>
+                    <p class="text-xl text-gray-200 mb-10 font-medium">
+                        インストールは<span class="font-bold" style="color: #ffd700;">10秒</span>で完了。すぐに使えるよ！
+                    </p>
                 
-                <p class="mt-6 text-sm text-gray-400">
-                    ※サーバー管理権限が必要です
-                </p>
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=1392384546560802947&permissions=2147485696&scope=bot%20applications.commands" 
+                       class="group relative inline-flex items-center bg-gradient-to-r from-discord-blurple to-purple-600 hover:from-purple-600 hover:to-discord-blurple text-white font-bold text-xl px-10 py-5 rounded-full transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl">
+                        <span class="absolute inset-0 bg-white/20 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                        <svg class="relative w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                        </svg>
+                        <span class="relative">Discordに追加</span>
+                        <span class="relative ml-2">→</span>
+                    </a>
                 
-                <div class="flex flex-wrap justify-center gap-4 mt-8">
-                    <span class="bg-gray-800 px-4 py-2 rounded-full text-sm">✅ 無料</span>
-                    <span class="bg-gray-800 px-4 py-2 rounded-full text-sm">🔰 簡単</span>
-                    <span class="bg-gray-800 px-4 py-2 rounded-full text-sm">🎉 シンプル</span>
-                    <span class="bg-gray-800 px-4 py-2 rounded-full text-sm">🌏 日本語対応</span>
+                    <p class="mt-8 text-sm text-gray-300">
+                        ※サーバー管理権限が必要です
+                    </p>
+                    
+                    <div class="flex flex-wrap justify-center gap-3 mt-10">
+                        <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/20 transition-all cursor-default">✅ 無料</span>
+                        <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/20 transition-all cursor-default">🔰 簡単</span>
+                        <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/20 transition-all cursor-default">🎉 シンプル</span>
+                        <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-white/20 transition-all cursor-default">🌏 日本語対応</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -339,11 +412,15 @@
             <p class="text-gray-400 text-sm mb-4">
                 みんなで楽しく予定を決めよう
             </p>
-            <div class="flex justify-center space-x-6 text-sm">
+            <div class="flex justify-center space-x-6 text-sm mb-6">
                 <a href="/privacy" class="text-gray-400 hover:text-white transition">プライバシー</a>
                 <a href="/terms" class="text-gray-400 hover:text-white transition">利用規約</a>
             </div>
-            <p class="text-gray-500 text-xs mt-8">
+            <div class="text-center mb-6">
+                <p class="text-gray-400 text-sm">お問い合わせ</p>
+                <p class="text-gray-300 text-sm mt-1">X: <a href="https://twitter.com/retoruto_carry" class="text-blue-400 hover:text-blue-300 transition">@retoruto_carry</a> のDMまで</p>
+            </div>
+            <p class="text-gray-500 text-xs">
                 Made with ❤️ for Discord communities
             </p>
         </div>
