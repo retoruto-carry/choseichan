@@ -28,10 +28,16 @@ export async function updateScheduleMainMessage(
       console.error(`Schedule not found for ID: ${scheduleId}`);
       return false;
     }
+    
+    console.log(`Schedule data:`, JSON.stringify({
+      id: schedule.id,
+      messageId: schedule.messageId,
+      title: schedule.title
+    }));
 
     // メッセージIDが指定されていない場合は、保存されているIDを使用
     const targetMessageId = messageId || schedule.messageId;
-    console.log(`Target message ID: ${targetMessageId}, schedule.messageId: ${schedule.messageId}`);
+    console.log(`Target message ID: ${targetMessageId}, passed messageId: ${messageId}, schedule.messageId: ${schedule.messageId}`);
     
     if (!targetMessageId) {
       console.error(`No message ID found for schedule: ${scheduleId}`);
@@ -52,6 +58,8 @@ export async function updateScheduleMainMessage(
     }
 
     // メイン画面を更新
+    console.log(`Calling updateOriginalMessage with appId: ${env.DISCORD_APPLICATION_ID}, messageId: ${targetMessageId}`);
+    
     await updateOriginalMessage(
       env.DISCORD_APPLICATION_ID,
       interactionToken,
@@ -61,6 +69,8 @@ export async function updateScheduleMainMessage(
         components: createSimpleScheduleComponents(summary.schedule)
       }
     );
+    
+    console.log(`updateOriginalMessage completed successfully`);
 
     // メッセージIDが新しく指定された場合は保存
     if (messageId && messageId !== schedule.messageId) {
