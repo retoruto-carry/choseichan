@@ -283,69 +283,56 @@ export async function handleDateSelectMenu(
   const parts = interaction.data.custom_id.split(':');
   const [_, scheduleId, dateId] = parts;
   
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
-  const schedule = await storage.getSchedule(scheduleId);
-  
-  if (!schedule) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '日程調整が見つかりません。',
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-  
-  const userId = interaction.member?.user.id || interaction.user?.id || '';
-  const userName = interaction.member?.user.username || interaction.user?.username || '';
-  
-  // Get selected value from select menu
-  const selectedValue = interaction.data.values?.[0] || 'none';
-  
-  // Get or create user response
-  let userResponse = await storage.getResponse(scheduleId, userId);
-  
-  if (!userResponse) {
-    userResponse = {
-      scheduleId,
-      userId,
-      userName,
-      responses: [],
-      comment: '',
-      updatedAt: new Date()
-    };
-  }
-  
-  // Update the specific date response
-  if (selectedValue === 'none') {
-    // Remove the response for this date
-    userResponse.responses = userResponse.responses.filter(r => r.dateId !== dateId);
-  } else {
-    const status = selectedValue as ResponseStatus;
-    const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
-    
-    if (existingIndex >= 0) {
-      userResponse.responses[existingIndex].status = status;
-    } else {
-      userResponse.responses.push({
-        dateId,
-        status
-      });
-    }
-  }
-  
-  userResponse.updatedAt = new Date();
-  await storage.saveResponse(userResponse);
-  
-  // Immediately acknowledge the interaction to avoid timeout
-  const immediateResponse = new Response(JSON.stringify({
-    type: 6 // DEFERRED_UPDATE_MESSAGE
-  }), { headers: { 'Content-Type': 'application/json' } });
-  
-  // Update the main message in the background after returning the response
-  // Use waitUntil to ensure the update completes even after the response is sent
-  const updatePromise = (async () => {
+  // Process in background to avoid blocking
+  const processVote = async () => {
     try {
+      const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+      const schedule = await storage.getSchedule(scheduleId);
+      
+      if (!schedule) {
+        console.error('Schedule not found:', scheduleId);
+        return;
+      }
+      
+      const userId = interaction.member?.user.id || interaction.user?.id || '';
+      const userName = interaction.member?.user.username || interaction.user?.username || '';
+      const selectedValue = interaction.data.values?.[0] || 'none';
+      
+      // Get or create user response
+      let userResponse = await storage.getResponse(scheduleId, userId);
+      
+      if (!userResponse) {
+        userResponse = {
+          scheduleId,
+          userId,
+          userName,
+          responses: [],
+          comment: '',
+          updatedAt: new Date()
+        };
+      }
+      
+      // Update the specific date response
+      if (selectedValue === 'none') {
+        userResponse.responses = userResponse.responses.filter(r => r.dateId !== dateId);
+      } else {
+        const status = selectedValue as ResponseStatus;
+        const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
+        
+        if (existingIndex >= 0) {
+          userResponse.responses[existingIndex].status = status;
+        } else {
+          userResponse.responses.push({
+            dateId,
+            status
+          });
+        }
+      }
+      
+      userResponse.updatedAt = new Date();
+      await storage.saveResponse(userResponse);
+      
+      // Update the main message if we have a stored message ID
       const messageId = schedule.messageId;
       
       if (!messageId) {
@@ -369,15 +356,15 @@ export async function handleDateSelectMenu(
         console.error(`Failed to update main message for schedule ${scheduleId}`);
       }
     } catch (error) {
-      console.error('Failed to update main message:', error);
+      console.error('Failed to process vote:', error);
     }
-  })();
+  };
   
-  // If we have access to the execution context, use waitUntil
-  // Otherwise, just let it run in the background
-  if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-    env.ctx.waitUntil(updatePromise);
-  }
+  // Start processing in background
+  processVote().catch(err => console.error('Background vote processing failed:', err));
   
-  return immediateResponse;
+  // Return DEFERRED_UPDATE_MESSAGE immediately to avoid timeout
+  return new Response(JSON.stringify({
+    type: 6 // DEFERRED_UPDATE_MESSAGE
+  }), { headers: { 'Content-Type': 'application/json' } });
 }
