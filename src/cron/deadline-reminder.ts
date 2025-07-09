@@ -2,6 +2,7 @@ import { Env } from '../types/discord';
 import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { NotificationService } from '../services/notification';
 import { Schedule } from '../types/schedule';
+import { processBatches } from '../utils/rate-limiter';
 
 interface DeadlineCheckResult {
   upcoming: Schedule[];  // 1時間以内に締切予定
@@ -76,8 +77,14 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
 
   const { upcoming, justClosed } = await checkDeadlines(env);
 
-  // Send reminders for upcoming deadlines
-  for (const schedule of upcoming) {
+  console.log(`Processing ${upcoming.length} upcoming reminders and ${justClosed.length} closure notifications`);
+
+  // Rate limiting configuration (can be overridden by environment variables)
+  const reminderBatchSize = env.REMINDER_BATCH_SIZE ? parseInt(env.REMINDER_BATCH_SIZE) : 20;
+  const reminderBatchDelay = env.REMINDER_BATCH_DELAY ? parseInt(env.REMINDER_BATCH_DELAY) : 100;
+
+  // Send reminders for upcoming deadlines with rate limiting
+  await processBatches(upcoming, async (schedule) => {
     try {
       await notificationService.sendDeadlineReminder(schedule);
       
@@ -90,25 +97,29 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
     } catch (error) {
       console.error(`Failed to send reminder for schedule ${schedule.id}:`, error);
     }
-  }
+  }, {
+    batchSize: reminderBatchSize,
+    delayBetweenBatches: reminderBatchDelay
+  });
 
-  // Send closure notifications and PR messages
-  for (const schedule of justClosed) {
+  // Send closure notifications with rate limiting
+  await processBatches(justClosed, async (schedule) => {
     try {
       // Mark as closed
       schedule.status = 'closed';
       if (!schedule.guildId) schedule.guildId = 'default';
       await storage.saveSchedule(schedule);
       
-      // Send summary
+      // Send summary and PR message in sequence (to avoid doubling API calls)
       await notificationService.sendSummaryMessage(schedule.id, schedule.guildId || 'default');
-      
-      // Send PR message
       await notificationService.sendPRMessage(schedule);
       
       console.log(`Sent closure notification for schedule ${schedule.id}`);
     } catch (error) {
       console.error(`Failed to send closure notification for schedule ${schedule.id}:`, error);
     }
-  }
+  }, {
+    batchSize: 15,  // Process 15 closures in parallel (each sends 2 messages = 30 total)
+    delayBetweenBatches: 100  // 0.1 second delay between batches
+  });
 }

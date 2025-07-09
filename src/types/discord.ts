@@ -8,6 +8,9 @@ export interface Env {
   SCHEDULES: KVNamespace;
   RESPONSES: KVNamespace;
   ctx?: ExecutionContext;
+  // Rate limiting for cron jobs (optional)
+  REMINDER_BATCH_SIZE?: string;
+  REMINDER_BATCH_DELAY?: string;
 }
 
 export interface DiscordUser {

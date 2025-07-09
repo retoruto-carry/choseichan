@@ -7,27 +7,25 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  check-deadlines:
+  trigger-deadline-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Check deadlines and send reminders
-      env:
-        WORKER_URL: ${{ secrets.WORKER_URL }}
-        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    - name: Trigger Worker
       run: |
-        curl -X POST "$WORKER_URL/cron/deadline-check" \
-          -H "X-Cron-Secret: $CRON_SECRET" \
+        response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.WORKER_URL }}/cron/deadline-check" \
+          -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
           -H "Content-Type: application/json" \
-          -d '{"action": "check_deadlines"}'
+          -d '{"action": "check_deadlines"}')
+        
+        http_code=$(echo "$response" | tail -n1)
+        body=$(echo "$response" | sed '$d')
+        
+        if [ "$http_code" -ne 200 ]; then
+          echo "Request failed with status code: $http_code"
+          echo "Response: $body"
+          exit 1
+        fi
+        
+        echo "Deadline check completed successfully"
