@@ -361,4 +361,47 @@ describe('Button Interactions', () => {
     expect(data.data.content).toContain('作成者のみです');
     expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
+
+  it('should handle select menu interaction', async () => {
+    const interaction: ButtonInteraction = {
+      id: 'test_id',
+      type: 3,
+      data: {
+        custom_id: 'dateselect:test_schedule_id:date1',
+        component_type: 3, // Select menu
+        values: ['yes']
+      },
+      channel_id: 'test_channel',
+      member: {
+        user: {
+          id: 'user456',
+          username: 'SelectUser',
+          discriminator: '0001'
+        },
+        roles: []
+      },
+      token: 'test_token',
+      message: {
+        id: 'msg_id',
+        message_reference: {
+          message_id: 'original_msg_id'
+        }
+      }
+    };
+
+    const response = await handleButtonInteraction(interaction, env);
+    const data = await response.json();
+    
+    expect(response.status).toBe(200);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.data.content).toContain('更新しました');
+    
+    // Check that response was saved
+    const savedResponse = await env.RESPONSES.get('response:test_schedule_id:user456');
+    expect(savedResponse).toBeTruthy();
+    const parsed = JSON.parse(savedResponse);
+    expect(parsed.responses).toHaveLength(1);
+    expect(parsed.responses[0].dateId).toBe('date1');
+    expect(parsed.responses[0].status).toBe('yes');
+  });
 });

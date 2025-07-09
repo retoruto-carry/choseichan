@@ -46,6 +46,7 @@ export interface ButtonInteraction {
   data: {
     custom_id: string;
     component_type: number;
+    values?: string[]; // For select menu interactions
   };
   guild_id?: string;
   channel_id?: string;
@@ -55,9 +56,12 @@ export interface ButtonInteraction {
   };
   user?: DiscordUser;
   token: string;
-  message: {
+  message?: {
     id: string;
     embeds: any[];
+    message_reference?: {
+      message_id: string;
+    };
   };
 }
 

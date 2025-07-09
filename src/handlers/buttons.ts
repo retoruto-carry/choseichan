@@ -1423,7 +1423,7 @@ async function handleDateSelectMenu(
   const userName = interaction.member?.user.username || interaction.user?.username || '';
   
   // Get selected value from select menu
-  const selectedValue = (interaction.data as any).values?.[0] || 'none';
+  const selectedValue = interaction.data.values?.[0] || 'none';
   
   // Get or create user response
   let userResponse = await storage.getResponse(scheduleId, userId);
