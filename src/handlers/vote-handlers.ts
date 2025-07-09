@@ -326,8 +326,23 @@ export async function handleDateSelectMenu(
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
   
-  // Skip original message update for select menu interactions to avoid timeout
-  // The original message will be updated when user completes voting
+  // Update the original message with new vote counts
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (summary && interaction.message?.message_reference?.message_id && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        interaction.message.message_reference.message_id,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(summary.schedule)
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
   
   // Simple acknowledgment without updating components
   const date = schedule.dates.find(d => d.id === dateId);

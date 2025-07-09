@@ -638,7 +638,23 @@ async function handleEditInfoModal(
   
   await storage.saveSchedule(schedule);
 
-  // Skip original message update to avoid timeout - it will be updated on next interaction
+  // Update the original message with new information
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (summary && originalMessageId && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        originalMessageId,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(schedule)
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
   
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -737,7 +753,23 @@ async function handleUpdateDatesModal(
     }
   }
 
-  // Skip original message update and response updates to avoid timeout
+  // Update the original message with new dates
+  const summary = await storage.getScheduleSummary(scheduleId);
+  if (summary && originalMessageId && env.DISCORD_APPLICATION_ID) {
+    try {
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interaction.token,
+        originalMessageId,
+        {
+          embeds: [createScheduleEmbedWithTable(summary)],
+          components: createSimpleScheduleComponents(schedule)
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
 
   const preservedCount = preservedDateIds.size;
   const newCount = newDates.length - preservedCount;
