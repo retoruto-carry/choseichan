@@ -135,14 +135,26 @@ export function createSimpleScheduleComponents(schedule: Schedule, showDetails: 
     });
   }
 
-  // 詳細ボタン
-  components.push({
-    type: 2,
-    style: 2, // Secondary
-    label: '詳細',
-    custom_id: createButtonId('status', schedule.id),
-    emoji: { name: '👥' }
-  });
+  // 詳細/簡易表示ボタン
+  if (showDetails) {
+    // 詳細表示中は簡易表示ボタンを表示
+    components.push({
+      type: 2,
+      style: 2, // Secondary
+      label: '簡易表示',
+      custom_id: createButtonId('hide_details', schedule.id),
+      emoji: { name: '📊' }
+    });
+  } else {
+    // 簡易表示中は詳細ボタンを表示
+    components.push({
+      type: 2,
+      style: 2, // Secondary
+      label: '詳細',
+      custom_id: createButtonId('status', schedule.id),
+      emoji: { name: '👥' }
+    });
+  }
 
   // 更新ボタン
   components.push({

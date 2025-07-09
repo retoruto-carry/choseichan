@@ -157,13 +157,8 @@ describe('Select Menu Interactions', () => {
       'test-guild'
     );
 
-    // Should update the main message using the stored message ID
-    expect(mockUpdateOriginalMessage).toHaveBeenCalledWith(
-      'mock-app-id',
-      'mock-token',
-      'message-456', // The stored message ID, not the ephemeral one
-      expect.any(Object)
-    );
+    // Should NOT update the main message immediately due to KV consistency issues
+    expect(mockUpdateOriginalMessage).not.toHaveBeenCalled();
 
     // Should return deferred update
     expect(responseData.type).toBe(6); // DEFERRED_UPDATE_MESSAGE

@@ -69,13 +69,12 @@ export async function handleStatusButton(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const tableEmbed = createResponseTableEmbed(summary);
-
+  // Update the main message to show details
   return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    type: InteractionResponseType.UPDATE_MESSAGE,
     data: {
-      embeds: [tableEmbed],
-      flags: InteractionResponseFlags.EPHEMERAL
+      embeds: [createScheduleEmbedWithTable(summary, true)],
+      components: createSimpleScheduleComponents(summary.schedule, true)
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
@@ -461,4 +460,29 @@ export async function handleRefreshButton(
     console.error('Failed to refresh message:', error);
     return createErrorResponse('メッセージの更新に失敗しました。');
   }
+}
+
+export async function handleHideDetailsButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
+  const [scheduleId] = params;
+  
+  // Get the schedule summary
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
+  if (!summary) {
+    return createErrorResponse('日程調整が見つかりません。');
+  }
+
+  // Update to simple view
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: {
+      embeds: [createScheduleEmbedWithTable(summary, false)],
+      components: createSimpleScheduleComponents(summary.schedule, false)
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
 }

@@ -258,10 +258,9 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.embeds).toHaveLength(1);
     expect(data.data.embeds[0].title).toContain('Test Event');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should reject close button by non-owner', async () => {
