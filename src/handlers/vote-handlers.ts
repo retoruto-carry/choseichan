@@ -92,8 +92,8 @@ export async function handleRespondButton(
   // Prepare initial response
   const totalGroups = componentGroups.length;
   const initialMessage = totalGroups === 1 
-    ? `**${schedule.title}** の回答を選択してください:\n`
-    : `**${schedule.title}** の回答を選択してください (1/${totalGroups}):\n\n📝 日程が${schedule.dates.length}件あります。`;
+    ? `**${schedule.title}** の回答を選択してください:\n\n*※反映には最大1分かかります*`
+    : `**${schedule.title}** の回答を選択してください (1/${totalGroups}):\n\n📝 日程が${schedule.dates.length}件あります。\n\n*※反映には最大1分かかります*`;
   
   // Send followup messages for additional groups
   if (totalGroups > 1 && env.DISCORD_APPLICATION_ID) {
