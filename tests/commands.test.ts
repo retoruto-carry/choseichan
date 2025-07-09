@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { handleScheduleCommand } from '../src/handlers/commands';
+import { handleChoseisanCommand } from '../src/handlers/commands';
 import { CommandInteraction, Env } from '../src/types/discord';
 
 // Mock KVNamespace
@@ -23,7 +23,7 @@ const createMockKVNamespace = () => {
   } as unknown as KVNamespace;
 };
 
-describe('Schedule Commands', () => {
+describe('Choseisan Commands', () => {
   let env: Env;
   
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe('Schedule Commands', () => {
       type: InteractionType.APPLICATION_COMMAND,
       data: {
         id: 'cmd_id',
-        name: 'schedule',
+        name: 'choseisan',
         options: [{
           name: 'create',
           type: 1
@@ -60,7 +60,7 @@ describe('Schedule Commands', () => {
       token: 'test_token'
     };
 
-    const response = await handleScheduleCommand(interaction, env);
+    const response = await handleChoseisanCommand(interaction, env);
     const data = await response.json();
     
     expect(response.status).toBe(200);
@@ -77,7 +77,7 @@ describe('Schedule Commands', () => {
       type: InteractionType.APPLICATION_COMMAND,
       data: {
         id: 'cmd_id',
-        name: 'schedule',
+        name: 'choseisan',
         options: [{
           name: 'list',
           type: 1
@@ -95,7 +95,7 @@ describe('Schedule Commands', () => {
       token: 'test_token'
     };
 
-    const response = await handleScheduleCommand(interaction, env);
+    const response = await handleChoseisanCommand(interaction, env);
     const data = await response.json();
     
     expect(response.status).toBe(200);

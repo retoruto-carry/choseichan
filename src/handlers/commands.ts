@@ -6,7 +6,7 @@ import { generateId, createButtonId } from '../utils/id';
 import { parseUserInputDate, formatDate } from '../utils/date';
 import { createScheduleEmbed, createScheduleComponents } from '../utils/embeds';
 
-export async function handleScheduleCommand(
+export async function handleChoseisanCommand(
   interaction: CommandInteraction,
   env: Env
 ): Promise<Response> {
@@ -29,6 +29,9 @@ export async function handleScheduleCommand(
       return handleCreateCommandSimple(interaction, storage);
     case 'list':
       return handleListCommand(interaction, storage);
+    case 'help':
+      const { handleHelpCommand } = await import('./help');
+      return handleHelpCommand();
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

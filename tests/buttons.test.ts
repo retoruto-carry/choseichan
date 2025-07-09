@@ -129,10 +129,10 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.embeds).toHaveLength(1);
-    expect(data.data.embeds[0].title).toContain('Test Event');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data.embeds[0].title).toContain('Test Event - 詳細');
+    expect(data.data.components).toBeDefined();
   });
 
   it('should reject response button for closed schedule', async () => {
@@ -203,9 +203,9 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(data.data.embeds).toHaveLength(1);
-    expect(data.data.components).toHaveLength(1); // Reopen button is shown
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(data.data.content).toContain('締め切りました');
+    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should handle vote button click', async () => {

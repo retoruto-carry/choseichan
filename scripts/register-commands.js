@@ -5,7 +5,7 @@ dotenv.config();
 
 const commands = [
   {
-    name: "schedule",
+    name: "choseisan",
     description: "日程調整を管理します",
     options: [
       {
@@ -18,11 +18,12 @@ const commands = [
         description: "このチャンネルの日程調整一覧を表示",
         type: ApplicationCommandOptionType.Subcommand,
       },
+      {
+        name: "help",
+        description: "調整ちゃんの使い方を表示",
+        type: ApplicationCommandOptionType.Subcommand,
+      },
     ],
-  },
-  {
-    name: "help",
-    description: "調整ちゃんの使い方を表示",
   },
 ];
 

@@ -7,9 +7,8 @@ Discord 上で簡単に日程調整ができるボット。調整さんのよう
 - 🎯 **シンプルな操作**: ボタンをクリックするだけで参加意思を表明
 - 📊 **リアルタイム集計**: 回答が即座に反映される
 - 🌟 **最適日程の自動判定**: 最も多くの人が参加できる日程を自動でハイライト
-- 📝 **柔軟な回答**: ○△× の 3 段階で回答、コメントも追加可能
+- 📝 **柔軟な回答**: ○△× の 3 段階で回答
 - 🔄 **回答の変更**: 何度でも回答を変更できる
-- 📅 **多様な回答方法**: ボタン投票、セレクトメニュー、一括回答など
 - ✏️ **編集機能**: 作成後も日程やタイトルを編集可能
 - 🔒 **締切機能**: 指定日時で自動締切も設定可能
 
@@ -69,16 +68,10 @@ node scripts/register-commands.js
 
 ### 基本コマンド
 
-#### 日程調整を作成（スラッシュコマンド）
+#### 日程調整を作成
 
 ```
-/schedule create title:"懇親会" date1:"12/25 19:00" date2:"12/26 18:00"
-```
-
-#### 日程調整を作成（インタラクティブ）
-
-```
-/schedule
+/choseisan create
 ```
 
 モーダルが開き、以下を入力できます：
@@ -91,25 +84,13 @@ node scripts/register-commands.js
 #### 日程調整一覧を表示
 
 ```
-/schedule list
-```
-
-#### 集計結果を確認
-
-```
-/schedule status id:"調整ID"
-```
-
-#### 日程調整を締切
-
-```
-/schedule close id:"調整ID"
+/choseisan list
 ```
 
 #### ヘルプを表示
 
 ```
-/help
+/choseisan help
 ```
 
 ### 回答方法
@@ -137,9 +118,9 @@ node scripts/register-commands.js
 ## ドキュメント
 
 - [アーキテクチャ](./docs/ARCHITECTURE.md) - システム構成と技術スタック
-- [デザイン](./docs/DESIGN.md) - UI/UX設計とユーザーフロー
-- [デプロイ](./docs/DEPLOY.md) - Cloudflare Workersへのデプロイ手順
-- [Discord API制限](./docs/DISCORD_API_LIMITS.md) - Discord APIの仕様と制限事項
+- [デザイン](./docs/DESIGN.md) - UI/UX 設計とユーザーフロー
+- [デプロイ](./docs/DEPLOY.md) - Cloudflare Workers へのデプロイ手順
+- [Discord API 制限](./docs/DISCORD_API_LIMITS.md) - Discord API の仕様と制限事項
 - [変更履歴](./docs/CHANGELOG.md) - リリースノートと変更内容
 - [貢献ガイド](./docs/CONTRIBUTING.md) - 開発に参加する際のガイドライン
 

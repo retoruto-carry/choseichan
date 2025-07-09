@@ -71,7 +71,7 @@ describe('Discord Bot', () => {
     };
     
     const req = createDiscordRequest(interaction, publicKey, privateKey);
-    const res = await app.fetch(req, env);
+    const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -96,12 +96,17 @@ describe('Discord Bot', () => {
     
     // Request signed with original privateKey but validated with wrongPublicKey
     const req = createDiscordRequest(interaction, publicKey, privateKey);
-    const res = await app.fetch(req, env);
+    const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(401);
   });
 
-  it('should handle schedule command without subcommand', async () => {
+  it('should handle choseisan command without subcommand', async () => {
+    const mockExecutionContext = {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn()
+    } as unknown as ExecutionContext;
+    
     const env = {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
@@ -115,13 +120,13 @@ describe('Discord Bot', () => {
       id: 'test_id',
       data: {
         id: 'cmd_id',
-        name: 'schedule'
+        name: 'choseisan'
       },
       token: 'test_token'
     };
     
     const req = createDiscordRequest(interaction, publicKey, privateKey);
-    const res = await app.fetch(req, env);
+    const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -131,6 +136,11 @@ describe('Discord Bot', () => {
   });
 
   it('should handle button interactions', async () => {
+    const mockExecutionContext = {
+      waitUntil: vi.fn(),
+      passThroughOnException: vi.fn()
+    } as unknown as ExecutionContext;
+    
     const env = {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
@@ -154,7 +164,7 @@ describe('Discord Bot', () => {
     };
     
     const req = createDiscordRequest(interaction, publicKey, privateKey);
-    const res = await app.fetch(req, env);
+    const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
     const json = await res.json();
