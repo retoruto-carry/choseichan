@@ -338,10 +338,7 @@ export async function handleDateSelectMenu(
       
       // Use waitUntil if available to ensure the update completes
       if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-        console.log('Using ctx.waitUntil for background update');
         env.ctx.waitUntil(updatePromise);
-      } else {
-        console.log('ctx.waitUntil not available');
       }
     }
   } catch (error) {

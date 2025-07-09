@@ -639,23 +639,30 @@ async function handleEditInfoModal(
   
   await storage.saveSchedule(schedule);
 
-  // Update the original message using the centralized updater
-  // originalMessageIdがなくてもschedule.messageIdから取得可能
-  await updateScheduleMainMessage(
-    scheduleId,
-    originalMessageId,
-    interaction.token,
-    storage,
-    env
-  );
-  
-  return new Response(JSON.stringify({
+  // Create response immediately
+  const response = new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: '✅ 日程調整の情報を更新しました。',
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
+
+  // Update the original message using the centralized updater
+  const updatePromise = updateScheduleMainMessage(
+    scheduleId,
+    originalMessageId,
+    interaction.token,
+    storage,
+    env
+  ).catch(error => console.error('Failed to update main message:', error));
+  
+  // Use waitUntil if available
+  if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+    env.ctx.waitUntil(updatePromise);
+  }
+  
+  return response;
 }
 
 async function handleUpdateDatesModal(
@@ -746,15 +753,6 @@ async function handleUpdateDatesModal(
     }
   }
 
-  // Update the original message using the centralized updater
-  await updateScheduleMainMessage(
-    scheduleId,
-    originalMessageId,
-    interaction.token,
-    storage,
-    env
-  );
-
   const preservedCount = preservedDateIds.size;
   const newCount = newDates.length - preservedCount;
   const removedCount = originalDateCount - preservedCount;
@@ -765,13 +763,29 @@ async function handleUpdateDatesModal(
   if (newCount > 0) message += `・追加: ${newCount}件\n`;
   if (removedCount > 0) message += `・削除: ${removedCount}件`;
   
-  return new Response(JSON.stringify({
+  const response = new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
       content: message,
       flags: InteractionResponseFlags.EPHEMERAL
     }
   }), { headers: { 'Content-Type': 'application/json' } });
+
+  // Update the original message using the centralized updater
+  const updatePromise = updateScheduleMainMessage(
+    scheduleId,
+    originalMessageId,
+    interaction.token,
+    storage,
+    env
+  ).catch(error => console.error('Failed to update main message:', error));
+  
+  // Use waitUntil if available
+  if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+    env.ctx.waitUntil(updatePromise);
+  }
+  
+  return response;
 }
 
 async function handleAddDatesModal(
