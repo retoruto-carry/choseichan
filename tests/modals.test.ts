@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { handleModalSubmit } from '../src/handlers/modals';
+import { handleModalSubmit } from '../src/handlers/modals/index';
 import { Env } from '../src/types/discord';
 
 // Mock the discord utils
@@ -100,6 +100,7 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(data.data).toBeDefined();
       expect(data.data.embeds).toHaveLength(1);
       expect(data.data.embeds[0].title).toContain('忘年会');
       expect(data.data.embeds[0].description).toContain('今年の忘年会です');
@@ -284,7 +285,8 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.content).toContain('2件の日程を追加しました');
+      expect(data.data.embeds).toBeDefined();
+      expect(data.data.embeds[0].title).toContain('日程を追加しました');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check dates were added

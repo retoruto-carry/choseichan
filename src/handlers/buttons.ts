@@ -35,8 +35,6 @@ import {
 } from './quick-vote-handlers';
 import {
   handleRespondButton,
-  handleResponseButton,
-  handleVoteButton,
   handleDateSelectMenu
 } from './vote-handlers';
 
@@ -57,10 +55,6 @@ export async function handleButtonInteraction(
   switch (action) {
     case 'respond':
       return handleRespondButton(interaction, storage, params, env);
-    case 'response':
-      return handleResponseButton(interaction, storage, params);
-    case 'vote':
-      return handleVoteButton(interaction, storage, params, env);
     case 'status':
       return handleStatusButton(interaction, storage, params);
     case 'edit':

@@ -1,10 +1,8 @@
 import { InteractionResponseType } from 'discord-interactions';
 import { CommandInteraction, Env } from '../types/discord';
-import { Schedule, ScheduleDate, STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
+import { STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
 import { StorageService } from '../services/storage';
-import { generateId, createButtonId } from '../utils/id';
-import { parseUserInputDate, formatDate } from '../utils/date';
-import { createScheduleEmbed, createScheduleComponents } from '../utils/embeds';
+import { formatDate } from '../utils/date';
 
 export async function handleChoseichanCommand(
   interaction: CommandInteraction,
@@ -108,90 +106,6 @@ async function handleCreateCommandSimple(
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
-
-async function handleCreateCommand(
-  interaction: CommandInteraction,
-  storage: StorageService
-): Promise<Response> {
-  const options = interaction.data.options?.[0]?.options;
-  
-  if (!options) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: 'オプションが指定されていません。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  // Extract options
-  const title = options.find(o => o.name === 'title')?.value as string;
-  const description = options.find(o => o.name === 'description')?.value as string | undefined;
-  const deadline = options.find(o => o.name === 'deadline')?.value as string | undefined;
-  
-  // Extract dates (date1, date2, date3...)
-  const dates: string[] = [];
-  for (let i = 1; i <= 10; i++) {
-    const dateOption = options.find(o => o.name === `date${i}`)?.value as string | undefined;
-    if (dateOption) {
-      const parsedDate = parseUserInputDate(dateOption);
-      if (parsedDate) {
-        dates.push(parsedDate.toISOString());
-      }
-    }
-  }
-
-  if (dates.length === 0) {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: '少なくとも1つの日程を指定してください。',
-        flags: 64
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  // Create schedule
-  const scheduleId = generateId();
-  const scheduleDates: ScheduleDate[] = dates.map((date, index) => ({
-    id: generateId(),
-    datetime: date,
-    description: undefined
-  }));
-
-  const schedule: Schedule = {
-    id: scheduleId,
-    title,
-    description,
-    dates: scheduleDates,
-    createdBy: {
-      id: interaction.member?.user.id || interaction.user?.id || '',
-      username: interaction.member?.user.username || interaction.user?.username || ''
-    },
-    channelId: interaction.channel_id || '',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deadline: deadline ? parseUserInputDate(deadline) || undefined : undefined,
-    status: 'open',
-    notificationSent: false
-  };
-
-  await storage.saveSchedule(schedule);
-
-  // Create response with embed and buttons
-  const embed = createScheduleEmbed(schedule);
-  const components = createScheduleComponents(schedule);
-
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      embeds: [embed],
-      components
-    }
-  }), { headers: { 'Content-Type': 'application/json' } });
-}
-
 async function handleListCommand(
   interaction: CommandInteraction,
   storage: StorageService

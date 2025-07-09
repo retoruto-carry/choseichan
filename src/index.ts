@@ -71,7 +71,7 @@ app.post('/interactions', async (c) => {
 
   // Handle modal submits
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
-    const { handleModalSubmit } = await import('./handlers/modals');
+    const { handleModalSubmit } = await import('./handlers/modals/index');
     const envWithContext = { ...c.env, ctx: c.executionCtx };
     return handleModalSubmit(interaction, envWithContext);
   }

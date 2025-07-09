@@ -1,0 +1,185 @@
+import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { ModalSubmitInteraction, Env } from '../../types/discord';
+import { ResponseStatus, ScheduleResponse as UserResponse, STATUS_EMOJI, EMBED_COLORS } from '../../types/schedule';
+import { StorageService } from '../../services/storage';
+import { updateOriginalMessage } from '../../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { createErrorResponse } from '../../utils/responses';
+
+export async function handleInteractiveResponseModal(
+  interaction: ModalSubmitInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return createErrorResponse('日程調整が見つかりません。');
+  }
+
+  if (schedule.status === 'closed') {
+    return createErrorResponse('この日程調整は締め切られています。');
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userName = interaction.member?.user.username || interaction.user?.username || '';
+  const comment = interaction.data.components[schedule.dates.length]?.components[0]?.value || '';
+
+  // Build user response
+  const userResponse: UserResponse = {
+    scheduleId,
+    userId,
+    userName,
+    responses: [],
+    comment,
+    updatedAt: new Date()
+  };
+
+  // Process each date input
+  for (let i = 0; i < schedule.dates.length; i++) {
+    const value = interaction.data.components[i]?.components[0]?.value || '';
+    let status: ResponseStatus = 'no';
+    
+    if (value.includes('○') || value.includes('o') || value.includes('◯')) {
+      status = 'yes';
+    } else if (value.includes('△') || value.includes('▲')) {
+      status = 'maybe';
+    }
+    
+    userResponse.responses.push({
+      dateId: schedule.dates[i].id,
+      status
+    });
+  }
+
+  await storage.saveResponse(userResponse);
+
+  // Create confirmation embed
+  const embed = {
+    title: '✅ 回答を受け付けました',
+    description: `**${schedule.title}** への回答を登録しました。`,
+    color: EMBED_COLORS.INFO,
+    fields: schedule.dates.map((date, idx) => {
+      const response = userResponse.responses[idx];
+      return {
+        name: date.datetime,
+        value: STATUS_EMOJI[response.status],
+        inline: true
+      };
+    }),
+    footer: {
+      text: comment ? `コメント: ${comment}` : undefined
+    }
+  };
+
+  // Update the original message
+  if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
+    try {
+      const summary = await storage.getScheduleSummary(scheduleId);
+      if (summary) {
+        await updateOriginalMessage(
+          env.DISCORD_APPLICATION_ID,
+          interaction.token,
+          interaction.message.id,
+          {
+            embeds: [createScheduleEmbedWithTable(summary, false)],
+            components: createSimpleScheduleComponents(schedule, false)
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update original message:', error);
+    }
+  }
+  
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      embeds: [embed],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleBulkResponseModal(
+  interaction: ModalSubmitInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userName = interaction.member?.user.username || interaction.user?.username || '';
+  const responses = interaction.data.components[0].components[0].value || '';
+  const comment = interaction.data.components[1]?.components[0]?.value || '';
+
+  // Parse responses
+  const responseLines = responses.split('\n').filter(line => line.trim());
+  
+  // Build user response
+  const userResponse: UserResponse = {
+    scheduleId,
+    userId,
+    userName,
+    responses: [],
+    comment,
+    updatedAt: new Date()
+  };
+
+  // Process each response line
+  for (let i = 0; i < responseLines.length && i < schedule.dates.length; i++) {
+    const line = responseLines[i].trim().toLowerCase();
+    let status: ResponseStatus = 'no';
+    
+    if (line.includes('○') || line.includes('o') || line.includes('yes') || line === '◯') {
+      status = 'yes';
+    } else if (line.includes('△') || line.includes('maybe') || line === '▲') {
+      status = 'maybe';
+    } else if (line.includes('×') || line.includes('x') || line.includes('no') || line === '✕' || line === '✖') {
+      status = 'no';
+    }
+    
+    userResponse.responses.push({
+      dateId: schedule.dates[i].id,
+      status
+    });
+  }
+
+  await storage.saveResponse(userResponse);
+
+  // Create confirmation embed
+  const confirmEmbed = {
+    title: '✅ 回答を受け付けました',
+    color: EMBED_COLORS.INFO,
+    fields: schedule.dates.map((date, idx) => {
+      const response = userResponse.responses.find(r => r.dateId === date.id);
+      return {
+        name: `${idx + 1}. ${date.datetime}`,
+        value: response ? STATUS_EMOJI[response.status] : STATUS_EMOJI.no,
+        inline: true
+      };
+    })
+  };
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      embeds: [confirmEmbed],
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}

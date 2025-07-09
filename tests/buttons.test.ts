@@ -135,46 +135,6 @@ describe('Button Interactions', () => {
     expect(data.data.components).toBeDefined();
   });
 
-  it('should reject response button for closed schedule', async () => {
-    // Close the schedule
-    testSchedule.status = 'closed';
-    await env.SCHEDULES.put(
-      `schedule:${testSchedule.id}`,
-      JSON.stringify(testSchedule)
-    );
-
-    const interaction: ButtonInteraction = {
-      id: 'test_id',
-      type: 3,
-      data: {
-        custom_id: 'response:test_schedule_id:date1',
-        component_type: 2
-      },
-      channel_id: 'test_channel',
-      member: {
-        user: {
-          id: 'user456',
-          username: 'ResponseUser',
-          discriminator: '0001'
-        },
-        roles: []
-      },
-      token: 'test_token',
-      message: {
-        id: 'msg_id',
-        embeds: []
-      }
-    };
-
-    const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
-    
-    expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('この日程調整は締め切られています');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-  });
-
   it('should handle close button by owner', async () => {
     const interaction: ButtonInteraction = {
       id: 'test_id',
@@ -205,35 +165,6 @@ describe('Button Interactions', () => {
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(data.data.content).toContain('締め切りました');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-  });
-
-  it('should handle vote button click', async () => {
-    const interaction: ButtonInteraction = {
-      id: 'test_id',
-      type: 3,
-      data: {
-        custom_id: 'vote:test_schedule_id:date1:yes',
-        component_type: 2
-      },
-      channel_id: 'test_channel',
-      member: {
-        user: {
-          id: 'user456',
-          username: 'VoteUser',
-          discriminator: '0001'
-        },
-        roles: []
-      },
-      token: 'test_token'
-    };
-
-    const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
-    
-    expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('新しい回答方法をお使いください');
     expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
