@@ -1579,10 +1579,8 @@ async function handleCompleteVoteButton(
     }
   }
   
-  return createUpdateResponse(
-    `✅ **${schedule.title}** の回答を完了しました！${responsesSummary}\n\n回答を変更する場合は、もう一度「回答する」ボタンを押してください。`,
-    undefined,
-    []
+  return createEphemeralResponse(
+    `✅ **${schedule.title}** の回答を完了しました！${responsesSummary}\n\n回答を変更する場合は、もう一度「回答する」ボタンを押してください。`
   );
 }
 

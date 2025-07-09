@@ -441,11 +441,11 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(data.data.content).toContain('回答を完了しました');
     expect(data.data.content).toContain('✅'); // Should show yes response
     expect(data.data.content).toContain('❌'); // Should show no response
-    expect(data.data.components).toHaveLength(0); // Components should be removed
+    expect(data.data.flags).toBe(64); // Should be ephemeral
   });
 
   it('should handle complete vote button without responses', async () => {
@@ -472,9 +472,10 @@ describe('Button Interactions', () => {
     const data = await response.json();
     
     expect(response.status).toBe(200);
-    expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(data.data.content).toContain('回答を完了しました');
     expect(data.data.content).toContain('回答がありません');
+    expect(data.data.flags).toBe(64); // Should be ephemeral
   });
 
   it('should handle date select menu with invalid schedule', async () => {
