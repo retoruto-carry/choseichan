@@ -3,6 +3,18 @@ import { StorageService } from './storage';
 import { formatDate } from '../utils/date';
 import { STATUS_EMOJI } from '../types/schedule';
 
+/**
+ * 通知サービス
+ * 
+ * NOTE: 自動締切リマインダーと自動締切機能は未実装です
+ * Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
+ * 以下の機能は実装していません：
+ * - 締切前の自動リマインダー通知
+ * - 締切時刻での自動締切処理
+ * 
+ * 必要に応じて有料プランにアップグレードするか、
+ * 外部のcronサービス（GitHub Actions等）を利用してください
+ */
 export class NotificationService {
   constructor(
     private storage: StorageService,
@@ -11,6 +23,11 @@ export class NotificationService {
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
+    // NOTE: この機能は未実装です
+    // Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
+    // 現在は自動的な締切リマインダーや自動締切機能は実装していません
+    // 必要に応じて有料プランにアップグレードするか、外部のcronサービスを利用してください
+    
     // This would be called by a cron job or scheduled worker
     const schedules = await this.getSchedulesNearingDeadline();
     
@@ -22,12 +39,17 @@ export class NotificationService {
   }
 
   private async getSchedulesNearingDeadline(): Promise<Schedule[]> {
-    // In a real implementation, this would query all schedules
-    // For now, this is a placeholder
+    // NOTE: この機能は未実装です
+    // 実際の実装では、締切が近い（例：24時間以内）すべてのスケジュールを取得します
+    // Cloudflare Workers の無料プランでは cron triggers が制限されているため未実装
     return [];
   }
 
   async sendDeadlineReminder(schedule: Schedule): Promise<void> {
+    // NOTE: この機能は未実装です
+    // Cloudflare Workers の無料プランでは cron triggers が3つまでしか設定できないため、
+    // 現在は自動的な締切リマインダー機能は実装していません
+    
     const summary = await this.storage.getScheduleSummary(schedule.id);
     if (!summary) return;
 
