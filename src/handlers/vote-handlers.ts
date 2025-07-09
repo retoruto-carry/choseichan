@@ -29,7 +29,12 @@ export async function handleRespondButton(
 
   // Save message ID if not already saved (important for select menu updates later)
   if (interaction.message?.id && !schedule.messageId) {
+    console.log(`Saving message ID ${interaction.message.id} for schedule ${scheduleId}`);
     await saveScheduleMessageId(scheduleId, interaction.message.id, storage);
+  } else if (interaction.message?.id) {
+    console.log(`Message ID already saved: ${schedule.messageId} for schedule ${scheduleId}`);
+  } else {
+    console.log(`No message ID available in interaction for schedule ${scheduleId}`);
   }
 
   // Get current user's responses
@@ -340,8 +345,9 @@ export async function handleDateSelectMenu(
     const messageId = schedule.messageId;
     
     if (!messageId) {
-      console.error('No stored message ID available for updating the main message');
+      console.error(`No stored message ID available for schedule ${scheduleId}`);
     } else {
+      console.log(`Updating main message ${messageId} for schedule ${scheduleId}`);
       // Update the original message using centralized updater
       // Run in background to avoid timeout
       updateScheduleMainMessage(
@@ -350,7 +356,13 @@ export async function handleDateSelectMenu(
         interaction.token,
         storage,
         env
-      ).catch(error => console.error('Background update failed:', error));
+      ).then(success => {
+        if (success) {
+          console.log(`Successfully updated main message for schedule ${scheduleId}`);
+        } else {
+          console.error(`Failed to update main message for schedule ${scheduleId}`);
+        }
+      }).catch(error => console.error('Background update failed:', error));
     }
   } catch (error) {
     console.error('Failed to initiate message update:', error);

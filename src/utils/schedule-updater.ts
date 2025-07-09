@@ -20,6 +20,8 @@ export async function updateScheduleMainMessage(
   env: Env
 ): Promise<boolean> {
   try {
+    console.log(`updateScheduleMainMessage called with scheduleId: ${scheduleId}, messageId: ${messageId}`);
+    
     // 最新のスケジュール情報を取得
     const schedule = await storage.getSchedule(scheduleId);
     if (!schedule) {
@@ -29,6 +31,8 @@ export async function updateScheduleMainMessage(
 
     // メッセージIDが指定されていない場合は、保存されているIDを使用
     const targetMessageId = messageId || schedule.messageId;
+    console.log(`Target message ID: ${targetMessageId}, schedule.messageId: ${schedule.messageId}`);
+    
     if (!targetMessageId) {
       console.error(`No message ID found for schedule: ${scheduleId}`);
       return false;
