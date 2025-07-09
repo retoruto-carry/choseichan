@@ -106,9 +106,14 @@
         }
         
         /* Ensure elements are visible before GSAP animation */
-        .hero-title, .hero-subtitle, .hero-buttons, .hero-buttons > *, .demo-visual {
+        .hero-title, .hero-subtitle, .hero-buttons, .hero-buttons > *, .demo-visual, .demo-visual * {
             opacity: 1 !important;
             visibility: visible !important;
+        }
+        
+        /* Smooth transitions */
+        .hero-title, .hero-subtitle, .hero-buttons > *, .demo-visual {
+            will-change: transform, opacity;
         }
     </style>
 </head>
@@ -377,36 +382,42 @@
                 force3D: true
             });
             
-            // Hero section animations with better timing
+            // Hero section animations with smoother timing
             const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
             
+            // All animations start almost immediately with overlap
             tl.from(".hero-title:first-child", { 
                 opacity: 0, 
-                y: 20, 
-                duration: 0.8
+                y: 15, 
+                duration: 0.6
             })
             .from(".hero-title h2", { 
                 opacity: 0, 
-                y: 30, 
-                duration: 1
-            }, "-=0.4")
+                y: 20, 
+                duration: 0.8
+            }, 0.1)
             .from(".hero-subtitle", { 
                 opacity: 0, 
-                y: 20, 
-                duration: 0.8
-            }, "-=0.6")
+                y: 15, 
+                duration: 0.6
+            }, 0.2)
             .from(".hero-buttons > *", { 
                 opacity: 0, 
-                y: 20, 
-                duration: 0.6, 
-                stagger: 0.15
-            }, "-=0.4")
+                y: 15, 
+                duration: 0.5, 
+                stagger: 0.1
+            }, 0.3)
             .from(".demo-visual", { 
                 opacity: 0, 
-                y: 20,
-                scale: 0.95, 
-                duration: 0.8
-            }, "-=0.3");
+                y: 15,
+                duration: 0.6
+            }, 0.4)
+            .from(".demo-visual .bg-gray-700", {
+                opacity: 0,
+                y: 10,
+                duration: 0.4,
+                stagger: 0.08
+            }, 0.6);
         });
         
         // Feature cards fade in on scroll
