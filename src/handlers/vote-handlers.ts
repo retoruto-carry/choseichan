@@ -181,43 +181,11 @@ export async function handleDateSelectMenu(
     
     userResponse.updatedAt = new Date();
     
-    // Save response and get schedule in parallel for efficiency
-    const [schedule] = await Promise.all([
-      storage.getSchedule(scheduleId, guildId),
-      storage.saveResponse(userResponse, guildId)
-    ]);
+    // Save response
+    await storage.saveResponse(userResponse, guildId);
     
-    // Only proceed with update if we have the necessary data
-    if (schedule?.messageId) {
-      // Create the update promise with optimistic update
-      const updatePromise = (async () => {
-        try {
-          // Get summary with optimistic update to avoid KV propagation delay
-          const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
-          if (summary && env.DISCORD_APPLICATION_ID) {
-            const { updateOriginalMessage } = await import('../utils/discord');
-            const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import('../utils/embeds');
-            
-            await updateOriginalMessage(
-              env.DISCORD_APPLICATION_ID,
-              interaction.token,
-              schedule.messageId,
-              {
-                embeds: [createScheduleEmbedWithTable(summary, false)],
-                components: createSimpleScheduleComponents(summary.schedule, false)
-              }
-            );
-          }
-        } catch (error) {
-          console.error('Failed to update main message:', error);
-        }
-      })();
-      
-      // Use waitUntil if available to ensure the update completes
-      if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-        env.ctx.waitUntil(updatePromise);
-      }
-    }
+    // Note: We don't update the main message immediately to avoid KV consistency issues
+    // The message will be updated on the next interaction
   } catch (error) {
     console.error('Failed to process vote:', error);
   }

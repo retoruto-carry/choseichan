@@ -76,26 +76,12 @@ export async function handleInteractiveResponseModal(
     }
   };
 
-  // Update the original message with optimistic update
-  if (interaction.message?.id && env.DISCORD_APPLICATION_ID) {
-    try {
-      // Get summary with optimistic update to avoid KV propagation delay
-      const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
-      if (summary) {
-        await updateOriginalMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          interaction.message.id,
-          {
-            embeds: [createScheduleEmbedWithTable(summary, false)],
-            components: createSimpleScheduleComponents(schedule, false)
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Failed to update original message:', error);
-    }
-  }
+  // Note: We don't update the original message immediately due to KV eventual consistency
+  // and potential concurrent write issues. The message will be updated when:
+  // 1. Another user interacts with the message
+  // 2. Someone clicks the details button
+  // 3. The deadline reminder runs
+  // This approach avoids showing incorrect counts during concurrent responses.
   
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

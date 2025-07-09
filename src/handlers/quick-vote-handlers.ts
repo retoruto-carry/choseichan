@@ -60,23 +60,8 @@ export async function handleDirectVoteButton(
     await saveScheduleMessageId(scheduleId, interaction.message.id, storage, guildId);
   }
 
-  // Update the message with optimistic update
-  const summary = await storage.getScheduleSummaryWithOptimisticUpdate(scheduleId, guildId, userResponse);
-  if (summary && interaction.message?.id && env.DISCORD_APPLICATION_ID) {
-    try {
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interaction.token,
-        interaction.message.id,
-        {
-          embeds: [createScheduleEmbedWithTable(summary, false)],
-          components: createSimpleScheduleComponents(summary.schedule)
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update original message:', error);
-    }
-  }
+  // Note: We don't update the message immediately to avoid KV consistency issues
+  // The message will be updated on the next interaction
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE
