@@ -118,8 +118,9 @@ describe('Select Menu Interactions', () => {
     // Should return ephemeral response with select menus
     expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(responseData.data.flags).toBe(64); // Ephemeral
-    expect(responseData.data.components).toHaveLength(2); // 2 dates
+    expect(responseData.data.components).toHaveLength(3); // 2 dates + 1 notice
     expect(responseData.data.components[0].components[0].type).toBe(3); // Select menu
+    expect(responseData.data.components[2].components[0].type).toBe(2); // Notice button
   });
 
   it('should update main message when select menu is used', async () => {

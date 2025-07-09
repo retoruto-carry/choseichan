@@ -91,12 +91,9 @@ export async function handleRespondButton(
 
   // Prepare initial response
   const totalGroups = componentGroups.length;
-  const baseMessage = totalGroups === 1 
+  const initialMessage = totalGroups === 1 
     ? `**${schedule.title}** の回答を選択してください:`
     : `**${schedule.title}** の回答を選択してください (1/${totalGroups}):\n\n📝 日程が${schedule.dates.length}件あります。`;
-  
-  // Add delay notice at the end
-  const initialMessage = baseMessage + '\n\n```\n※反映には最大1分かかります\n```';
   
   // Send followup messages for additional groups
   if (totalGroups > 1 && env.DISCORD_APPLICATION_ID) {
@@ -122,11 +119,26 @@ export async function handleRespondButton(
     }
   }
   
+  // Add the delay notice as a small text after components
+  const componentsWithNotice = [
+    ...componentGroups[0],
+    {
+      type: 1, // Action Row
+      components: [{
+        type: 2, // Button
+        style: 2, // Secondary
+        label: '※反映には最大1分かかります',
+        custom_id: 'delay_notice',
+        disabled: true
+      }]
+    }
+  ];
+  
   // Return the first message with components
   return createEphemeralResponse(
     initialMessage,
     undefined,
-    componentGroups[0]
+    componentsWithNotice
   );
 }
 
