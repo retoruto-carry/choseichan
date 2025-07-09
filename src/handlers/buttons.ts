@@ -62,6 +62,10 @@ export async function handleButtonInteraction(
       return handleDirectVoteButton(interaction, storage, params, env);
     case 'add_comment':
       return handleAddCommentButton(interaction, storage, params);
+    case 'comment':
+      return handleCommentButton(interaction, storage, params);
+    case 'show_all':
+      return handleShowAllButton(interaction, storage, params);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -104,37 +108,90 @@ async function handleRespondButton(
   // Get current user's responses
   const userId = interaction.member?.user.id || interaction.user?.id || '';
   const userResponse = await storage.getResponse(scheduleId, userId);
+  const userResponseMap = new Map<string, { status: ResponseStatus; comment?: string }>();
   
-  // Create modal with fields for each date
-  const modal = {
-    title: schedule.title.length > 40 ? schedule.title.substring(0, 40) + '...' : schedule.title,
-    custom_id: `modal:interactive_response:${scheduleId}`,
-    components: schedule.dates.slice(0, 5).map((date, idx) => {
-      const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
-      const existingStatus = existingResponse?.status;
-      const existingComment = existingResponse?.comment || '';
-      
-      return {
-        type: 1, // Action Row
-        components: [{
-          type: 4, // Text Input
-          custom_id: `date_${date.id}`,
-          label: `${idx + 1}. ${formatDate(date.datetime)}`,
-          style: 1, // Short
-          placeholder: '○、△、× のいずれかと、必要ならコメント',
-          value: existingStatus ? 
-            `${STATUS_EMOJI[existingStatus]} ${existingComment}`.trim() : 
-            '',
-          required: false,
-          max_length: 100
-        }]
-      };
-    })
-  };
+  // Create a map of dateId to response for easier lookup
+  if (userResponse) {
+    for (const response of userResponse.responses) {
+      userResponseMap.set(response.dateId, response);
+    }
+  }
+  
+  // Create voting interface with buttons for each date
+  const components = schedule.dates.slice(0, 4).map(date => {
+    const currentResponse = userResponseMap.get(date.id);
+    const currentStatus = currentResponse?.status;
+    const currentComment = currentResponse?.comment;
+    const dateLabel = formatDate(date.datetime);
+    
+    return {
+      type: 1, // Action Row
+      components: [
+        {
+          type: 2, // Button
+          style: 2, // Secondary
+          label: dateLabel.length > 40 ? dateLabel.substring(0, 40) + '...' : dateLabel,
+          custom_id: `date_label:${scheduleId}:${date.id}`,
+          disabled: true
+        },
+        {
+          type: 2,
+          custom_id: `vote:${scheduleId}:${date.id}:yes`,
+          label: '○',
+          style: currentStatus === 'yes' ? 3 : 2, // Success if selected
+          emoji: { name: '⭕' }
+        },
+        {
+          type: 2,
+          custom_id: `vote:${scheduleId}:${date.id}:maybe`,
+          label: '△',
+          style: currentStatus === 'maybe' ? 1 : 2, // Primary if selected
+          emoji: { name: '🔺' }
+        },
+        {
+          type: 2,
+          custom_id: `vote:${scheduleId}:${date.id}:no`,
+          label: '×',
+          style: currentStatus === 'no' ? 4 : 2, // Danger if selected
+          emoji: { name: '❌' }
+        },
+        {
+          type: 2,
+          custom_id: `comment:${scheduleId}:${date.id}`,
+          label: currentComment ? '💬' : '➕',
+          style: 2, // Secondary
+          emoji: currentComment ? { name: '💬' } : { name: '💭' }
+        }
+      ]
+    };
+  });
+
+  // Add action row for additional dates if there are more than 4
+  if (schedule.dates.length > 4) {
+    components.push({
+      type: 1,
+      components: [{
+        type: 2,
+        style: 2,
+        label: `他 ${schedule.dates.length - 4} 件の日程を表示`,
+        custom_id: `show_all:${scheduleId}`,
+        emoji: { name: '📋' }
+      }]
+    });
+  }
+
+  // Get summary for display
+  const summary = await storage.getScheduleSummary(scheduleId);
+  const tableEmbed = createResponseTableEmbed(summary!);
 
   return new Response(JSON.stringify({
-    type: InteractionResponseType.MODAL,
-    data: modal
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `**${schedule.title}** の回答を選択してください:\n\n各日程のボタンをクリックして回答し、💬ボタンでコメントを追加できます。`,
+      embeds: [tableEmbed],
+      components,
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
 
@@ -314,8 +371,11 @@ async function handleVoteButton(
   }
   
   // Re-create voting buttons with updated state
-  const components = schedule.dates.map(date => {
-    const currentStatus = updatedResponseMap.get(date.id);
+  const updatedUserResponse = await storage.getResponse(scheduleId, userId);
+  const components = schedule.dates.slice(0, 4).map(date => {
+    const currentResponse = updatedUserResponse?.responses.find(r => r.dateId === date.id);
+    const currentStatus = currentResponse?.status;
+    const currentComment = currentResponse?.comment;
     const dateLabel = formatDate(date.datetime);
     
     return {
@@ -324,34 +384,55 @@ async function handleVoteButton(
         {
           type: 2,
           style: 2,
-          label: dateLabel.length > 20 ? dateLabel.substring(0, 20) + '...' : dateLabel,
+          label: dateLabel.length > 40 ? dateLabel.substring(0, 40) + '...' : dateLabel,
           custom_id: `date_label:${scheduleId}:${date.id}`,
           disabled: true
         },
         {
           type: 2,
           custom_id: `vote:${scheduleId}:${date.id}:yes`,
-          label: `○`,
+          label: '○',
           style: currentStatus === 'yes' ? 3 : 2,
           emoji: { name: '⭕' }
         },
         {
           type: 2,
           custom_id: `vote:${scheduleId}:${date.id}:maybe`,
-          label: `△`,
+          label: '△',
           style: currentStatus === 'maybe' ? 1 : 2,
           emoji: { name: '🔺' }
         },
         {
           type: 2,
           custom_id: `vote:${scheduleId}:${date.id}:no`,
-          label: `×`,
+          label: '×',
           style: currentStatus === 'no' ? 4 : 2,
           emoji: { name: '❌' }
+        },
+        {
+          type: 2,
+          custom_id: `comment:${scheduleId}:${date.id}`,
+          label: currentComment ? '💬' : '➕',
+          style: 2,
+          emoji: currentComment ? { name: '💬' } : { name: '💭' }
         }
       ]
     };
   });
+  
+  // Add action row for additional dates if there are more than 4
+  if (schedule.dates.length > 4) {
+    components.push({
+      type: 1,
+      components: [{
+        type: 2,
+        style: 2,
+        label: `他 ${schedule.dates.length - 4} 件の日程を表示`,
+        custom_id: `show_all:${scheduleId}`,
+        emoji: { name: '📋' }
+      }]
+    });
+  }
 
   const date = schedule.dates.find(d => d.id === dateId);
   const statusText = status === 'clear' ? 'クリアしました' : STATUS_EMOJI[status as ResponseStatus];
@@ -361,7 +442,7 @@ async function handleVoteButton(
     data: {
       content: `**${schedule.title}** の回答を選択してください:\n✅ ${date ? formatDate(date.datetime) : '日程'} を ${statusText} に更新しました`,
       embeds: [tableEmbed],
-      components: components.slice(0, 5)
+      components
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
@@ -1323,5 +1404,100 @@ async function handleAddCommentButton(
         }
       ]
     }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+async function handleCommentButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId, dateId] = params;
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  
+  // Get current comment for this specific date
+  const userResponse = await storage.getResponse(scheduleId, userId);
+  const dateResponse = userResponse?.responses.find(r => r.dateId === dateId);
+  const currentComment = dateResponse?.comment || '';
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  const date = schedule?.dates.find(d => d.id === dateId);
+  
+  // Show modal for adding/editing comment for specific date
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: {
+      custom_id: `modal:date_comment:${scheduleId}:${dateId}`,
+      title: date ? formatDate(date.datetime) : 'コメント',
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'comment',
+            label: 'この日程へのコメント',
+            style: 2,
+            placeholder: '例: 午後なら参加可能',
+            value: currentComment,
+            required: false,
+            max_length: 100
+          }]
+        }
+      ]
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+async function handleShowAllButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userResponse = await storage.getResponse(scheduleId, userId);
+
+  // Open modal for all dates
+  const modal = {
+    title: schedule.title.length > 40 ? schedule.title.substring(0, 40) + '...' : schedule.title,
+    custom_id: `modal:interactive_response:${scheduleId}`,
+    components: schedule.dates.slice(0, 5).map((date, idx) => {
+      const existingResponse = userResponse?.responses.find(r => r.dateId === date.id);
+      const existingStatus = existingResponse?.status;
+      const existingComment = existingResponse?.comment || '';
+      
+      return {
+        type: 1,
+        components: [{
+          type: 4,
+          custom_id: `date_${date.id}`,
+          label: `${idx + 1}. ${formatDate(date.datetime)}`,
+          style: 1,
+          placeholder: '○、△、× のいずれかと、必要ならコメント',
+          value: existingStatus ? 
+            `${STATUS_EMOJI[existingStatus]} ${existingComment}`.trim() : 
+            '',
+          required: false,
+          max_length: 100
+        }]
+      };
+    })
+  };
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: modal
   }), { headers: { 'Content-Type': 'application/json' } });
 }

@@ -78,6 +78,8 @@ export async function handleModalSubmit(
       return handleAddDatesModal(interaction, storage, params, env);
     case 'add_comment':
       return handleAddCommentModal(interaction, storage, params, env);
+    case 'date_comment':
+      return handleDateCommentModal(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -966,6 +968,62 @@ async function handleAddCommentModal(
 
   // Update comment
   userResponse.comment = comment;
+  userResponse.updatedAt = new Date();
+  await storage.saveResponse(userResponse);
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `✅ コメントを${comment ? '更新' : '削除'}しました。`,
+      flags: InteractionResponseFlags.EPHEMERAL
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+async function handleDateCommentModal(
+  interaction: ModalSubmitInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const [scheduleId, dateId] = params;
+  const userId = interaction.member?.user.id || interaction.user?.id || '';
+  const userName = interaction.member?.user.username || interaction.user?.username || '';
+  
+  // Extract comment
+  const comment = interaction.data.components
+    .flatMap(row => row.components)
+    .find(c => c.custom_id === 'comment')?.value || '';
+
+  // Get or create user response
+  let userResponse = await storage.getResponse(scheduleId, userId);
+  
+  if (!userResponse) {
+    userResponse = {
+      scheduleId,
+      userId,
+      userName,
+      responses: [],
+      comment: '',
+      updatedAt: new Date()
+    };
+  }
+
+  // Update comment for specific date
+  const existingResponseIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
+  if (existingResponseIndex >= 0) {
+    userResponse.responses[existingResponseIndex].comment = comment || undefined;
+  } else {
+    // If no response exists for this date, don't create one with just a comment
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: 'この日程にはまだ回答していません。先に○△×で回答してからコメントを追加してください。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
   userResponse.updatedAt = new Date();
   await storage.saveResponse(userResponse);
 
