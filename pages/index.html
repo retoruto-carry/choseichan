@@ -14,21 +14,47 @@
         .discord-dark { background-color: #23272a; }
         .discord-blurple { background-color: #5865f2; }
         .discord-blurple-hover:hover { background-color: #4752c4; }
+        .gradient-text {
+            background: linear-gradient(to right, #5865f2, #7289da);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .feature-card {
+            background: linear-gradient(145deg, #2c2f33 0%, #23272a 100%);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            border-color: #5865f2;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(88, 101, 242, 0.5);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
     <!-- Header -->
-    <header class="discord-dark border-b border-gray-800">
+    <header class="discord-dark border-b border-gray-800 backdrop-blur-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <span class="text-3xl">📅</span>
+                    <span class="text-3xl floating">📅</span>
                     <h1 class="text-2xl font-bold text-white">Discord 調整ちゃん</h1>
                 </div>
                 <nav class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-gray-300 hover:text-white transition">機能</a>
-                    <a href="#how-to-use" class="text-gray-300 hover:text-white transition">使い方</a>
-                    <a href="#install" class="discord-blurple discord-blurple-hover text-white px-6 py-2.5 rounded-lg font-medium transition">
+                    <a href="#features" class="text-gray-300 hover:text-white transition duration-200">機能</a>
+                    <a href="#how-to-use" class="text-gray-300 hover:text-white transition duration-200">使い方</a>
+                    <a href="#install" class="discord-blurple discord-blurple-hover text-white px-6 py-2.5 rounded-lg font-medium transition duration-200 glow">
                         Botを追加
                     </a>
                 </nav>
@@ -37,93 +63,186 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="py-20 px-4">
-        <div class="max-w-5xl mx-auto text-center">
-            <h2 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+    <section class="py-24 px-4 relative overflow-hidden">
+        <!-- Background gradient -->
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-blue-900/10"></div>
+        
+        <!-- Animated background shapes -->
+        <div class="absolute top-20 left-10 w-72 h-72 bg-purple-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur px-4 py-2 rounded-full mb-6 border border-gray-700">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span class="text-sm text-gray-300">複数サーバー対応</span>
+            </div>
+            <h2 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
                 Discord内で完結する<br>
-                <span class="text-blue-500">シンプルな日程調整</span>
+                <span class="gradient-text">スマートな日程調整</span>
             </h2>
-            <p class="text-xl text-gray-400 mb-10 max-w-3xl mx-auto">
-                調整さんのような日程調整機能をDiscordで。<br>
-                外部サイト不要で、ボタンクリックだけで簡単回答。
+            <p class="text-xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
+                調整さんのような使いやすさをDiscordで実現。<br>
+                外部サイト不要、リアルタイム集計、締切通知まで全て自動化。
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#install" class="discord-blurple discord-blurple-hover text-white px-8 py-4 rounded-lg font-semibold text-lg transition transform hover:scale-105">
+                <a href="#install" class="discord-blurple discord-blurple-hover text-white px-10 py-4 rounded-lg font-semibold text-lg transition duration-200 transform hover:scale-105 glow">
                     無料でBotを追加
                 </a>
-                <a href="#features" class="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition">
+                <a href="#features" class="bg-gray-800/80 backdrop-blur hover:bg-gray-700 text-white px-10 py-4 rounded-lg font-semibold text-lg transition duration-200 border border-gray-700 hover:border-gray-600">
                     機能を見る
                 </a>
             </div>
         </div>
     </section>
 
+    <!-- Stats Section -->
+    <section class="py-16 px-4 discord-bg border-y border-gray-800">
+        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+                <div class="text-4xl font-bold gradient-text mb-2">∞</div>
+                <p class="text-gray-400">同時調整数</p>
+            </div>
+            <div>
+                <div class="text-4xl font-bold gradient-text mb-2">24/7</div>
+                <p class="text-gray-400">稼働時間</p>
+            </div>
+            <div>
+                <div class="text-4xl font-bold gradient-text mb-2">0円</div>
+                <p class="text-gray-400">基本料金</p>
+            </div>
+            <div>
+                <div class="text-4xl font-bold gradient-text mb-2">3秒</div>
+                <p class="text-gray-400">セットアップ</p>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
-    <section id="features" class="py-20 px-4 discord-bg">
+    <section id="features" class="py-24 px-4">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-16">
-                <h3 class="text-4xl font-bold mb-4">主な機能</h3>
-                <p class="text-xl text-gray-400">シンプルで使いやすい機能</p>
+                <h3 class="text-4xl font-bold mb-4">パワフルな機能</h3>
+                <p class="text-xl text-gray-400">シンプルだけど、必要な機能は全て揃っています</p>
             </div>
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">📅</div>
-                    <h4 class="text-xl font-semibold mb-3">簡単な日程作成</h4>
-                    <p class="text-gray-400">/choseichan create コマンドで、モーダルから直感的に日程調整を作成できます。</p>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-blue-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">📅</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">直感的な作成</h4>
+                    <p class="text-gray-400 leading-relaxed">/choseichan create で即座に開始。モーダルUIで必要な情報を簡単入力。</p>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">🗳️</div>
-                    <h4 class="text-xl font-semibold mb-3">ボタンで簡単回答</h4>
-                    <p class="text-gray-400">○△×の3段階評価で回答。セレクトメニューから選ぶだけの簡単操作。</p>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-green-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">🗳️</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">ワンクリック回答</h4>
+                    <p class="text-gray-400 leading-relaxed">○△×の3択で簡単回答。セレクトメニューで直感的に操作できます。</p>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">📊</div>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-purple-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">📊</span>
+                    </div>
                     <h4 class="text-xl font-semibold mb-3">リアルタイム集計</h4>
-                    <p class="text-gray-400">回答は即座に集計され、最適な日程が一目でわかります。</p>
+                    <p class="text-gray-400 leading-relaxed">回答は即座に反映。最適な日程が自動でハイライトされます。</p>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">⏰</div>
-                    <h4 class="text-xl font-semibold mb-3">締切設定</h4>
-                    <p class="text-gray-400">回答締切を設定可能。締切時に自動で集計結果を通知します。</p>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-orange-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">⏰</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">自動リマインダー</h4>
+                    <p class="text-gray-400 leading-relaxed">締切前の通知で回答率UP。締切時には自動で結果を通知します。</p>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">💬</div>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-pink-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">💬</span>
+                    </div>
                     <h4 class="text-xl font-semibold mb-3">コメント機能</h4>
-                    <p class="text-gray-400">各日程や全体へのコメントを追加できます。</p>
+                    <p class="text-gray-400 leading-relaxed">各日程への補足や全体コメントで、より詳細な調整が可能。</p>
                 </div>
-                <div class="bg-gray-800 p-8 rounded-xl">
-                    <div class="text-4xl mb-4">📥</div>
-                    <h4 class="text-xl font-semibold mb-3">CSV出力</h4>
-                    <p class="text-gray-400">集計結果をCSV形式でエクスポート可能。</p>
+                <div class="feature-card p-8 rounded-2xl">
+                    <div class="w-16 h-16 bg-indigo-600/20 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-3xl">📥</span>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-3">データエクスポート</h4>
+                    <p class="text-gray-400 leading-relaxed">集計結果をCSV形式で出力。外部ツールでの分析も簡単です。</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- How to Use Section -->
-    <section id="how-to-use" class="py-20 px-4">
+    <section id="how-to-use" class="py-24 px-4 discord-bg">
         <div class="max-w-4xl mx-auto">
-            <h3 class="text-4xl font-bold text-center mb-12">使い方</h3>
-            <div class="space-y-8">
-                <div class="flex items-start space-x-4">
-                    <div class="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">1</div>
+            <h3 class="text-4xl font-bold text-center mb-16">たった3ステップ</h3>
+            <div class="space-y-12">
+                <div class="flex items-start space-x-6">
+                    <div class="bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 font-bold text-lg">1</div>
                     <div>
-                        <h4 class="text-xl font-semibold mb-2">日程調整を作成</h4>
-                        <p class="text-gray-400">/choseichan create コマンドを実行し、タイトル、説明、候補日程を入力します。</p>
+                        <h4 class="text-2xl font-semibold mb-3">日程調整を作成</h4>
+                        <p class="text-gray-400 text-lg leading-relaxed">/choseichan create でモーダルが開きます。タイトルと候補日を入力するだけ。</p>
                     </div>
                 </div>
-                <div class="flex items-start space-x-4">
-                    <div class="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">2</div>
+                <div class="flex items-start space-x-6">
+                    <div class="bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 font-bold text-lg">2</div>
                     <div>
-                        <h4 class="text-xl font-semibold mb-2">参加者が回答</h4>
-                        <p class="text-gray-400">「回答する」ボタンから各日程に○△×で回答します。</p>
+                        <h4 class="text-2xl font-semibold mb-3">みんなが回答</h4>
+                        <p class="text-gray-400 text-lg leading-relaxed">「回答する」ボタンから、各日程に○△×で回答。コメントも追加可能。</p>
                     </div>
                 </div>
-                <div class="flex items-start space-x-4">
-                    <div class="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">3</div>
+                <div class="flex items-start space-x-6">
+                    <div class="bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 font-bold text-lg">3</div>
                     <div>
-                        <h4 class="text-xl font-semibold mb-2">結果を確認</h4>
-                        <p class="text-gray-400">「集計を見る」ボタンで現在の回答状況を確認。最適な日程が自動的に表示されます。</p>
+                        <h4 class="text-2xl font-semibold mb-3">結果を確認</h4>
+                        <p class="text-gray-400 text-lg leading-relaxed">リアルタイムで集計結果を確認。最適な日程が一目でわかります。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="py-24 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h3 class="text-4xl font-bold mb-4">実際の画面</h3>
+                <p class="text-xl text-gray-400">Discord内でこんな感じで動きます</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="discord-bg rounded-2xl p-6 border border-gray-800">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-300">作成画面</h4>
+                    <div class="bg-gray-800 rounded-lg p-4 space-y-3">
+                        <div class="text-sm text-gray-400">タイトル</div>
+                        <div class="bg-gray-900 px-3 py-2 rounded">忘年会の日程調整</div>
+                        <div class="text-sm text-gray-400 mt-4">候補日程</div>
+                        <div class="bg-gray-900 px-3 py-2 rounded">
+                            12/20(金) 19:00～<br>
+                            12/21(土) 18:00～<br>
+                            12/22(日) 17:00～
+                        </div>
+                    </div>
+                </div>
+                <div class="discord-bg rounded-2xl p-6 border border-gray-800">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-300">回答画面</h4>
+                    <div class="space-y-3">
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span>12/20(金) 19:00～</span>
+                                <div class="flex space-x-2">
+                                    <span class="bg-green-600 px-3 py-1 rounded text-sm">○ 3人</span>
+                                    <span class="bg-yellow-600 px-3 py-1 rounded text-sm">△ 1人</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 rounded-lg p-4 border-2 border-green-600">
+                            <div class="flex justify-between items-center">
+                                <span>12/21(土) 18:00～ ⭐</span>
+                                <div class="flex space-x-2">
+                                    <span class="bg-green-600 px-3 py-1 rounded text-sm">○ 5人</span>
+                                    <span class="bg-yellow-600 px-3 py-1 rounded text-sm">△ 0人</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,61 +250,61 @@
     </section>
 
     <!-- Installation Section -->
-    <section id="install" class="py-20 px-4 discord-bg">
-        <div class="max-w-4xl mx-auto text-center">
-            <h3 class="text-4xl font-bold mb-6">今すぐ始める</h3>
+    <section id="install" class="py-24 px-4 discord-bg relative overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent"></div>
+        
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <h3 class="text-5xl font-bold mb-6">今すぐ始めよう</h3>
             <p class="text-xl text-gray-400 mb-12">
-                ボタンをクリックしてBotをサーバーに追加するだけ
+                ボタンをクリックして、3秒でセットアップ完了
             </p>
-            <a href="https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=2147485696&scope=bot%20applications.commands" 
-               class="inline-flex items-center discord-blurple discord-blurple-hover text-white px-8 py-4 rounded-lg font-semibold text-lg transition transform hover:scale-105">
-                <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
+            <a href="https://discord.com/api/oauth2/authorize?client_id=1392384546560802947&permissions=2147485696&scope=bot%20applications.commands" 
+               class="inline-flex items-center discord-blurple discord-blurple-hover text-white px-12 py-5 rounded-xl font-semibold text-xl transition duration-200 transform hover:scale-105 glow">
+                <svg class="w-8 h-8 mr-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
                 </svg>
                 Discordに追加
             </a>
-            <p class="mt-6 text-sm text-gray-500">
+            <p class="mt-8 text-sm text-gray-500">
                 ※ボットの招待にはサーバー管理権限が必要です
             </p>
+            
+            <!-- Feature badges -->
+            <div class="mt-16 flex flex-wrap justify-center gap-4">
+                <div class="bg-gray-800/50 backdrop-blur px-4 py-2 rounded-full text-sm border border-gray-700">
+                    ✅ 完全無料
+                </div>
+                <div class="bg-gray-800/50 backdrop-blur px-4 py-2 rounded-full text-sm border border-gray-700">
+                    🔒 データ分離
+                </div>
+                <div class="bg-gray-800/50 backdrop-blur px-4 py-2 rounded-full text-sm border border-gray-700">
+                    ⚡ 高速レスポンス
+                </div>
+                <div class="bg-gray-800/50 backdrop-blur px-4 py-2 rounded-full text-sm border border-gray-700">
+                    🌍 複数サーバー対応
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="discord-dark border-t border-gray-800 py-12 px-4">
+    <footer class="discord-dark border-t border-gray-800 py-16 px-4">
         <div class="max-w-7xl mx-auto">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <span class="text-2xl">📅</span>
-                        <h5 class="font-semibold">Discord 調整ちゃん</h5>
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-6 md:mb-0">
+                    <span class="text-3xl">📅</span>
+                    <div>
+                        <h5 class="font-semibold text-white">Discord 調整ちゃん</h5>
+                        <p class="text-gray-400 text-sm">スマートな日程調整Bot</p>
                     </div>
-                    <p class="text-gray-400 text-sm">
-                        Discord内で簡単に<br>
-                        日程調整ができるBot
-                    </p>
                 </div>
-                <div>
-                    <h6 class="font-semibold mb-4">リンク</h6>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="https://github.com/retca/discord-choseisan" class="hover:text-white transition">GitHub</a></li>
-                        <li><a href="/docs" class="hover:text-white transition">ドキュメント</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="font-semibold mb-4">ポリシー</h6>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="/privacy" class="hover:text-white transition">プライバシーポリシー</a></li>
-                        <li><a href="/terms" class="hover:text-white transition">利用規約</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h6 class="font-semibold mb-4">サポート</h6>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="https://github.com/retca/discord-choseisan/issues" class="hover:text-white transition">Issue</a></li>
-                    </ul>
+                <div class="flex space-x-6 text-sm">
+                    <a href="/privacy" class="text-gray-400 hover:text-white transition">プライバシー</a>
+                    <a href="/terms" class="text-gray-400 hover:text-white transition">利用規約</a>
                 </div>
             </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+            <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
                 <p>&copy; 2024 Discord 調整ちゃん. All rights reserved.</p>
             </div>
         </div>

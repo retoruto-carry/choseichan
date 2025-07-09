@@ -29,13 +29,6 @@
 
 ## カスタマイズ
 
-`index.html`内の`YOUR_CLIENT_ID`を実際のDiscordアプリケーションIDに置き換えてください。
+Discord Application IDは既に設定済みです（1392384546560802947）。
 
-```html
-<a href="https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=2147485696&scope=bot%20applications.commands">
-```
-
-または、URLパラメータで動的に設定：
-```
-https://your-domain.pages.dev/?client_id=123456789
-```
+必要に応じて、`index.html`内のリンクを更新できます。
