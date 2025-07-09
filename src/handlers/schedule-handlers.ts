@@ -139,7 +139,7 @@ export async function handleEditButton(
             {
               type: 2,
               style: 2,
-              label: '日程を一括更新',
+              label: '日程を編集',
               custom_id: createButtonId('update_dates', scheduleId, originalMessageId),
               emoji: { name: '📅' }
             },
@@ -431,4 +431,34 @@ export async function handleDeleteButton(
       components: []
     }
   }), { headers: { 'Content-Type': 'application/json' } });
+}
+
+export async function handleRefreshButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
+  const [scheduleId] = params;
+  
+  // Get the latest schedule summary
+  const summary = await storage.getScheduleSummary(scheduleId, guildId);
+  if (!summary) {
+    return createErrorResponse('日程調整が見つかりません。');
+  }
+
+  // Update the message with latest data
+  try {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.UPDATE_MESSAGE,
+      data: {
+        embeds: [createScheduleEmbedWithTable(summary, false)],
+        components: createSimpleScheduleComponents(summary.schedule, false)
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  } catch (error) {
+    console.error('Failed to refresh message:', error);
+    return createErrorResponse('メッセージの更新に失敗しました。');
+  }
 }

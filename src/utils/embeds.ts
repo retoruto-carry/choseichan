@@ -78,7 +78,8 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
     footer: {
       text: [
         `作成: ${schedule.createdBy.username}`,
-        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null
+        schedule.deadline ? `締切: ${formatDate(schedule.deadline.toISOString())}` : null,
+        '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
     timestamp: schedule.updatedAt.toISOString()
@@ -121,33 +122,47 @@ export function createScheduleComponents(schedule: Schedule) {
 }
 
 export function createSimpleScheduleComponents(schedule: Schedule, showDetails: boolean = false) {
-  const components = [
-    {
+  const components = [];
+
+  // 回答するボタン（開いている時のみ）
+  if (schedule.status === 'open') {
+    components.push({
       type: 2,
       style: 1, // Primary
       label: '回答する',
       custom_id: createButtonId('respond', schedule.id),
       emoji: { name: '✏️' }
-    }
-  ];
+    });
+  }
 
-  // Add details toggle button
+  // 詳細ボタン
   components.push({
     type: 2,
     style: 2, // Secondary
-    label: showDetails ? '簡易表示' : '詳細',
-    custom_id: createButtonId('toggle_details', schedule.id),
-    emoji: { name: showDetails ? '📊' : '📋' }
+    label: '詳細',
+    custom_id: createButtonId('status', schedule.id),
+    emoji: { name: '👥' }
   });
 
-  // Add edit button
+  // 更新ボタン
   components.push({
     type: 2,
     style: 2, // Secondary
-    label: '編集',
-    custom_id: createButtonId('edit', schedule.id),
-    emoji: { name: '⚙️' }
+    label: '更新',
+    custom_id: createButtonId('refresh', schedule.id),
+    emoji: { name: '🔄' }
   });
+
+  // 編集ボタン（開いている時のみ）
+  if (schedule.status === 'open') {
+    components.push({
+      type: 2,
+      style: 2, // Secondary
+      label: '編集',
+      custom_id: createButtonId('edit', schedule.id),
+      emoji: { name: '⚙️' }
+    });
+  }
 
   return [
     {

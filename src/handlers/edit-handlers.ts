@@ -94,7 +94,7 @@ export async function handleUpdateDatesButton(
     type: InteractionResponseType.MODAL,
     data: {
       custom_id: `modal:update_dates:${scheduleId}:${messageId}`,
-      title: '日程を一括更新',
+      title: '日程を編集',
       components: [
         {
           type: 1,

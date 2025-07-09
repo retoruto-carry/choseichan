@@ -10,6 +10,7 @@ import {
   handleCloseButton,
   handleReopenButton,
   handleDeleteButton,
+  handleRefreshButton,
 } from './schedule-handlers';
 import {
   handleToggleDetailsButton
@@ -91,6 +92,8 @@ export async function handleButtonInteraction(
       return handleShowAllButton(interaction, storage, params);
     case 'toggle_details':
       return handleToggleDetailsButton(interaction, storage, params, env);
+    case 'refresh':
+      return handleRefreshButton(interaction, storage, params, env);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

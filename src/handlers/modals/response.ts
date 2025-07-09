@@ -61,7 +61,7 @@ export async function handleInteractiveResponseModal(
   // Create confirmation embed
   const embed = {
     title: '✅ 回答を受け付けました',
-    description: `**${schedule.title}** への回答を登録しました。`,
+    description: `**${schedule.title}** への回答を登録しました。\n\n💡 最大1分程度で反映されます。`,
     color: EMBED_COLORS.INFO,
     fields: schedule.dates.map((date, idx) => {
       const response = userResponse.responses[idx];
