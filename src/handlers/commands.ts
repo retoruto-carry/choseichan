@@ -99,7 +99,7 @@ async function handleCreateCommandSimple(
             label: '締切とリマインダー（任意）',
             style: 2, // Paragraph
             value: 'リマインダー: 3d,1d,8h\n通知先: @here',
-            placeholder: '例: 12/20 23:59\nリマインダー: 3d,1d,8h,30m\n通知先: @everyone',
+            placeholder: '例: 12/20 23:59\nリマインダー: 3d,1d,8h,30m\n通知先: @everyone, @Alice, @Bob',
             required: false,
             max_length: 200
           }]

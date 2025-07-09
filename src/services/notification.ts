@@ -10,6 +10,8 @@ import { STATUS_EMOJI } from '../types/schedule';
  * GitHub Actionsのcronジョブから呼び出されます。
  */
 export class NotificationService {
+  private memberCache: Map<string, Map<string, { id: string; username: string }>> = new Map();
+
   constructor(
     private storage: StorageService,
     private discordToken: string,
@@ -55,18 +57,10 @@ export class NotificationService {
     
     // Build mentions string
     let mentions = '';
-    if (schedule.reminderMentions && schedule.reminderMentions.length > 0) {
-      // Convert mentions array to Discord mention format
-      mentions = schedule.reminderMentions.map(mention => {
-        if (mention === '@everyone') return '@everyone';
-        if (mention === '@here') return '@here';
-        // For user mentions, assume format is @username or <@userId>
-        if (mention.startsWith('<@') && mention.endsWith('>')) {
-          return mention; // Already in correct format
-        }
-        // TODO: In a real implementation, we would need to resolve username to user ID
-        return mention;
-      }).join(' ') + ' ';
+    if (schedule.reminderMentions && schedule.reminderMentions.length > 0 && schedule.guildId) {
+      // Resolve user mentions to proper Discord format
+      const resolvedMentions = await this.resolveUserMentions(schedule.reminderMentions, schedule.guildId);
+      mentions = resolvedMentions.join(' ') + ' ';
     }
     
     // Send reminder to channel
@@ -150,6 +144,105 @@ export class NotificationService {
     if (!response.ok) {
       throw new Error(`Failed to send message: ${response.status}`);
     }
+  }
+
+  private async fetchGuildMembers(guildId: string): Promise<Map<string, { id: string; username: string }>> {
+    if (this.memberCache.has(guildId)) {
+      return this.memberCache.get(guildId)!;
+    }
+
+    const members = new Map<string, { id: string; username: string }>();
+    let after: string | undefined = undefined;
+    
+    try {
+      // Discord API allows fetching up to 1000 members at a time
+      while (true) {
+        const url = `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000${after ? `&after=${after}` : ''}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bot ${this.discordToken}`,
+          }
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch guild members: ${response.status}`);
+          break;
+        }
+        
+        const memberList = await response.json() as Array<{
+          user: { id: string; username: string; discriminator: string };
+        }>;
+        
+        if (memberList.length === 0) break;
+        
+        for (const member of memberList) {
+          members.set(member.user.username.toLowerCase(), {
+            id: member.user.id,
+            username: member.user.username
+          });
+        }
+        
+        if (memberList.length < 1000) break;
+        after = memberList[memberList.length - 1].user.id;
+      }
+      
+      // Cache for 5 minutes
+      this.memberCache.set(guildId, members);
+      setTimeout(() => this.memberCache.delete(guildId), 5 * 60 * 1000);
+      
+      return members;
+    } catch (error) {
+      console.error('Error fetching guild members:', error);
+      return members;
+    }
+  }
+
+  private async resolveUserMentions(mentions: string[], guildId: string): Promise<string[]> {
+    const resolved: string[] = [];
+    
+    // Check if we need to fetch members
+    const needsResolution = mentions.some(m => 
+      m !== '@everyone' && 
+      m !== '@here' && 
+      !(m.startsWith('<@') && m.endsWith('>'))
+    );
+    
+    if (!needsResolution) {
+      return mentions;
+    }
+    
+    const members = await this.fetchGuildMembers(guildId);
+    
+    for (const mention of mentions) {
+      if (mention === '@everyone' || mention === '@here') {
+        resolved.push(mention);
+      } else if (mention.startsWith('<@') && mention.endsWith('>')) {
+        resolved.push(mention); // Already in correct format
+      } else if (mention.startsWith('@')) {
+        // Remove @ prefix and search for username
+        const username = mention.substring(1).toLowerCase();
+        const member = members.get(username);
+        
+        if (member) {
+          resolved.push(`<@${member.id}>`);
+        } else {
+          console.warn(`Could not resolve user mention: ${mention}`);
+          // Keep original mention as fallback
+          resolved.push(mention);
+        }
+      } else {
+        // Try without @ prefix
+        const member = members.get(mention.toLowerCase());
+        if (member) {
+          resolved.push(`<@${member.id}>`);
+        } else {
+          resolved.push(mention);
+        }
+      }
+    }
+    
+    return resolved;
   }
 
   async sendDirectMessage(userId: string, content: string): Promise<void> {

@@ -317,10 +317,10 @@ export async function handleEditDeadlineButton(
           components: [{
             type: 4,
             custom_id: 'reminder_mentions',
-            label: '通知先（カンマ区切り）',
+            label: '通知先（カンマ区切りで複数指定可）',
             style: 1,
             value: currentMentions,
-            placeholder: '例: @everyone, @here, @username',
+            placeholder: '例: @everyone, @here, @Alice, @Bob',
             required: false,
             max_length: 200
           }]
