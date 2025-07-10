@@ -80,7 +80,7 @@ function getTimingMessage(timing: string): string {
 }
 
 export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
   const now = new Date();
   const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 過去1週間まで確認
@@ -191,7 +191,7 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
     return;
   }
 
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
   const notificationService = new NotificationService(
     storage,
     env.DISCORD_TOKEN,

@@ -31,8 +31,12 @@ binding = "RESPONSES"
 id = "3399118d0fc24437ac694cb6c25e7dc8"
 preview_id = "a59f3cc9de6a4f0dbc463211ddbbaf6a"
 
-# D1 Database (alternative to KV)
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "discord-choseisan"
-# database_id = "your-database-id"
+# D1 Database configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "discord-choseisan-db"
+database_id = "f9c793aa-2850-4646-8d5d-271550fdc3ac"
+
+# Database type configuration
+[vars]
+DATABASE_TYPE = "d1"  # Switch to D1 database

@@ -276,7 +276,7 @@ export class ScheduleAsyncOperations {
     try {
       // この処理は非同期で実行されるため、エラーがあってもユーザーには影響しない
       const { StorageServiceV2 } = await import('../services/storage-v2');
-      const storage = new StorageServiceV2(env.SCHEDULES, env.RESPONSES);
+      const storage = new StorageServiceV2(env.SCHEDULES, env.RESPONSES, env);
       
       // メッセージIDを保存
       schedule.messageId = messageId;

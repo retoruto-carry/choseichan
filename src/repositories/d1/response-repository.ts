@@ -1,0 +1,246 @@
+/**
+ * D1実装のレスポンスリポジトリ
+ */
+
+import { IResponseRepository, IScheduleRepository, RepositoryError, ConflictError } from '../interfaces';
+import { Response, ScheduleSummary, ResponseStatus } from '../../types/schedule-v2';
+import { TIME_CONSTANTS } from '../../constants';
+
+export class D1ResponseRepository implements IResponseRepository {
+  constructor(
+    private db: D1Database,
+    private scheduleRepository: IScheduleRepository
+  ) {}
+
+  async save(response: Response, guildId: string = 'default'): Promise<void> {
+    // Get schedule to determine expiration time
+    const schedule = await this.scheduleRepository.findById(response.scheduleId, guildId);
+    if (!schedule) {
+      throw new RepositoryError('Schedule not found', 'NOT_FOUND');
+    }
+    
+    const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
+    const expiresAt = Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) + TIME_CONSTANTS.SIX_MONTHS_SECONDS;
+    
+    try {
+      // Start transaction for atomic update
+      const tx = this.db.batch([
+        // Insert or update response
+        this.db.prepare(`
+          INSERT INTO responses (
+            schedule_id, guild_id, user_id, username, display_name, 
+            comment, updated_at, expires_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(schedule_id, user_id) DO UPDATE SET
+            username = excluded.username,
+            display_name = excluded.display_name,
+            comment = excluded.comment,
+            updated_at = excluded.updated_at,
+            expires_at = excluded.expires_at
+          RETURNING id
+        `).bind(
+          response.scheduleId,
+          guildId,
+          response.userId,
+          response.username,
+          response.displayName || null,
+          response.comment || null,
+          Math.floor(response.updatedAt.getTime() / 1000),
+          expiresAt
+        )
+      ]);
+
+      const results = await tx;
+      const responseResult = results[0] as any;
+      const responseId = responseResult.results[0].id as number;
+      
+      // Delete existing date statuses
+      await this.db.prepare(`
+        DELETE FROM response_date_status 
+        WHERE response_id = ?
+      `).bind(responseId).run();
+      
+      // Insert new date statuses
+      const statusInserts = Object.entries(response.dateStatuses).map(([dateId, status]) => 
+        this.db.prepare(`
+          INSERT INTO response_date_status (response_id, date_id, status)
+          VALUES (?, ?, ?)
+        `).bind(responseId, dateId, status)
+      );
+      
+      if (statusInserts.length > 0) {
+        await this.db.batch(statusInserts);
+      }
+    } catch (error) {
+      throw new RepositoryError('Failed to save response', 'SAVE_ERROR', error as Error);
+    }
+  }
+
+  async findByUser(
+    scheduleId: string, 
+    userId: string, 
+    guildId: string = 'default'
+  ): Promise<Response | null> {
+    try {
+      const responseRow = await this.db.prepare(`
+        SELECT * FROM responses 
+        WHERE schedule_id = ? AND user_id = ? AND guild_id = ?
+      `).bind(scheduleId, userId, guildId).first();
+      
+      if (!responseRow) return null;
+      
+      // Get date statuses
+      const statusResult = await this.db.prepare(`
+        SELECT date_id, status FROM response_date_status 
+        WHERE response_id = ?
+      `).bind(responseRow.id).all();
+      
+      return this.mapRowToResponse(responseRow, statusResult.results);
+    } catch (error) {
+      throw new RepositoryError('Failed to find response', 'FIND_ERROR', error as Error);
+    }
+  }
+
+  async findBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
+    try {
+      const result = await this.db.prepare(`
+        SELECT * FROM responses 
+        WHERE schedule_id = ? AND guild_id = ?
+        ORDER BY updated_at DESC
+      `).bind(scheduleId, guildId).all();
+      
+      const responses: Response[] = [];
+      for (const row of result.results) {
+        const statusResult = await this.db.prepare(`
+          SELECT date_id, status FROM response_date_status 
+          WHERE response_id = ?
+        `).bind(row.id).all();
+        
+        const response = this.mapRowToResponse(row, statusResult.results);
+        if (response) responses.push(response);
+      }
+      
+      return responses;
+    } catch (error) {
+      throw new RepositoryError('Failed to find responses', 'FIND_ERROR', error as Error);
+    }
+  }
+
+  async delete(scheduleId: string, userId: string, guildId: string = 'default'): Promise<void> {
+    try {
+      await this.db.prepare(`
+        DELETE FROM responses 
+        WHERE schedule_id = ? AND user_id = ? AND guild_id = ?
+      `).bind(scheduleId, userId, guildId).run();
+    } catch (error) {
+      throw new RepositoryError('Failed to delete response', 'DELETE_ERROR', error as Error);
+    }
+  }
+
+  async deleteBySchedule(scheduleId: string, guildId: string = 'default'): Promise<void> {
+    try {
+      await this.db.prepare(`
+        DELETE FROM responses 
+        WHERE schedule_id = ? AND guild_id = ?
+      `).bind(scheduleId, guildId).run();
+    } catch (error) {
+      throw new RepositoryError('Failed to delete responses', 'DELETE_ERROR', error as Error);
+    }
+  }
+
+  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
+    const schedule = await this.scheduleRepository.findById(scheduleId, guildId);
+    if (!schedule) return null;
+    
+    try {
+      // Get response counts using the view
+      const countResult = await this.db.prepare(`
+        SELECT date_id, status, count 
+        FROM date_response_counts 
+        WHERE schedule_id = ?
+      `).bind(scheduleId).all();
+      
+      // Initialize response counts
+      const responseCounts: Record<string, Record<ResponseStatus, number>> = {};
+      for (const date of schedule.dates) {
+        responseCounts[date.id] = {
+          ok: 0,
+          maybe: 0,
+          ng: 0
+        };
+      }
+      
+      // Fill in actual counts
+      for (const row of countResult.results) {
+        const dateId = row.date_id as string;
+        const status = row.status as ResponseStatus;
+        const count = Number(row.count);
+        
+        if (responseCounts[dateId]) {
+          responseCounts[dateId][status] = count;
+        }
+      }
+      
+      // Get user responses
+      const userResponsesResult = await this.db.prepare(`
+        SELECT 
+          r.user_id,
+          rds.date_id,
+          rds.status
+        FROM responses r
+        JOIN response_date_status rds ON r.id = rds.response_id
+        WHERE r.schedule_id = ? AND r.guild_id = ?
+      `).bind(scheduleId, guildId).all();
+      
+      const userResponses: Record<string, Record<string, ResponseStatus>> = {};
+      for (const row of userResponsesResult.results) {
+        const userId = row.user_id as string;
+        const dateId = row.date_id as string;
+        const status = row.status as ResponseStatus;
+        
+        if (!userResponses[userId]) {
+          userResponses[userId] = {};
+        }
+        userResponses[userId][dateId] = status;
+      }
+      
+      // Get total response count
+      const totalResult = await this.db.prepare(`
+        SELECT COUNT(DISTINCT user_id) as total 
+        FROM responses 
+        WHERE schedule_id = ? AND guild_id = ?
+      `).bind(scheduleId, guildId).first();
+      
+      return {
+        schedule,
+        responseCounts,
+        userResponses,
+        totalResponses: Number(totalResult?.total) || 0
+      };
+    } catch (error) {
+      throw new RepositoryError('Failed to get schedule summary', 'SUMMARY_ERROR', error as Error);
+    }
+  }
+
+  /**
+   * Map database row to Response object
+   */
+  private mapRowToResponse(row: any, statusRows: any[]): Response | null {
+    if (!row) return null;
+    
+    const dateStatuses: Record<string, ResponseStatus> = {};
+    for (const statusRow of statusRows) {
+      dateStatuses[statusRow.date_id] = statusRow.status as ResponseStatus;
+    }
+    
+    return {
+      scheduleId: row.schedule_id,
+      userId: row.user_id,
+      username: row.username,
+      displayName: row.display_name || undefined,
+      dateStatuses,
+      comment: row.comment || undefined,
+      updatedAt: new Date(row.updated_at * 1000)
+    };
+  }
+}

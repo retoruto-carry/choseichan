@@ -1,288 +1,92 @@
-import { Schedule, Response, ScheduleSummary, ResponseStatus } from '../types/schedule';
-import { TIME_CONSTANTS } from '../constants';
+/**
+ * StorageServiceV2の互換性を保ちながら、実装をStorageServiceV3に委譲するアダプター
+ */
+
+import { Schedule, Response, ScheduleSummary } from '../types/schedule';
+import { StorageServiceV3 } from './storage-v3';
+import { getRepositoryFactory } from '../repositories/factory';
+import { Env } from '../types/discord';
 
 /**
- * マルチテナント対応のStorageService
- * guildIdを含むキー設計で、サーバーごとにデータを分離
+ * 既存のStorageServiceV2と同じインターフェースを提供
+ * 内部ではStorageServiceV3を使用
  */
 export class StorageServiceV2 {
-  constructor(
-    private schedules: KVNamespace,
-    private responses: KVNamespace
-  ) {}
+  private storageV3: StorageServiceV3;
+
+  constructor(schedules: KVNamespace, responses: KVNamespace, env?: Env) {
+    // 環境変数からリポジトリファクトリを作成
+    const effectiveEnv: Env = env || {
+      DISCORD_PUBLIC_KEY: '',
+      DISCORD_APPLICATION_ID: '',
+      DISCORD_TOKEN: '',
+      SCHEDULES: schedules,
+      RESPONSES: responses,
+      DATABASE_TYPE: 'kv',
+      DB: undefined
+    };
+    
+    const repositoryFactory = getRepositoryFactory(effectiveEnv);
+    
+    this.storageV3 = new StorageServiceV3(repositoryFactory);
+  }
 
   // Schedule operations
   async saveSchedule(schedule: Schedule): Promise<void> {
-    const guildId = schedule.guildId || 'default';
-    
-    // Check for existing schedule to clean up old deadline index
-    const existingSchedule = await this.getSchedule(schedule.id, guildId);
-    if (existingSchedule?.deadline) {
-      const oldTimestamp = Math.floor(existingSchedule.deadline.getTime() / 1000);
-      const newTimestamp = schedule.deadline ? Math.floor(schedule.deadline.getTime() / 1000) : null;
-      
-      // If deadline was removed or changed, delete old index entries
-      if (!schedule.deadline || oldTimestamp !== newTimestamp) {
-        // Delete old guild-specific index (legacy)
-        await this.schedules.delete(`guild:${guildId}:deadline:${oldTimestamp}:${schedule.id}`);
-        // Delete old global index
-        await this.schedules.delete(`deadline:${oldTimestamp}:${guildId}:${schedule.id}`);
-      }
-    }
-    
-    // Calculate expiration time: 6 months after deadline (or creation if no deadline)
-    const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
-    const expirationTime = Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) + TIME_CONSTANTS.SIX_MONTHS_SECONDS;
-    
-    await this.schedules.put(
-      `guild:${guildId}:schedule:${schedule.id}`,
-      JSON.stringify(schedule),
-      {
-        metadata: {
-          guildId,
-          channelId: schedule.channelId,
-          createdBy: schedule.createdBy.id,
-          status: schedule.status
-        },
-        expiration: expirationTime
-      }
-    );
-
-    // Save to channel index with same expiration
-    await this.schedules.put(
-      `guild:${guildId}:channel:${schedule.channelId}:${schedule.id}`,
-      schedule.id,
-      {
-        expiration: expirationTime
-      }
-    );
-
-    // Save to deadline index if deadline exists
-    if (schedule.deadline) {
-      const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
-      // Save to global deadline index for efficient cross-guild queries
-      await this.schedules.put(
-        `deadline:${timestamp}:${guildId}:${schedule.id}`,
-        schedule.id,
-        {
-          expiration: expirationTime
-        }
-      );
-    }
+    return this.storageV3.saveSchedule(schedule);
   }
 
   async getSchedule(scheduleId: string, guildId: string = 'default'): Promise<Schedule | null> {
-    const data = await this.schedules.get(`guild:${guildId}:schedule:${scheduleId}`);
-    if (!data) return null;
-    
-    const schedule = JSON.parse(data) as Schedule;
-    // Convert date strings back to Date objects
-    schedule.createdAt = new Date(schedule.createdAt);
-    schedule.updatedAt = new Date(schedule.updatedAt);
-    if (schedule.deadline) {
-      schedule.deadline = new Date(schedule.deadline);
-    }
-    
-    return schedule;
+    return this.storageV3.getSchedule(scheduleId, guildId);
   }
 
-  async listSchedulesByChannel(channelId: string, guildId: string = 'default'): Promise<Schedule[]> {
-    const list = await this.schedules.list({ 
-      prefix: `guild:${guildId}:channel:${channelId}:` 
-    });
-    const schedules: Schedule[] = [];
-    
-    for (const key of list.keys) {
-      const scheduleId = await this.schedules.get(key.name);
-      if (scheduleId && typeof scheduleId === 'string') {
-        const schedule = await this.getSchedule(scheduleId, guildId);
-        if (schedule) {
-          schedules.push(schedule);
-        }
-      }
-    }
-    
-    return schedules.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  async listSchedulesByChannel(channelId: string, guildId: string = 'default', limit: number = 100): Promise<Schedule[]> {
+    return this.storageV3.listSchedulesByChannel(channelId, guildId, limit);
+  }
+
+  async getSchedulesWithDeadlineInRange(startTime: Date, endTime: Date, guildId?: string): Promise<Schedule[]> {
+    return this.storageV3.getSchedulesWithDeadlineInRange(startTime, endTime, guildId);
   }
 
   async deleteSchedule(scheduleId: string, guildId: string = 'default'): Promise<void> {
-    const schedule = await this.getSchedule(scheduleId, guildId);
-    if (!schedule) return;
+    return this.storageV3.deleteSchedule(scheduleId, guildId);
+  }
 
-    // Delete main record
-    await this.schedules.delete(`guild:${guildId}:schedule:${scheduleId}`);
-    
-    // Delete from channel index
-    await this.schedules.delete(`guild:${guildId}:channel:${schedule.channelId}:${scheduleId}`);
-    
-    // Delete from deadline index
-    if (schedule.deadline) {
-      const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
-      // Delete from global deadline index
-      await this.schedules.delete(`deadline:${timestamp}:${guildId}:${scheduleId}`);
-    }
+  async getScheduleByMessageId(messageId: string, guildId: string): Promise<Schedule | null> {
+    return this.storageV3.getScheduleByMessageId(messageId, guildId);
   }
 
   // Response operations
   async saveResponse(response: Response, guildId: string = 'default'): Promise<void> {
-    // Get schedule to determine expiration time
-    const schedule = await this.getSchedule(response.scheduleId, guildId);
-    let expirationTime: number | undefined;
-    
-    if (schedule) {
-      // Same expiration logic as schedule: 6 months after deadline (or creation if no deadline)
-      const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
-      expirationTime = Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) + TIME_CONSTANTS.SIX_MONTHS_SECONDS;
-    }
-    
-    await this.responses.put(
-      `guild:${guildId}:response:${response.scheduleId}:${response.userId}`,
-      JSON.stringify(response),
-      expirationTime ? { expiration: expirationTime } : undefined
-    );
+    return this.storageV3.saveResponse(response, guildId);
   }
 
   async getResponse(scheduleId: string, userId: string, guildId: string = 'default'): Promise<Response | null> {
-    const data = await this.responses.get(`guild:${guildId}:response:${scheduleId}:${userId}`);
-    if (!data) return null;
-    
-    const response = JSON.parse(data) as Response;
-    response.updatedAt = new Date(response.updatedAt);
-    
-    return response;
+    return this.storageV3.getResponse(scheduleId, userId, guildId);
   }
 
   async listResponsesBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
-    const list = await this.responses.list({ 
-      prefix: `guild:${guildId}:response:${scheduleId}:` 
-    });
-    const responses: Response[] = [];
-    
-    for (const key of list.keys) {
-      const data = await this.responses.get(key.name);
-      if (data) {
-        const response = JSON.parse(data) as Response;
-        response.updatedAt = new Date(response.updatedAt);
-        responses.push(response);
-      }
-    }
-    
-    return responses.sort((a, b) => a.userName.localeCompare(b.userName));
+    return this.storageV3.listResponsesBySchedule(scheduleId, guildId);
   }
 
+  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
+    return this.storageV3.getScheduleSummary(scheduleId, guildId);
+  }
+
+  // Additional methods for backward compatibility
   async getUserResponses(scheduleId: string, userId: string, guildId: string = 'default'): Promise<Response[]> {
     const response = await this.getResponse(scheduleId, userId, guildId);
     return response ? [response] : [];
   }
-  
-  async deleteResponse(scheduleId: string, userId: string, guildId: string = 'default'): Promise<void> {
-    await this.responses.delete(`guild:${guildId}:response:${scheduleId}:${userId}`);
-  }
 
-  // Summary operations
-  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
-    const schedule = await this.getSchedule(scheduleId, guildId);
-    if (!schedule) return null;
-    
-    const userResponses = await this.listResponsesBySchedule(scheduleId, guildId);
-    
-    // Initialize response counts
-    const responseCounts: { [dateId: string]: { yes: number; maybe: number; no: number; total: number } } = {};
-    
-    for (const date of schedule.dates) {
-      responseCounts[date.id] = { yes: 0, maybe: 0, no: 0, total: 0 };
-    }
-    
-    // Count responses
-    for (const userResponse of userResponses) {
-      for (const dateResponse of userResponse.responses) {
-        if (responseCounts[dateResponse.dateId]) {
-          responseCounts[dateResponse.dateId][dateResponse.status]++;
-          responseCounts[dateResponse.dateId].total++;
-        }
-      }
-    }
-    
-    // Find best date
-    let bestDateId: string | undefined = undefined;
-    let maxScore = -1;
-    
-    for (const date of schedule.dates) {
-      const count = responseCounts[date.id];
-      const score = count.yes * 2 + count.maybe;
-      
-      if (score > maxScore) {
-        maxScore = score;
-        bestDateId = date.id;
-      }
-    }
-    
-    return {
-      schedule,
-      userResponses,
-      responseCounts,
-      bestDateId
-    };
-  }
-
-  /**
-   * Get schedule summary with optimistic update for a specific user response
-   * This is used to immediately reflect changes without waiting for KV propagation
-   */
   async getScheduleSummaryWithOptimisticUpdate(
-    scheduleId: string, 
+    scheduleId: string,
     guildId: string,
+    userId: string,
     optimisticResponse: Response
   ): Promise<ScheduleSummary | null> {
-    const schedule = await this.getSchedule(scheduleId, guildId);
-    if (!schedule) return null;
-    
-    const userResponses = await this.listResponsesBySchedule(scheduleId, guildId);
-    
-    // Apply optimistic update
-    const existingIndex = userResponses.findIndex(r => r.userId === optimisticResponse.userId);
-    if (existingIndex >= 0) {
-      userResponses[existingIndex] = optimisticResponse;
-    } else {
-      userResponses.push(optimisticResponse);
-    }
-    
-    // Initialize response counts
-    const responseCounts: { [dateId: string]: { yes: number; maybe: number; no: number; total: number } } = {};
-    
-    for (const date of schedule.dates) {
-      responseCounts[date.id] = { yes: 0, maybe: 0, no: 0, total: 0 };
-    }
-    
-    // Count responses with optimistic data
-    for (const userResponse of userResponses) {
-      for (const dateResponse of userResponse.responses) {
-        if (responseCounts[dateResponse.dateId]) {
-          responseCounts[dateResponse.dateId][dateResponse.status]++;
-          responseCounts[dateResponse.dateId].total++;
-        }
-      }
-    }
-    
-    // Find best date
-    let bestDateId: string | undefined = undefined;
-    let maxScore = -1;
-    
-    for (const date of schedule.dates) {
-      const count = responseCounts[date.id];
-      const score = count.yes * 2 + count.maybe;
-      
-      if (score > maxScore) {
-        maxScore = score;
-        bestDateId = date.id;
-      }
-    }
-    
-    return {
-      schedule,
-      userResponses,
-      responseCounts,
-      bestDateId
-    };
+    // For now, just save and return the updated summary
+    await this.saveResponse(optimisticResponse, guildId);
+    return this.getScheduleSummary(scheduleId, guildId);
   }
 }

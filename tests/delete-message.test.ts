@@ -35,7 +35,7 @@ describe('Delete Schedule with Message', () => {
       }
     } as Env;
     
-    storage = new StorageServiceV2(mockKV, mockKV);
+    storage = new StorageServiceV2(mockKV, mockKV, mockEnv);
   });
 
   it('should delete both schedule and Discord message', async () => {

@@ -23,7 +23,7 @@ export async function handleChoseichanCommand(
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
 
   switch (subcommand.name) {
     case 'create':

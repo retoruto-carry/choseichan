@@ -19,7 +19,7 @@ export async function handleModalSubmit(
 ): Promise<Response> {
   const customId = interaction.data.custom_id;
   const { action, params } = parseButtonId(customId);
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
   
   // Handle both 'modal:create_schedule' and 'create_schedule' formats
   const modalAction = action === 'modal' && params.length > 0 ? params[0] : action;

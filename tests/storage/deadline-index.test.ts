@@ -14,7 +14,7 @@ describe('Deadline Index Management', () => {
       list: vi.fn().mockResolvedValue({ keys: [] })
     };
     
-    storage = new StorageServiceV2(mockKV, mockKV);
+    storage = new StorageServiceV2(mockKV, mockKV, undefined);
   });
 
   it('should clean up old deadline index when deadline is updated', async () => {

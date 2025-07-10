@@ -11,6 +11,9 @@ export interface Env {
   // Rate limiting for cron jobs (optional)
   REMINDER_BATCH_SIZE?: string;
   REMINDER_BATCH_DELAY?: string;
+  // Database configuration
+  DATABASE_TYPE?: 'kv' | 'd1';
+  DB?: D1Database;
 }
 
 export interface DiscordUser {

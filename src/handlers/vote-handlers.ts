@@ -155,7 +155,7 @@ export async function handleDateSelectMenu(
   const [_, scheduleId, dateId] = parts;
   
   try {
-    const storage = new StorageService(env.SCHEDULES, env.RESPONSES);
+    const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
     
     // Quick operations only - save the vote
     const userId = interaction.member?.user.id || interaction.user?.id || '';
