@@ -37,6 +37,9 @@ describe('Date Utilities', () => {
       expect(result).toBeInstanceOf(Date);
       expect(result?.getMonth()).toBe(11);
       expect(result?.getDate()).toBe(25);
+      expect(result?.getHours()).toBe(23);
+      expect(result?.getMinutes()).toBe(59);
+      expect(result?.getSeconds()).toBe(59);
     });
 
     it('should parse slash format with time (MM/DD HH:mm)', () => {
@@ -52,6 +55,9 @@ describe('Date Utilities', () => {
       expect(result).toBeInstanceOf(Date);
       expect(result?.getMonth()).toBe(11);
       expect(result?.getDate()).toBe(25);
+      expect(result?.getHours()).toBe(23);
+      expect(result?.getMinutes()).toBe(59);
+      expect(result?.getSeconds()).toBe(59);
     });
 
     it('should parse hyphen format (MM-DD)', () => {
@@ -59,6 +65,9 @@ describe('Date Utilities', () => {
       expect(result).toBeInstanceOf(Date);
       expect(result?.getMonth()).toBe(11);
       expect(result?.getDate()).toBe(25);
+      expect(result?.getHours()).toBe(23);
+      expect(result?.getMinutes()).toBe(59);
+      expect(result?.getSeconds()).toBe(59);
     });
 
     it('should parse full date format (YYYY/MM/DD HH:mm)', () => {
@@ -76,6 +85,9 @@ describe('Date Utilities', () => {
       expect(result?.getFullYear()).toBe(2024);
       expect(result?.getMonth()).toBe(11);
       expect(result?.getDate()).toBe(25);
+      expect(result?.getHours()).toBe(23);
+      expect(result?.getMinutes()).toBe(59);
+      expect(result?.getSeconds()).toBe(59);
     });
 
     it('should parse ISO date format', () => {
@@ -106,6 +118,9 @@ describe('Date Utilities', () => {
       expect(result?.getDate()).toBe(11);
       // Should be current year or next year if past
       expect(result?.getFullYear()).toBeGreaterThanOrEqual(currentYear);
+      expect(result?.getHours()).toBe(23);
+      expect(result?.getMinutes()).toBe(59);
+      expect(result?.getSeconds()).toBe(59);
     });
     
     it('should validate month and day ranges', () => {

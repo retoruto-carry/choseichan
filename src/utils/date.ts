@@ -46,7 +46,7 @@ export function parseUserInputDate(input: string): Date | null {
   const matchJp2 = input.match(/^(\d{1,2})月(\d{1,2})日$/);
   if (matchJp2) {
     const [, month, day] = matchJp2;
-    const date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
+    const date = new Date(currentYear, parseInt(month) - 1, parseInt(day), 23, 59, 59);
     if (date < now) date.setFullYear(currentYear + 1);
     return date;
   }
@@ -80,7 +80,7 @@ export function parseUserInputDate(input: string): Date | null {
     
     // Validate month and day
     if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
-      const date = new Date(currentYear, monthNum - 1, dayNum);
+      const date = new Date(currentYear, monthNum - 1, dayNum, 23, 59, 59);
       
       // If the date is in the past, assume next year
       if (date < now) {
@@ -102,7 +102,7 @@ export function parseUserInputDate(input: string): Date | null {
   const match4 = input.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if (match4) {
     const [, year, month, day] = match4;
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59);
   }
   
   // Try native Date parsing as last resort, but only for specific formats
@@ -115,6 +115,8 @@ export function parseUserInputDate(input: string): Date | null {
       if (nativeDate < now) {
         nativeDate.setFullYear(currentYear + 1);
       }
+      // Set time to 23:59:59 for date-only formats
+      nativeDate.setHours(23, 59, 59);
       return nativeDate;
     }
   }
