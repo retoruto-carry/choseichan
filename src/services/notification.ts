@@ -289,7 +289,7 @@ export class NotificationService {
 
   async sendPRMessage(schedule: Schedule): Promise<void> {
     const message: any = {
-      content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\nhttps://x.com/retoruto_carry/status/1796123557090517067\n\n> 調整ちゃんは無料で運営されています。`
+      content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\nhttps://x.com/retoruto_carry/status/1796123557090517067\n\n> 調整ちゃんは無料で運営されています`
     };
 
     // Add message reference if messageId exists
