@@ -154,12 +154,18 @@ export async function handleEditButton(
         {
           type: 1,
           components: [
-            {
+            schedule.status === 'open' ? {
               type: 2,
               style: 4, // Danger
               label: '締め切る',
               custom_id: createButtonId('close', scheduleId),
               emoji: { name: '🔒' }
+            } : {
+              type: 2,
+              style: 3, // Success
+              label: '再開する',
+              custom_id: createButtonId('reopen', scheduleId),
+              emoji: { name: '🔓' }
             },
             {
               type: 2,

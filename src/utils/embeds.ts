@@ -142,16 +142,14 @@ export function createSimpleScheduleComponents(schedule: Schedule, showDetails: 
     emoji: { name: '🔄' }
   });
 
-  // 編集ボタン（開いている時のみ）
-  if (schedule.status === 'open') {
-    components.push({
-      type: 2,
-      style: 2, // Secondary
-      label: '編集',
-      custom_id: createButtonId('edit', schedule.id),
-      emoji: { name: '⚙️' }
-    });
-  }
+  // 編集ボタン（常に表示）
+  components.push({
+    type: 2,
+    style: 2, // Secondary
+    label: '編集',
+    custom_id: createButtonId('edit', schedule.id),
+    emoji: { name: '⚙️' }
+  });
 
   return [
     {
