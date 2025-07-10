@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { InteractionType, InteractionResponseType, verifyKey } from 'discord-interactions';
 import { Env, CommandInteraction, ButtonInteraction } from './types/discord';
+import { handleChoseichanCommand } from './handlers/commands';
+import { handleButtonInteraction } from './handlers/buttons';
+import { handleModalSubmit } from './handlers/modals/index';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -71,9 +74,10 @@ app.post('/interactions', async (c) => {
     
     switch (command.data.name) {
       case 'choseichan':
-        const { handleChoseichanCommand } = await import('./handlers/commands');
         const envWithContext = { ...c.env, ctx: c.executionCtx };
-        return handleChoseichanCommand(command, envWithContext);
+        const response = await handleChoseichanCommand(command, envWithContext);
+        // Honoは生のResponseオブジェクトもそのまま返せる
+        return response;
       
       default:
         return c.json({
@@ -88,7 +92,6 @@ app.post('/interactions', async (c) => {
   // Handle button interactions
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
     const button = interaction as ButtonInteraction;
-    const { handleButtonInteraction } = await import('./handlers/buttons');
     // Pass execution context through env
     const envWithContext = { ...c.env, ctx: c.executionCtx };
     return handleButtonInteraction(button, envWithContext);
@@ -96,7 +99,6 @@ app.post('/interactions', async (c) => {
 
   // Handle modal submits
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
-    const { handleModalSubmit } = await import('./handlers/modals/index');
     const envWithContext = { ...c.env, ctx: c.executionCtx };
     return handleModalSubmit(interaction, envWithContext);
   }

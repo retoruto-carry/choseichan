@@ -77,24 +77,8 @@ describe('Modal Submit Interactions', () => {
               type: 1,
               components: [{
                 type: 4,
-                custom_id: 'deadline',
-                value: '12/20 23:59'
-              }]
-            },
-            {
-              type: 1,
-              components: [{
-                type: 4,
-                custom_id: 'reminder_timings',
-                value: '3d, 1d, 8h'
-              }]
-            },
-            {
-              type: 1,
-              components: [{
-                type: 4,
-                custom_id: 'reminder_mentions',
-                value: '@here'
+                custom_id: 'deadline_settings',
+                value: '締切: 12/20 23:59\nリマインダー: 3d, 1d, 8h\n通知先: @here'
               }]
             }
           ]
@@ -163,23 +147,7 @@ describe('Modal Submit Interactions', () => {
               type: 1,
               components: [{
                 type: 4,
-                custom_id: 'deadline',
-                value: ''
-              }]
-            },
-            {
-              type: 1,
-              components: [{
-                type: 4,
-                custom_id: 'reminder_timings',
-                value: ''
-              }]
-            },
-            {
-              type: 1,
-              components: [{
-                type: 4,
-                custom_id: 'reminder_mentions',
+                custom_id: 'deadline_settings',
                 value: ''
               }]
             }

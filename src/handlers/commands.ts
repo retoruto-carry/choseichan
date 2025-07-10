@@ -3,6 +3,7 @@ import { CommandInteraction, Env } from '../types/discord';
 import { STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
 import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { formatDate } from '../utils/date';
+import { handleHelpCommand } from './help';
 
 export async function handleChoseichanCommand(
   interaction: CommandInteraction,
@@ -29,7 +30,6 @@ export async function handleChoseichanCommand(
     case 'list':
       return handleListCommand(interaction, storage);
     case 'help':
-      const { handleHelpCommand } = await import('./help');
       return handleHelpCommand();
     default:
       return new Response(JSON.stringify({
@@ -95,38 +95,12 @@ async function handleCreateCommandSimple(
           type: 1,
           components: [{
             type: 4,
-            custom_id: 'deadline',
-            label: '締切日時（任意）',
-            style: 1, // Short
-            placeholder: '例: 12/20 23:59',
+            custom_id: 'deadline_settings',
+            label: '締切とリマインダー設定（任意）',
+            style: 2, // Paragraph
+            placeholder: '締切: 12/20 23:59\nリマインダー: 3d, 1d, 8h\n通知先: @here, @everyone',
             required: false,
-            max_length: 50
-          }]
-        },
-        {
-          type: 1,
-          components: [{
-            type: 4,
-            custom_id: 'reminder_timings',
-            label: 'リマインダー（任意、カンマ区切り）',
-            style: 1, // Short
-            value: '3d, 1d, 8h',
-            placeholder: '例: 3d, 1d, 8h, 30m',
-            required: false,
-            max_length: 100
-          }]
-        },
-        {
-          type: 1,
-          components: [{
-            type: 4,
-            custom_id: 'reminder_mentions',
-            label: '通知先（任意、カンマ区切りで複数指定可）',
-            style: 1, // Short
-            value: '@here',
-            placeholder: '例: @everyone, @here, @Alice, @Bob',
-            required: false,
-            max_length: 200
+            max_length: 300
           }]
         }
       ]

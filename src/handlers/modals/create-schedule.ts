@@ -15,9 +15,7 @@ export async function handleCreateScheduleModal(
   const title = interaction.data.components[0].components[0].value;
   const description = interaction.data.components[1].components[0].value || undefined;
   const datesText = interaction.data.components[2].components[0].value;
-  const deadlineStr = interaction.data.components[3]?.components[0].value || undefined;
-  const reminderTimingsStr = interaction.data.components[4]?.components[0].value || undefined;
-  const reminderMentionsStr = interaction.data.components[5]?.components[0].value || undefined;
+  const deadlineSettingsStr = interaction.data.components[3]?.components[0].value || undefined;
 
   // Parse dates
   const dates = datesText.split('\n').filter((line: string) => line.trim());
@@ -36,50 +34,55 @@ export async function handleCreateScheduleModal(
     datetime: date.trim()
   }));
 
-  // Parse deadline
+  // Parse deadline settings
   let deadlineDate: Date | undefined = undefined;
-  if (deadlineStr && deadlineStr.trim()) {
-    deadlineDate = parseUserInputDate(deadlineStr.trim());
-    if (!deadlineDate) {
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: '締切日時の形式が正しくありません。',
-          flags: InteractionResponseFlags.EPHEMERAL
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
-    }
-  }
-
-  // Parse reminder timings
   let reminderTimings: string[] | undefined = undefined;
-  if (reminderTimingsStr && reminderTimingsStr.trim() && deadlineDate) {
-    const timings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
-    const validTimings = timings.filter(t => {
-      const match = t.match(/^(\d+)([dhm])$/);
-      if (!match) return false;
-      
-      const value = parseInt(match[1]);
-      const unit = match[2];
-      
-      // Validate reasonable ranges
-      if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
-      if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
-      if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
-      
-      return true;
-    });
-    if (validTimings.length > 0) {
-      reminderTimings = validTimings;
-    }
-  }
-
-  // Parse reminder mentions
   let reminderMentions: string[] | undefined = undefined;
-  if (reminderMentionsStr && reminderMentionsStr.trim() && deadlineDate) {
-    const mentions = reminderMentionsStr.split(',').map(m => m.trim()).filter(m => m);
-    if (mentions.length > 0) {
-      reminderMentions = mentions;
+
+  if (deadlineSettingsStr && deadlineSettingsStr.trim()) {
+    const lines = deadlineSettingsStr.split('\n').map(l => l.trim()).filter(l => l);
+    
+    for (const line of lines) {
+      if (line.startsWith('締切:') || line.startsWith('deadline:')) {
+        const deadlineStr = line.replace(/^(締切|deadline):/, '').trim();
+        const parsedDate = parseUserInputDate(deadlineStr);
+        deadlineDate = parsedDate || undefined;
+        if (!deadlineDate) {
+          return new Response(JSON.stringify({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '締切日時の形式が正しくありません。',
+              flags: InteractionResponseFlags.EPHEMERAL
+            }
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+      } else if (line.startsWith('リマインダー:') || line.startsWith('reminder:')) {
+        const timingsStr = line.replace(/^(リマインダー|reminder):/, '').trim();
+        const timings = timingsStr.split(',').map(t => t.trim()).filter(t => t);
+        const validTimings = timings.filter(t => {
+          const match = t.match(/^(\d+)([dhm])$/);
+          if (!match) return false;
+          
+          const value = parseInt(match[1]);
+          const unit = match[2];
+          
+          // Validate reasonable ranges
+          if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
+          if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
+          if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
+          
+          return true;
+        });
+        if (validTimings.length > 0) {
+          reminderTimings = validTimings;
+        }
+      } else if (line.startsWith('通知先:') || line.startsWith('mention:')) {
+        const mentionsStr = line.replace(/^(通知先|mention):/, '').trim();
+        const mentions = mentionsStr.split(',').map(m => m.trim()).filter(m => m);
+        if (mentions.length > 0) {
+          reminderMentions = mentions;
+        }
+      }
     }
   }
 
