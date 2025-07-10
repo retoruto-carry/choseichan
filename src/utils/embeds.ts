@@ -98,41 +98,6 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
   };
 }
 
-export function createScheduleComponents(schedule: Schedule) {
-  if (schedule.status === 'closed') {
-    return [];
-  }
-
-  return [
-    {
-      type: 1,
-      components: [
-        {
-          type: 2,
-          style: 1, // Primary
-          label: '回答する',
-          custom_id: createButtonId('respond', schedule.id),
-          emoji: { name: '✏️' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: '詳細',
-          custom_id: createButtonId('details', schedule.id),
-          emoji: { name: '📊' }
-        },
-        {
-          type: 2,
-          style: 2, // Secondary
-          label: '編集',
-          custom_id: createButtonId('edit', schedule.id),
-          emoji: { name: '⚙️' }
-        }
-      ]
-    }
-  ];
-}
-
 export function createSimpleScheduleComponents(schedule: Schedule, showDetails: boolean = false) {
   const components = [];
 

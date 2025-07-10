@@ -26,16 +26,9 @@ import {
   handleReminderEditButton
 } from './edit-handlers';
 import {
-  handleExportButton,
-  handleShowAllButton
-} from './export-handlers';
-import {
   handleAddCommentButton,
   handleCommentButton
 } from './comment-handlers';
-import {
-  handleDirectVoteButton
-} from './quick-vote-handlers';
 import {
   handleRespondButton,
   handleDateSelectMenu
@@ -70,8 +63,6 @@ export async function handleButtonInteraction(
       return handleReopenButton(interaction, storage, params, env);
     case 'delete':
       return handleDeleteButton(interaction, storage, params, env);
-    case 'export':
-      return handleExportButton(interaction, storage, params);
     case 'edit_info':
       return handleEditInfoButton(interaction, storage, params);
     case 'update_dates':
@@ -84,14 +75,10 @@ export async function handleButtonInteraction(
       return handleConfirmRemoveDateButton(interaction, storage, params);
     case 'edit_deadline':
       return handleEditDeadlineButton(interaction, storage, params);
-    case 'direct_vote':
-      return handleDirectVoteButton(interaction, storage, params, env);
     case 'add_comment':
       return handleAddCommentButton(interaction, storage, params);
     case 'comment':
       return handleCommentButton(interaction, storage, params);
-    case 'show_all':
-      return handleShowAllButton(interaction, storage, params);
     case 'toggle_details':
       return handleToggleDetailsButton(interaction, storage, params, env);
     case 'refresh':

@@ -36,30 +36,6 @@ export function createSuccessResponse(message: string, ephemeral: boolean = fals
 }
 
 /**
- * Create an update message response
- */
-export function createUpdateResponse(content: string, embeds?: any[], components?: any[]): Response {
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.UPDATE_MESSAGE,
-    data: {
-      content,
-      embeds,
-      components
-    }
-  }), { headers: { 'Content-Type': 'application/json' } });
-}
-
-/**
- * Create a modal response
- */
-export function createModalResponse(modal: any): Response {
-  return new Response(JSON.stringify({
-    type: InteractionResponseType.MODAL,
-    data: modal
-  }), { headers: { 'Content-Type': 'application/json' } });
-}
-
-/**
  * Create a deferred update response
  */
 export function createDeferredUpdateResponse(): Response {

@@ -32,9 +32,6 @@ export async function handleModalSubmit(
     case 'interactive_response':
       return handleInteractiveResponseModal(interaction, storage, modalParams, env);
       
-    case 'response':
-      // Legacy response modal handling
-      return handleBulkResponseModal(interaction, storage, modalParams, env);
       
     case 'bulk_response':
       return handleBulkResponseModal(interaction, storage, modalParams, env);
@@ -54,15 +51,6 @@ export async function handleModalSubmit(
     case 'date_comment':
       return handleDateCommentModal(interaction, storage, modalParams);
       
-    case 'select_response':
-      // Legacy handling - can be removed
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: 'この機能は新しい回答方法に置き換えられました。',
-          flags: InteractionResponseFlags.EPHEMERAL
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
       
     case 'edit_deadline':
       return handleEditDeadlineModal(interaction, storage, modalParams, env);
