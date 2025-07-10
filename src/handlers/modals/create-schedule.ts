@@ -108,45 +108,59 @@ export async function handleCreateScheduleModal(
   const embed = createScheduleEmbedWithTable(summary, false);
   const components = createSimpleScheduleComponents(schedule, false);
 
-  // 締切がある場合、リマインダー編集ボタンをフォローアップメッセージで送信
-  if (schedule.deadline && schedule.reminderTimings && env.DISCORD_APPLICATION_ID && env.ctx) {
-    const timingDisplay = schedule.reminderTimings.map(t => {
-      const match = t.match(/^(\d+)([dhm])$/);
-      if (!match) return t;
-      const value = parseInt(match[1]);
-      const unit = match[2];
-      if (unit === 'd') return `${value}日前`;
-      if (unit === 'h') return `${value}時間前`;
-      if (unit === 'm') return `${value}分前`;
-      return t;
-    }).join(' / ');
-
-    const mentionDisplay = schedule.reminderMentions?.map(m => `\`${m}\``).join(' ') || '`@here`';
-
+  // メッセージIDを保存するための処理と、リマインダー編集ボタンの送信
+  if (env.DISCORD_APPLICATION_ID && env.ctx) {
     env.ctx.waitUntil(
       (async () => {
         try {
-          const { sendFollowupMessage } = await import('../../utils/discord');
-          await sendFollowupMessage(
-            env.DISCORD_APPLICATION_ID,
-            interaction.token,
-            {
-              content: `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`,
-              components: [{
-                type: 1,
+          // 作成されたメッセージの情報を取得
+          const { getOriginalMessage } = await import('../../utils/discord');
+          const message = await getOriginalMessage(env.DISCORD_APPLICATION_ID, interaction.token);
+          
+          if (message?.id) {
+            // メッセージIDを保存
+            schedule.messageId = message.id;
+            if (!schedule.guildId) schedule.guildId = guildId;
+            await storage.saveSchedule(schedule);
+          }
+          
+          // 締切がある場合、リマインダー編集ボタンをフォローアップメッセージで送信
+          if (schedule.deadline && schedule.reminderTimings) {
+            const timingDisplay = schedule.reminderTimings.map(t => {
+              const match = t.match(/^(\d+)([dhm])$/);
+              if (!match) return t;
+              const value = parseInt(match[1]);
+              const unit = match[2];
+              if (unit === 'd') return `${value}日前`;
+              if (unit === 'h') return `${value}時間前`;
+              if (unit === 'm') return `${value}分前`;
+              return t;
+            }).join(' / ');
+
+            const mentionDisplay = schedule.reminderMentions?.map(m => `\`${m}\``).join(' ') || '`@here`';
+            
+            const { sendFollowupMessage } = await import('../../utils/discord');
+            await sendFollowupMessage(
+              env.DISCORD_APPLICATION_ID,
+              interaction.token,
+              {
+                content: `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`,
                 components: [{
-                  type: 2,
-                  custom_id: `reminder_edit:${schedule.id}`,
-                  label: 'リマインダーを編集',
-                  style: 2,
-                  emoji: { name: '🔔' }
-                }]
-              }],
-              flags: InteractionResponseFlags.EPHEMERAL
-            }
-          );
+                  type: 1,
+                  components: [{
+                    type: 2,
+                    custom_id: `reminder_edit:${schedule.id}`,
+                    label: 'リマインダーを編集',
+                    style: 2,
+                    emoji: { name: '🔔' }
+                  }]
+                }],
+                flags: InteractionResponseFlags.EPHEMERAL
+              }
+            );
+          }
         } catch (error) {
-          console.error('Failed to send reminder edit button:', error);
+          console.error('Failed to save message ID or send reminder edit button:', error);
         }
       })()
     );
