@@ -305,7 +305,7 @@ export async function handleCloseButton(
     }
   }
   
-  // Send summary message to channel
+  // Send summary message and PR message to channel
   if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
     const notificationService = new NotificationService(
       storage,
@@ -314,8 +314,14 @@ export async function handleCloseButton(
     );
     
     env.ctx.waitUntil(
-      notificationService.sendSummaryMessage(scheduleId)
-        .catch(error => console.error('Failed to send summary message:', error))
+      (async () => {
+        try {
+          await notificationService.sendSummaryMessage(scheduleId, guildId);
+          await notificationService.sendPRMessage(schedule);
+        } catch (error) {
+          console.error('Failed to send closure notifications:', error);
+        }
+      })()
     );
   }
 
@@ -427,7 +433,7 @@ export async function handleDeleteButton(
       (async () => {
         try {
           const { deleteMessage } = await import('../utils/discord');
-          await deleteMessage(env.DISCORD_APPLICATION_ID, interaction.token, schedule.messageId);
+          await deleteMessage(env.DISCORD_APPLICATION_ID!, interaction.token, schedule.messageId!);
         } catch (error) {
           console.error('Failed to delete main Discord message:', error);
           // Continue with schedule deletion even if message deletion fails

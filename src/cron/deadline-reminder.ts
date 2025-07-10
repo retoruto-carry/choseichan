@@ -98,8 +98,6 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
   // Use global deadline index for efficient cross-guild query
   const deadlineKeys = await env.SCHEDULES.list({
     prefix: 'deadline:',
-    start: `deadline:${startTime}`,
-    end: `deadline:${endTime}`,
     limit: 1000
   });
 
@@ -127,7 +125,7 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
         // Use custom timings if available, otherwise use defaults
         const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
         const timings = isCustom
-          ? schedule.reminderTimings.map(t => ({
+          ? schedule.reminderTimings!.map(t => ({
               type: t,
               hours: parseTimingToHours(t) || 0,
               message: getTimingMessage(t),
