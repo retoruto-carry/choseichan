@@ -238,8 +238,15 @@ export class NotificationService {
 
     const { schedule, responseCounts, userResponses, bestDateId } = summary;
     
+    // Add mentions from reminder settings if available
+    let mentionText = '';
+    if (schedule.reminderMentions && schedule.reminderMentions.length > 0) {
+      const resolvedMentions = await this.resolveUserMentions(schedule.reminderMentions, guildId);
+      mentionText = resolvedMentions.join(' ') + ' ';
+    }
+    
     const message = {
-      content: `**📊 日程調整「${schedule.title}」が締め切られました！**`,
+      content: `${mentionText}**📊 日程調整「${schedule.title}」が締め切られました！**`,
       embeds: [{
         title: '📊 集計結果',
         color: 0x2ecc71,
