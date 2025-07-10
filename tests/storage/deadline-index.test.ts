@@ -59,7 +59,10 @@ describe('Deadline Index Management', () => {
     const newTimestamp = Math.floor(newDeadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
       `deadline:${newTimestamp}:guild123:test-schedule`,
-      'test-schedule'
+      'test-schedule',
+      expect.objectContaining({
+        expiration: expect.any(Number)
+      })
     );
   });
 
@@ -147,7 +150,10 @@ describe('Deadline Index Management', () => {
     const timestamp = Math.floor(deadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
       `deadline:${timestamp}:guild123:test-schedule-3`,
-      'test-schedule-3'
+      'test-schedule-3',
+      expect.objectContaining({
+        expiration: expect.any(Number)
+      })
     );
   });
 
@@ -182,7 +188,10 @@ describe('Deadline Index Management', () => {
     const timestamp = Math.floor(deadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
       `deadline:${timestamp}:guild123:test-schedule-4`,
-      'test-schedule-4'
+      'test-schedule-4',
+      expect.objectContaining({
+        expiration: expect.any(Number)
+      })
     );
   });
 });
