@@ -12,12 +12,16 @@ describe('Custom Reminder Settings', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
     
-    // Mock KV storage
+    // Reset global fetch mock
+    (global.fetch as any) = vi.fn();
+    
+    // Mock KV storage - create fresh instances
     mockKV = {
-      list: vi.fn(),
-      get: vi.fn(),
-      put: vi.fn(),
+      list: vi.fn().mockResolvedValue({ keys: [] }),
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
     };
     
     mockEnv = {
@@ -65,11 +69,19 @@ describe('Custom Reminder Settings', () => {
             keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-1` }]
           });
         }
+        if (prefix?.includes('response:')) {
+          return Promise.resolve({ keys: [] });
+        }
         return Promise.resolve({ keys: [] });
       });
 
       // Mock schedule retrieval
-      mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+      mockKV.get.mockImplementation((key: string) => {
+        if (key === 'guild:guild123:schedule:schedule-1') {
+          return Promise.resolve(JSON.stringify(schedule));
+        }
+        return Promise.resolve(null);
+      });
 
       // Mock successful Discord API calls
       (global.fetch as any).mockResolvedValue({
@@ -97,7 +109,9 @@ describe('Custom Reminder Settings', () => {
 
     it('should handle multiple custom mentions', async () => {
       const now = new Date();
-      const in1Hour = new Date(now.getTime() + 60 * 60 * 1000);
+      // Set deadline exactly 29 minutes and 59 seconds from now
+      // This ensures we've just passed the 30 minute reminder threshold
+      const deadline = new Date(now.getTime() + 29 * 60 * 1000 + 59 * 1000);
       
       const schedule: Schedule = {
         id: 'schedule-2',
@@ -108,14 +122,14 @@ describe('Custom Reminder Settings', () => {
         channelId: 'channel123',
         guildId: 'guild123',
         messageId: 'message123',
-        deadline: in1Hour,
+        deadline: deadline,
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
         notificationSent: false,
         reminderSent: false,
         remindersSent: [],
-        reminderTimings: ['1h'],
+        reminderTimings: ['30m'],  // 30 minute reminder
         reminderMentions: ['@everyone', '@here', '<@123456789>'], // Multiple mentions
         totalResponses: 0
       };
@@ -123,16 +137,24 @@ describe('Custom Reminder Settings', () => {
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
         if (prefix === 'deadline:') {
-          const deadlineTimestamp = Math.floor(in1Hour.getTime() / 1000);
+          const deadlineTimestamp = Math.floor(deadline.getTime() / 1000);
           return Promise.resolve({
             keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-2` }]
           });
+        }
+        if (prefix?.includes('response:')) {
+          return Promise.resolve({ keys: [] });
         }
         return Promise.resolve({ keys: [] });
       });
 
       // Mock schedule retrieval
-      mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+      mockKV.get.mockImplementation((key: string) => {
+        if (key === 'guild:guild123:schedule:schedule-2') {
+          return Promise.resolve(JSON.stringify(schedule));
+        }
+        return Promise.resolve(null);
+      });
 
       // Mock successful Discord API calls
       (global.fetch as any).mockResolvedValue({
@@ -142,7 +164,7 @@ describe('Custom Reminder Settings', () => {
 
       await sendDeadlineReminders(mockEnv);
 
-      // Should include all mentions
+      // Should include all mentions in the message body
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/messages'),
         expect.objectContaining({
@@ -153,7 +175,9 @@ describe('Custom Reminder Settings', () => {
 
     it('should parse different time units correctly', async () => {
       const now = new Date();
-      const in2Days = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+      // Set deadline to be less than 2 days away (47 hours and 59 minutes)
+      // This ensures the 2d reminder should fire
+      const deadline = new Date(now.getTime() + 47 * 60 * 60 * 1000 + 59 * 60 * 1000);
       
       const schedule: Schedule = {
         id: 'schedule-3',
@@ -164,7 +188,7 @@ describe('Custom Reminder Settings', () => {
         channelId: 'channel123',
         guildId: 'guild123',
         messageId: 'message123',
-        deadline: in2Days,
+        deadline: deadline,
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
@@ -178,16 +202,24 @@ describe('Custom Reminder Settings', () => {
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
         if (prefix === 'deadline:') {
-          const deadlineTimestamp = Math.floor(in2Days.getTime() / 1000);
+          const deadlineTimestamp = Math.floor(deadline.getTime() / 1000);
           return Promise.resolve({
             keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-3` }]
           });
+        }
+        if (prefix?.includes('response:')) {
+          return Promise.resolve({ keys: [] });
         }
         return Promise.resolve({ keys: [] });
       });
 
       // Mock schedule retrieval
-      mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+      mockKV.get.mockImplementation((key: string) => {
+        if (key === 'guild:guild123:schedule:schedule-3') {
+          return Promise.resolve(JSON.stringify(schedule));
+        }
+        return Promise.resolve(null);
+      });
 
       // Mock successful Discord API calls
       (global.fetch as any).mockResolvedValue({
@@ -205,12 +237,11 @@ describe('Custom Reminder Settings', () => {
       );
 
       // Message should say "締切まで2日"
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/messages'),
-        expect.objectContaining({
-          body: expect.stringContaining('締切まで2日')
-        })
-      );
+      expect(global.fetch).toHaveBeenCalled();
+      const fetchCall = (global.fetch as any).mock.calls[0];
+      expect(fetchCall).toBeDefined();
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.content).toContain('締切まで2日');
     });
 
     it('should not send reminders if no custom timings and defaults would not apply', async () => {
@@ -231,8 +262,8 @@ describe('Custom Reminder Settings', () => {
         updatedAt: new Date(),
         status: 'open',
         notificationSent: false,
-        reminderSent: false,
-        remindersSent: ['3d', '1d', '8h'], // All default reminders already sent
+        reminderSent: true, // Mark as already sent to avoid 30m default reminder
+        remindersSent: ['3d', '1d', '8h', '30m'], // All default reminders already sent including 30m
         totalResponses: 0
       };
 
@@ -248,7 +279,12 @@ describe('Custom Reminder Settings', () => {
       });
 
       // Mock schedule retrieval
-      mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+      mockKV.get.mockImplementation((key: string) => {
+        if (key === 'guild:guild123:schedule:schedule-4') {
+          return Promise.resolve(JSON.stringify(schedule));
+        }
+        return Promise.resolve(null);
+      });
 
       await sendDeadlineReminders(mockEnv);
 

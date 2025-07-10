@@ -12,7 +12,10 @@ vi.mock('../src/utils/discord', () => ({
 const createMockKVNamespace = () => {
   const storage = new Map();
   return {
-    get: vi.fn(async (key: string) => storage.get(key) || null),
+    get: vi.fn(async (key: string) => {
+      const value = storage.get(key);
+      return value || null;
+    }),
     put: vi.fn(async (key: string, value: string) => {
       storage.set(key, value);
     }),
@@ -32,12 +35,15 @@ describe('Modal Submit Interactions', () => {
   let env: Env;
   
   beforeEach(() => {
+    const schedulesKV = createMockKVNamespace();
+    const responsesKV = createMockKVNamespace();
+    
     env = {
       DISCORD_PUBLIC_KEY: 'test_public_key',
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: createMockKVNamespace(),
-      RESPONSES: createMockKVNamespace()
+      SCHEDULES: schedulesKV,
+      RESPONSES: responsesKV
     };
   });
 
@@ -177,7 +183,22 @@ describe('Modal Submit Interactions', () => {
   });
 
   describe('Edit Schedule Modal', () => {
+    let editEnv: Env;
+    
     beforeEach(async () => {
+      // Create fresh environment for this test suite
+      const schedulesKV = createMockKVNamespace();
+      const responsesKV = createMockKVNamespace();
+      
+      editEnv = {
+        DISCORD_PUBLIC_KEY: 'test_public_key',
+        DISCORD_APPLICATION_ID: 'test_app_id',
+        DISCORD_TOKEN: 'test_token',
+        SCHEDULES: schedulesKV,
+        RESPONSES: responsesKV,
+        DATABASE_TYPE: 'kv'  // Use KV for tests
+      };
+      
       // Create a test schedule
       const schedule = {
         id: 'test_schedule_id',
@@ -188,18 +209,20 @@ describe('Modal Submit Interactions', () => {
           { id: 'date2', datetime: '2024-12-26T18:00:00Z' }
         ],
         createdBy: { id: 'user123', username: 'TestUser' },
+        authorId: 'user123',
         channelId: 'test_channel',
         guildId: 'test-guild',
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
-        notificationSent: false
+        notificationSent: false,
+        totalResponses: 0
       };
       
-      await env.SCHEDULES.put(
-        `guild:test-guild:schedule:${schedule.id}`,
-        JSON.stringify(schedule)
-      );
+      // Use StorageService to save the schedule
+      const { StorageServiceV2 } = await import('../src/services/storage-v2');
+      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      await storage.saveSchedule(schedule);
     });
 
     it('should update schedule info from modal', async () => {
@@ -227,8 +250,8 @@ describe('Modal Submit Interactions', () => {
             }
           ]
         },
-        channel_id: 'test_channel',
         guild_id: 'test-guild',
+        channel_id: 'test_channel',
         member: {
           user: {
             id: 'user123',
@@ -240,7 +263,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await handleModalSubmit(interaction, editEnv);
       const data = await response.json();
       
       expect(response.status).toBe(200);
@@ -248,11 +271,13 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.content).toContain('更新しました');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
-      // Check schedule was updated
-      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_id');
-      const parsed = JSON.parse(updatedSchedule);
-      expect(parsed.title).toBe('新年会');
-      expect(parsed.description).toBe('新年会の日程調整です');
+      // Check schedule was updated using StorageService
+      const { StorageServiceV2 } = await import('../src/services/storage-v2');
+      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
+      expect(updatedSchedule).toBeTruthy();
+      expect(updatedSchedule.title).toBe('新年会');
+      expect(updatedSchedule.description).toBe('新年会の日程調整です');
     });
 
     it('should add dates from modal', async () => {
@@ -285,7 +310,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await handleModalSubmit(interaction, editEnv);
       const data = await response.json();
       
       expect(response.status).toBe(200);
@@ -294,15 +319,32 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.embeds[0].title).toContain('日程を追加しました');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
-      // Check dates were added
-      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_id');
-      const parsed = JSON.parse(updatedSchedule);
-      expect(parsed.dates).toHaveLength(4); // Original 2 + new 2
+      // Check dates were added using StorageService
+      const { StorageServiceV2 } = await import('../src/services/storage-v2');
+      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
+      expect(updatedSchedule).toBeTruthy();
+      expect(updatedSchedule.dates).toHaveLength(4); // Original 2 + new 2
     });
   });
 
   describe('Edit Deadline Modal', () => {
+    let deadlineEnv: Env;
+    
     beforeEach(async () => {
+      // Create fresh environment for this test suite
+      const schedulesKV = createMockKVNamespace();
+      const responsesKV = createMockKVNamespace();
+      
+      deadlineEnv = {
+        DISCORD_PUBLIC_KEY: 'test_public_key',
+        DISCORD_APPLICATION_ID: 'test_app_id',
+        DISCORD_TOKEN: 'test_token',
+        SCHEDULES: schedulesKV,
+        RESPONSES: responsesKV,
+        DATABASE_TYPE: 'kv'  // Use KV for tests
+      };
+      
       // Create a test schedule with deadline and reminders
       const schedule = {
         id: 'test_schedule_deadline',
@@ -322,13 +364,14 @@ describe('Modal Submit Interactions', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
-        notificationSent: false
+        notificationSent: false,
+        totalResponses: 0
       };
       
-      await env.SCHEDULES.put(
-        `guild:test-guild:schedule:${schedule.id}`,
-        JSON.stringify(schedule)
-      );
+      // Use StorageService to save the schedule
+      const { StorageServiceV2 } = await import('../src/services/storage-v2');
+      const storage = new StorageServiceV2(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      await storage.saveSchedule(schedule);
     });
 
     it('should reset reminders when deadline is changed', async () => {
@@ -361,7 +404,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await handleModalSubmit(interaction, deadlineEnv);
       const data = await response.json();
       
       expect(response.status).toBe(200);
@@ -369,11 +412,13 @@ describe('Modal Submit Interactions', () => {
       expect(data.data.content).toContain('締切日を');
       expect(data.data.content).toContain('更新しました');
       
-      // Check reminders were reset
-      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_deadline');
-      const parsed = JSON.parse(updatedSchedule);
-      expect(parsed.reminderSent).toBe(false);
-      expect(parsed.remindersSent).toEqual([]);
+      // Check reminders were reset using StorageService
+      const { StorageServiceV2: CheckStorage1 } = await import('../src/services/storage-v2');
+      const checkStorage1 = new CheckStorage1(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const updatedSchedule = await checkStorage1.getSchedule('test_schedule_deadline', 'test-guild');
+      expect(updatedSchedule).toBeTruthy();
+      expect(updatedSchedule.reminderSent).toBe(false);
+      expect(updatedSchedule.remindersSent).toEqual([]);
     });
 
     it('should reset reminders when deadline is removed', async () => {
@@ -406,18 +451,20 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await handleModalSubmit(interaction, deadlineEnv);
       const data = await response.json();
       
       expect(response.status).toBe(200);
       expect(data.data.content).toContain('締切日を削除しました');
       
-      // Check reminders were reset
-      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_deadline');
-      const parsed = JSON.parse(updatedSchedule);
-      expect(parsed.deadline).toBeUndefined();
-      expect(parsed.reminderSent).toBe(false);
-      expect(parsed.remindersSent).toEqual([]);
+      // Check reminders were reset using StorageService
+      const { StorageServiceV2: CheckStorage2 } = await import('../src/services/storage-v2');
+      const storage2 = new CheckStorage2(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const updatedSchedule = await storage2.getSchedule('test_schedule_deadline', 'test-guild');
+      expect(updatedSchedule).toBeTruthy();
+      expect(updatedSchedule.deadline).toBeUndefined();
+      expect(updatedSchedule.reminderSent).toBe(false);
+      expect(updatedSchedule.remindersSent).toEqual([]);
     });
 
     it('should reset reminders when adding deadline to schedule without one', async () => {
@@ -433,13 +480,14 @@ describe('Modal Submit Interactions', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: 'open',
-        notificationSent: false
+        notificationSent: false,
+        totalResponses: 0
       };
       
-      await env.SCHEDULES.put(
-        `guild:test-guild:schedule:${scheduleWithoutDeadline.id}`,
-        JSON.stringify(scheduleWithoutDeadline)
-      );
+      // Use StorageService to save the schedule
+      const { StorageServiceV2: SaveStorage3 } = await import('../src/services/storage-v2');
+      const storage3 = new SaveStorage3(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      await storage3.saveSchedule(scheduleWithoutDeadline);
 
       const interaction = {
         id: 'test_id',
@@ -470,19 +518,19 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await handleModalSubmit(interaction, deadlineEnv);
       const data = await response.json();
       
       expect(response.status).toBe(200);
       expect(data.data.content).toContain('締切日を');
       expect(data.data.content).toContain('更新しました');
       
-      // Check reminders were initialized
-      const updatedSchedule = await env.SCHEDULES.get('guild:test-guild:schedule:test_schedule_no_deadline');
-      const parsed = JSON.parse(updatedSchedule);
-      expect(parsed.deadline).toBeDefined();
-      expect(parsed.reminderSent).toBe(false);
-      expect(parsed.remindersSent).toEqual([]);
+      // Check reminders were initialized using StorageService
+      const updatedSchedule = await storage3.getSchedule('test_schedule_no_deadline', 'test-guild');
+      expect(updatedSchedule).toBeTruthy();
+      expect(updatedSchedule.deadline).toBeDefined();
+      expect(updatedSchedule.reminderSent).toBe(false);
+      expect(updatedSchedule.remindersSent).toEqual([]);
     });
   });
 });

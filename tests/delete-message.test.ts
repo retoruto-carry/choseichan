@@ -31,7 +31,11 @@ describe('Delete Schedule with Message', () => {
       SCHEDULES: mockKV,
       RESPONSES: mockKV,
       ctx: {
-        waitUntil: vi.fn((promise: Promise<any>) => promise)
+        waitUntil: vi.fn((promise: Promise<any>) => {
+          // Execute the promise immediately in tests
+          promise.catch(() => {}); // Catch to avoid unhandled rejection
+          return promise;
+        })
       }
     } as Env;
     
@@ -162,6 +166,11 @@ describe('Delete Schedule with Message', () => {
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.content).toContain('削除しました');
+    
+    // Wait for async operations to complete
+    await vi.waitFor(() => {
+      expect(mockKV.delete).toHaveBeenCalled();
+    });
     
     // Verify schedule was still deleted from storage
     expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:schedule:${scheduleId}`);

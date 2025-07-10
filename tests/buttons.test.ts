@@ -332,13 +332,15 @@ describe('Button Interactions', () => {
     expect(data.type).toBe(6); // DEFERRED_UPDATE_MESSAGE
     expect(data.data).toBeUndefined();
     
-    // Check that response was saved
-    const savedResponse = await env.RESPONSES.get('guild:test-guild:response:test_schedule_id:user456');
+    // Check that response was saved using StorageService
+    const { StorageServiceV2 } = await import('../src/services/storage-v2');
+    const storage = new StorageServiceV2(env.SCHEDULES, env.RESPONSES, env);
+    
+    const savedResponse = await storage.getResponse('test_schedule_id', 'user456', 'test-guild');
     expect(savedResponse).toBeTruthy();
-    const parsed = JSON.parse(savedResponse);
-    expect(parsed.responses).toHaveLength(1);
-    expect(parsed.responses[0].dateId).toBe('date1');
-    expect(parsed.responses[0].status).toBe('yes');
+    expect(savedResponse.responses).toHaveLength(1);
+    expect(savedResponse.responses[0].dateId).toBe('date1');
+    expect(savedResponse.responses[0].status).toBe('yes');
   });
 
 
