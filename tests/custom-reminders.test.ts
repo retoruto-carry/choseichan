@@ -5,13 +5,13 @@ import { Schedule } from '../src/types/schedule';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
 import { StorageServiceV2 } from '../src/services/storage-v2';
-import { NotificationService } from '../src/services/notification';
+import { NotificationService } from '../src/application/services/NotificationService';
 
 // Mock fetch globally
 global.fetch = vi.fn();
 
 // Mock NotificationService
-vi.mock('../src/services/notification', () => {
+vi.mock('../src/application/services/NotificationService', () => {
   return {
     NotificationService: vi.fn().mockImplementation(() => ({
       sendDeadlineReminder: vi.fn().mockResolvedValue(undefined)

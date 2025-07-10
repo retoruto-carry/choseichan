@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { sendDeadlineReminders } from '../../src/cron/deadline-reminder';
 import { Schedule } from '../../src/types/schedule';
-import { NotificationService } from '../../src/services/notification';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../helpers/d1-database';
 import type { D1Database } from '../helpers/d1-database';
 import { StorageServiceV2 } from '../../src/services/storage-v2';

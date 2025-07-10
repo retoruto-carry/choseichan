@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NotificationService } from '../../src/services/notification';
-import { StorageServiceV2 } from '../../src/services/storage-v2';
+import { NotificationService } from '../../src/application/services/NotificationService';
+import { IScheduleRepository, IResponseRepository } from '../../src/domain/repositories/interfaces';
+import { GetScheduleSummaryUseCase } from '../../src/application/usecases/schedule/GetScheduleSummaryUseCase';
 import { Schedule, ScheduleSummary } from '../../src/types/schedule';
 
 // Mock fetch globally
