@@ -4,12 +4,14 @@ Discord調整ちゃんの締切リマインダーと通知システムの仕様�
 
 ## 概要
 
-締切リマインダーシステムは、GitHub ActionsのCronジョブから定期的に実行され、日程調整の締切が近づいたときに自動的にリマインダーを送信します。
+締切リマインダーシステムは、Cloudflare Workers Cronから定期的に実行され、日程調整の締切が近づいたときに自動的にリマインダーを送信します。
 
 ## アーキテクチャ
 
 ```
-GitHub Actions (Cron)
+Cloudflare Workers Cron
+    ↓
+POST /cron/deadline-check (CRON_SECRET認証)
     ↓
 deadline-reminder.ts
     ↓
@@ -80,6 +82,8 @@ const members = await fetchGuildMembers(guildId);
   ○ 5人　△ 3人　× 2人
 ```
 
+締切通知の5秒後にPRメッセージ（広告）も送信されます。
+
 ### 3. DM通知
 作成者には個別にDMでも通知が送信されます。
 
@@ -116,23 +120,60 @@ if (schedule.deadline) {
 
 ### リマインダー送信のロジック
 ```typescript
-// 1. 締切が設定されているスケジュールを検索
-const guilds = await getUniqueGuilds();
+// 1. 時間枠の設定（過去1週間〜3日後）
+const now = new Date();
+const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-for (const guildId of guilds) {
-  // 2. 締切インデックスから候補を取得
-  const deadlineKeys = await storage.schedules.list({
-    prefix: `guild:${guildId}:deadline:`
+// 2. 全ギルドのスケジュールキーから unique なギルドIDを取得
+const scheduleKeys = await env.SCHEDULES.list({
+  prefix: 'guild:',
+  limit: 1000
+});
+
+const guildIds = new Set<string>();
+for (const key of scheduleKeys.keys) {
+  const parts = key.name.split(':');
+  if (parts[0] === 'guild' && parts[2] === 'schedule' && parts[1]) {
+    guildIds.add(parts[1]);
+  }
+}
+
+// 3. 各ギルドの締切インデックスをチェック
+for (const guildId of guildIds) {
+  const deadlineKeys = await env.SCHEDULES.list({
+    prefix: `guild:${guildId}:deadline:`,
+    limit: 1000
   });
   
-  // 3. 各スケジュールをチェック
-  for (const schedule of schedules) {
-    // 4. リマインダータイミングを計算
-    const timings = schedule.reminderTimings || ['3d', '1d', '8h'];
+  for (const key of deadlineKeys.keys) {
+    const parts = key.name.split(':');
+    const timestamp = parseInt(parts[3]) * 1000; // ミリ秒に変換
     
-    for (const timing of timings) {
-      if (shouldSendReminder(schedule, timing)) {
-        await sendReminder(schedule, timing);
+    // 時間枠内の締切のみ処理
+    if (timestamp >= oneWeekAgo.getTime() && timestamp <= threeDaysFromNow.getTime()) {
+      const scheduleId = parts[4];
+      const schedule = await storage.getSchedule(scheduleId, guildId);
+      
+      if (schedule && schedule.status === 'open') {
+        // リマインダー送信判定
+        const timings = schedule.reminderTimings || ['3d', '1d', '8h'];
+        
+        for (const timing of timings) {
+          const reminderTime = schedule.deadline.getTime() - (parseTimingToHours(timing) * 60 * 60 * 1000);
+          
+          if (now.getTime() >= reminderTime && !schedule.remindersSent?.includes(timing)) {
+            // 8時間以上遅れていない場合のみ送信
+            if (now.getTime() - reminderTime <= OLD_REMINDER_THRESHOLD_MS) {
+              await sendReminder(schedule, timing);
+            }
+          }
+        }
+        
+        // 締切を過ぎていたら自動クローズ
+        if (schedule.deadline.getTime() <= now.getTime()) {
+          await autoCloseSchedule(schedule);
+        }
       }
     }
   }
@@ -142,20 +183,25 @@ for (const guildId of guilds) {
 ### レート制限対策
 Discord APIのレート制限を考慮したバッチ処理：
 ```typescript
-const batchSize = parseInt(env.REMINDER_BATCH_SIZE || '10');
-const batchDelay = parseInt(env.REMINDER_BATCH_DELAY || '100');
-
-for (let i = 0; i < schedules.length; i += batchSize) {
-  const batch = schedules.slice(i, i + batchSize);
-  
-  await Promise.all(
-    batch.map(schedule => processSchedule(schedule))
-  );
-  
-  if (i + batchSize < schedules.length) {
-    await delay(batchDelay);
+// processBatches ユーティリティを使用
+await processBatches(upcomingReminders, async (reminderInfo) => {
+  try {
+    const { schedule, reminderType, message } = reminderInfo;
+    
+    // リマインダーを送信
+    await notificationService.sendDeadlineReminder(schedule, message);
+    
+    // 送信済みとして記録
+    schedule.remindersSent = [...(schedule.remindersSent || []), reminderType];
+    await storage.saveSchedule(schedule);
+    
+  } catch (error) {
+    console.error(`Failed to send reminder for schedule ${reminderInfo.schedule.id}:`, error);
   }
-}
+}, {
+  batchSize: env.REMINDER_BATCH_SIZE || 20,
+  delayBetweenBatches: env.REMINDER_BATCH_DELAY || 100
+});
 ```
 
 ## セキュリティと制限
@@ -189,9 +235,12 @@ schedule.remindersSent = [...(schedule.remindersSent || []), timing];
 DISCORD_TOKEN=Bot_xxxx
 DISCORD_APPLICATION_ID=xxxx
 
+# Cron認証
+CRON_SECRET=xxxx            # Cronエンドポイントの認証シークレット
+
 # レート制限設定
-REMINDER_BATCH_SIZE=10      # 一度に処理するスケジュール数
-REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒）
+REMINDER_BATCH_SIZE=20      # 一度に処理するリマインダー数（デフォルト: 20）
+REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒、デフォルト: 100）
 ```
 
 ## テスト
@@ -209,8 +258,9 @@ REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒）
 
 ### リマインダーが送信されない
 1. 締切が設定されているか確認
-2. GitHub Actions Cronが動作しているか確認
-3. 環境変数が正しく設定されているか確認
+2. Cloudflare Workers Cronトリガーが設定されているか確認
+3. CRON_SECRETが正しく設定されているか確認
+4. 環境変数（DISCORD_TOKEN, DISCORD_APPLICATION_ID）が正しく設定されているか確認
 
 ### メンションが解決されない
 1. Botに必要な権限があるか確認（サーバーメンバー取得権限）
@@ -225,3 +275,14 @@ REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒）
 - ギルドメンバーは5分間キャッシュ
 - 締切インデックスによる効率的な検索
 - バッチ処理によるAPI呼び出し最適化
+- 過去1週間〜3日後の時間枠で検索範囲を限定
+
+## Cronトリガーの設定
+
+Cloudflare Workers の wrangler.toml で設定：
+```toml
+[[triggers.crons]]
+schedule = "*/30 * * * *"  # 30分ごとに実行
+```
+
+または Cloudflare ダッシュボードから手動で設定することも可能です。
