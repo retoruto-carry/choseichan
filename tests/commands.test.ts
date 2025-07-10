@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { handleChoseichanCommand } from '../src/handlers/commands';
+import { createCommandController } from '../src/presentation/controllers/CommandController';
 import { CommandInteraction, Env } from '../src/types/discord';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
@@ -46,7 +46,7 @@ describe('Choseichan Commands', () => {
       token: 'test_token'
     };
 
-    const response = await handleChoseichanCommand(interaction, env);
+    const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -83,7 +83,7 @@ describe('Choseichan Commands', () => {
       token: 'test_token'
     };
 
-    const response = await handleChoseichanCommand(interaction, env);
+    const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);

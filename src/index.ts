@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { InteractionType, InteractionResponseType, verifyKey } from 'discord-interactions';
 import { Env, CommandInteraction, ButtonInteraction } from './types/discord';
-import { handleChoseichanCommand } from './handlers/commands';
-import { handleButtonInteraction } from './handlers/buttons';
-import { handleModalSubmit } from './handlers/modals/index';
+import { createCommandController } from './presentation/controllers/CommandController';
+import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
+import { createModalController } from './presentation/controllers/ModalController';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -75,7 +75,8 @@ app.post('/interactions', async (c) => {
     switch (command.data.name) {
       case 'choseichan':
         const envWithContext = { ...c.env, ctx: c.executionCtx };
-        const response = await handleChoseichanCommand(command, envWithContext);
+        const controller = createCommandController(envWithContext);
+        const response = await controller.handleChoseichanCommand(command, envWithContext);
         // Honoは生のResponseオブジェクトもそのまま返せる
         return response;
       
@@ -94,13 +95,15 @@ app.post('/interactions', async (c) => {
     const button = interaction as ButtonInteraction;
     // Pass execution context through env
     const envWithContext = { ...c.env, ctx: c.executionCtx };
-    return handleButtonInteraction(button, envWithContext);
+    const buttonController = createButtonInteractionController(envWithContext);
+    return buttonController.handleButtonInteraction(button, envWithContext);
   }
 
   // Handle modal submits
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
     const envWithContext = { ...c.env, ctx: c.executionCtx };
-    return handleModalSubmit(interaction, envWithContext);
+    const modalController = createModalController(envWithContext);
+    return modalController.handleModalSubmit(interaction, envWithContext);
   }
 
   return c.text('Unknown interaction type', 400);

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { handleButtonInteraction } from '../src/handlers/buttons';
+import { createButtonInteractionController } from '../src/presentation/controllers/ButtonInteractionController';
 import { ButtonInteraction, Env } from '../src/types/discord';
 import { Schedule } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
@@ -65,7 +65,7 @@ describe('Button Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -102,7 +102,7 @@ describe('Button Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -137,7 +137,7 @@ describe('Button Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -167,7 +167,7 @@ describe('Button Interactions', () => {
       token: 'test_token'
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -198,7 +198,7 @@ describe('Button Interactions', () => {
       token: 'test_token'
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -228,7 +228,7 @@ describe('Button Interactions', () => {
       token: 'test_token'
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -262,7 +262,7 @@ describe('Button Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -300,7 +300,7 @@ describe('Button Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, env);
+    const response = await createButtonInteractionController(env).handleButtonInteraction(interaction, env);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
@@ -348,7 +348,7 @@ describe('Button Interactions', () => {
       token: 'test_token'
     };
 
-    const response = await handleButtonInteraction(interaction, envWithContext);
+    const response = await createButtonInteractionController(envWithContext).handleButtonInteraction(interaction, envWithContext);
     const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);

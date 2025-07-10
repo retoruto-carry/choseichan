@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { handleModalSubmit } from '../src/handlers/modals/index';
+import { createModalController } from '../src/presentation/controllers/ModalController';
 import { Env } from '../src/types/discord';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
@@ -81,7 +81,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await createModalController(env).handleModalSubmit(interaction, env);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -163,7 +163,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, env);
+      const response = await createModalController(env).handleModalSubmit(interaction, env);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -241,7 +241,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, editEnv);
+      const response = await createModalController(editEnv).handleModalSubmit(interaction, editEnv);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -288,7 +288,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, editEnv);
+      const response = await createModalController(editEnv).handleModalSubmit(interaction, editEnv);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -368,7 +368,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, deadlineEnv);
+      const response = await createModalController(deadlineEnv).handleModalSubmit(interaction, deadlineEnv);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -415,7 +415,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, deadlineEnv);
+      const response = await createModalController(deadlineEnv).handleModalSubmit(interaction, deadlineEnv);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
@@ -482,7 +482,7 @@ describe('Modal Submit Interactions', () => {
         token: 'test_token'
       };
 
-      const response = await handleModalSubmit(interaction, deadlineEnv);
+      const response = await createModalController(deadlineEnv).handleModalSubmit(interaction, deadlineEnv);
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);

@@ -11,7 +11,7 @@ vi.mock('../src/services/storage-v2', () => ({
   StorageServiceV2: vi.fn()
 }));
 
-import { handleButtonInteraction } from '../src/handlers/buttons';
+import { createButtonInteractionController } from '../src/presentation/controllers/ButtonInteractionController';
 import { StorageServiceV2 } from '../src/services/storage-v2';
 import { Schedule, ResponseStatus } from '../src/types/schedule';
 import { ButtonInteraction, Env } from '../src/types/discord';
@@ -104,7 +104,7 @@ describe('Select Menu Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, mockEnv);
+    const response = await createButtonInteractionController(mockEnv).handleButtonInteraction(interaction, mockEnv);
     const responseData = await response.json() as any;
 
     // Should save the schedule with message ID
@@ -145,7 +145,7 @@ describe('Select Menu Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, mockEnv);
+    const response = await createButtonInteractionController(mockEnv).handleButtonInteraction(interaction, mockEnv);
     const responseData = await response.json() as any;
 
     // Should save the response
@@ -190,7 +190,7 @@ describe('Select Menu Interactions', () => {
       }
     };
 
-    const response = await handleButtonInteraction(interaction, mockEnv);
+    const response = await createButtonInteractionController(mockEnv).handleButtonInteraction(interaction, mockEnv);
     const responseData = await response.json() as any;
 
     // Should still save the response

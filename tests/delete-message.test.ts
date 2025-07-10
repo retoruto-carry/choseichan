@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { handleDeleteButton } from '../src/handlers/schedule-handlers';
+import { createScheduleManagementController } from '../src/presentation/controllers/ScheduleManagementController';
 import { ButtonInteraction, Env } from '../src/types/discord';
 import { StorageServiceV2 } from '../src/services/storage-v2';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
@@ -90,7 +90,7 @@ describe('Delete Schedule with Message', () => {
     
     const { deleteMessage } = await import('../src/utils/discord');
     
-    const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
+    const response = await createScheduleManagementController(mockEnv).handleDeleteButton(interaction, [scheduleId], mockEnv);
     const data = await response.json() as any;
     
     // Verify response
@@ -162,7 +162,7 @@ describe('Delete Schedule with Message', () => {
       token: 'test-token'
     };
     
-    const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
+    const response = await createScheduleManagementController(mockEnv).handleDeleteButton(interaction, [scheduleId], mockEnv);
     const data = await response.json() as any;
     
     // Verify response is still successful
@@ -224,7 +224,7 @@ describe('Delete Schedule with Message', () => {
     
     const { deleteMessage } = await import('../src/utils/discord');
     
-    const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
+    const response = await createScheduleManagementController(mockEnv).handleDeleteButton(interaction, [scheduleId], mockEnv);
     const data = await response.json() as any;
     
     // Verify error response
