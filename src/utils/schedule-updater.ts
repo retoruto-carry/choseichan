@@ -76,27 +76,6 @@ export async function updateScheduleMainMessage(
   }
 }
 
-/**
- * インタラクションからメッセージIDを安全に取得する
- * @param interaction インタラクション
- * @returns メッセージID（取得できない場合は空文字）
- */
-export function getMessageIdFromInteraction(interaction: any): string {
-  // 優先順位：
-  // 1. message_reference.message_id (返信元のメッセージ)
-  // 2. message.id (インタラクションが発生したメッセージ)
-  // 3. 空文字列（取得できない場合）
-  
-  if (interaction.message?.message_reference?.message_id) {
-    return interaction.message.message_reference.message_id;
-  }
-  
-  if (interaction.message?.id) {
-    return interaction.message.id;
-  }
-  
-  return '';
-}
 
 /**
  * スケジュールにメッセージIDを保存する
