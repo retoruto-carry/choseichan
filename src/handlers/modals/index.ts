@@ -3,7 +3,6 @@ import { ModalInteraction, Env } from '../../types/discord';
 import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 import { parseButtonId } from '../../utils/id';
 import { handleCreateScheduleModal } from './create-schedule';
-import { handleInteractiveResponseModal, handleBulkResponseModal } from './response';
 import { 
   handleEditInfoModal, 
   handleUpdateDatesModal, 
@@ -28,13 +27,6 @@ export async function handleModalSubmit(
   switch (modalAction) {
     case 'create_schedule':
       return handleCreateScheduleModal(interaction, storage, env);
-      
-    case 'interactive_response':
-      return handleInteractiveResponseModal(interaction, storage, modalParams, env);
-      
-      
-    case 'bulk_response':
-      return handleBulkResponseModal(interaction, storage, modalParams, env);
       
     case 'edit_info':
       return handleEditInfoModal(interaction, storage, modalParams, env);
