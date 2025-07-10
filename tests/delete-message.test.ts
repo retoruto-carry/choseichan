@@ -66,7 +66,7 @@ describe('Delete Schedule with Message', () => {
       messageId: messageId, // This is the key - the main message ID
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'open',
+      status: 'open' as const,
       notificationSent: false,
       totalResponses: 0
     };
@@ -105,7 +105,8 @@ describe('Delete Schedule with Message', () => {
     expect(data.data.content).toContain('削除しました');
     
     // Wait for all waitUntil promises to complete
-    await Promise.all((mockEnv as any)._waitUntilPromises || []);
+    const testEnv = mockEnv as any;
+    await Promise.all(testEnv._waitUntilPromises || []);
     
     // Now verify deleteMessage was called
     expect(deleteMessage).toHaveBeenCalledWith(
@@ -135,7 +136,7 @@ describe('Delete Schedule with Message', () => {
       messageId: messageId,
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'open',
+      status: 'open' as const,
       notificationSent: false,
       totalResponses: 0
     };
@@ -198,7 +199,7 @@ describe('Delete Schedule with Message', () => {
       messageId: 'test-message-789',
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'open',
+      status: 'open' as const,
       notificationSent: false,
       totalResponses: 0
     };

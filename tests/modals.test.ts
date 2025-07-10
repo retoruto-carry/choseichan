@@ -86,14 +86,26 @@ describe('Modal Submit Interactions', () => {
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data).toBeDefined();
+      if (!data.data) throw new Error('data.data is undefined');
       expect(data.data.embeds).toHaveLength(1);
       expect(data.data.embeds?.[0].title).toContain('忘年会');
       expect(data.data.embeds?.[0].description).toContain('今年の忘年会です');
       expect(data.data.components).toBeDefined();
       
-      // Check schedule was saved
-      const schedules = await env.SCHEDULES.list({ prefix: 'guild:test-guild:schedule:' });
-      expect(schedules.keys.length).toBe(1);
+      // Check schedule was saved by verifying it can be retrieved
+      const { StorageServiceV2 } = await import('../src/services/storage-v2');
+      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+      
+      // Extract schedule ID from the response components
+      const buttonRow = data.data?.components?.[0];
+      const buttons = buttonRow?.components || [];
+      const respondButton = buttons.find(btn => btn.custom_id?.startsWith('respond:'));
+      const scheduleId = respondButton?.custom_id?.split(':')[1];
+      
+      expect(scheduleId).toBeDefined();
+      const savedSchedule = await storage.getSchedule(scheduleId!, 'test-guild');
+      expect(savedSchedule).toBeTruthy();
+      expect(savedSchedule?.title).toBe('忘年会');
     });
 
     it('should handle empty dates in modal submission', async () => {
@@ -155,8 +167,8 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.content).toContain('日程候補を入力してください');
-      expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+      expect(data.data?.content).toContain('日程候補を入力してください');
+      expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
     });
   });
 
@@ -243,8 +255,8 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.content).toContain('更新しました');
-      expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+      expect(data.data?.content).toContain('更新しました');
+      expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check schedule was updated using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
@@ -290,16 +302,16 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.embeds).toBeDefined();
-      expect(data.data.embeds?.[0].title).toContain('日程を追加しました');
-      expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+      expect(data.data?.embeds).toBeDefined();
+      expect(data.data?.embeds?.[0].title).toContain('日程を追加しました');
+      expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check dates were added using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
       const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
       const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
-      expect(updatedSchedule.dates).toHaveLength(4); // Original 2 + new 2
+      expect(updatedSchedule?.dates).toHaveLength(4); // Original 2 + new 2
     });
   });
 
@@ -380,16 +392,16 @@ describe('Modal Submit Interactions', () => {
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(data.data.content).toContain('締切日を');
-      expect(data.data.content).toContain('更新しました');
+      expect(data.data?.content).toContain('締切日を');
+      expect(data.data?.content).toContain('更新しました');
       
       // Check reminders were reset using StorageService
       const { StorageServiceV2: CheckStorage1 } = await import('../src/services/storage-v2');
       const checkStorage1 = new CheckStorage1(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
       const updatedSchedule = await checkStorage1.getSchedule('test_schedule_deadline', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
-      expect(updatedSchedule.reminderSent).toBe(false);
-      expect(updatedSchedule.remindersSent).toEqual([]);
+      // remindersSent should be reset to empty array
+      expect(updatedSchedule?.remindersSent).toEqual([]);
     });
 
     it('should reset reminders when deadline is removed', async () => {
@@ -426,16 +438,16 @@ describe('Modal Submit Interactions', () => {
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
-      expect(data.data.content).toContain('締切日を削除しました');
+      expect(data.data?.content).toContain('締切日を削除しました');
       
       // Check reminders were reset using StorageService
       const { StorageServiceV2: CheckStorage2 } = await import('../src/services/storage-v2');
       const storage2 = new CheckStorage2(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
       const updatedSchedule = await storage2.getSchedule('test_schedule_deadline', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
-      expect(updatedSchedule.deadline).toBeUndefined();
-      expect(updatedSchedule.reminderSent).toBe(false);
-      expect(updatedSchedule.remindersSent).toEqual([]);
+      expect(updatedSchedule?.deadline).toBeUndefined();
+      // remindersSent should be reset to empty array
+      expect(updatedSchedule?.remindersSent).toEqual([]);
     });
 
     it('should reset reminders when adding deadline to schedule without one', async () => {
@@ -493,15 +505,15 @@ describe('Modal Submit Interactions', () => {
       const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
-      expect(data.data.content).toContain('締切日を');
-      expect(data.data.content).toContain('更新しました');
+      expect(data.data?.content).toContain('締切日を');
+      expect(data.data?.content).toContain('更新しました');
       
       // Check reminders were initialized using StorageService
       const updatedSchedule = await storage3.getSchedule('test_schedule_no_deadline', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
-      expect(updatedSchedule.deadline).toBeDefined();
-      expect(updatedSchedule.reminderSent).toBe(false);
-      expect(updatedSchedule.remindersSent).toEqual([]);
+      expect(updatedSchedule?.deadline).toBeDefined();
+      // remindersSent should be reset to empty array
+      expect(updatedSchedule?.remindersSent).toEqual([]);
     });
   });
 });

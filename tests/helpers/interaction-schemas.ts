@@ -71,6 +71,23 @@ export interface ModalComponent {
   }>;
 }
 
+// Component interfaces
+export interface ButtonComponent {
+  type: 2;
+  style: number;
+  label?: string;
+  emoji?: {
+    name: string;
+  };
+  custom_id: string;
+  disabled?: boolean;
+}
+
+export interface ActionRow {
+  type: 1;
+  components: ButtonComponent[];
+}
+
 // Main interaction response interface
 export interface InteractionResponse {
   type: number;
@@ -78,7 +95,7 @@ export interface InteractionResponse {
     content?: string;
     flags?: number;
     embeds?: DiscordEmbed[];
-    components?: unknown[];
+    components?: ActionRow[];
     modal?: {
       custom_id: string;
       title: string;

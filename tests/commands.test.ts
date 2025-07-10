@@ -51,9 +51,9 @@ describe('Choseichan Commands', () => {
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.MODAL);
-    expect(data.data?.modal?.title).toBe('日程調整を作成');
-    expect(data.data?.modal?.components).toHaveLength(4);
-    expect(data.data?.modal?.custom_id).toBe('modal:create_schedule');
+    expect(data.data?.title).toBe('日程調整を作成');
+    expect(data.data?.components).toHaveLength(4);
+    expect(data.data?.custom_id).toBe('modal:create_schedule');
   });
 
 
