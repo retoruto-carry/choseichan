@@ -38,15 +38,16 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 
 ## アーキテクチャの特徴
 
-### リポジトリパターン
-- `src/repositories/interfaces.ts` - インターフェース定義
-- `src/repositories/d1/` - D1実装
-- `src/repositories/kv/` - KV実装（レガシー）
-- `DATABASE_TYPE` 環境変数で切り替え可能
+### Clean Architecture（Onion Architecture）
+**完全移行済み - Jeffrey Palermoのアーキテクチャパターン**
+- `src/domain/` - 純粋ビジネスロジック（エンティティ・ドメインサービス）
+- `src/application/` - ユースケース実装（11個完備）
+- `src/infrastructure/` - 外部技術（D1リポジトリ・API）
+- `src/presentation/` - UI構築とコントローラー
 
 ### ストレージサービス
-- `StorageServiceV2` - 外部向けAPI（後方互換性）
-- `StorageServiceV3` - 内部実装（リポジトリパターン使用）
+- **主流**: Clean Architecture（ドメイン層＋アプリケーション層）
+- `StorageServiceV2` - 後方互換性アダプター（段階的廃止予定）
 
 ### 型変換
 - `src/types/schedule.ts` - レガシー型定義
@@ -109,10 +110,18 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 
 ## 重要なファイル
 
+### Clean Architecture 実装
+- `/src/domain/entities/Schedule.ts` - スケジュールエンティティ
+- `/src/application/usecases/schedule/` - スケジュール関連ユースケース
+- `/src/infrastructure/factories/DependencyContainer.ts` - DI コンテナ
+- `/src/cron/deadline-reminder.ts` - クリーンアーキテクチャ化済み
+
+### Legacy（段階的移行対象）
 - `/src/index.ts` - エントリーポイント
-- `/src/handlers/modals/index.ts` - モーダルルーティング
-- `/src/services/storage-v2.ts` - ストレージアダプター
-- `/src/cron/deadline-reminder.ts` - リマインダー処理
+- `/src/handlers/` - Discord ハンドラー（11ファイル）
+- `/src/services/storage-v2.ts` - 後方互換性アダプター
+
+### Database
 - `/migrations/0001_initial_schema.sql` - D1スキーマ
 
 ## デバッグのヒント

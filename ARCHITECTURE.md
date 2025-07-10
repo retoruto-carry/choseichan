@@ -135,26 +135,30 @@ UI構築とコントローラー。ApplicationとInfrastructureに依存。
 - ✅ 全テスト動作確認（116テスト合格）
 - ✅ 型安全性確保（TypeScript strict mode）
 - ✅ コード品質確保（ESLint/Prettier）
+- ✅ 重要システム機能のClean Architecture移行
+  - `src/cron/deadline-reminder.ts` - クリーンアーキテクチャ化完了
+  - DeadlineReminderUseCase, ProcessReminderUseCase実装
+  - GetScheduleSummaryUseCase, FindSchedulesUseCaseの追加
 
-### 現在の実装戦略（ハイブリッドアプローチ）
+### 現在の実装状況
 
-#### 🔵 新機能・新規開発
-**Clean Architecture使用**
-- `src/domain/` - 純粋ビジネスロジック
-- `src/application/` - ユースケース実装
-- `src/infrastructure/` - 外部技術実装
-- `src/presentation/` - UI構築とコントローラー
+#### 🔵 Clean Architecture適用済み
+**ドメイン駆動設計によるコア実装**
+- `src/domain/` - 純粋ビジネスロジック（エンティティ・ドメインサービス）
+- `src/application/` - ユースケース実装（11個のユースケース完備）
+- `src/infrastructure/` - 外部技術実装（D1リポジトリ・ファクトリ）
+- `src/presentation/` - UI構築とコントローラー基盤
+- `src/cron/` - 重要なスケジュールジョブ（完全移行済み）
 
-#### 🟡 既存機能・安定稼働中
-**Legacy Architecture継続**
-- `src/handlers/` - 既存ハンドラー（StorageServiceV2使用）
-- `src/services/storage-v2.ts` - 安定稼働中の統合サービス
-- `src/cron/` - 重要なスケジュールジョブ
+#### 🟡 Legacy Architecture継続（段階的移行対象）
+**既存ハンドラー（StorageServiceV2経由）**
+- `src/handlers/` - Discord インタラクション処理（11ファイル）
+- `src/services/storage-v2.ts` - 後方互換性アダプター
 
-#### 📋 段階的移行計画
-1. **新機能はClean Architecture**で実装
-2. **既存機能は安定稼働優先**で保持
-3. **必要に応じて徐々に移行**（リスク最小化）
+#### 📋 移行完了計画
+1. ✅ **コアシステム**: cron/deadline-reminder.ts の Clean Architecture化
+2. 🔄 **ハンドラー**: 段階的にClean Architectureへ移行
+3. 🔄 **最終統合**: StorageServiceV2の段階的廃止
 
 ### アーキテクチャ利点
 
@@ -171,11 +175,12 @@ UI構築とコントローラー。ApplicationとInfrastructureに依存。
 - 🔄 現行運用との親和性
 
 ### 将来の計画
-- 📋 新機能開発時のClean Architecture適用
-- 📋 既存機能の必要時リファクタリング
+- 📋 ハンドラーのClean Architecture移行完了
+- 📋 StorageServiceV2の段階的廃止
 - 📋 統合テスト強化
 - 📋 監視・ログ改善
 - 📋 国際化対応
+- 📋 パフォーマンス最適化
 
 ## ベストプラクティス
 
