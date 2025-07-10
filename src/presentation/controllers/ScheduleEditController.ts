@@ -193,27 +193,23 @@ export class ScheduleEditController {
         return this.createErrorResponse('削除対象の日程が見つかりません。');
       }
 
-      // 日程削除処理（一時的にStorageServiceV2を使用）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storage = new StorageServiceV2({} as any);
+      // 日程削除処理
+      const remainingDates = scheduleResult.schedule.dates
+        .filter(d => d.id !== dateId)
+        .map(d => ({ id: d.id, datetime: d.datetime }));
       
-      const schedule = await storage.getSchedule(scheduleId, guildId);
-      if (!schedule) {
-        return this.createErrorResponse('スケジュールの取得に失敗しました。');
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        dates: remainingDates
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse('日程の削除に失敗しました。');
       }
 
-      // 日程削除
-      schedule.dates = schedule.dates.filter(d => d.id !== dateId);
-      schedule.updatedAt = new Date();
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storage.saveSchedule(schedule);
-
-      // 該当日程の回答データも削除
-      const responses = await storage.listResponsesBySchedule(scheduleId);
-      for (const response of responses) {
-        response.responses = response.responses.filter(r => r.dateId !== dateId);
-        await storage.saveResponse(response, guildId);
-      }
+      // Note: Response data with removed date IDs will be handled by the repository layer
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.UPDATE_MESSAGE,

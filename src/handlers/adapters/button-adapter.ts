@@ -14,6 +14,6 @@ export async function handleButtonInteraction(
   interaction: ButtonInteraction,
   env: Env
 ): Promise<Response> {
-  const controller = createButtonInteractionController();
+  const controller = createButtonInteractionController(env);
   return controller.handleButtonInteraction(interaction, env);
 }

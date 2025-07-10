@@ -29,38 +29,34 @@ export class ModalController {
       const { parseButtonId } = await import('../../utils/id');
       const { action, params } = parseButtonId(customId);
       
-      // 一時的にStorageServiceV2を使用（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
-      
       // Handle both 'modal:create_schedule' and 'create_schedule' formats
       const modalAction = action === 'modal' && params.length > 0 ? params[0] : action;
       const modalParams = action === 'modal' ? params.slice(1) : params;
 
       switch (modalAction) {
         case 'create_schedule':
-          return this.handleCreateScheduleModal(interaction, env, storageToUse);
+          return this.handleCreateScheduleModal(interaction, env, storage);
           
         case 'edit_info':
-          return this.handleEditInfoModal(interaction, modalParams, env, storageToUse);
+          return this.handleEditInfoModal(interaction, modalParams, env, storage);
           
         case 'update_dates':
-          return this.handleUpdateDatesModal(interaction, modalParams, env, storageToUse);
+          return this.handleUpdateDatesModal(interaction, modalParams, env, storage);
           
         case 'add_dates':
-          return this.handleAddDatesModal(interaction, modalParams, env, storageToUse);
+          return this.handleAddDatesModal(interaction, modalParams, env, storage);
           
         case 'add_comment':
-          return this.handleAddCommentModal(interaction, modalParams, env, storageToUse);
+          return this.handleAddCommentModal(interaction, modalParams, env, storage);
           
         case 'date_comment':
-          return this.handleDateCommentModal(interaction, modalParams, env, storageToUse);
+          return this.handleDateCommentModal(interaction, modalParams, env, storage);
           
         case 'edit_deadline':
-          return this.handleEditDeadlineModal(interaction, modalParams, env, storageToUse);
+          return this.handleEditDeadlineModal(interaction, modalParams, env, storage);
           
         case 'edit_reminder':
-          return this.handleEditReminderModal(interaction, modalParams, env, storageToUse);
+          return this.handleEditReminderModal(interaction, modalParams, env, storage);
           
         default:
           return this.createErrorResponse('不明なモーダルです。');

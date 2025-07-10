@@ -266,6 +266,33 @@ export class Schedule {
     );
   }
 
+  reopen(): Schedule {
+    if (this._status !== ScheduleStatus.CLOSED) {
+      throw new Error('Schedule is not closed');
+    }
+
+    return new Schedule(
+      this._id,
+      this._guildId,
+      this._channelId,
+      this._title,
+      this._dates,
+      this._createdBy,
+      this._authorId,
+      ScheduleStatus.OPEN,
+      this._createdAt,
+      new Date(),
+      this._messageId,
+      this._description,
+      this._deadline,
+      this._reminderTimings,
+      this._reminderMentions,
+      this._remindersSent,
+      this._notificationSent,
+      this._totalResponses
+    );
+  }
+
   updateTitle(title: string): Schedule {
     if (!title.trim()) {
       throw new Error('Title cannot be empty');

@@ -219,18 +219,16 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整を再開できるのは作成者のみです。');
       }
 
-      // 再開処理（一時的にStorageServiceV2を使用）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storage = new StorageServiceV2({} as any);
-      
-      const schedule = await storage.getSchedule(scheduleId, guildId);
-      if (!schedule) {
-        return this.createErrorResponse('スケジュールの取得に失敗しました。');
+      // 再開処理
+      const reopenResult = await this.dependencyContainer.reopenScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId
+      });
+
+      if (!reopenResult.success) {
+        return this.createErrorResponse(reopenResult.errors?.[0] || '再開に失敗しました。');
       }
-      
-      schedule.status = 'open';
-      schedule.updatedAt = new Date();
-      await storage.saveSchedule(schedule);
 
       // メッセージ更新処理
       await this.handlePostReopenActions(scheduleId, guildId, interaction, env);
@@ -281,10 +279,16 @@ export class ScheduleManagementController {
       // Discord メッセージ削除処理
       await this.handleDiscordMessageDeletion(scheduleResult.schedule, interaction, env);
 
-      // データベースから削除（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storage = new StorageServiceV2(env || {});
-      await storage.deleteSchedule(scheduleId, guildId);
+      // データベースから削除
+      const deleteResult = await this.dependencyContainer.deleteScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId
+      });
+
+      if (!deleteResult.success) {
+        return this.createErrorResponse(deleteResult.errors?.[0] || '削除に失敗しました。');
+      }
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.UPDATE_MESSAGE,
@@ -383,13 +387,13 @@ export class ScheduleManagementController {
         .execute(scheduleId, guildId);
 
       if (scheduleResult.success && scheduleResult.schedule && !scheduleResult.schedule.messageId) {
-        // MessageIDの更新は既存のユーティリティを使用
-        const { saveScheduleMessageId } = await import('../../utils/schedule-updater');
-        const { StorageServiceV2 } = await import('../../services/storage-v2');
-        
-        // 一時的にStorageServiceV2を使用（後でClean Architectureに移行予定）
-        const storage = new StorageServiceV2({ DB: null } as any);
-        await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
+        // MessageIDの更新
+        await this.dependencyContainer.updateScheduleUseCase.execute({
+          scheduleId,
+          guildId,
+          editorUserId: 'system',
+          messageId
+        });
       }
     } catch (error) {
       console.error('Failed to save message ID:', error);
@@ -401,15 +405,13 @@ export class ScheduleManagementController {
       // メインメッセージの更新
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
       if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
-        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater');
-        const { StorageServiceV2 } = await import('../../services/storage-v2');
-        const storage = new StorageServiceV2(env);
+        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater-v2');
         
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
           scheduleResult.schedule.messageId,
           interaction.token,
-          storage,
+          this.dependencyContainer,
           env,
           guildId
         ).catch(error => console.error('Failed to update main message after closing:', error));
@@ -421,12 +423,12 @@ export class ScheduleManagementController {
 
       // 通知送信
       if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
-        const { NotificationService } = await import('../../services/notification');
-        const { StorageServiceV2 } = await import('../../services/storage-v2');
-        const storage = new StorageServiceV2(env);
+        const { NotificationService } = await import('../../application/services/NotificationService');
         
         const notificationService = new NotificationService(
-          storage,
+          this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
+          this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
+          this.dependencyContainer.getScheduleSummaryUseCase,
           env.DISCORD_TOKEN,
           env.DISCORD_APPLICATION_ID
         );
@@ -436,13 +438,7 @@ export class ScheduleManagementController {
             try {
               await notificationService.sendSummaryMessage(scheduleId, guildId);
               if (scheduleResult.success && scheduleResult.schedule) {
-                const legacySchedule = {
-                  ...scheduleResult.schedule,
-                  deadline: scheduleResult.schedule.deadline ? new Date(scheduleResult.schedule.deadline) : undefined,
-                  createdAt: new Date(scheduleResult.schedule.createdAt),
-                  updatedAt: new Date(scheduleResult.schedule.updatedAt)
-                };
-                await notificationService.sendPRMessage(legacySchedule);
+                await notificationService.sendPRMessage(scheduleResult.schedule);
               }
             } catch (error) {
               console.error('Failed to send closure notifications:', error);
@@ -459,15 +455,13 @@ export class ScheduleManagementController {
     try {
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
       if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
-        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater');
-        const { StorageServiceV2 } = await import('../../services/storage-v2');
-        const storage = new StorageServiceV2(env);
+        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater-v2');
         
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
           scheduleResult.schedule.messageId,
           interaction.token,
-          storage,
+          this.dependencyContainer,
           env,
           guildId
         ).catch(error => console.error('Failed to update main message after reopening:', error));
