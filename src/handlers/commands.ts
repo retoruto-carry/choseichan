@@ -96,10 +96,35 @@ async function handleCreateCommandSimple(
           components: [{
             type: 4,
             custom_id: 'deadline',
-            label: '締切とリマインダー（任意）',
-            style: 2, // Paragraph
-            value: 'リマインダー: 3d,1d,8h\n通知先: @here',
-            placeholder: '例: 12/20 23:59\nリマインダー: 3d,1d,8h,30m\n通知先: @everyone, @Alice, @Bob',
+            label: '締切日時（任意）',
+            style: 1, // Short
+            placeholder: '例: 12/20 23:59',
+            required: false,
+            max_length: 50
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_timings',
+            label: 'リマインダー（任意、カンマ区切り）',
+            style: 1, // Short
+            value: '3d, 1d, 8h',
+            placeholder: '例: 3d, 1d, 8h, 30m',
+            required: false,
+            max_length: 100
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_mentions',
+            label: '通知先（任意、カンマ区切りで複数指定可）',
+            style: 1, // Short
+            value: '@here',
+            placeholder: '例: @everyone, @here, @Alice, @Bob',
             required: false,
             max_length: 200
           }]

@@ -80,6 +80,22 @@ describe('Modal Submit Interactions', () => {
                 custom_id: 'deadline',
                 value: '12/20 23:59'
               }]
+            },
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'reminder_timings',
+                value: '3d, 1d, 8h'
+              }]
+            },
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'reminder_mentions',
+                value: '@here'
+              }]
             }
           ]
         },
@@ -148,6 +164,22 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'deadline',
+                value: ''
+              }]
+            },
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'reminder_timings',
+                value: ''
+              }]
+            },
+            {
+              type: 1,
+              components: [{
+                type: 4,
+                custom_id: 'reminder_mentions',
                 value: ''
               }]
             }
