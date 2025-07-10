@@ -11,16 +11,25 @@ vars = { ENVIRONMENT = "development" }
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
+# KV Namespaces for production environment
+[[env.production.kv_namespaces]]
+binding = "SCHEDULES"
+id = "6db94c56f3294de695e539020aec6700"
+
+[[env.production.kv_namespaces]]
+binding = "RESPONSES" 
+id = "3399118d0fc24437ac694cb6c25e7dc8"
+
 # KV Namespaces for data storage
 [[kv_namespaces]]
 binding = "SCHEDULES"
-id = "6a83c721d5aa47da900e1adda3f465e8"
-preview_id = "schedules_kv_preview"
+id = "6db94c56f3294de695e539020aec6700"
+preview_id = "7278ac2a361a40b891f7e5f17b655594"
 
 [[kv_namespaces]]
 binding = "RESPONSES"
-id = "14eebb7e00bb4cefaa04cd38e47eb324"
-preview_id = "responses_kv_preview"
+id = "3399118d0fc24437ac694cb6c25e7dc8"
+preview_id = "a59f3cc9de6a4f0dbc463211ddbbaf6a"
 
 # D1 Database (alternative to KV)
 # [[d1_databases]]
