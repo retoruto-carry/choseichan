@@ -241,26 +241,45 @@ export class NotificationService {
     const message = {
       content: `📊 日程調整「${schedule.title}」が締め切られました！`,
       embeds: [{
-        title: '集計結果',
+        title: '最終集計結果',
         color: 0x2ecc71,
+        description: schedule.description || undefined,
         fields: [
           {
-            name: '参加者数',
-            value: `${userResponses.length}人`,
-            inline: true
+            name: '基本情報',
+            value: [
+              `参加者数: ${userResponses.length}人`,
+              `作成者: ${schedule.createdBy.username}`,
+              `作成日: ${schedule.createdAt.toLocaleDateString('ja-JP')}`
+            ].join('\n'),
+            inline: false
           },
           ...schedule.dates.map(date => {
             const count = responseCounts[date.id];
-            const isBest = date.id === bestDateId;
+            const isBest = date.id === bestDateId && userResponses.length > 0;
+            
+            // Get responses for this date with user names
+            const dateResponses = userResponses
+              .map(ur => {
+                const response = ur.responses.find(r => r.dateId === date.id);
+                if (!response) return null;
+                const comment = response.comment ? ` (${response.comment})` : '';
+                return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
+              })
+              .filter(Boolean);
+            
             return {
               name: `${isBest ? '⭐ ' : ''}${date.datetime}`,
-              value: `${STATUS_EMOJI.yes} ${count.yes}人　${STATUS_EMOJI.maybe} ${count.maybe}人　${STATUS_EMOJI.no} ${count.no}人`,
+              value: [
+                `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`,
+                dateResponses.length > 0 ? dateResponses.join(', ') : '回答なし'
+              ].join('\n'),
               inline: false
             };
           })
         ],
         footer: {
-          text: bestDateId ? '⭐ は最有力候補です' : ''
+          text: bestDateId ? '⭐ は最有力候補です' : `回答者: ${userResponses.length}人`
         }
       }]
     };
