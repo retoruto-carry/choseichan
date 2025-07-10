@@ -77,8 +77,8 @@ describe('Modal Submit Interactions', () => {
               type: 1,
               components: [{
                 type: 4,
-                custom_id: 'deadline_settings',
-                value: '締切: 12/20 23:59\nリマインダー: 3d, 1d, 8h\n通知先: @here'
+                custom_id: 'deadline',
+                value: '12/20 23:59'
               }]
             }
           ]
@@ -147,7 +147,7 @@ describe('Modal Submit Interactions', () => {
               type: 1,
               components: [{
                 type: 4,
-                custom_id: 'deadline_settings',
+                custom_id: 'deadline',
                 value: ''
               }]
             }

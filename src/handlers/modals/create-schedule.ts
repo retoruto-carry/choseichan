@@ -15,7 +15,7 @@ export async function handleCreateScheduleModal(
   const title = interaction.data.components[0].components[0].value;
   const description = interaction.data.components[1].components[0].value || undefined;
   const datesText = interaction.data.components[2].components[0].value;
-  const deadlineSettingsStr = interaction.data.components[3]?.components[0].value || undefined;
+  const deadlineStr = interaction.data.components[3]?.components[0].value || undefined;
 
   // Parse dates
   const dates = datesText.split('\n').filter((line: string) => line.trim());
@@ -34,56 +34,31 @@ export async function handleCreateScheduleModal(
     datetime: date.trim()
   }));
 
-  // Parse deadline settings
+  // Parse deadline
   let deadlineDate: Date | undefined = undefined;
+  if (deadlineStr && deadlineStr.trim()) {
+    const parsedDate = parseUserInputDate(deadlineStr);
+    deadlineDate = parsedDate || undefined;
+    if (!deadlineDate) {
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: '締切日時の形式が正しくありません。',
+          flags: InteractionResponseFlags.EPHEMERAL
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  // デフォルトのリマインダー設定（締切がある場合のみ）
   let reminderTimings: string[] | undefined = undefined;
   let reminderMentions: string[] | undefined = undefined;
-
-  if (deadlineSettingsStr && deadlineSettingsStr.trim()) {
-    const lines = deadlineSettingsStr.split('\n').map(l => l.trim()).filter(l => l);
-    
-    for (const line of lines) {
-      if (line.startsWith('締切:') || line.startsWith('deadline:')) {
-        const deadlineStr = line.replace(/^(締切|deadline):/, '').trim();
-        const parsedDate = parseUserInputDate(deadlineStr);
-        deadlineDate = parsedDate || undefined;
-        if (!deadlineDate) {
-          return new Response(JSON.stringify({
-            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: {
-              content: '締切日時の形式が正しくありません。',
-              flags: InteractionResponseFlags.EPHEMERAL
-            }
-          }), { headers: { 'Content-Type': 'application/json' } });
-        }
-      } else if (line.startsWith('リマインダー:') || line.startsWith('reminder:')) {
-        const timingsStr = line.replace(/^(リマインダー|reminder):/, '').trim();
-        const timings = timingsStr.split(',').map(t => t.trim()).filter(t => t);
-        const validTimings = timings.filter(t => {
-          const match = t.match(/^(\d+)([dhm])$/);
-          if (!match) return false;
-          
-          const value = parseInt(match[1]);
-          const unit = match[2];
-          
-          // Validate reasonable ranges
-          if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
-          if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
-          if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
-          
-          return true;
-        });
-        if (validTimings.length > 0) {
-          reminderTimings = validTimings;
-        }
-      } else if (line.startsWith('通知先:') || line.startsWith('mention:')) {
-        const mentionsStr = line.replace(/^(通知先|mention):/, '').trim();
-        const mentions = mentionsStr.split(',').map(m => m.trim()).filter(m => m);
-        if (mentions.length > 0) {
-          reminderMentions = mentions;
-        }
-      }
-    }
+  
+  if (deadlineDate) {
+    // デフォルトのリマインダータイミング
+    reminderTimings = ['3d', '1d', '8h'];
+    // デフォルトの通知先
+    reminderMentions = ['@here'];
   }
 
   const guildId = interaction.guild_id || 'default';
@@ -133,11 +108,44 @@ export async function handleCreateScheduleModal(
   const embed = createScheduleEmbedWithTable(summary, false);
   const components = createSimpleScheduleComponents(schedule, false);
 
+  const responseData: any = {
+    embeds: [embed],
+    components
+  };
+
+  // 締切がある場合、リマインダー情報を追加
+  if (schedule.deadline && schedule.reminderTimings) {
+    const timingDisplay = schedule.reminderTimings.map(t => {
+      const match = t.match(/^(\d+)([dhm])$/);
+      if (!match) return t;
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      if (unit === 'd') return `${value}日前`;
+      if (unit === 'h') return `${value}時間前`;
+      if (unit === 'm') return `${value}分前`;
+      return t;
+    }).join(' / ');
+
+    const mentionDisplay = schedule.reminderMentions?.map(m => `\`${m}\``).join(' ') || '`@here`';
+
+    responseData.content = `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`;
+    
+    // リマインダー編集ボタンを追加
+    if (!responseData.components) responseData.components = [];
+    responseData.components.push({
+      type: 1,
+      components: [{
+        type: 2,
+        custom_id: `reminder_edit:${schedule.id}`,
+        label: 'リマインダーを編集',
+        style: 2,
+        emoji: { name: '🔔' }
+      }]
+    });
+  }
+
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: {
-      embeds: [embed],
-      components
-    }
+    data: responseData
   }), { headers: { 'Content-Type': 'application/json' } });
 }

@@ -329,3 +329,64 @@ export async function handleEditDeadlineButton(
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
+
+export async function handleReminderEditButton(
+  interaction: ButtonInteraction,
+  storage: StorageService,
+  params: string[]
+): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId, guildId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Current reminder settings
+  const currentTimings = schedule.reminderTimings?.join(', ') || '3d, 1d, 8h';
+  const currentMentions = schedule.reminderMentions?.join(', ') || '@here';
+
+  // Show modal for editing reminder settings
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.MODAL,
+    data: {
+      custom_id: `modal:edit_reminder:${scheduleId}`,
+      title: 'リマインダーの編集',
+      components: [
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_timings',
+            label: 'リマインダー（カンマ区切り）',
+            style: 1,
+            value: currentTimings,
+            placeholder: '例: 3d, 1d, 8h, 30m',
+            required: false,
+            max_length: 100
+          }]
+        },
+        {
+          type: 1,
+          components: [{
+            type: 4,
+            custom_id: 'reminder_mentions',
+            label: '通知先（カンマ区切りで複数指定可）',
+            style: 1,
+            value: currentMentions,
+            placeholder: '例: @everyone, @here, @Alice, @Bob',
+            required: false,
+            max_length: 200
+          }]
+        }
+      ]
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}

@@ -8,7 +8,8 @@ import {
   handleEditInfoModal, 
   handleUpdateDatesModal, 
   handleAddDatesModal, 
-  handleEditDeadlineModal 
+  handleEditDeadlineModal,
+  handleEditReminderModal
 } from './edit';
 import { handleAddCommentModal, handleDateCommentModal } from './comment';
 
@@ -65,6 +66,9 @@ export async function handleModalSubmit(
       
     case 'edit_deadline':
       return handleEditDeadlineModal(interaction, storage, modalParams, env);
+      
+    case 'edit_reminder':
+      return handleEditReminderModal(interaction, storage, modalParams, env);
       
     default:
       return new Response(JSON.stringify({

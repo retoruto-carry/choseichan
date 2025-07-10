@@ -22,7 +22,8 @@ import {
   handleAddDatesButton,
   handleRemoveDatesButton,
   handleConfirmRemoveDateButton,
-  handleEditDeadlineButton
+  handleEditDeadlineButton,
+  handleReminderEditButton
 } from './edit-handlers';
 import {
   handleExportButton,
@@ -97,6 +98,8 @@ export async function handleButtonInteraction(
       return handleRefreshButton(interaction, storage, params, env);
     case 'hide_details':
       return handleHideDetailsButton(interaction, storage, params, env);
+    case 'reminder_edit':
+      return handleReminderEditButton(interaction, storage, params);
     default:
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

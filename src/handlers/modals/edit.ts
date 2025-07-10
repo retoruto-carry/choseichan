@@ -453,3 +453,109 @@ export async function handleEditDeadlineModal(
     }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
+
+export async function handleEditReminderModal(
+  interaction: ModalInteraction,
+  storage: StorageService,
+  params: string[],
+  env: Env
+): Promise<Response> {
+  const guildId = interaction.guild_id || 'default';
+  const [scheduleId] = params;
+  
+  const schedule = await storage.getSchedule(scheduleId, guildId);
+  if (!schedule) {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '日程調整が見つかりません。',
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const reminderTimingsStr = interaction.data.components[0]?.components[0]?.value || '';
+  const reminderMentionsStr = interaction.data.components[1]?.components[0]?.value || '';
+  
+  // Save previous settings to check if they changed
+  const previousTimings = schedule.reminderTimings;
+  
+  // Parse and validate reminder timings
+  if (reminderTimingsStr.trim()) {
+    const timings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
+    const validTimings = timings.filter(t => {
+      const match = t.match(/^(\d+)([dhm])$/);
+      if (!match) return false;
+      
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      
+      // Validate reasonable ranges
+      if (unit === 'd' && (value < 1 || value > 30)) return false; // 1-30 days
+      if (unit === 'h' && (value < 1 || value > 720)) return false; // 1-720 hours (30 days)
+      if (unit === 'm' && (value < 5 || value > 1440)) return false; // 5-1440 minutes (1 day)
+      
+      return true;
+    });
+    if (validTimings.length > 0) {
+      schedule.reminderTimings = validTimings;
+    }
+  }
+  
+  // Parse reminder mentions
+  if (reminderMentionsStr.trim()) {
+    const mentions = reminderMentionsStr.split(',').map(m => m.trim()).filter(m => m);
+    schedule.reminderMentions = mentions;
+  }
+  
+  // Reset reminder status if timings changed
+  const timingsChanged = JSON.stringify(schedule.reminderTimings) !== JSON.stringify(previousTimings);
+  if (timingsChanged) {
+    // Timings were changed - reset all reminders
+    schedule.reminderSent = false;
+    schedule.remindersSent = [];
+    console.log(`Reset reminders for schedule ${scheduleId}: timings changed`);
+  }
+  
+  schedule.updatedAt = new Date();
+  
+  if (!schedule.guildId) schedule.guildId = guildId;
+  await storage.saveSchedule(schedule);
+
+  let message = '✅ リマインダー設定を更新しました。';
+  
+  if (reminderTimingsStr.trim()) {
+    const originalTimings = reminderTimingsStr.split(',').map(t => t.trim()).filter(t => t);
+    const invalidTimings = originalTimings.filter(t => !schedule.reminderTimings?.includes(t));
+    
+    if (invalidTimings.length > 0) {
+      message += `\n⚠️ 無効なリマインダー設定は無視されました: ${invalidTimings.join(', ')}`;
+      message += '\n（有効な範囲: 1-30日, 1-720時間, 5-1440分）';
+    }
+  }
+  
+  if (schedule.reminderTimings && schedule.reminderTimings.length > 0) {
+    const timingDisplay = schedule.reminderTimings.map(t => {
+      const match = t.match(/^(\d+)([dhm])$/);
+      if (!match) return t;
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      if (unit === 'd') return `${value}日前`;
+      if (unit === 'h') return `${value}時間前`;
+      if (unit === 'm') return `${value}分前`;
+      return t;
+    }).join(' / ');
+    message += `\n⏰ リマインダー: ${timingDisplay}`;
+  }
+  
+  if (schedule.reminderMentions && schedule.reminderMentions.length > 0) {
+    message += `\n👥 通知先: ${schedule.reminderMentions.map(m => `\`${m}\``).join(' ')}`;
+  }
+
+  return new Response(JSON.stringify({
+    type: InteractionResponseType.UPDATE_MESSAGE,
+    data: {
+      content: message
+    }
+  }), { headers: { 'Content-Type': 'application/json' } });
+}
