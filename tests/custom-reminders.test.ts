@@ -59,15 +59,10 @@ describe('Custom Reminder Settings', () => {
 
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
-        if (prefix === 'guild:') {
-          return Promise.resolve({
-            keys: [{ name: 'guild:guild123:schedule:schedule-1' }]
-          });
-        }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in30Minutes.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-1` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-1` }]
           });
         }
         return Promise.resolve({ keys: [] });
@@ -127,15 +122,10 @@ describe('Custom Reminder Settings', () => {
 
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
-        if (prefix === 'guild:') {
-          return Promise.resolve({
-            keys: [{ name: 'guild:guild123:schedule:schedule-2' }]
-          });
-        }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in1Hour.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-2` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-2` }]
           });
         }
         return Promise.resolve({ keys: [] });
@@ -187,15 +177,10 @@ describe('Custom Reminder Settings', () => {
 
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
-        if (prefix === 'guild:') {
-          return Promise.resolve({
-            keys: [{ name: 'guild:guild123:schedule:schedule-3' }]
-          });
-        }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in2Days.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-3` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-3` }]
           });
         }
         return Promise.resolve({ keys: [] });
@@ -253,15 +238,10 @@ describe('Custom Reminder Settings', () => {
 
       // Mock guild list and deadline index
       mockKV.list.mockImplementation(({ prefix }: any) => {
-        if (prefix === 'guild:') {
-          return Promise.resolve({
-            keys: [{ name: 'guild:guild123:schedule:schedule-4' }]
-          });
-        }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in5Minutes.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-4` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-4` }]
           });
         }
         return Promise.resolve({ keys: [] });

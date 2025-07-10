@@ -80,7 +80,7 @@ describe('Deadline Reminder', () => {
     // Add deadline index entry
     const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
     await mockKV.put(
-      `guild:guild123:deadline:${deadlineTimestamp}:test-schedule-1`,
+      `deadline:${deadlineTimestamp}:guild123:test-schedule-1`,
       ''
     );
 
@@ -159,7 +159,7 @@ describe('Deadline Reminder', () => {
     // Add deadline index entry for past deadline
     const deadlineTimestamp = Math.floor(pastDeadline.getTime() / 1000);
     await mockKV.put(
-      `guild:guild123:deadline:${deadlineTimestamp}:test-schedule-3`,
+      `deadline:${deadlineTimestamp}:guild123:test-schedule-3`,
       ''
     );
 
@@ -285,11 +285,11 @@ describe('Deadline Reminder', () => {
     // Add deadline index entries
     const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
     await mockKV.put(
-      `guild:guild123:deadline:${deadlineTimestamp}:multi-guild-1`,
+      `deadline:${deadlineTimestamp}:guild123:multi-guild-1`,
       ''
     );
     await mockKV.put(
-      `guild:guild456:deadline:${deadlineTimestamp}:multi-guild-2`,
+      `deadline:${deadlineTimestamp}:guild456:multi-guild-2`,
       ''
     );
 
@@ -346,7 +346,7 @@ describe('Deadline Reminder', () => {
     // Add deadline index entry
     const deadlineTimestamp = Math.floor(deadlineIn10Hours.getTime() / 1000);
     await mockKV.put(
-      `guild:guild123:deadline:${deadlineTimestamp}:test-old-reminder`,
+      `deadline:${deadlineTimestamp}:guild123:test-old-reminder`,
       ''
     );
 

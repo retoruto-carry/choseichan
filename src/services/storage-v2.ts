@@ -20,9 +20,12 @@ export class StorageServiceV2 {
       const oldTimestamp = Math.floor(existingSchedule.deadline.getTime() / 1000);
       const newTimestamp = schedule.deadline ? Math.floor(schedule.deadline.getTime() / 1000) : null;
       
-      // If deadline was removed or changed, delete old index entry
+      // If deadline was removed or changed, delete old index entries
       if (!schedule.deadline || oldTimestamp !== newTimestamp) {
+        // Delete old guild-specific index (legacy)
         await this.schedules.delete(`guild:${guildId}:deadline:${oldTimestamp}:${schedule.id}`);
+        // Delete old global index
+        await this.schedules.delete(`deadline:${oldTimestamp}:${guildId}:${schedule.id}`);
       }
     }
     
@@ -51,8 +54,9 @@ export class StorageServiceV2 {
     // Save to deadline index if deadline exists
     if (schedule.deadline) {
       const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
+      // Save to global deadline index for efficient cross-guild queries
       await this.schedules.put(
-        `guild:${guildId}:deadline:${timestamp}:${schedule.id}`,
+        `deadline:${timestamp}:${guildId}:${schedule.id}`,
         schedule.id
       );
     }
@@ -105,7 +109,8 @@ export class StorageServiceV2 {
     // Delete from deadline index
     if (schedule.deadline) {
       const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
-      await this.schedules.delete(`guild:${guildId}:deadline:${timestamp}:${scheduleId}`);
+      // Delete from global deadline index
+      await this.schedules.delete(`deadline:${timestamp}:${guildId}:${scheduleId}`);
     }
   }
 

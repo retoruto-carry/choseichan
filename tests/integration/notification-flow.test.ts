@@ -64,10 +64,10 @@ describe('Notification Flow Integration Tests', () => {
             keys: [{ name: 'guild:guild123:schedule:test-schedule-1' }]
           });
         }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in30Minutes.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-1` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-1` }]
           });
         }
         return Promise.resolve({ keys: [] });
@@ -203,10 +203,10 @@ describe('Notification Flow Integration Tests', () => {
             keys: schedules.map(s => ({ name: `guild:guild123:schedule:${s.id}` }))
           });
         }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           return Promise.resolve({
             keys: schedules.map(s => ({ 
-              name: `guild:guild123:deadline:${deadlineTimestamp}:${s.id}` 
+              name: `deadline:${deadlineTimestamp}:guild123:${s.id}` 
             }))
           });
         }
@@ -284,10 +284,10 @@ describe('Notification Flow Integration Tests', () => {
             keys: [{ name: 'guild:guild123:schedule:schedule-1' }]
           });
         }
-        if (prefix === 'guild:guild123:deadline:') {
+        if (prefix === 'deadline:') {
           const deadlineTimestamp = Math.floor(in30Minutes.getTime() / 1000);
           return Promise.resolve({
-            keys: [{ name: `guild:guild123:deadline:${deadlineTimestamp}:schedule-1` }]
+            keys: [{ name: `deadline:${deadlineTimestamp}:guild123:schedule-1` }]
           });
         }
         return Promise.resolve({ keys: [] });

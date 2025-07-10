@@ -52,13 +52,13 @@ describe('Deadline Index Management', () => {
     // Verify old deadline index was deleted
     const oldTimestamp = Math.floor(oldDeadline.getTime() / 1000);
     expect(mockKV.delete).toHaveBeenCalledWith(
-      `guild:guild123:deadline:${oldTimestamp}:test-schedule`
+      `deadline:${oldTimestamp}:guild123:test-schedule`
     );
     
     // Verify new deadline index was created
     const newTimestamp = Math.floor(newDeadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
-      `guild:guild123:deadline:${newTimestamp}:test-schedule`,
+      `deadline:${newTimestamp}:guild123:test-schedule`,
       'test-schedule'
     );
   });
@@ -97,7 +97,7 @@ describe('Deadline Index Management', () => {
     // Verify old deadline index was deleted
     const oldTimestamp = Math.floor(oldDeadline.getTime() / 1000);
     expect(mockKV.delete).toHaveBeenCalledWith(
-      `guild:guild123:deadline:${oldTimestamp}:test-schedule-2`
+      `deadline:${oldTimestamp}:guild123:test-schedule-2`
     );
     
     // Verify no new deadline index was created
@@ -146,7 +146,7 @@ describe('Deadline Index Management', () => {
     // Verify deadline index was still created (idempotent)
     const timestamp = Math.floor(deadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
-      `guild:guild123:deadline:${timestamp}:test-schedule-3`,
+      `deadline:${timestamp}:guild123:test-schedule-3`,
       'test-schedule-3'
     );
   });
@@ -181,7 +181,7 @@ describe('Deadline Index Management', () => {
     // Verify deadline index was created
     const timestamp = Math.floor(deadline.getTime() / 1000);
     expect(mockKV.put).toHaveBeenCalledWith(
-      `guild:guild123:deadline:${timestamp}:test-schedule-4`,
+      `deadline:${timestamp}:guild123:test-schedule-4`,
       'test-schedule-4'
     );
   });

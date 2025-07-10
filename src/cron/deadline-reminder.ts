@@ -69,105 +69,86 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
     justClosed: []
   };
 
-  // Scan deadline index for schedules within past week to 3 days from now
+  // Scan global deadline index for schedules within past week to 3 days from now
   // 過去の締切も含めて広範囲をスキャンして、まだ閉じられていないものを見つける
-  const startTime = oneWeekAgo.getTime();
-  const endTime = threeDaysFromNow.getTime();
+  const startTime = Math.floor(oneWeekAgo.getTime() / 1000); // Convert to seconds for key comparison
+  const endTime = Math.floor(threeDaysFromNow.getTime() / 1000);
   
-  // List all guilds first by finding all schedule keys
-  const scheduleKeys = await env.SCHEDULES.list({
-    prefix: 'guild:',
+  // Use global deadline index for efficient cross-guild query
+  const deadlineKeys = await env.SCHEDULES.list({
+    prefix: 'deadline:',
+    start: `deadline:${startTime}`,
+    end: `deadline:${endTime}`,
     limit: 1000
   });
 
-  // Extract unique guild IDs from schedule keys only
-  const guildIds = new Set<string>();
-  for (const key of scheduleKeys.keys) {
+  console.log(`Found ${deadlineKeys.keys.length} schedules with deadlines in range`);
+
+  for (const key of deadlineKeys.keys) {
     const parts = key.name.split(':');
-    // Match pattern: guild:{guildId}:schedule:{scheduleId}
-    if (parts[0] === 'guild' && parts[2] === 'schedule' && parts[1]) {
-      guildIds.add(parts[1]);
-    }
-  }
-
-  // Check deadline index for each guild
-  console.log(`Found ${guildIds.size} guilds to check`);
-  
-  for (const guildId of guildIds) {
-    const deadlineKeys = await env.SCHEDULES.list({
-      prefix: `guild:${guildId}:deadline:`,
-      limit: 1000
-    });
+    // Format: deadline:{timestamp}:{guildId}:{scheduleId}
+    const timestamp = parseInt(parts[1]) * 1000; // Convert back to milliseconds
+    const guildId = parts[2];
+    const scheduleId = parts[3];
     
-    console.log(`Guild ${guildId}: Found ${deadlineKeys.keys.length} deadline keys`);
-
-    for (const key of deadlineKeys.keys) {
-      const parts = key.name.split(':');
-      const timestamp = parseInt(parts[3]) * 1000; // Convert to milliseconds
+    const schedule = await storage.getSchedule(scheduleId, guildId);
+    if (schedule && schedule.deadline) {
+      // Add guildId to schedule
+      schedule.guildId = guildId;
+      const deadlineTime = schedule.deadline.getTime();
       
-      if (timestamp >= startTime && timestamp <= endTime) {
-        const scheduleId = parts[4];
+      console.log(`Schedule ${scheduleId}: deadline=${new Date(deadlineTime).toISOString()}, status=${schedule.status}, remindersSent=${schedule.remindersSent?.join(',') || 'none'}`);
+      
+      // Check which reminders need to be sent
+      if (schedule.status === 'open' && deadlineTime > now.getTime()) {
+        const remindersSent = schedule.remindersSent || [];
         
-        const schedule = await storage.getSchedule(scheduleId, guildId);
-        if (schedule && schedule.deadline) {
-          // Add guildId to schedule
-          schedule.guildId = guildId;
-          const deadlineTime = schedule.deadline.getTime();
+        // Use custom timings if available, otherwise use defaults
+        const timings = schedule.reminderTimings && schedule.reminderTimings.length > 0
+          ? schedule.reminderTimings.map(t => ({
+              type: t,
+              hours: parseTimingToHours(t) || 0,
+              message: getTimingMessage(t)
+            })).filter(t => t.hours > 0)
+          : DEFAULT_REMINDER_TIMINGS;
+        
+        for (const timing of timings) {
+          const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
           
-          console.log(`Schedule ${scheduleId}: deadline=${new Date(deadlineTime).toISOString()}, status=${schedule.status}, remindersSent=${schedule.remindersSent?.join(',') || 'none'}`);
-          
-          // Check which reminders need to be sent
-          if (schedule.status === 'open' && deadlineTime > now.getTime()) {
-            const remindersSent = schedule.remindersSent || [];
-            
-            // Use custom timings if available, otherwise use defaults
-            const timings = schedule.reminderTimings && schedule.reminderTimings.length > 0
-              ? schedule.reminderTimings.map(t => ({
-                  type: t,
-                  hours: parseTimingToHours(t) || 0,
-                  message: getTimingMessage(t)
-                })).filter(t => t.hours > 0)
-              : DEFAULT_REMINDER_TIMINGS;
-            
-            for (const timing of timings) {
-              const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
-              
-              // Check if this reminder should be sent now
-              // リマインダー時刻を過ぎていて、まだ送信していない場合
-              if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
-                // Skip if reminder is too old (more than 8 hours past the reminder time)
-                // 8時間以上前のリマインダーはスキップ（大幅に過ぎている場合）
-                const timeSinceReminder = now.getTime() - reminderTime;
-                if (timeSinceReminder > OLD_REMINDER_THRESHOLD_MS) {
-                  console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${Math.floor(timeSinceReminder / (60 * 60 * 1000))} hours late`);
-                  continue;
-                }
-                
-                console.log(`Adding ${scheduleId} to upcoming reminders (${timing.type})`);
-                result.upcomingReminders.push({
-                  schedule,
-                  reminderType: timing.type,
-                  message: timing.message
-                });
-              }
-            }
-          }
-          
-          // Check if it's past deadline but still open
-          // 締切を過ぎているがまだ開いている場合（自動クローズ対象）
-          if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
-            // Skip if deadline is too old (more than 8 hours past)
-            // 締切を8時間以上過ぎている場合はスキップ
-            const timeSinceDeadline = now.getTime() - deadlineTime;
-            if (timeSinceDeadline > OLD_REMINDER_THRESHOLD_MS) {
-              console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
+          // Check if this reminder should be sent now
+          // リマインダー時刻を過ぎていて、まだ送信していない場合
+          if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
+            // Skip if reminder is too old (more than 8 hours past the reminder time)
+            // 8時間以上前のリマインダーはスキップ（大幅に過ぎている場合）
+            const timeSinceReminder = now.getTime() - reminderTime;
+            if (timeSinceReminder > OLD_REMINDER_THRESHOLD_MS) {
+              console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${Math.floor(timeSinceReminder / (60 * 60 * 1000))} hours late`);
               continue;
             }
             
-            console.log(`Adding ${scheduleId} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
-            result.justClosed.push(schedule);
+            console.log(`Adding ${scheduleId} to upcoming reminders (${timing.type})`);
+            result.upcomingReminders.push({
+              schedule,
+              reminderType: timing.type,
+              message: timing.message
+            });
           }
         }
+      }
+      
+      // Check if it's past deadline but still open
+      // 締切を過ぎているがまだ開いている場合（自動クローズ対象）
+      if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
+        // Skip if deadline is too old (more than 8 hours past)
+        // 締切を8時間以上過ぎている場合はスキップ
+        const timeSinceDeadline = now.getTime() - deadlineTime;
+        if (timeSinceDeadline > OLD_REMINDER_THRESHOLD_MS) {
+          console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
+          continue;
+        }
+        
+        console.log(`Adding ${scheduleId} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
+        result.justClosed.push(schedule);
       }
     }
   }
