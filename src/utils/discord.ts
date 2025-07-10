@@ -25,7 +25,7 @@ export async function updateOriginalMessage(
 export async function getOriginalMessage(
   applicationId: string,
   token: string
-): Promise<unknown> {
+): Promise<{ id?: string }> {
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/@original`;
   
   const response = await fetch(url, {

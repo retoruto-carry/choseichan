@@ -52,6 +52,8 @@ export interface LegacyResponse {
   scheduleId: string;
   userId: string;
   userName: string;
+  username: string;
+  displayName?: string;
   responses: Array<{
     dateId: string;
     status: 'yes' | 'maybe' | 'no';
@@ -162,12 +164,17 @@ export function convertResponseToLegacy(response: Response): LegacyResponse {
   const responses = Object.entries(response.dateStatuses).map(([dateId, status]) => ({
     dateId,
     status: status === 'ok' ? 'yes' : status === 'ng' ? 'no' : 'maybe'
-  }));
+  })) as Array<{
+    dateId: string;
+    status: 'yes' | 'maybe' | 'no';
+  }>;
   
   return {
     scheduleId: response.scheduleId,
     userId: response.userId,
     userName: response.username,
+    username: response.username,
+    displayName: response.displayName,
     responses,
     comment: response.comment,
     updatedAt: response.updatedAt

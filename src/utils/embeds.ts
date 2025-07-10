@@ -61,13 +61,16 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
             const response = ur.responses.find((r) => r.dateId === date.id);
             if (!response) return null;
             const comment = response.comment ? ` (${response.comment})` : '';
-            return `${STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI]} ${ur.userName}${comment}`;
-          } else {
+            const username = 'userName' in ur ? ur.userName : 'username' in ur ? (ur as any).username : 'Unknown';
+            return `${STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI]} ${username}${comment}`;
+          } else if ('dateStatuses' in ur) {
             // New ResponseDto type
             const status = ur.dateStatuses[date.id];
             if (!status) return null;
             const statusEmoji = status === 'ok' ? STATUS_EMOJI.yes : status === 'maybe' ? STATUS_EMOJI.maybe : STATUS_EMOJI.no;
             return `${statusEmoji} ${ur.username}`;
+          } else {
+            return null;
           }
         })
         .filter(Boolean);

@@ -2,11 +2,11 @@
  * D1実装のレスポンスリポジトリ
  */
 
-import { IResponseRepository, IScheduleRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
+import { IScheduleRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
 import { Response, ScheduleSummary, ResponseStatus } from '../../../types/schedule-v2';
 import { TIME_CONSTANTS } from '../../../constants';
 
-export class D1ResponseRepository implements IResponseRepository {
+export class D1ResponseRepository {
   constructor(
     private db: D1Database,
     private scheduleRepository: IScheduleRepository

@@ -3,7 +3,7 @@
  * KVとD1の実装を切り替え可能にするための抽象層
  */
 
-import { Schedule, Response, ScheduleSummary } from '../../types/schedule-v2';
+import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../types/Schedule';
 
 /**
  * スケジュールリポジトリのインターフェース
@@ -12,17 +12,17 @@ export interface IScheduleRepository {
   /**
    * スケジュールを保存
    */
-  save(schedule: Schedule): Promise<void>;
+  save(schedule: DomainSchedule): Promise<void>;
 
   /**
    * スケジュールを取得
    */
-  findById(scheduleId: string, guildId: string): Promise<Schedule | null>;
+  findById(scheduleId: string, guildId: string): Promise<DomainSchedule | null>;
 
   /**
    * チャンネル内のスケジュール一覧を取得
    */
-  findByChannel(channelId: string, guildId: string, limit?: number): Promise<Schedule[]>;
+  findByChannel(channelId: string, guildId: string, limit?: number): Promise<DomainSchedule[]>;
 
   /**
    * 締切が指定期間内のスケジュールを取得
@@ -31,7 +31,7 @@ export interface IScheduleRepository {
     startTime: Date, 
     endTime: Date, 
     guildId?: string
-  ): Promise<Schedule[]>;
+  ): Promise<DomainSchedule[]>;
 
   /**
    * スケジュールを削除
@@ -41,7 +41,7 @@ export interface IScheduleRepository {
   /**
    * メッセージIDでスケジュールを検索
    */
-  findByMessageId(messageId: string, guildId: string): Promise<Schedule | null>;
+  findByMessageId(messageId: string, guildId: string): Promise<DomainSchedule | null>;
 
   /**
    * ギルド内の全スケジュール数を取得
@@ -66,7 +66,7 @@ export interface IResponseRepository {
   /**
    * レスポンスを保存（アップサート）
    */
-  save(response: Response, guildId: string): Promise<void>;
+  save(response: DomainResponse, guildId: string): Promise<void>;
 
   /**
    * 特定のユーザーのレスポンスを取得
@@ -75,12 +75,12 @@ export interface IResponseRepository {
     scheduleId: string, 
     userId: string, 
     guildId: string
-  ): Promise<Response | null>;
+  ): Promise<DomainResponse | null>;
 
   /**
    * スケジュールの全レスポンスを取得
    */
-  findByScheduleId(scheduleId: string, guildId: string): Promise<Response[]>;
+  findByScheduleId(scheduleId: string, guildId: string): Promise<DomainResponse[]>;
 
   /**
    * レスポンスを削除
@@ -95,7 +95,7 @@ export interface IResponseRepository {
   /**
    * スケジュールのサマリー情報を取得（集計済み）
    */
-  getScheduleSummary(scheduleId: string, guildId: string): Promise<ScheduleSummary | null>;
+  getScheduleSummary(scheduleId: string, guildId: string): Promise<DomainScheduleSummary | null>;
 }
 
 /**

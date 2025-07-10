@@ -100,18 +100,38 @@ export class StorageServiceV2 {
 
   // Response operations
   async saveResponse(response: Response, guildId: string = 'default'): Promise<void> {
-    const responseV2 = convertLegacyResponse(response);
+    // Convert old Response to LegacyResponse format first
+    const legacyResponse = {
+      ...response,
+      username: response.userName,
+      responses: response.responses.map(r => ({
+        dateId: r.dateId,
+        status: r.status
+      }))
+    };
+    const responseV2 = convertLegacyResponse(legacyResponse);
     return this.storageV3.saveResponse(responseV2, guildId);
   }
 
   async getResponse(scheduleId: string, userId: string, guildId: string = 'default'): Promise<Response | null> {
     const responseV2 = await this.storageV3.getResponse(scheduleId, userId, guildId);
-    return responseV2 ? convertResponseToLegacy(responseV2) : null;
+    if (!responseV2) return null;
+    const legacyResponse = convertResponseToLegacy(responseV2);
+    return {
+      ...legacyResponse,
+      updatedAt: legacyResponse.updatedAt instanceof Date ? legacyResponse.updatedAt : new Date(legacyResponse.updatedAt)
+    } as Response;
   }
 
   async listResponsesBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
     const responsesV2 = await this.storageV3.listResponsesBySchedule(scheduleId, guildId);
-    return responsesV2.map(convertResponseToLegacy);
+    return responsesV2.map(r => {
+      const legacyResponse = convertResponseToLegacy(r);
+      return {
+        ...legacyResponse,
+        updatedAt: legacyResponse.updatedAt instanceof Date ? legacyResponse.updatedAt : new Date(legacyResponse.updatedAt)
+      } as Response;
+    });
   }
 
   async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
@@ -133,8 +153,16 @@ export class StorageServiceV2 {
     userId: string,
     optimisticResponse: Response
   ): Promise<ScheduleSummary | null> {
-    // Convert and save the response
-    const responseV2 = convertLegacyResponse(optimisticResponse);
+    // Convert old Response to LegacyResponse format first
+    const legacyResponse = {
+      ...optimisticResponse,
+      username: optimisticResponse.userName,
+      responses: optimisticResponse.responses.map(r => ({
+        dateId: r.dateId,
+        status: r.status
+      }))
+    };
+    const responseV2 = convertLegacyResponse(legacyResponse);
     await this.storageV3.saveResponse(responseV2, guildId);
     
     // Get and convert the updated summary
