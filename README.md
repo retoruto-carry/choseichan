@@ -71,7 +71,7 @@ npm run deploy
 ## アーキテクチャ
 
 - **Runtime**: Cloudflare Workers
-- **Storage**: Cloudflare KV
+- **Storage**: Cloudflare D1 (SQLite) / KV (移行中)
 - **Framework**: Hono
 - **Language**: TypeScript
 

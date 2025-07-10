@@ -16,7 +16,7 @@ wrangler d1 create discord-choseisan-db
 [[d1_databases]]
 binding = "DB"
 database_name = "discord-choseisan-db"
-database_id = "your-database-id-here"
+database_id = "f9c793aa-2850-4646-8d5d-271550fdc3ac"
 
 # 環境変数でデータベースタイプを指定
 [vars]
