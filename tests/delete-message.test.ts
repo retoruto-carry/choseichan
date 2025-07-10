@@ -26,13 +26,7 @@ describe('Delete Schedule with Message', () => {
     
     const waitUntilPromises: Promise<any>[] = [];
     mockEnv = {
-      DISCORD_PUBLIC_KEY: 'test-public-key',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      DISCORD_TOKEN: 'test-token',
-      DATABASE_TYPE: 'd1' as const,
-      DB: db as unknown as D1Database,
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace,
+      ...createTestEnv(db),
       ctx: {
         waitUntil: vi.fn((promise: Promise<any>) => {
           waitUntilPromises.push(promise);
@@ -177,7 +171,8 @@ describe('Delete Schedule with Message', () => {
     expect(data.data.content).toContain('削除しました');
     
     // Wait for all waitUntil promises to complete
-    await Promise.all(mockEnv._waitUntilPromises || []);
+    const testEnv2 = mockEnv as any;
+    await Promise.all(testEnv2._waitUntilPromises || []);
     
     // Verify schedule was still deleted from storage
     const deletedSchedule = await storage.getSchedule(scheduleId, guildId);

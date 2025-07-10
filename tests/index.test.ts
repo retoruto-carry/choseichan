@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
 import app from '../src/index';
 import nacl from 'tweetnacl';
+import { expectInteractionResponse } from './helpers/interaction-schemas';
 
 // Mock Discord signature
 function createDiscordRequest(body: any, publicKey: string, privateKey: Uint8Array): Request {
@@ -54,7 +55,7 @@ describe('Discord Bot', () => {
     );
     
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = await res.json();
     expect(json.status).toBe('ok');
     expect(json.service).toBe('Discord Choseisan Bot');
   });
@@ -81,7 +82,7 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = await res.json();
     expect(json.type).toBe(InteractionResponseType.PONG);
   });
 
@@ -141,7 +142,7 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = await res.json();
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(json.data.content).toContain('入力内容に問題があります。');
     expect(json.data.flags).toBe(64); // Ephemeral
@@ -179,7 +180,7 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = await res.json();
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(json.data.content).toBe('不明なボタンです。');
     expect(json.data.flags).toBe(64); // Ephemeral

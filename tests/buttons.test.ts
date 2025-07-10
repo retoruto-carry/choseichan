@@ -7,6 +7,7 @@ import { generateId } from '../src/utils/id';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
 import { expectInteractionResponse } from './helpers/interaction-schemas';
+import { createTestSchedule, createTestStorage } from './helpers/test-utils';
 
 // Mock the discord utils
 vi.mock('../src/utils/discord', () => ({
@@ -23,27 +24,15 @@ describe('Button Interactions', () => {
     await applyMigrations(db);
     env = createTestEnv(db);
 
-    // Create test schedule
-    testSchedule = {
+    // Create test schedule using helper
+    testSchedule = createTestSchedule({
       id: 'test_schedule_id',
-      title: 'Test Event',
-      dates: [
-        { id: 'date1', datetime: '2024-12-25T19:00:00Z' },
-        { id: 'date2', datetime: '2024-12-26T18:00:00Z' }
-      ],
-      createdBy: { id: 'user123', username: 'TestUser' },
-      authorId: 'user123',
       channelId: 'test_channel',
-      guildId: 'test-guild',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: 'open' as const,
-      notificationSent: false
-    };
+      guildId: 'test-guild'
+    });
     
-    // Use StorageService to save the schedule
-    const { StorageServiceV2 } = await import('../src/services/storage-v2');
-    const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+    // Use helper to create storage and save the schedule
+    const storage = await createTestStorage(env);
     await storage.saveSchedule(testSchedule);
   });
   

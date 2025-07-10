@@ -5,6 +5,7 @@ import { Env } from '../src/types/discord';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
 import { expectInteractionResponse } from './helpers/interaction-schemas';
+import { createTestSchedule, createTestStorage } from './helpers/test-utils';
 
 // Mock the discord utils
 vi.mock('../src/utils/discord', () => ({
@@ -182,29 +183,19 @@ describe('Modal Submit Interactions', () => {
       await applyMigrations(editDb);
       editEnv = createTestEnv(editDb);
       
-      // Create a test schedule
-      const schedule = {
+      // Create a test schedule using helper
+      const schedule = createTestSchedule({
         id: 'test_schedule_id',
         title: 'Original Title',
         description: 'Original Description',
         dates: [
           { id: 'date1', datetime: '2024-12-25T19:00:00Z' },
           { id: 'date2', datetime: '2024-12-26T18:00:00Z' }
-        ],
-        createdBy: { id: 'user123', username: 'TestUser' },
-        authorId: 'user123',
-        channelId: 'test_channel',
-        guildId: 'test-guild',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'open' as const,
-        notificationSent: false,
-        totalResponses: 0
-      };
+        ]
+      });
       
-      // Use StorageService to save the schedule
-      const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
+      // Use helper to create storage and save the schedule
+      const storage = await createTestStorage(editEnv);
       await storage.saveSchedule(schedule);
     });
     
@@ -325,8 +316,8 @@ describe('Modal Submit Interactions', () => {
       await applyMigrations(deadlineDb);
       deadlineEnv = createTestEnv(deadlineDb);
       
-      // Create a test schedule with deadline and reminders
-      const schedule = {
+      // Create a test schedule with deadline and reminders using helper
+      const schedule = createTestSchedule({
         id: 'test_schedule_deadline',
         title: 'Deadline Test Event',
         description: 'Testing deadline changes',
@@ -334,22 +325,12 @@ describe('Modal Submit Interactions', () => {
           { id: 'date1', datetime: '2024-12-25 19:00' },
           { id: 'date2', datetime: '2024-12-26 18:00' }
         ],
-        createdBy: { id: 'user123', username: 'TestUser' },
-        authorId: 'user123',
-        channelId: 'test_channel',
-        guildId: 'test-guild',
         deadline: new Date('2024-12-20T23:59:00Z'),
-        remindersSent: ['3d', '1d'],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'open' as const,
-        notificationSent: false,
-        totalResponses: 0
-      };
+        remindersSent: ['3d', '1d']
+      });
       
-      // Use StorageService to save the schedule
-      const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, deadlineEnv);
+      // Use helper to create storage and save the schedule
+      const storage = await createTestStorage(deadlineEnv);
       await storage.saveSchedule(schedule);
     });
     

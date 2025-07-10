@@ -4,6 +4,7 @@ import { Schedule, Response, ScheduleSummary } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
 import type { D1Database } from './helpers/d1-database';
+import { createTestSchedule, createTestStorage } from './helpers/test-utils';
 
 
 describe('Response Management', () => {
@@ -18,27 +19,19 @@ describe('Response Management', () => {
     await applyMigrations(db);
     
     mockEnv = createTestEnv(db);
-    storage = new StorageService({} as KVNamespace, {} as KVNamespace, mockEnv);
+    storage = await createTestStorage(mockEnv);
 
-    // Create test schedule with unique ID
-    testSchedule = {
+    // Create test schedule using helper with unique ID
+    testSchedule = createTestSchedule({
       id: generateId(),
-      title: 'Test Event',
       dates: [
         { id: 'date1', datetime: '2024-12-25T19:00:00Z' },
         { id: 'date2', datetime: '2024-12-26T18:00:00Z' },
         { id: 'date3', datetime: '2024-12-27T19:00:00Z' }
       ],
-      createdBy: { id: 'creator_id', username: 'Creator' },
       authorId: 'creator_id',
-      channelId: 'test_channel',
-      guildId: 'test-guild',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: 'open',
-      notificationSent: false,
-      totalResponses: 0
-    };
+      createdBy: { id: 'creator_id', username: 'Creator' }
+    });
     
     await storage.saveSchedule(testSchedule);
   });

@@ -37,13 +37,7 @@ describe('Custom Reminder Settings', () => {
     await applyMigrations(db);
     
     mockEnv = {
-      DISCORD_PUBLIC_KEY: 'test-public-key',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      DISCORD_TOKEN: 'test-token',
-      DATABASE_TYPE: 'd1' as const,
-      DB: db as unknown as D1Database,
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace,
+      ...createTestEnv(db),
       REMINDER_BATCH_SIZE: '10',
       REMINDER_BATCH_DELAY: '50'
     };

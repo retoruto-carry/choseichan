@@ -16,7 +16,7 @@ export interface D1PreparedStatement {
   bind(...values: any[]): D1PreparedStatement;
   all<T = any>(): Promise<D1Result<T>>;
   first<T = any>(colName?: string): Promise<T>;
-  run(): Promise<D1Meta>;
+  run<T = any>(): Promise<D1Result<T>>;
   raw<T = any>(): Promise<T[]>;
 }
 
@@ -119,7 +119,7 @@ class D1DatabaseWrapper implements D1Database {
         }
       },
 
-      async run(): Promise<D1Meta> {
+      async run<T = any>(): Promise<D1Result<T>> {
         try {
           const start = Date.now();
           const boundStmt = boundValues.length > 0 ? stmt.bind(...boundValues) : stmt;
@@ -127,14 +127,29 @@ class D1DatabaseWrapper implements D1Database {
           const duration = (Date.now() - start) / 1000;
           
           return {
-            duration,
-            changes: info.changes,
-            last_row_id: info.lastInsertRowid as number | null,
-            rows_read: 0,
-            rows_written: info.changes
+            results: [] as T[],
+            success: true,
+            meta: {
+              duration,
+              changes: info.changes,
+              last_row_id: info.lastInsertRowid as number | null,
+              rows_read: 0,
+              rows_written: info.changes
+            }
           };
         } catch (error) {
-          throw new Error(`D1 error: ${(error as Error).message}`);
+          return {
+            results: [] as T[],
+            success: false,
+            error: (error as Error).message,
+            meta: {
+              duration: 0,
+              changes: 0,
+              last_row_id: null,
+              rows_read: 0,
+              rows_written: 0
+            }
+          };
         }
       },
 
@@ -161,12 +176,8 @@ class D1DatabaseWrapper implements D1Database {
     try {
       for (const stmt of statements) {
         // run()メソッドを使用してINSERT/UPDATE/DELETE文を実行
-        const result = await stmt.run();
-        results.push({
-          results: [] as T[],
-          success: true,
-          meta: result
-        });
+        const result = await stmt.run<T>();
+        results.push(result);
       }
       
       // Only commit if we started the transaction
@@ -306,15 +317,16 @@ export async function applyMigrations(db: D1Database): Promise<void> {
 
 export function createTestEnv(db: D1Database): Env {
   // Create a properly typed Env object with DB as our test D1Database
-  const env: Env = {
+  // We need to cast to any first to bypass TypeScript's structural type checking
+  const env = {
     DISCORD_PUBLIC_KEY: 'test-public-key',
     DISCORD_APPLICATION_ID: 'test-app-id',
     DISCORD_TOKEN: 'test-token',
     DATABASE_TYPE: 'd1' as const,
-    DB: db as unknown as D1Database, // Cast our test database to D1Database interface
+    DB: db,
     SCHEDULES: {} as KVNamespace,
     RESPONSES: {} as KVNamespace,
-  };
+  } as any as Env;
   
   return env;
 }

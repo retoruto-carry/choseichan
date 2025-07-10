@@ -22,15 +22,9 @@ describe('Notification Flow Integration Tests', () => {
     await applyMigrations(db);
     
     mockEnv = {
-      DISCORD_PUBLIC_KEY: 'test-public-key',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      DISCORD_TOKEN: 'test-token',
+      ...createTestEnv(db),
       REMINDER_BATCH_SIZE: '2',
-      REMINDER_BATCH_DELAY: '50',
-      DATABASE_TYPE: 'd1' as const,
-      DB: db as unknown as D1Database,
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace,
+      REMINDER_BATCH_DELAY: '50'
     };
     
     storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
