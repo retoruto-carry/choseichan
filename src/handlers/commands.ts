@@ -85,7 +85,7 @@ async function handleCreateCommandSimple(
             custom_id: 'dates',
             label: '候補（1行に1つずつ）',
             style: 2, // Paragraph
-            placeholder: '12/25 19:00\n12/26(土) 18:00〜20:00\n忘年会予定日',
+            placeholder: '12/25 19:00\n12/26(土) 18:00〜20:00',
             required: true,
             min_length: 1,
             max_length: 1000

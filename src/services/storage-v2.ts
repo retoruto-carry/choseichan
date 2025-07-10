@@ -29,6 +29,10 @@ export class StorageServiceV2 {
       }
     }
     
+    // Calculate expiration time: 6 months after deadline (or creation if no deadline)
+    const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
+    const expirationTime = Math.floor(baseTime / 1000) + (6 * 30 * 24 * 60 * 60); // +6 months
+    
     await this.schedules.put(
       `guild:${guildId}:schedule:${schedule.id}`,
       JSON.stringify(schedule),
@@ -38,16 +42,17 @@ export class StorageServiceV2 {
           channelId: schedule.channelId,
           createdBy: schedule.createdBy.id,
           status: schedule.status
-        }
+        },
+        expiration: expirationTime
       }
     );
 
-    // Save to channel index
+    // Save to channel index with same expiration
     await this.schedules.put(
       `guild:${guildId}:channel:${schedule.channelId}:${schedule.id}`,
       schedule.id,
       {
-        expiration: schedule.deadline ? Math.floor(schedule.deadline.getTime() / 1000) : undefined
+        expiration: expirationTime
       }
     );
 
@@ -57,7 +62,10 @@ export class StorageServiceV2 {
       // Save to global deadline index for efficient cross-guild queries
       await this.schedules.put(
         `deadline:${timestamp}:${guildId}:${schedule.id}`,
-        schedule.id
+        schedule.id,
+        {
+          expiration: expirationTime
+        }
       );
     }
   }
@@ -116,9 +124,20 @@ export class StorageServiceV2 {
 
   // Response operations
   async saveResponse(response: Response, guildId: string = 'default'): Promise<void> {
+    // Get schedule to determine expiration time
+    const schedule = await this.getSchedule(response.scheduleId, guildId);
+    let expirationTime: number | undefined;
+    
+    if (schedule) {
+      // Same expiration logic as schedule: 6 months after deadline (or creation if no deadline)
+      const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
+      expirationTime = Math.floor(baseTime / 1000) + (6 * 30 * 24 * 60 * 60); // +6 months
+    }
+    
     await this.responses.put(
       `guild:${guildId}:response:${response.scheduleId}:${response.userId}`,
-      JSON.stringify(response)
+      JSON.stringify(response),
+      expirationTime ? { expiration: expirationTime } : undefined
     );
   }
 
