@@ -393,7 +393,8 @@ export async function handleReopenButton(
 export async function handleDeleteButton(
   interaction: ButtonInteraction,
   storage: StorageService,
-  params: string[]
+  params: string[],
+  env?: Env
 ): Promise<Response> {
   const guildId = interaction.guild_id || 'default';
   const [scheduleId] = params;
@@ -418,6 +419,17 @@ export async function handleDeleteButton(
         flags: InteractionResponseFlags.EPHEMERAL
       }
     }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Delete the main Discord message if it exists
+  if (schedule.messageId && env?.DISCORD_APPLICATION_ID) {
+    try {
+      const { deleteMessage } = await import('../utils/discord');
+      await deleteMessage(env.DISCORD_APPLICATION_ID, interaction.token, schedule.messageId);
+    } catch (error) {
+      console.error('Failed to delete main Discord message:', error);
+      // Continue with schedule deletion even if message deletion fails
+    }
   }
 
   await storage.deleteSchedule(scheduleId, guildId);

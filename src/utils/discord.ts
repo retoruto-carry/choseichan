@@ -39,3 +39,23 @@ export async function getOriginalMessage(
   
   return response.json();
 }
+
+export async function deleteMessage(
+  applicationId: string,
+  token: string,
+  messageId: string
+): Promise<void> {
+  const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`;
+  
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete message: ${response.status} - ${errorText}`);
+  }
+}

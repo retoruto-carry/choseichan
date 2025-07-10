@@ -68,7 +68,7 @@ export async function handleButtonInteraction(
     case 'reopen':
       return handleReopenButton(interaction, storage, params, env);
     case 'delete':
-      return handleDeleteButton(interaction, storage, params);
+      return handleDeleteButton(interaction, storage, params, env);
     case 'export':
       return handleExportButton(interaction, storage, params);
     case 'edit_info':
