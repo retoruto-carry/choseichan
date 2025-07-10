@@ -108,13 +108,8 @@ export async function handleCreateScheduleModal(
   const embed = createScheduleEmbedWithTable(summary, false);
   const components = createSimpleScheduleComponents(schedule, false);
 
-  const responseData: any = {
-    embeds: [embed],
-    components
-  };
-
-  // 締切がある場合、リマインダー情報を追加
-  if (schedule.deadline && schedule.reminderTimings) {
+  // 締切がある場合、リマインダー編集ボタンをフォローアップメッセージで送信
+  if (schedule.deadline && schedule.reminderTimings && env.DISCORD_APPLICATION_ID && env.ctx) {
     const timingDisplay = schedule.reminderTimings.map(t => {
       const match = t.match(/^(\d+)([dhm])$/);
       if (!match) return t;
@@ -128,24 +123,40 @@ export async function handleCreateScheduleModal(
 
     const mentionDisplay = schedule.reminderMentions?.map(m => `\`${m}\``).join(' ') || '`@here`';
 
-    responseData.content = `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`;
-    
-    // リマインダー編集ボタンを追加
-    if (!responseData.components) responseData.components = [];
-    responseData.components.push({
-      type: 1,
-      components: [{
-        type: 2,
-        custom_id: `reminder_edit:${schedule.id}`,
-        label: 'リマインダーを編集',
-        style: 2,
-        emoji: { name: '🔔' }
-      }]
-    });
+    env.ctx.waitUntil(
+      (async () => {
+        try {
+          const { sendFollowupMessage } = await import('../../utils/discord');
+          await sendFollowupMessage(
+            env.DISCORD_APPLICATION_ID,
+            interaction.token,
+            {
+              content: `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`,
+              components: [{
+                type: 1,
+                components: [{
+                  type: 2,
+                  custom_id: `reminder_edit:${schedule.id}`,
+                  label: 'リマインダーを編集',
+                  style: 2,
+                  emoji: { name: '🔔' }
+                }]
+              }],
+              flags: InteractionResponseFlags.EPHEMERAL
+            }
+          );
+        } catch (error) {
+          console.error('Failed to send reminder edit button:', error);
+        }
+      })()
+    );
   }
 
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: responseData
+    data: {
+      embeds: [embed],
+      components
+    }
   }), { headers: { 'Content-Type': 'application/json' } });
 }
