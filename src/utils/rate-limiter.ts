@@ -2,7 +2,7 @@
  * Simple rate limiter for API calls
  */
 export class RateLimiter {
-  private queue: (() => Promise<any>)[] = [];
+  private queue: (() => Promise<unknown>)[] = [];
   private processing = false;
   
   constructor(

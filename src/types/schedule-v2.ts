@@ -47,6 +47,19 @@ export interface Response {
 // Updated ResponseStatus to match KV storage
 export type ResponseStatus = 'ok' | 'maybe' | 'ng';
 
+// Legacy Response type for backward compatibility
+export interface LegacyResponse {
+  scheduleId: string;
+  userId: string;
+  userName: string;
+  responses: Array<{
+    dateId: string;
+    status: 'yes' | 'maybe' | 'no';
+  }>;
+  comment?: string;
+  updatedAt: Date | string;
+}
+
 export interface ScheduleSummary {
   schedule: Schedule;
   responseCounts: Record<string, Record<ResponseStatus, number>>;
@@ -65,12 +78,17 @@ export interface LegacyScheduleSummary {
       total: number;
     };
   };
-  userResponses: any[];  // Legacy Response[]
+  userResponses: LegacyResponse[];  // Legacy Response[]
   bestDateId?: string;
 }
 
 export function convertToLegacyScheduleSummary(summary: ScheduleSummary, responses: Response[]): LegacyScheduleSummary {
-  const legacyResponseCounts: Record<string, any> = {};
+  const legacyResponseCounts: Record<string, {
+    yes: number;
+    maybe: number;
+    no: number;
+    total: number;
+  }> = {};
   
   for (const [dateId, counts] of Object.entries(summary.responseCounts)) {
     legacyResponseCounts[dateId] = {
@@ -119,7 +137,7 @@ export const EMBED_COLORS = {
 };
 
 // Helper functions for type conversion
-export function convertLegacyResponse(legacy: any): Response {
+export function convertLegacyResponse(legacy: LegacyResponse): Response {
   const dateStatuses: Record<string, ResponseStatus> = {};
   
   if (legacy.responses && Array.isArray(legacy.responses)) {
@@ -140,7 +158,7 @@ export function convertLegacyResponse(legacy: any): Response {
   };
 }
 
-export function convertResponseToLegacy(response: Response): any {
+export function convertResponseToLegacy(response: Response): LegacyResponse {
   const responses = Object.entries(response.dateStatuses).map(([dateId, status]) => ({
     dateId,
     status: status === 'ok' ? 'yes' : status === 'ng' ? 'no' : 'maybe'

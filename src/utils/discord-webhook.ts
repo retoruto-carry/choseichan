@@ -1,4 +1,5 @@
 import { Env } from '../types/discord';
+import { DiscordComponent } from '../types/discord-api';
 
 /**
  * Send a followup message using webhook
@@ -7,7 +8,7 @@ export async function sendFollowupMessage(
   applicationId: string,
   interactionToken: string,
   content: string,
-  components: any[],
+  components: DiscordComponent[],
   env: Env
 ): Promise<void> {
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}`;

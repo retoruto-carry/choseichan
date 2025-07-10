@@ -54,11 +54,11 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
     // 詳細表示の場合は各ユーザーの回答も含める
     if (showDetails) {
       const responses = userResponses
-        .map((ur: any) => {
+        .map((ur) => {
           // Handle both old and new response types
-          if ('responses' in ur) {
+          if ('responses' in ur && Array.isArray(ur.responses)) {
             // Old Response type
-            const response = ur.responses.find((r: any) => r.dateId === date.id);
+            const response = ur.responses.find((r) => r.dateId === date.id);
             if (!response) return null;
             const comment = response.comment ? ` (${response.comment})` : '';
             return `${STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI]} ${ur.userName}${comment}`;
@@ -107,7 +107,7 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
       text: [
-        `作成: ${'createdBy' in schedule ? schedule.createdBy.username : (schedule as any).createdByUsername}`,
+        `作成: ${'createdBy' in schedule && typeof schedule.createdBy === 'object' ? schedule.createdBy.username : '不明'}`,
         '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
