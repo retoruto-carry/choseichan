@@ -39,6 +39,9 @@ export async function handleDirectVoteButton(
     };
   }
 
+  // Always update userName in case it has changed
+  userResponse.userName = userName;
+  
   // Update the specific date response
   const responseStatus = status as ResponseStatus;
   const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);

@@ -176,6 +176,9 @@ export async function handleDateSelectMenu(
       };
     }
     
+    // Always update userName in case it has changed
+    userResponse.userName = userName;
+    
     // Update the specific date response
     if (selectedValue === 'none') {
       // Remove the response for this date
