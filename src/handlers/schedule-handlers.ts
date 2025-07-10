@@ -422,14 +422,18 @@ export async function handleDeleteButton(
   }
 
   // Delete the main Discord message if it exists
-  if (schedule.messageId && env?.DISCORD_APPLICATION_ID) {
-    try {
-      const { deleteMessage } = await import('../utils/discord');
-      await deleteMessage(env.DISCORD_APPLICATION_ID, interaction.token, schedule.messageId);
-    } catch (error) {
-      console.error('Failed to delete main Discord message:', error);
-      // Continue with schedule deletion even if message deletion fails
-    }
+  if (schedule.messageId && env?.DISCORD_APPLICATION_ID && env?.ctx) {
+    env.ctx.waitUntil(
+      (async () => {
+        try {
+          const { deleteMessage } = await import('../utils/discord');
+          await deleteMessage(env.DISCORD_APPLICATION_ID, interaction.token, schedule.messageId);
+        } catch (error) {
+          console.error('Failed to delete main Discord message:', error);
+          // Continue with schedule deletion even if message deletion fails
+        }
+      })()
+    );
   }
 
   await storage.deleteSchedule(scheduleId, guildId);

@@ -29,7 +29,10 @@ describe('Delete Schedule with Message', () => {
       DISCORD_APPLICATION_ID: 'test-app-id',
       DISCORD_TOKEN: 'test-token',
       SCHEDULES: mockKV,
-      RESPONSES: mockKV
+      RESPONSES: mockKV,
+      ctx: {
+        waitUntil: vi.fn((promise: Promise<any>) => promise)
+      }
     } as Env;
     
     storage = new StorageServiceV2(mockKV, mockKV);
@@ -89,12 +92,14 @@ describe('Delete Schedule with Message', () => {
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.content).toContain('削除しました');
     
-    // Verify Discord message was deleted
-    expect(deleteMessage).toHaveBeenCalledWith(
-      'test-app-id',
-      'test-token',
-      'test-message-123'
-    );
+    // Wait for waitUntil to execute
+    await vi.waitFor(() => {
+      expect(deleteMessage).toHaveBeenCalledWith(
+        'test-app-id',
+        'test-token',
+        'test-message-123'
+      );
+    });
     
     // Verify schedule was deleted from storage (multiple delete calls)
     expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:schedule:${scheduleId}`);
