@@ -90,6 +90,22 @@ describe('Date Utilities', () => {
       expect(result?.getUTCSeconds()).toBe(59);
     });
 
+    it('should parse 2026/01/04 as JST 23:59', () => {
+      const result = parseUserInputDate('2026/01/04');
+      expect(result).toBeInstanceOf(Date);
+      expect(result?.getUTCFullYear()).toBe(2026);
+      expect(result?.getUTCMonth()).toBe(0); // January is month 0
+      expect(result?.getUTCDate()).toBe(4);
+      expect(result?.getUTCHours()).toBe(14); // 23:59 JST = 14:59 UTC
+      expect(result?.getUTCMinutes()).toBe(59);
+      expect(result?.getUTCSeconds()).toBe(59);
+      
+      // Test that it formats back to JST correctly
+      const formatted = formatDate(result!.toISOString());
+      expect(formatted).toContain('1/4');
+      expect(formatted).toContain('23:59');
+    });
+
     it('should parse ISO date format', () => {
       const result = parseUserInputDate('2024-12-25T19:00:00Z');
       expect(result).toBeInstanceOf(Date);
@@ -121,6 +137,23 @@ describe('Date Utilities', () => {
       expect(result?.getUTCHours()).toBe(14); // 23:59 JST = 14:59 UTC
       expect(result?.getUTCMinutes()).toBe(59);
       expect(result?.getUTCSeconds()).toBe(59);
+    });
+
+    it('should parse 04/23 as current year April 23rd 23:59 JST', () => {
+      const currentYear = new Date().getFullYear();
+      const result = parseUserInputDate('04/23');
+      expect(result).toBeInstanceOf(Date);
+      expect(result?.getUTCMonth()).toBe(3); // April is month 3 (0-based)
+      expect(result?.getUTCDate()).toBe(23);
+      expect(result?.getUTCFullYear()).toBeGreaterThanOrEqual(currentYear);
+      expect(result?.getUTCHours()).toBe(14); // 23:59 JST = 14:59 UTC
+      expect(result?.getUTCMinutes()).toBe(59);
+      expect(result?.getUTCSeconds()).toBe(59);
+      
+      // Test that it formats back to JST correctly
+      const formatted = formatDate(result!.toISOString());
+      expect(formatted).toContain('4/23');
+      expect(formatted).toContain('23:59');
     });
     
     it('should validate month and day ranges', () => {
