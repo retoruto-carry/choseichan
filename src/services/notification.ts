@@ -40,20 +40,6 @@ export class NotificationService {
     if (!schedule.deadline) return;
     
     const deadlineDate = new Date(schedule.deadline);
-    const messageLink = `https://discord.com/channels/${schedule.guildId}/${schedule.channelId}/${schedule.messageId}`;
-    
-    // Send DM to schedule author
-    try {
-      await this.sendDirectMessage(
-        schedule.authorId,
-        `⏰ **リマインダー**: 「${schedule.title}」の${customMessage}です！\n\n` +
-        `締切: ${deadlineDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n` +
-        `現在の回答者数: ${schedule.totalResponses || 0}人\n\n` +
-        `[スケジュールを確認](${messageLink})`
-      );
-    } catch (error) {
-      console.error(`Failed to send DM to author ${schedule.authorId}:`, error);
-    }
     
     // Build mentions string
     let mentions = '';
@@ -245,26 +231,6 @@ export class NotificationService {
     return resolved;
   }
 
-  async sendDirectMessage(userId: string, content: string): Promise<void> {
-    // First, create or get DM channel
-    const dmChannelResponse = await fetch('https://discord.com/api/v10/users/@me/channels', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bot ${this.discordToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ recipient_id: userId })
-    });
-
-    if (!dmChannelResponse.ok) {
-      throw new Error(`Failed to create DM channel: ${dmChannelResponse.status}`);
-    }
-
-    const dmChannel = await dmChannelResponse.json() as { id: string };
-    
-    // Send message to DM channel
-    await this.sendChannelMessage(dmChannel.id, { content });
-  }
 
   async sendSummaryMessage(scheduleId: string, guildId: string = 'default'): Promise<void> {
     const summary = await this.storage.getScheduleSummary(scheduleId, guildId);

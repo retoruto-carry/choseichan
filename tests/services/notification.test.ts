@@ -24,69 +24,9 @@ describe('NotificationService', () => {
     notificationService = new NotificationService(mockStorage, mockToken, mockAppId);
   });
 
-  describe('sendDirectMessage', () => {
-    it('should create DM channel and send message', async () => {
-      const userId = 'user123';
-      const content = 'Test message';
-      
-      // Mock DM channel creation
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'dm-channel-123' })
-      });
-      
-      // Mock message sending
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'message-123' })
-      });
-
-      await notificationService.sendDirectMessage(userId, content);
-
-      // Check DM channel creation
-      expect(global.fetch).toHaveBeenNthCalledWith(1, 
-        'https://discord.com/api/v10/users/@me/channels',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bot ${mockToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ recipient_id: userId })
-        }
-      );
-
-      // Check message sending
-      expect(global.fetch).toHaveBeenNthCalledWith(2,
-        'https://discord.com/api/v10/channels/dm-channel-123/messages',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bot ${mockToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ content })
-        }
-      );
-    });
-
-    it('should handle DM channel creation failure', async () => {
-      const userId = 'user123';
-      const content = 'Test message';
-      
-      // Mock failed DM channel creation
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: false,
-        status: 403
-      });
-
-      await expect(notificationService.sendDirectMessage(userId, content))
-        .rejects.toThrow('Failed to create DM channel: 403');
-    });
-  });
 
   describe('sendDeadlineReminder', () => {
-    it('should send reminder to author and channel', async () => {
+    it('should send reminder to channel', async () => {
       const schedule: Schedule = {
         id: 'test-schedule',
         title: 'Test Event',
@@ -104,18 +44,6 @@ describe('NotificationService', () => {
         reminderSent: false,
         totalResponses: 5
       };
-
-      // Mock DM channel creation
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'dm-channel-123' })
-      });
-      
-      // Mock DM message sending
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'dm-message-123' })
-      });
       
       // Mock channel message sending
       (global.fetch as any).mockResolvedValueOnce({
@@ -124,12 +52,6 @@ describe('NotificationService', () => {
       });
 
       await notificationService.sendDeadlineReminder(schedule);
-
-      // Verify DM was sent
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/users/@me/channels',
-        expect.any(Object)
-      );
 
       // Verify channel message was sent
       expect(global.fetch).toHaveBeenCalledWith(
@@ -144,46 +66,6 @@ describe('NotificationService', () => {
       );
     });
 
-    it('should continue even if DM fails', async () => {
-      const schedule: Schedule = {
-        id: 'test-schedule',
-        title: 'Test Event',
-        dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
-        createdBy: { id: 'user123', username: 'TestUser' },
-        authorId: 'user123',
-        channelId: 'channel123',
-        guildId: 'guild123',
-        messageId: 'message123',
-        deadline: new Date('2024-12-25T10:00:00Z'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'open',
-        notificationSent: false,
-        reminderSent: false,
-        totalResponses: 5
-      };
-
-      // Mock failed DM channel creation
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: false,
-        status: 403
-      });
-      
-      // Mock successful channel message
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'channel-message-123' })
-      });
-
-      // Should not throw
-      await notificationService.sendDeadlineReminder(schedule);
-
-      // Channel message should still be sent
-      expect(global.fetch).toHaveBeenLastCalledWith(
-        'https://discord.com/api/v10/channels/channel123/messages',
-        expect.any(Object)
-      );
-    });
 
     it('should skip if no deadline', async () => {
       const schedule: Schedule = {
