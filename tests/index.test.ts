@@ -55,7 +55,7 @@ describe('Discord Bot', () => {
     );
     
     expect(res.status).toBe(200);
-    const json = await res.json();
+    const json = await res.json() as { status: string; service: string };
     expect(json.status).toBe('ok');
     expect(json.service).toBe('Discord Choseisan Bot');
   });
@@ -82,7 +82,7 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json();
+    const json = expectInteractionResponse(await res.json());
     expect(json.type).toBe(InteractionResponseType.PONG);
   });
 
@@ -142,10 +142,10 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json();
+    const json = expectInteractionResponse(await res.json());
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toContain('入力内容に問題があります。');
-    expect(json.data.flags).toBe(64); // Ephemeral
+    expect(json.data?.content).toContain('入力内容に問題があります。');
+    expect(json.data?.flags).toBe(64); // Ephemeral
   });
 
   it('should handle button interactions', async () => {
@@ -180,9 +180,9 @@ describe('Discord Bot', () => {
     const res = await app.fetch(req, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const json = await res.json();
+    const json = expectInteractionResponse(await res.json());
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toBe('不明なボタンです。');
-    expect(json.data.flags).toBe(64); // Ephemeral
+    expect(json.data?.content).toBe('不明なボタンです。');
+    expect(json.data?.flags).toBe(64); // Ephemeral
   });
 });

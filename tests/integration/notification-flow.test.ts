@@ -4,6 +4,7 @@ import { Env } from '../../src/types/discord';
 import { Schedule } from '../../src/types/schedule';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../helpers/d1-database';
 import type { D1Database } from '../helpers/d1-database';
+import { createTestSchedule, createTestStorage } from '../helpers/test-utils';
 import { StorageServiceV2 } from '../../src/services/storage-v2';
 
 // Mock fetch globally
@@ -27,7 +28,7 @@ describe('Notification Flow Integration Tests', () => {
       REMINDER_BATCH_DELAY: '50'
     };
     
-    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+    storage = await createTestStorage(mockEnv);
   });
 
   afterEach(() => {
@@ -39,25 +40,18 @@ describe('Notification Flow Integration Tests', () => {
       const now = new Date();
       const in30Minutes = new Date(now.getTime() + 30 * 60 * 1000);
       
-      const schedule1: Schedule = {
+      const schedule1 = createTestSchedule({
         id: 'schedule-1',
         title: '忘年会',
         dates: [
           { id: 'date1', datetime: '2024-12-23 18:00' },
           { id: 'date2', datetime: '2024-12-24 18:00' }
         ],
-        createdBy: { id: 'user123', username: 'TestUser' },
-        authorId: 'user123',
         channelId: 'channel123',
         guildId: 'guild123',
         messageId: 'message123',
-        deadline: in30Minutes,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'open',
-        notificationSent: false,
-        totalResponses: 0
-      };
+        deadline: in30Minutes
+      });
 
       // Save schedule to D1
       await storage.saveSchedule(schedule1);
@@ -182,23 +176,17 @@ describe('Notification Flow Integration Tests', () => {
       const now = new Date();
       const in10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000); // Changed to 10 hours
       
-      const schedule: Schedule = {
+      const schedule = createTestSchedule({
         id: 'schedule-1',
         title: 'Already Reminded Event',
         dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
-        createdBy: { id: 'user123', username: 'TestUser' },
-        authorId: 'user123',
         channelId: 'channel123',
         guildId: 'guild123',
         messageId: 'message123',
         deadline: in10Hours,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: 'open',
-        notificationSent: false,
         remindersSent: ['3d', '1d', '8h'], // All reminders already sent
         totalResponses: 5
-      };
+      });
 
       // Save schedule to D1
       await storage.saveSchedule(schedule);
