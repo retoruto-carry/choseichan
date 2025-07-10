@@ -203,9 +203,9 @@ describe('NotificationService', () => {
       expect(body.message_reference.message_id).toBe('message123');
       
       // Check PR message content
-      expect(body.content).toContain('[PR] 画像を貼るだけでリンク集');
+      expect(body.content).toContain('[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)');
       expect(body.content).toContain('https://x.com/retoruto_carry/status/1796123557090517067');
-      expect(body.embeds[0].footer.text).toBe('調整ちゃんは無料で運営されています。');
+      expect(body.content).toContain('調整ちゃんは無料で運営されています。');
       
       vi.useRealTimers();
     });
