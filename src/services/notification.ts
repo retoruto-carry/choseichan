@@ -269,21 +269,12 @@ export class NotificationService {
   }
 
   async sendPRMessage(schedule: Schedule): Promise<void> {
-    const prMessages = [
-      '🎉 Discord調整ちゃんは無料でご利用いただけます！もっと多くの機能が必要な場合は、プレミアムプランをご検討ください。',
-      '📅 チーム運営を効率化！Discord調整ちゃんで簡単日程調整。詳しくは https://discord-choseisan.com をチェック！',
-      '✨ より高度な集計機能やカスタマイズが必要ですか？エンタープライズプランもご用意しています！',
-      '🚀 Discord調整ちゃんをご利用いただきありがとうございます！フィードバックは GitHub Issues までお寄せください。'
-    ];
-
-    const randomMessage = prMessages[Math.floor(Math.random() * prMessages.length)];
-
     const message: any = {
-      content: `[PR] ${randomMessage}`,
+      content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！\nhttps://x.com/retoruto_carry/status/1796123557090517067`,
       embeds: [{
         color: 0x7289da,
         footer: {
-          text: 'この広告は無料版をご利用の場合に表示されます'
+          text: '調整ちゃんは無料で運営されています。'
         }
       }]
     };
