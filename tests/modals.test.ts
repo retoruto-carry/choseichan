@@ -55,7 +55,7 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'dates',
-                value: '12/25 19:00\n12/26 18:00\n12/27 19:00'
+                value: '2025/12/25 19:00\n2025/12/26 18:00\n2025/12/27 19:00'
               }]
             },
             {
@@ -63,7 +63,7 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'deadline',
-                value: '12/20 23:59'
+                value: '2025/12/24 23:59'
               }]
             }
           ]
@@ -294,7 +294,7 @@ describe('Modal Submit Interactions', () => {
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data?.embeds).toBeDefined();
-      expect(data.data?.embeds?.[0].title).toContain('日程を追加しました');
+      expect(data.data?.embeds?.[0].title).toBe('追加された日程');
       expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check dates were added using StorageService
@@ -322,8 +322,8 @@ describe('Modal Submit Interactions', () => {
         title: 'Deadline Test Event',
         description: 'Testing deadline changes',
         dates: [
-          { id: 'date1', datetime: '2024-12-25 19:00' },
-          { id: 'date2', datetime: '2024-12-26 18:00' }
+          { id: 'date1', datetime: '2025-12-25 19:00' },
+          { id: 'date2', datetime: '2025-12-26 18:00' }
         ],
         deadline: new Date('2024-12-20T23:59:00Z'),
         remindersSent: ['3d', '1d']
@@ -350,7 +350,7 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'deadline',
-                value: '12/24 23:59' // New deadline
+                value: '2025/12/19 23:59' // New deadline before the earliest date
               }]
             }
           ]
@@ -436,7 +436,7 @@ describe('Modal Submit Interactions', () => {
       const scheduleWithoutDeadline = {
         id: 'test_schedule_no_deadline',
         title: 'No Deadline Event',
-        dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+        dates: [{ id: 'date1', datetime: '2025-12-25 19:00' }],
         createdBy: { id: 'user123', username: 'TestUser' },
         authorId: 'user123',
         channelId: 'test_channel',
@@ -464,7 +464,7 @@ describe('Modal Submit Interactions', () => {
               components: [{
                 type: 4,
                 custom_id: 'deadline',
-                value: '12/20 23:59' // Add deadline
+                value: '2025/12/19 23:59' // Add deadline before the earliest date
               }]
             }
           ]

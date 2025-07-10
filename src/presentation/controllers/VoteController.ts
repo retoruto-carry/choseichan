@@ -11,8 +11,10 @@ import { ResponseStatus } from '../../types/schedule';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { createEphemeralResponse, createErrorResponse } from '../../utils/responses';
-import { saveScheduleMessageId } from '../../utils/schedule-updater';
 import { sendFollowupMessage } from '../../utils/discord-webhook';
+import { updateOriginalMessage } from '../../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { NotificationService } from '../../application/services/NotificationService';
 
 export class VoteController {
   constructor(
@@ -32,254 +34,337 @@ export class VoteController {
     try {
       const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id || '';
 
-      // スケジュール取得
-      let schedule = null;
-      if (storage) {
-        // Use passed storage for test compatibility
-        schedule = await storage.getSchedule(scheduleId, guildId);
-      } else {
-        // Use Clean Architecture
-        const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-          .execute(scheduleId, guildId);
-        schedule = scheduleResult.success ? scheduleResult.schedule : null;
-      }
-
-      if (!schedule) {
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return createErrorResponse('日程調整が見つかりません。');
       }
+      const schedule = scheduleResult.schedule;
 
       if (schedule.status === 'closed') {
         return createErrorResponse('この日程調整は締め切られています。');
       }
 
-      // Save message ID if not already saved (using passed storage for test compatibility)
+      // Save message ID if not already saved
       if (interaction.message?.id && !schedule.messageId) {
-        const storageToUse = storage || await (async () => {
-          const { StorageServiceV2 } = await import('../../services/storage-v2');
-          return new StorageServiceV2(env);
-        })();
-        await saveScheduleMessageId(scheduleId, interaction.message.id, storageToUse, guildId);
+        await this.dependencyContainer.updateScheduleUseCase.execute({
+          scheduleId,
+          guildId,
+          editorUserId: userId,
+          messageId: interaction.message.id
+        });
       }
 
       // Get current user's responses
-      const userId = interaction.member?.user.id || interaction.user?.id || '';
-      let userResponse = null;
-      
-      if (storage) {
-        // Use passed storage for test compatibility
-        userResponse = await storage.getResponse(scheduleId, userId, guildId);
-      } else {
-        // Use Clean Architecture
-        const userResponseResult = await this.dependencyContainer.getResponseUseCase
-          .execute({ scheduleId, userId, guildId });
-        userResponse = userResponseResult.success ? userResponseResult.response : null;
+      const responseResult = await this.dependencyContainer.getResponseUseCase.execute({
+        scheduleId,
+        userId,
+        guildId
+      });
+
+      // ResponseDto の dateStatuses を使用
+      const currentResponses = [];
+      if (responseResult.success && responseResult.response) {
+        for (const [dateId, status] of Object.entries(responseResult.response.dateStatuses)) {
+          currentResponses.push({ dateId, status });
+        }
       }
 
-      // Create select menu components
-      const components = this.uiBuilder.createVoteSelectMenus(
-        schedule,
-        userResponse
-      );
+      // Create vote modal
+      const modal = this.uiBuilder.createVoteModal(schedule, currentResponses);
 
-      // Handle multiple component groups (max 5 per message)
-      const componentGroups = this.splitComponentsIntoGroups(components);
-      const totalGroups = componentGroups.length;
-
-      // Send followup messages for additional groups
-      if (totalGroups > 1 && env.DISCORD_APPLICATION_ID) {
-        await this.sendFollowupMessages(
-          componentGroups.slice(1),
-          totalGroups,
-          interaction,
-          env
-        );
-      }
-
-      // Prepare initial message
-      const initialMessage = this.createInitialMessage(
-        schedule.title,
-        schedule.dates.length,
-        totalGroups
-      );
-
-      const componentsWithNotice = this.addDelayNotice(componentGroups[0]);
-
-      return createEphemeralResponse(
-        initialMessage,
-        undefined,
-        componentsWithNotice
-      );
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.MODAL,
+        data: modal
+      }), { headers: { 'Content-Type': 'application/json' } });
 
     } catch (error) {
-      console.error('Error in handleRespondButton:', error);
-      return createErrorResponse('回答画面の表示中にエラーが発生しました。');
+      console.error('Error handling respond button:', error);
+      return createErrorResponse('エラーが発生しました。');
     }
   }
 
   /**
-   * 日程選択メニュー処理
+   * 詳細表示トグルボタン処理
    */
-  async handleDateSelectMenu(
+  async handleToggleDetailsButton(
     interaction: ButtonInteraction,
-    env: Env
+    params: string[],
+    env: Env,
+    storage?: any
   ): Promise<Response> {
     try {
+      const [scheduleId, currentState] = params;
       const guildId = interaction.guild_id || 'default';
-      const parts = interaction.data.custom_id.split(':');
-      const [_, scheduleId, dateId] = parts;
+      const showDetails = currentState !== 'true';
 
-      const userId = interaction.member?.user.id || interaction.user?.id || '';
-      const userName = interaction.member?.user.username || interaction.user?.username || '';
-      const selectedValue = interaction.data.values?.[0] || 'none';
+      // Get schedule and summary using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return createErrorResponse('日程調整が見つかりません。');
+      }
 
-      // レスポンス保存処理
-      await this.processVoteResponse(
-        scheduleId,
-        userId,
-        userName,
-        dateId,
-        selectedValue as ResponseStatus | 'none',
-        guildId,
-        env
-      );
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
+        return createErrorResponse('サマリー情報の取得に失敗しました。');
+      }
 
-      // Always return DEFERRED_UPDATE_MESSAGE immediately
+      // Update the message with new state
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, showDetails);
+      const components = createSimpleScheduleComponents(scheduleResult.schedule, showDetails);
+
       return new Response(JSON.stringify({
-        type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          embeds: [embed],
+          components
+        }
       }), { headers: { 'Content-Type': 'application/json' } });
 
     } catch (error) {
-      console.error('Error in handleDateSelectMenu:', error);
-      // Still return DEFERRED_UPDATE_MESSAGE to avoid Discord errors
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE
-      }), { headers: { 'Content-Type': 'application/json' } });
+      console.error('Error toggling details:', error);
+      return createErrorResponse('表示の切り替えに失敗しました。');
     }
   }
 
-  private splitComponentsIntoGroups(components: any[]): any[][] {
-    const componentGroups: any[][] = [];
-    for (let i = 0; i < components.length; i += 5) {
-      componentGroups.push(components.slice(i, i + 5));
-    }
-    return componentGroups;
-  }
+  /**
+   * 投票モーダル処理
+   */
+  async handleVoteModal(
+    interaction: any, // ModalInteraction type
+    params: string[],
+    env: Env,
+    storage?: any
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id || '';
+      const username = interaction.member?.user.username || interaction.user?.username || 'Unknown';
 
-  private async sendFollowupMessages(
-    componentGroups: any[][],
-    totalGroups: number,
-    interaction: ButtonInteraction,
-    env: Env
-  ): Promise<void> {
-    const sendFollowups = async () => {
-      for (let i = 0; i < componentGroups.length; i++) {
-        await sendFollowupMessage(
-          env.DISCORD_APPLICATION_ID,
-          interaction.token,
-          `続き (${i + 2}/${totalGroups}):`,
-          componentGroups[i],
-          env
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return createErrorResponse('日程調整が見つかりません。');
+      }
+      const schedule = scheduleResult.schedule;
+
+      if (schedule.status === 'closed' && schedule.createdBy.id !== userId) {
+        return createErrorResponse('この日程調整は締め切られています。');
+      }
+
+      // Parse responses from modal
+      const components = interaction.data.components;
+      const responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }> = [];
+      const comment = components[components.length - 1]?.components[0]?.value || '';
+
+      // Parse each date response
+      for (let i = 0; i < schedule.dates.length && i < components.length - 1; i++) {
+        const dateId = schedule.dates[i].id;
+        const value = components[i]?.components[0]?.value || '';
+        const trimmedValue = value.trim().toLowerCase();
+
+        let status: 'ok' | 'maybe' | 'ng' = 'ng';
+        if (trimmedValue === 'o' || trimmedValue === '○' || trimmedValue === '◯') {
+          status = 'ok';
+        } else if (trimmedValue === '△' || trimmedValue === '▲') {
+          status = 'maybe';
+        }
+
+        responses.push({ dateId, status });
+      }
+
+      // Submit response using Clean Architecture
+      const submitResult = await this.dependencyContainer.submitResponseUseCase.execute({
+        scheduleId,
+        userId,
+        username,
+        responses,
+        comment,
+        guildId
+      });
+
+      if (!submitResult.success) {
+        return createErrorResponse('回答の保存に失敗しました。');
+      }
+
+      // Send response message
+      const responseContent = this.createResponseMessage(schedule, responses, username);
+
+      // Update main message in background
+      if (env.ctx && schedule.messageId && env.DISCORD_APPLICATION_ID) {
+        env.ctx.waitUntil(
+          this.updateMainMessage(scheduleId, schedule.messageId, interaction.token, env, guildId)
         );
       }
-    };
 
-    if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-      env.ctx.waitUntil(sendFollowups());
-    } else {
-      sendFollowups().catch(err => console.error('Failed to send followup messages:', err));
+      return createEphemeralResponse(responseContent);
+
+    } catch (error) {
+      console.error('Error handling vote modal:', error);
+      return createErrorResponse('回答の処理中にエラーが発生しました。');
     }
   }
 
-  private createInitialMessage(title: string, dateCount: number, totalGroups: number): string {
-    return totalGroups === 1 
-      ? `**${title}** の回答を選択してください:`
-      : `**${title}** の回答を選択してください (1/${totalGroups}):\n\n📝 日程が${dateCount}件あります。`;
-  }
+  /**
+   * 締切ボタン処理
+   */
+  async handleCloseButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env,
+    storage?: any
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id || '';
 
-  private addDelayNotice(components: any[]): any[] {
-    return [
-      ...components,
-      {
-        type: 1, // Action Row
-        components: [{
-          type: 2, // Button
-          style: 2, // Secondary
-          label: '※反映には最大1分かかります',
-          custom_id: 'delay_notice',
-          disabled: true
-        }]
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return createErrorResponse('日程調整が見つかりません。');
       }
-    ];
+      const schedule = scheduleResult.schedule;
+
+      // Check permissions
+      if (schedule.createdBy.id !== userId) {
+        return createErrorResponse('この日程調整を締め切る権限がありません。');
+      }
+
+      if (schedule.status === 'closed') {
+        return createErrorResponse('この日程調整は既に締め切られています。');
+      }
+
+      // Close schedule using Clean Architecture
+      const closeResult = await this.dependencyContainer.closeScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId
+      });
+
+      if (!closeResult.success) {
+        return createErrorResponse('日程調整の締切に失敗しました。');
+      }
+
+      // Send notifications in background
+      if (env.ctx && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
+        env.ctx.waitUntil(
+          this.sendClosureNotifications(scheduleId, guildId, env)
+        );
+      }
+
+      return createEphemeralResponse('✅ 日程調整を締め切りました。\n📊 集計結果と個人宛通知を送信しています...');
+
+    } catch (error) {
+      console.error('Error closing schedule:', error);
+      return createErrorResponse('締切処理中にエラーが発生しました。');
+    }
   }
 
-  private async processVoteResponse(
+  /**
+   * 締切通知を送信
+   */
+  private async sendClosureNotifications(
     scheduleId: string,
-    userId: string,
-    userName: string,
-    dateId: string,
-    selectedValue: ResponseStatus | 'none',
     guildId: string,
     env: Env
   ): Promise<void> {
     try {
-      // 一時的にStorageServiceV2を使用（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storage = new StorageServiceV2(env);
+      // Create NotificationService with Clean Architecture dependencies
+      const notificationService = new NotificationService(
+        this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
+        this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
+        this.dependencyContainer.getScheduleSummaryUseCase,
+        env.DISCORD_TOKEN!,
+        env.DISCORD_APPLICATION_ID!
+      );
 
-      // Get or create user response
-      let userResponse = await storage.getResponse(scheduleId, userId, guildId);
+      // Send summary message
+      await notificationService.sendSummaryMessage(scheduleId, guildId);
 
-      if (!userResponse) {
-        userResponse = {
-          scheduleId,
-          userId,
-          userName,
-          responses: [],
-          comment: '',
-          updatedAt: new Date()
-        };
+      // Get schedule for PR message
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (scheduleResult.success && scheduleResult.schedule) {
+        await notificationService.sendPRMessage(scheduleResult.schedule);
       }
-
-      // Always update userName in case it has changed
-      userResponse.userName = userName;
-
-      // Update the specific date response
-      if (selectedValue === 'none') {
-        // Remove the response for this date
-        userResponse.responses = userResponse.responses.filter(r => r.dateId !== dateId);
-      } else {
-        const status = selectedValue as ResponseStatus;
-        const existingIndex = userResponse.responses.findIndex(r => r.dateId === dateId);
-
-        if (existingIndex >= 0) {
-          userResponse.responses[existingIndex].status = status;
-        } else {
-          userResponse.responses.push({
-            dateId,
-            status
-          });
-        }
-      }
-
-      userResponse.updatedAt = new Date();
-
-      // Save response
-      await storage.saveResponse(userResponse, guildId);
-
     } catch (error) {
-      console.error('Failed to process vote:', error);
-      throw error;
+      console.error('Error sending closure notifications:', error);
     }
+  }
+
+  /**
+   * メインメッセージを更新
+   */
+  private async updateMainMessage(
+    scheduleId: string,
+    messageId: string,
+    interactionToken: string,
+    env: Env,
+    guildId: string
+  ): Promise<void> {
+    try {
+      if (!env.DISCORD_APPLICATION_ID) {
+        return;
+      }
+
+      // Get latest schedule and summary
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return;
+      }
+
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
+        return;
+      }
+
+      // Update the message
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
+      const components = createSimpleScheduleComponents(scheduleResult.schedule, false);
+
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interactionToken,
+        {
+          embeds: [embed],
+          components
+        },
+        messageId
+      );
+    } catch (error) {
+      console.error('Error updating main message:', error);
+    }
+  }
+
+  /**
+   * 回答メッセージを作成
+   */
+  private createResponseMessage(
+    schedule: any,
+    responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }>,
+    username: string
+  ): string {
+    const lines = [`✅ ${username} さんの回答を受け付けました！\n`];
+    
+    // Add response summary
+    for (const response of responses) {
+      const date = schedule.dates.find((d: any) => d.id === response.dateId);
+      if (date) {
+        const statusEmoji = response.status === 'ok' ? '○' : 
+                           response.status === 'maybe' ? '△' : '×';
+        lines.push(`${statusEmoji} ${date.datetime}`);
+      }
+    }
+
+    return lines.join('\n');
   }
 }
 
-/**
- * Factory function for creating controller with dependencies
- */
 export function createVoteController(env: Env): VoteController {
   const container = new DependencyContainer(env);
   const uiBuilder = new VoteUIBuilder();
-  
   return new VoteController(container, uiBuilder);
 }

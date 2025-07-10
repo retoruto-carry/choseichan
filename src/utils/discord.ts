@@ -1,10 +1,12 @@
 export async function updateOriginalMessage(
   applicationId: string,
   token: string,
-  messageId: string,
-  data: any
+  data: any,
+  messageId?: string
 ): Promise<void> {
-  const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`;
+  const url = messageId 
+    ? `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`
+    : `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/@original`;
   
   const response = await fetch(url, {
     method: 'PATCH',

@@ -21,13 +21,3 @@ export async function handleRespondButton(
   return controller.handleRespondButton(interaction, params, env, storage);
 }
 
-/**
- * 日程選択メニュー処理
- */
-export async function handleDateSelectMenu(
-  interaction: ButtonInteraction,
-  env: Env
-): Promise<Response> {
-  const controller = createVoteController(env);
-  return controller.handleDateSelectMenu(interaction, env);
-}

@@ -35,8 +35,7 @@ import {
   handleCommentButton
 } from '../../handlers/comment-handlers';
 import {
-  handleRespondButton,
-  handleDateSelectMenu
+  handleRespondButton
 } from '../../handlers/vote-handlers';
 import { StorageServiceV2 as StorageService } from '../../services/storage-v2';
 
@@ -50,12 +49,6 @@ export class ButtonInteractionController {
   ): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
-      
-      // Handle select menu interactions
-      if (customId.startsWith('dateselect:')) {
-        return handleDateSelectMenu(interaction, env);
-      }
-      
       const { action, params } = parseButtonId(customId);
       const storage = new StorageService(env);
 

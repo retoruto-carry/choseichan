@@ -6,6 +6,5 @@
 
 // Re-export all handlers from the adapter
 export {
-  handleRespondButton,
-  handleDateSelectMenu
+  handleRespondButton
 } from './adapters/vote-adapter';

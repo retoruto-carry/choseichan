@@ -1,4 +1,5 @@
 import { Schedule, ScheduleSummary, STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
+import { ScheduleSummaryResponse, ScheduleResponse } from '../application/dto/ScheduleDto';
 import { createButtonId } from './id';
 import { formatDate } from './date';
 
@@ -34,8 +35,12 @@ export function createScheduleEmbed(schedule: Schedule) {
   };
 }
 
-export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetails: boolean = false) {
-  const { schedule, userResponses, responseCounts, bestDateId } = summary;
+export function createScheduleEmbedWithTable(summary: ScheduleSummary | ScheduleSummaryResponse, showDetails: boolean = false) {
+  // Handle both old and new types
+  const schedule = summary.schedule;
+  const responseCounts = summary.responseCounts;
+  const bestDateId = 'bestDateId' in summary ? summary.bestDateId : (summary as ScheduleSummaryResponse).statistics?.optimalDates?.optimalDateId;
+  const userResponses = 'userResponses' in summary ? summary.userResponses : (summary as ScheduleSummaryResponse).responses;
   
   // 日程リストを作成（番号付き）
   const dateFields = schedule.dates.map((date, idx) => {
@@ -49,11 +54,21 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
     // 詳細表示の場合は各ユーザーの回答も含める
     if (showDetails) {
       const responses = userResponses
-        .map(ur => {
-          const response = ur.responses.find(r => r.dateId === date.id);
-          if (!response) return null;
-          const comment = response.comment ? ` (${response.comment})` : '';
-          return `${STATUS_EMOJI[response.status]} ${ur.userName}${comment}`;
+        .map((ur: any) => {
+          // Handle both old and new response types
+          if ('responses' in ur) {
+            // Old Response type
+            const response = ur.responses.find((r: any) => r.dateId === date.id);
+            if (!response) return null;
+            const comment = response.comment ? ` (${response.comment})` : '';
+            return `${STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI]} ${ur.userName}${comment}`;
+          } else {
+            // New ResponseDto type
+            const status = ur.dateStatuses[date.id];
+            if (!status) return null;
+            const statusEmoji = status === 'ok' ? STATUS_EMOJI.yes : status === 'maybe' ? STATUS_EMOJI.maybe : STATUS_EMOJI.no;
+            return `${statusEmoji} ${ur.username}`;
+          }
         })
         .filter(Boolean);
       
@@ -78,7 +93,9 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
   ];
   
   if (schedule.deadline) {
-    descriptionParts.push(`⏰ 締切: ${formatDate(schedule.deadline.toISOString())}`);
+    // Handle both Date and string types
+    const deadlineStr = schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
+    descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
   }
   
   descriptionParts.push(`回答者: ${userResponses.length}人`);
@@ -90,15 +107,15 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary, showDetai
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
       text: [
-        `作成: ${schedule.createdBy.username}`,
+        `作成: ${'createdBy' in schedule ? schedule.createdBy.username : (schedule as any).createdByUsername}`,
         '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
-    timestamp: schedule.updatedAt.toISOString()
+    timestamp: schedule.updatedAt instanceof Date ? schedule.updatedAt.toISOString() : schedule.updatedAt
   };
 }
 
-export function createSimpleScheduleComponents(schedule: Schedule, showDetails: boolean = false) {
+export function createSimpleScheduleComponents(schedule: Schedule | ScheduleResponse, showDetails: boolean = false) {
   const components = [];
 
   // 回答するボタン（開いている時のみ）

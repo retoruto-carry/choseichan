@@ -390,6 +390,102 @@ export class Schedule {
     );
   }
 
+  updateMessageId(messageId: string): Schedule {
+    return new Schedule(
+      this._id,
+      this._guildId,
+      this._channelId,
+      this._title,
+      this._dates,
+      this._createdBy,
+      this._authorId,
+      this._status,
+      this._createdAt,
+      new Date(),
+      { value: messageId },
+      this._description,
+      this._deadline,
+      this._reminderTimings,
+      this._reminderMentions,
+      this._remindersSent,
+      this._notificationSent,
+      this._totalResponses
+    );
+  }
+
+  updateDates(dates: ScheduleDate[]): Schedule {
+    if (dates.length === 0) {
+      throw new Error('Schedule must have at least one date');
+    }
+    
+    return new Schedule(
+      this._id,
+      this._guildId,
+      this._channelId,
+      this._title,
+      dates,
+      this._createdBy,
+      this._authorId,
+      this._status,
+      this._createdAt,
+      new Date(),
+      this._messageId,
+      this._description,
+      this._deadline,
+      this._reminderTimings,
+      this._reminderMentions,
+      this._remindersSent,
+      this._notificationSent,
+      this._totalResponses
+    );
+  }
+
+  updateReminderSettings(timings?: string[], mentions?: string[]): Schedule {
+    return new Schedule(
+      this._id,
+      this._guildId,
+      this._channelId,
+      this._title,
+      this._dates,
+      this._createdBy,
+      this._authorId,
+      this._status,
+      this._createdAt,
+      new Date(),
+      this._messageId,
+      this._description,
+      this._deadline,
+      timings,
+      mentions,
+      this._remindersSent,
+      this._notificationSent,
+      this._totalResponses
+    );
+  }
+
+  resetReminders(): Schedule {
+    return new Schedule(
+      this._id,
+      this._guildId,
+      this._channelId,
+      this._title,
+      this._dates,
+      this._createdBy,
+      this._authorId,
+      this._status,
+      this._createdAt,
+      new Date(),
+      this._messageId,
+      this._description,
+      this._deadline,
+      this._reminderTimings,
+      this._reminderMentions,
+      [], // Reset remindersSent
+      this._notificationSent,
+      this._totalResponses
+    );
+  }
+
   toPrimitives(): any {
     return {
       id: this.id,

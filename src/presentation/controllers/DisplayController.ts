@@ -9,6 +9,7 @@ import { InteractionResponseType } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../../types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { DisplayUIBuilder } from '../builders/DisplayUIBuilder';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 
 export class DisplayController {
   constructor(
@@ -29,19 +30,15 @@ export class DisplayController {
       const guildId = interaction.guild_id || 'default';
       const [scheduleId] = params;
 
-      // 一時的にStorageServiceV2を使用（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
-      
       // ボタンラベルから現在の状態を取得
       const currentButton = (interaction.message as any)?.components?.[0]?.components?.find(
         (c: any) => c.custom_id === interaction.data.custom_id
       );
       const isShowingDetails = currentButton?.label === '簡易表示';
       
-      // スケジュール概要を取得
-      const summary = await storageToUse.getScheduleSummary(scheduleId, guildId);
-      if (!summary) {
+      // スケジュール概要を取得 (Clean Architecture)
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
         return this.createNotFoundResponse();
       }
       
@@ -49,9 +46,8 @@ export class DisplayController {
       const showDetails = !isShowingDetails;
       
       // 更新されたembedとコンポーネントを作成
-      const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import('../../utils/embeds');
-      const embed = createScheduleEmbedWithTable(summary, showDetails);
-      const components = createSimpleScheduleComponents(summary.schedule, showDetails);
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, showDetails);
+      const components = createSimpleScheduleComponents(summaryResult.summary.schedule, showDetails);
       
       return new Response(JSON.stringify({
         type: InteractionResponseType.UPDATE_MESSAGE,

@@ -31,7 +31,8 @@ export async function handleDateCommentModal(
 ): Promise<Response> {
   const env = storage.getEnv();
   const controller = createCommentController(env);
-  return controller.handleDateCommentModal(interaction, params, env, storage);
+  // Comment functionality has been removed
+  return controller.handleAddCommentModal(interaction, params, env, storage);
 }
 
 /**
@@ -57,5 +58,6 @@ export async function handleCommentButton(
 ): Promise<Response> {
   const env = storage.getEnv();
   const controller = createCommentController(env);
-  return controller.handleCommentButton(interaction, params, env, storage);
+  // Comment functionality has been removed
+  return controller.handleAddCommentButton(interaction, params, env, storage);
 }

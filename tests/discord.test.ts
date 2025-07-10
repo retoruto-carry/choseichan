@@ -26,7 +26,7 @@ describe('Discord Utilities', () => {
       const messageId = 'msg789';
       const data = { content: 'Updated message' };
 
-      await updateOriginalMessage(applicationId, token, messageId, data);
+      await updateOriginalMessage(applicationId, token, data, messageId);
 
       expect(global.fetch).toHaveBeenCalledWith(
         `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`,
@@ -49,7 +49,7 @@ describe('Discord Utilities', () => {
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
       await expect(
-        updateOriginalMessage('app123', 'token456', 'msg789', {})
+        updateOriginalMessage('app123', 'token456', {}, 'msg789')
       ).rejects.toThrow('Failed to update message: 404 - Not Found');
     });
 
@@ -80,7 +80,7 @@ describe('Discord Utilities', () => {
         }]
       };
 
-      await updateOriginalMessage('app123', 'token456', 'msg789', complexData);
+      await updateOriginalMessage('app123', 'token456', complexData, 'msg789');
 
       const [[, requestInit]] = (global.fetch as any).mock.calls;
       expect(JSON.parse(requestInit.body)).toEqual(complexData);

@@ -22,6 +22,8 @@ import { FindSchedulesUseCase } from '../../application/usecases/schedule/FindSc
 import { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
 import { DeadlineReminderUseCase } from '../../application/usecases/schedule/DeadlineReminderUseCase';
 import { ProcessReminderUseCase } from '../../application/usecases/schedule/ProcessReminderUseCase';
+import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
+import { NotificationService } from '../../application/services/NotificationService';
 
 export interface ApplicationServices {
   // Schedule Use Cases
@@ -33,6 +35,7 @@ export interface ApplicationServices {
   getScheduleSummaryUseCase: GetScheduleSummaryUseCase;
   deadlineReminderUseCase: DeadlineReminderUseCase;
   processReminderUseCase: ProcessReminderUseCase;
+  processDeadlineRemindersUseCase: ProcessDeadlineRemindersUseCase;
 
   // Response Use Cases
   submitResponseUseCase: SubmitResponseUseCase;
@@ -48,8 +51,10 @@ export interface InfrastructureServices {
 export class DependencyContainer {
   private readonly _infrastructureServices: InfrastructureServices;
   private readonly _applicationServices: ApplicationServices;
+  private readonly _env: Env;
 
   constructor(env: Env) {
+    this._env = env;
     // Infrastructure Services
     this._infrastructureServices = this.createInfrastructureServices(env);
 
@@ -79,21 +84,60 @@ export class DependencyContainer {
     const scheduleRepository = infrastructure.repositoryFactory.getScheduleRepository();
     const responseRepository = infrastructure.repositoryFactory.getResponseRepository();
 
+    // Create base use cases
+    const createScheduleUseCase = new CreateScheduleUseCase(scheduleRepository);
+    const updateScheduleUseCase = new UpdateScheduleUseCase(scheduleRepository);
+    const closeScheduleUseCase = new CloseScheduleUseCase(scheduleRepository);
+    const getScheduleUseCase = new GetScheduleUseCase(scheduleRepository, responseRepository);
+    const findSchedulesUseCase = new FindSchedulesUseCase(scheduleRepository);
+    const getScheduleSummaryUseCase = new GetScheduleSummaryUseCase(scheduleRepository, responseRepository);
+    const deadlineReminderUseCase = new DeadlineReminderUseCase(scheduleRepository);
+    const processReminderUseCase = new ProcessReminderUseCase(scheduleRepository);
+    const submitResponseUseCase = new SubmitResponseUseCase(scheduleRepository, responseRepository);
+    const updateResponseUseCase = new UpdateResponseUseCase(scheduleRepository, responseRepository);
+    const getResponseUseCase = new GetResponseUseCase(responseRepository);
+
+    // Create NotificationService if credentials are available
+    let notificationService: NotificationService | null = null;
+    if (this._env.DISCORD_TOKEN && this._env.DISCORD_APPLICATION_ID) {
+      notificationService = new NotificationService(
+        scheduleRepository,
+        responseRepository,
+        getScheduleSummaryUseCase,
+        this._env.DISCORD_TOKEN,
+        this._env.DISCORD_APPLICATION_ID
+      );
+    }
+
+    // Create composite use case
+    const processDeadlineRemindersUseCase = notificationService
+      ? new ProcessDeadlineRemindersUseCase(
+          deadlineReminderUseCase,
+          getScheduleUseCase,
+          getScheduleSummaryUseCase,
+          processReminderUseCase,
+          closeScheduleUseCase,
+          notificationService,
+          this._env
+        )
+      : null;
+
     return {
       // Schedule Use Cases
-      createScheduleUseCase: new CreateScheduleUseCase(scheduleRepository),
-      updateScheduleUseCase: new UpdateScheduleUseCase(scheduleRepository),
-      closeScheduleUseCase: new CloseScheduleUseCase(scheduleRepository),
-      getScheduleUseCase: new GetScheduleUseCase(scheduleRepository, responseRepository),
-      findSchedulesUseCase: new FindSchedulesUseCase(scheduleRepository),
-      getScheduleSummaryUseCase: new GetScheduleSummaryUseCase(scheduleRepository, responseRepository),
-      deadlineReminderUseCase: new DeadlineReminderUseCase(scheduleRepository),
-      processReminderUseCase: new ProcessReminderUseCase(scheduleRepository),
+      createScheduleUseCase,
+      updateScheduleUseCase,
+      closeScheduleUseCase,
+      getScheduleUseCase,
+      findSchedulesUseCase,
+      getScheduleSummaryUseCase,
+      deadlineReminderUseCase,
+      processReminderUseCase,
+      processDeadlineRemindersUseCase: processDeadlineRemindersUseCase!,
 
       // Response Use Cases
-      submitResponseUseCase: new SubmitResponseUseCase(scheduleRepository, responseRepository),
-      updateResponseUseCase: new UpdateResponseUseCase(scheduleRepository, responseRepository),
-      getResponseUseCase: new GetResponseUseCase(responseRepository),
+      submitResponseUseCase,
+      updateResponseUseCase,
+      getResponseUseCase,
     };
   }
 
@@ -106,6 +150,7 @@ export class DependencyContainer {
   get getScheduleSummaryUseCase() { return this._applicationServices.getScheduleSummaryUseCase; }
   get deadlineReminderUseCase() { return this._applicationServices.deadlineReminderUseCase; }
   get processReminderUseCase() { return this._applicationServices.processReminderUseCase; }
+  get processDeadlineRemindersUseCase() { return this._applicationServices.processDeadlineRemindersUseCase; }
 
   // Response Use Cases便利アクセサー
   get submitResponseUseCase() { return this._applicationServices.submitResponseUseCase; }

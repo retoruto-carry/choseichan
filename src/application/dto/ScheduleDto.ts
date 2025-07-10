@@ -26,7 +26,15 @@ export interface UpdateScheduleRequest {
   editorUserId: string;
   title?: string;
   description?: string;
-  deadline?: string; // ISO string or null to remove
+  deadline?: string | null; // ISO string or null to remove
+  messageId?: string;
+  dates?: Array<{
+    id: string;
+    datetime: string;
+  }>;
+  reminderTimings?: string[];
+  reminderMentions?: string[];
+  reminderStates?: any; // Reset reminder states when set
 }
 
 export interface AddDatesRequest {

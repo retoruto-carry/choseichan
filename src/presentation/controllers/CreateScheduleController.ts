@@ -7,9 +7,13 @@
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ModalInteraction, Env } from '../../types/discord';
-import { Schedule, ScheduleDate } from '../../types/schedule';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CreateScheduleUIBuilder } from '../builders/CreateScheduleUIBuilder';
+import { generateId } from '../../utils/id';
+import { parseUserInputDate } from '../../utils/date';
+import { getOriginalMessage } from '../../utils/discord';
+import { sendFollowupMessage } from '../../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 
 export class CreateScheduleController {
   constructor(
@@ -28,14 +32,11 @@ export class CreateScheduleController {
     try {
       const guildId = interaction.guild_id || 'default';
       const authorId = interaction.member?.user.id || interaction.user?.id || '';
+      const username = interaction.member?.user.username || interaction.user?.username || '';
 
       if (!authorId) {
         return this.createErrorResponse('ユーザー情報を取得できませんでした。');
       }
-
-      // 一時的にStorageServiceV2を使用（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
 
       // フォーム値を抽出
       const title = interaction.data.components[0].components[0].value;
@@ -49,21 +50,19 @@ export class CreateScheduleController {
         return this.createErrorResponse('日程候補を入力してください。');
       }
 
-      const { generateId } = await import('../../utils/id');
-      const scheduleDates: ScheduleDate[] = dates.map((date: string) => ({
+      const scheduleDates = dates.map((date: string) => ({
         id: generateId(),
         datetime: date.trim()
       }));
 
       // 締切をパース
-      let deadlineDate: Date | undefined = undefined;
+      let deadlineDate: string | undefined = undefined;
       if (deadlineStr && deadlineStr.trim()) {
-        const { parseUserInputDate } = await import('../../utils/date');
         const parsedDate = parseUserInputDate(deadlineStr);
-        deadlineDate = parsedDate || undefined;
-        if (!deadlineDate) {
+        if (!parsedDate) {
           return this.createErrorResponse('締切日時の形式が正しくありません。');
         }
+        deadlineDate = parsedDate.toISOString();
       }
 
       // デフォルトのリマインダー設定（締切がある場合のみ）
@@ -75,46 +74,57 @@ export class CreateScheduleController {
         reminderMentions = ['@here'];
       }
 
-      // スケジュールオブジェクトを作成
-      const schedule: Schedule = {
-        id: generateId(),
+      // Create schedule using Clean Architecture
+      const createResult = await this.dependencyContainer.createScheduleUseCase.execute({
+        guildId,
+        channelId: interaction.channel_id || '',
+        authorId: authorId,
+        authorUsername: username,
         title,
         description,
         dates: scheduleDates,
         deadline: deadlineDate,
-        status: 'open',
-        createdBy: {
-          id: authorId,
-          username: interaction.member?.user.username || interaction.user?.username || ''
-        },
-        authorId,
-        channelId: interaction.channel_id || '',
-        guildId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        notificationSent: false,
-        reminderSent: false,
-        remindersSent: [],
-        reminderTimings: deadlineDate ? reminderTimings : undefined,
-        reminderMentions: deadlineDate ? reminderMentions : undefined,
-        totalResponses: 0
-      };
+        reminderTimings,
+        reminderMentions
+      });
 
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
-
-      // レスポンスを作成
-      const summary = await storageToUse.getScheduleSummary(schedule.id, guildId);
-      if (!summary) {
-        return this.createErrorResponse('日程調整を作成しましたが、詳細を取得できませんでした。');
+      if (!createResult.success || !createResult.schedule) {
+        console.error('Failed to create schedule:', createResult.errors);
+        return this.createErrorResponse('スケジュールの作成に失敗しました。');
       }
 
-      const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import('../../utils/embeds');
-      const embed = createScheduleEmbedWithTable(summary, false);
+      const schedule = createResult.schedule;
+
+      // Get summary for display
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(schedule.id, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
+        console.error('Failed to get schedule summary:', summaryResult.errors);
+        return this.createErrorResponse('スケジュール情報の取得に失敗しました。');
+      }
+
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
       const components = createSimpleScheduleComponents(schedule, false);
 
-      // メッセージIDを保存とリマインダー編集ボタンをバックグラウンドで処理
-      await this.handleBackgroundTasks(schedule, interaction, storageToUse, env, guildId);
+      // バックグラウンドでメッセージIDを保存
+      if (env.ctx) {
+        env.ctx.waitUntil((async () => {
+          try {
+            // メッセージIDを保存
+            const message = await getOriginalMessage(env.DISCORD_APPLICATION_ID, interaction.token);
+            
+            if (message?.id) {
+              await this.dependencyContainer.updateScheduleUseCase.execute({
+                scheduleId: schedule.id,
+                guildId,
+                editorUserId: authorId,
+                messageId: message.id
+              });
+            }
+          } catch (error) {
+            console.error('Failed to save message ID:', error);
+          }
+        })());
+      }
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -126,77 +136,30 @@ export class CreateScheduleController {
 
     } catch (error) {
       console.error('Error in handleCreateScheduleModal:', error);
-      return this.createErrorResponse('日程調整の作成中にエラーが発生しました。');
+      return this.createErrorResponse('スケジュール作成中にエラーが発生しました。');
     }
   }
 
-  private async handleBackgroundTasks(
-    schedule: Schedule,
-    interaction: ModalInteraction,
-    storage: any,
-    env: Env,
-    guildId: string
-  ): Promise<void> {
-    if (env.DISCORD_APPLICATION_ID && env.ctx) {
-      env.ctx.waitUntil(
-        (async () => {
-          try {
-            // メッセージIDを保存
-            const { getOriginalMessage } = await import('../../utils/discord');
-            const message = await getOriginalMessage(env.DISCORD_APPLICATION_ID, interaction.token);
-            
-            if (message?.id) {
-              schedule.messageId = message.id;
-              if (!schedule.guildId) schedule.guildId = guildId;
-              await storage.saveSchedule(schedule);
-            }
-            
-            // 締切がある場合、リマインダー編集ボタンを送信
-            if (schedule.deadline && schedule.reminderTimings) {
-              await this.sendReminderEditButton(schedule, interaction, env);
-            }
-          } catch (error) {
-            console.error('Failed to save message ID or send reminder edit button:', error);
-          }
-        })()
-      );
-    }
-  }
-
-  private async sendReminderEditButton(
-    schedule: Schedule,
-    interaction: ModalInteraction,
+  /**
+   * 締切通知設定のフォローアップメッセージを送信
+   */
+  async sendReminderFollowup(
+    schedule: any,
+    interactionToken: string,
     env: Env
   ): Promise<void> {
-    const timingDisplay = schedule.reminderTimings!.map(t => {
-      const match = t.match(/^(\d+)([dhm])$/);
-      if (!match) return t;
-      const value = parseInt(match[1]);
-      const unit = match[2];
-      if (unit === 'd') return `${value}日前`;
-      if (unit === 'h') return `${value}時間前`;
-      if (unit === 'm') return `${value}分前`;
-      return t;
-    }).join(' / ');
+    if (!schedule.reminderTimings || !env.DISCORD_APPLICATION_ID) {
+      return;
+    }
 
-    const mentionDisplay = schedule.reminderMentions?.map(m => `\`${m}\``).join(' ') || '`@here`';
+    const timingsDisplay = schedule.reminderTimings.join(', ');
+    const mentionDisplay = schedule.reminderMentions?.map((m: string) => `\`${m}\``).join(' ') || '`@here`';
     
-    const { sendFollowupMessage } = await import('../../utils/discord');
     await sendFollowupMessage(
       env.DISCORD_APPLICATION_ID,
-      interaction.token,
+      interactionToken,
       {
-        content: `📅 リマインダーが設定されています: ${timingDisplay} | 宛先: ${mentionDisplay}`,
-        components: [{
-          type: 1,
-          components: [{
-            type: 2,
-            custom_id: `reminder_edit:${schedule.id}`,
-            label: 'リマインダーを編集',
-            style: 2,
-            emoji: { name: '🔔' }
-          }]
-        }],
+        content: `⏰ 締切前リマインダーを設定しました！\n締切の ${timingsDisplay} 前に ${mentionDisplay} にリマインダーを送信します。`,
         flags: InteractionResponseFlags.EPHEMERAL
       }
     );
@@ -206,19 +169,15 @@ export class CreateScheduleController {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: message,
+        content: `❌ ${message}`,
         flags: InteractionResponseFlags.EPHEMERAL
       }
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 }
 
-/**
- * Factory function for creating controller with dependencies
- */
 export function createCreateScheduleController(env: Env): CreateScheduleController {
   const container = new DependencyContainer(env);
   const uiBuilder = new CreateScheduleUIBuilder();
-  
   return new CreateScheduleController(container, uiBuilder);
 }

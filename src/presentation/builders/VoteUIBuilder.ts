@@ -5,6 +5,7 @@
  */
 
 import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
+import { DISCORD_LIMITS } from '../../constants';
 
 export class VoteUIBuilder {
   /**
@@ -51,5 +52,61 @@ export class VoteUIBuilder {
         }]
       };
     });
+  }
+
+  /**
+   * 投票モーダルを作成
+   */
+  createVoteModal(schedule: any, currentResponses: any[]): any {
+    const components = [];
+    
+    // Create input for each date (up to Discord's limit)
+    const maxDates = Math.min(schedule.dates.length, DISCORD_LIMITS.MAX_BUTTON_ROWS - 1);
+    
+    for (let i = 0; i < maxDates; i++) {
+      const date = schedule.dates[i];
+      const existingResponse = currentResponses.find(r => r.dateId === date.id);
+      const currentValue = existingResponse ? 
+        (existingResponse.status === 'available' ? '○' : 
+         existingResponse.status === 'maybe' ? '△' : '×') : '';
+      
+      components.push({
+        type: 1,
+        components: [{
+          type: 4,
+          custom_id: `vote_${date.id}`,
+          label: date.datetime,
+          style: 1,
+          min_length: 0,
+          max_length: 10,
+          placeholder: '○、△、× のいずれかを入力',
+          value: currentValue,
+          required: false
+        }]
+      });
+    }
+    
+    // Add comment field
+    const existingComment = currentResponses.length > 0 && currentResponses[0].comment || '';
+    components.push({
+      type: 1,
+      components: [{
+        type: 4,
+        custom_id: 'comment',
+        label: 'コメント（任意）',
+        style: 2,
+        min_length: 0,
+        max_length: 200,
+        placeholder: '何かコメントがあれば入力してください',
+        value: existingComment,
+        required: false
+      }]
+    });
+    
+    return {
+      title: schedule.title,
+      custom_id: `vote:${schedule.id}`,
+      components
+    };
   }
 }

@@ -6,6 +6,7 @@
  */
 
 import { Schedule } from '../../../domain/entities/Schedule';
+import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { UpdateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
@@ -86,6 +87,26 @@ export class UpdateScheduleUseCase {
       if (request.deadline !== undefined) {
         const deadline = request.deadline === null ? null : new Date(request.deadline);
         updatedSchedule = updatedSchedule.updateDeadline(deadline);
+      }
+
+      if (request.messageId !== undefined) {
+        updatedSchedule = updatedSchedule.updateMessageId(request.messageId);
+      }
+
+      if (request.dates !== undefined) {
+        const scheduleDates = request.dates.map(d => ScheduleDate.create(d.id, d.datetime));
+        updatedSchedule = updatedSchedule.updateDates(scheduleDates);
+      }
+
+      if (request.reminderTimings !== undefined || request.reminderMentions !== undefined) {
+        updatedSchedule = updatedSchedule.updateReminderSettings(
+          request.reminderTimings,
+          request.reminderMentions
+        );
+      }
+
+      if (request.reminderStates !== undefined) {
+        updatedSchedule = updatedSchedule.resetReminders();
       }
 
       // 7. リポジトリへの保存

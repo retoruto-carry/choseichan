@@ -9,8 +9,11 @@ import { InteractionResponseType, InteractionResponseFlags } from 'discord-inter
 import { ModalInteraction, Env } from '../../types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { EditModalUIBuilder } from '../builders/EditModalUIBuilder';
-import { updateScheduleMainMessage, saveScheduleMessageId } from '../../utils/schedule-updater';
-import { NotificationService } from '../../services/notification';
+import { generateId } from '../../utils/id';
+import { parseUserInputDate } from '../../utils/date';
+import { EMBED_COLORS, ScheduleDate } from '../../types/schedule';
+import { updateOriginalMessage } from '../../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 
 export class EditModalController {
   constructor(
@@ -36,30 +39,33 @@ export class EditModalController {
         return this.createErrorResponse('ユーザー情報を取得できませんでした。');
       }
 
-      // 一時的にStorageServiceV2を使用（後でClean Architectureに移行）
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
-
-      const schedule = await storageToUse.getSchedule(scheduleId, guildId);
-      if (!schedule) {
+      // Clean Architecture を使用してスケジュールを取得
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
+      const schedule = scheduleResult.schedule;
 
-      // Update schedule
-      schedule.title = interaction.data.components[0].components[0].value;
-      schedule.description = interaction.data.components[1].components[0].value || undefined;
-      schedule.updatedAt = new Date();
+      // Update schedule using Clean Architecture
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        title: interaction.data.components[0].components[0].value,
+        description: interaction.data.components[1].components[0].value || undefined,
+        messageId: messageId || schedule.messageId
+      });
       
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
-      
-      // Save message ID if provided
-      if (messageId) {
-        await saveScheduleMessageId(scheduleId, messageId, storageToUse, guildId);
+      if (!updateResult.success) {
+        return this.createErrorResponse('スケジュールの更新に失敗しました。');
       }
 
       // Update main message in background
-      await this.handleBackgroundMessageUpdate(scheduleId, messageId, interaction, storageToUse, env, guildId);
+      if (env.ctx && (messageId || schedule.messageId)) {
+        env.ctx.waitUntil(
+          this.updateMainMessage(scheduleId, messageId || schedule.messageId, interaction.token, env, guildId)
+        );
+      }
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -87,43 +93,51 @@ export class EditModalController {
     try {
       const [scheduleId, messageId] = params;
       const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
 
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
 
-      const schedule = await storageToUse.getSchedule(scheduleId, guildId);
-      if (!schedule) {
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
       // Parse new dates
       const datesInput = interaction.data.components[0].components[0].value;
-      const { generateId } = await import('../../utils/id');
-      
       const parsedDates = datesInput.split('\n').filter((line: string) => line.trim());
       
       if (parsedDates.length === 0) {
         return this.createErrorResponse('有効な日程が入力されていません。');
       }
 
-      // Remove all existing responses since dates are changing
-      const responses = await storageToUse.listResponsesBySchedule(scheduleId);
-      for (const response of responses) {
-        await storageToUse.saveResponse({ ...response, responses: [] }, guildId);
-      }
-
-      // Update schedule with new dates
-      schedule.dates = parsedDates.map((datetime: string) => ({
+      // Create new dates
+      const newDates: ScheduleDate[] = parsedDates.map((datetime: string) => ({
         id: generateId(),
         datetime: datetime.trim()
       }));
-      schedule.updatedAt = new Date();
-      
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
+
+      // Update schedule with new dates - this will reset all responses
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        dates: newDates,
+        messageId: messageId || scheduleResult.schedule.messageId
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse('日程の更新に失敗しました。');
+      }
 
       // Update main message in background
-      await this.handleBackgroundMessageUpdate(scheduleId, messageId, interaction, storageToUse, env, guildId);
+      if (env.ctx && (messageId || scheduleResult.schedule.messageId)) {
+        env.ctx.waitUntil(
+          this.updateMainMessage(scheduleId, messageId || scheduleResult.schedule.messageId, interaction.token, env, guildId)
+        );
+      }
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -151,19 +165,21 @@ export class EditModalController {
     try {
       const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
 
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
 
-      const schedule = await storageToUse.getSchedule(scheduleId, guildId);
-      if (!schedule) {
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
+      const schedule = scheduleResult.schedule;
 
       // Parse new dates
       const datesInput = interaction.data.components[0].components[0].value;
-      const { generateId } = await import('../../utils/id');
-      
       const parsedDates = datesInput.split('\n').filter((line: string) => line.trim());
       
       if (parsedDates.length === 0) {
@@ -171,32 +187,40 @@ export class EditModalController {
       }
 
       // Add new dates to existing ones
-      const newDates = parsedDates.map((datetime: string) => ({
+      const newDates: ScheduleDate[] = parsedDates.map((datetime: string) => ({
         id: generateId(),
         datetime: datetime.trim()
       }));
-      
-      schedule.dates = [...schedule.dates, ...newDates];
-      schedule.updatedAt = new Date();
-      
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
+
+      const combinedDates = [...schedule.dates, ...newDates];
+
+      // Update schedule with combined dates
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        dates: combinedDates
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse('日程の追加に失敗しました。');
+      }
 
       // Update main message in background
-      await this.handleBackgroundMessageUpdate(scheduleId, schedule.messageId, interaction, storageToUse, env, guildId);
+      if (env.ctx && schedule.messageId) {
+        env.ctx.waitUntil(
+          this.updateMainMessage(scheduleId, schedule.messageId, interaction.token, env, guildId)
+        );
+      }
 
-      const { EMBED_COLORS } = await import('../../types/schedule');
-      
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
+          content: `✅ ${parsedDates.length}件の日程を追加しました。`,
           embeds: [{
-            title: '✅ 日程を追加しました',
-            color: EMBED_COLORS.INFO,
-            fields: [{
-              name: '追加された日程',
-              value: newDates.map((d, i) => `• ${d.datetime}`).join('\n')
-            }]
+            title: '追加された日程',
+            description: parsedDates.join('\n'),
+            color: EMBED_COLORS.OPEN
           }],
           flags: InteractionResponseFlags.EPHEMERAL
         }
@@ -218,69 +242,80 @@ export class EditModalController {
     storage?: any
   ): Promise<Response> {
     try {
-      const [scheduleId, messageId] = params;
+      const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
 
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
 
-      const schedule = await storageToUse.getSchedule(scheduleId, guildId);
-      if (!schedule) {
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
+      const schedule = scheduleResult.schedule;
 
-      // Parse deadline
-      const components = interaction.data.components;
-      if (!components || components.length < 1) {
-        return this.createErrorResponse('フォームデータが不完全です。');
-      }
-
-      const deadlineInput = components[0].components[0].value;
-      const timingsInput = components[1]?.components[0]?.value || '';
-      const mentionsInput = components[2]?.components[0]?.value || '';
-
+      // Parse deadline input
+      const deadlineInput = interaction.data.components[0].components[0].value;
       let newDeadline = null;
       if (deadlineInput.trim()) {
-        const { parseUserInputDate } = await import('../../utils/date');
         newDeadline = parseUserInputDate(deadlineInput.trim());
         
         if (!newDeadline) {
-          return this.createErrorResponse('締切日時の形式が正しくありません。例: 2024-04-01 19:00');
+          return this.createErrorResponse('締切日の形式が正しくありません。例: 2023/12/31 23:59');
+        }
+        
+        if (newDeadline.getTime() <= Date.now()) {
+          return this.createErrorResponse('締切日は現在より未来の日付を指定してください。');
         }
       }
 
-      const oldDeadline = schedule.deadline;
-      const oldTimings = schedule.reminderTimings;
+      // Update schedule with new deadline (and reset reminders if deadline changed)
+      const updateData: any = {
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        deadline: newDeadline ? newDeadline.toISOString() : null
+      };
 
-      // Update schedule
-      schedule.deadline = newDeadline;
-      schedule.reminderTimings = timingsInput.trim() ? 
-        timingsInput.split(',').map(t => t.trim()).filter(Boolean) : 
-        ['3d', '1d', '8h'];
-      schedule.reminderMentions = mentionsInput.trim() ? 
-        mentionsInput.split(',').map(m => m.trim()).filter(Boolean) : 
-        ['@here'];
-      schedule.updatedAt = new Date();
-
-      // Reset reminders if deadline or timings changed
-      const deadlineChanged = (oldDeadline?.getTime() !== newDeadline?.getTime());
-      const timingsChanged = JSON.stringify(oldTimings) !== JSON.stringify(schedule.reminderTimings);
-      
-      if (deadlineChanged || timingsChanged) {
-        schedule.remindersSent = [];
-        console.log(`Reset reminders for schedule ${scheduleId}: deadline or timings changed`);
+      // Reset reminders if deadline is being changed
+      if ((schedule.deadline && !newDeadline) || (!schedule.deadline && newDeadline) || 
+          (schedule.deadline && newDeadline && new Date(schedule.deadline).getTime() !== newDeadline.getTime())) {
+        updateData.reminderStates = {};
       }
-      
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
 
-      // Save message ID if provided
-      if (messageId) {
-        await saveScheduleMessageId(scheduleId, messageId, storageToUse, guildId);
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute(updateData);
+
+      if (!updateResult.success) {
+        console.error('UpdateScheduleUseCase failed:', updateResult.errors);
+        return this.createErrorResponse('締切日の更新に失敗しました。');
+      }
+
+      // Update reminders
+      const timingsInput = interaction.data.components[1]?.components[0]?.value || '';
+      const mentionsInput = interaction.data.components[2]?.components[0]?.value || '';
+      
+      const timings = timingsInput.trim() ? timingsInput.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
+      const mentions = mentionsInput.trim() ? mentionsInput.split(',').map((m: string) => m.trim()).filter(Boolean) : [];
+
+      if (timings.length > 0 || mentions.length > 0) {
+        await this.dependencyContainer.updateScheduleUseCase.execute({
+          scheduleId,
+          guildId,
+          editorUserId: userId,
+          reminderTimings: timings,
+          reminderMentions: mentions
+        });
       }
 
       // Update main message in background
-      await this.handleBackgroundMessageUpdate(scheduleId, messageId, interaction, storageToUse, env, guildId);
+      if (env.ctx && schedule.messageId) {
+        env.ctx.waitUntil(
+          this.updateMainMessage(scheduleId, schedule.messageId, interaction.token, env, guildId)
+        );
+      }
 
       const message = newDeadline ? 
         `✅ 締切日を ${newDeadline.toLocaleString('ja-JP')} に更新しました。` :
@@ -296,7 +331,7 @@ export class EditModalController {
 
     } catch (error) {
       console.error('Error in handleEditDeadlineModal:', error);
-      return this.createErrorResponse('締切の設定中にエラーが発生しました。');
+      return this.createErrorResponse('締切日の更新中にエラーが発生しました。');
     }
   }
 
@@ -312,38 +347,36 @@ export class EditModalController {
     try {
       const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
 
-      const { StorageServiceV2 } = await import('../../services/storage-v2');
-      const storageToUse = storage || new StorageServiceV2(env);
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
 
-      const schedule = await storageToUse.getSchedule(scheduleId, guildId);
-      if (!schedule) {
+      // Get schedule using Clean Architecture
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
+      // Update reminder settings
       const timingsInput = interaction.data.components[0].components[0].value;
       const mentionsInput = interaction.data.components[1].components[0].value;
-
-      const oldTimings = schedule.reminderTimings;
-
-      // Update reminder settings
-      schedule.reminderTimings = timingsInput.trim() ? 
-        timingsInput.split(',').map(t => t.trim()).filter(Boolean) : 
-        ['3d', '1d', '8h'];
-      schedule.reminderMentions = mentionsInput.trim() ? 
-        mentionsInput.split(',').map(m => m.trim()).filter(Boolean) : 
-        ['@here'];
-      schedule.updatedAt = new Date();
-
-      // Reset reminders if timings changed
-      const timingsChanged = JSON.stringify(oldTimings) !== JSON.stringify(schedule.reminderTimings);
-      if (timingsChanged) {
-        schedule.remindersSent = [];
-        console.log(`Reset reminders for schedule ${scheduleId}: timings changed`);
-      }
       
-      if (!schedule.guildId) schedule.guildId = guildId;
-      await storageToUse.saveSchedule(schedule);
+      const timings = timingsInput.trim() ? timingsInput.split(',').map((t: string) => t.trim()).filter(Boolean) : [];
+      const mentions = mentionsInput.trim() ? mentionsInput.split(',').map((m: string) => m.trim()).filter(Boolean) : [];
+
+      const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: userId,
+        reminderTimings: timings,
+        reminderMentions: mentions
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse('リマインダー設定の更新に失敗しました。');
+      }
 
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -359,45 +392,66 @@ export class EditModalController {
     }
   }
 
-  private async handleBackgroundMessageUpdate(
+  /**
+   * バックグラウンドでメインメッセージを更新
+   */
+  private async updateMainMessage(
     scheduleId: string,
     messageId: string | undefined,
-    interaction: ModalInteraction,
-    storage: any,
+    interactionToken: string,
     env: Env,
     guildId: string
   ): Promise<void> {
-    if (env.ctx) {
-      env.ctx.waitUntil(
-        updateScheduleMainMessage(
-          scheduleId,
-          messageId,
-          interaction.token,
-          storage,
-          env,
-          guildId
-        ).catch(error => console.error('Failed to update main message:', error))
+    try {
+      if (!messageId || !env.DISCORD_APPLICATION_ID) {
+        return;
+      }
+
+      // Get latest schedule and summary
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return;
+      }
+
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
+        return;
+      }
+
+      // Update the message using Discord API
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
+      const components = createSimpleScheduleComponents(scheduleResult.schedule, false);
+
+      await updateOriginalMessage(
+        env.DISCORD_APPLICATION_ID,
+        interactionToken,
+        {
+          embeds: [embed],
+          components
+        },
+        messageId
       );
+    } catch (error) {
+      console.error('Error updating main message:', error);
     }
   }
 
+  /**
+   * エラーレスポンスを作成
+   */
   private createErrorResponse(message: string): Response {
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: message,
+        content: `❌ ${message}`,
         flags: InteractionResponseFlags.EPHEMERAL
       }
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 }
 
-/**
- * Factory function for creating controller with dependencies
- */
 export function createEditModalController(env: Env): EditModalController {
   const container = new DependencyContainer(env);
   const uiBuilder = new EditModalUIBuilder();
-  
   return new EditModalController(container, uiBuilder);
 }

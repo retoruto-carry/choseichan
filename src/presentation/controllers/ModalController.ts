@@ -134,7 +134,8 @@ export class ModalController {
   ): Promise<Response> {
     const { createCommentController } = await import('./CommentController');
     const controller = createCommentController(env);
-    return controller.handleDateCommentModal(interaction, params, env, storage);
+    // Comment functionality has been removed, use the generic handler
+    return controller.handleAddCommentModal(interaction, params, env, storage);
   }
 
   private async handleEditDeadlineModal(

@@ -4,12 +4,11 @@ import { updateOriginalMessage } from './discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './embeds';
 
 /**
- * スケジュールのメイン画面を更新する共通関数
- * StorageServiceを受け取るが内部でDependencyContainerを使う
+ * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版
  * @param scheduleId スケジュールID
  * @param messageId 更新対象のメッセージID（省略時はschedule.messageIdを使用）
  * @param interactionToken インタラクショントークン
- * @param storage StorageService インスタンス（互換性のため残す）
+ * @param container DependencyContainer インスタンス
  * @param env 環境変数
  * @param guildId ギルドID
  * @returns 更新が成功したかどうか
@@ -18,14 +17,11 @@ export async function updateScheduleMainMessage(
   scheduleId: string,
   messageId: string | undefined,
   interactionToken: string,
-  storage: any, // StorageServiceV2 type but treated as any to avoid dependency
+  container: DependencyContainer,
   env: Env,
   guildId: string = 'default'
 ): Promise<boolean> {
   try {
-    // StorageServiceから環境情報を取得してDependencyContainerを作成
-    const container = new DependencyContainer(env);
-    
     // 最新のスケジュール情報を取得
     const scheduleResult = await container.getScheduleUseCase.execute(scheduleId, guildId);
     if (!scheduleResult.success || !scheduleResult.schedule) {
@@ -81,19 +77,15 @@ export async function updateScheduleMainMessage(
  * スケジュールのメッセージIDを保存
  * @param scheduleId スケジュールID
  * @param messageId メッセージID
- * @param storage StorageService インスタンス（互換性のため残す）
+ * @param container DependencyContainer インスタンス
  * @param guildId ギルドID
  */
 export async function saveScheduleMessageId(
   scheduleId: string,
   messageId: string,
-  storage: any, // StorageServiceV2 type but treated as any to avoid dependency
+  container: DependencyContainer,
   guildId: string = 'default'
 ): Promise<void> {
-  // StorageServiceのgetEnv()を使って環境情報を取得
-  const env = storage.getEnv ? storage.getEnv() : storage.env || {};
-  const container = new DependencyContainer(env);
-  
   const scheduleResult = await container.getScheduleUseCase.execute(scheduleId, guildId);
   if (!scheduleResult.success || !scheduleResult.schedule) {
     console.error(`Schedule not found: ${scheduleId}`);
