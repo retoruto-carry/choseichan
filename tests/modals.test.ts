@@ -95,7 +95,7 @@ describe('Modal Submit Interactions', () => {
       
       // Check schedule was saved by verifying it can be retrieved
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+      const storage = new StorageServiceV2(env);
       
       // Extract schedule ID from the response components
       const buttonRow = data.data?.components?.[0];
@@ -251,7 +251,7 @@ describe('Modal Submit Interactions', () => {
       
       // Check schedule was updated using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
+      const storage = new StorageServiceV2(editEnv);
       const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
       expect(updatedSchedule?.title).toBe('新年会');
@@ -299,7 +299,7 @@ describe('Modal Submit Interactions', () => {
       
       // Check dates were added using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
+      const storage = new StorageServiceV2(editEnv);
       const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
       expect(updatedSchedule?.dates).toHaveLength(4); // Original 2 + new 2
@@ -378,7 +378,7 @@ describe('Modal Submit Interactions', () => {
       
       // Check reminders were reset using StorageService
       const { StorageServiceV2: CheckStorage1 } = await import('../src/services/storage-v2');
-      const checkStorage1 = new CheckStorage1(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const checkStorage1 = new CheckStorage1(deadlineEnv);
       const updatedSchedule = await checkStorage1.getSchedule('test_schedule_deadline', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
       // remindersSent should be reset to empty array
@@ -423,7 +423,7 @@ describe('Modal Submit Interactions', () => {
       
       // Check reminders were reset using StorageService
       const { StorageServiceV2: CheckStorage2 } = await import('../src/services/storage-v2');
-      const storage2 = new CheckStorage2(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const storage2 = new CheckStorage2(deadlineEnv);
       const updatedSchedule = await storage2.getSchedule('test_schedule_deadline', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
       expect(updatedSchedule?.deadline).toBeUndefined();
@@ -450,7 +450,7 @@ describe('Modal Submit Interactions', () => {
       
       // Use StorageService to save the schedule
       const { StorageServiceV2: SaveStorage3 } = await import('../src/services/storage-v2');
-      const storage3 = new SaveStorage3(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const storage3 = new SaveStorage3(deadlineEnv);
       await storage3.saveSchedule(scheduleWithoutDeadline);
 
       const interaction = {

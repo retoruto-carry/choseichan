@@ -31,8 +31,7 @@ describe('Select Menu Interactions', () => {
       DISCORD_PUBLIC_KEY: 'mock-public-key',
       DISCORD_APPLICATION_ID: 'mock-app-id',
       DISCORD_TOKEN: 'mock-token',
-      SCHEDULES: {} as any,
-      RESPONSES: {} as any
+      DB: {} as any
     };
 
     mockSchedule = {

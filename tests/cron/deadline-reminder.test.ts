@@ -37,11 +37,9 @@ describe('Deadline Reminder', () => {
       DISCORD_APPLICATION_ID: 'test-app',
       DATABASE_TYPE: 'd1',
       DB: db,
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace,
     };
     
-    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+    storage = new StorageServiceV2(mockEnv);
   });
 
   afterEach(() => {

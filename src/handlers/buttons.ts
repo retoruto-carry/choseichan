@@ -46,7 +46,7 @@ export async function handleButtonInteraction(
   }
   
   const { action, params } = parseButtonId(customId);
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
+  const storage = new StorageService(env);
 
   switch (action) {
     case 'respond':

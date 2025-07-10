@@ -5,15 +5,12 @@ export interface Env {
   DISCORD_APPLICATION_ID: string;
   DISCORD_TOKEN: string;
   CRON_SECRET?: string;
-  SCHEDULES: KVNamespace;
-  RESPONSES: KVNamespace;
   ctx?: ExecutionContext;
   // Rate limiting for cron jobs (optional)
   REMINDER_BATCH_SIZE?: string;
   REMINDER_BATCH_DELAY?: string;
-  // Database configuration
-  DATABASE_TYPE?: 'kv' | 'd1';
-  DB?: D1Database;
+  // D1 Database
+  DB: D1Database;
 }
 
 export interface DiscordUser {

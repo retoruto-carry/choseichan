@@ -45,8 +45,7 @@ describe('Discord Bot', () => {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace
+      DB: {} as D1Database
     };
     
     const res = await app.fetch(
@@ -70,8 +69,7 @@ describe('Discord Bot', () => {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace
+      DB: {} as D1Database
     };
     
     const interaction = {
@@ -99,8 +97,7 @@ describe('Discord Bot', () => {
       DISCORD_PUBLIC_KEY: wrongPublicKey, // Different public key
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace
+      DB: {} as D1Database
     };
     
     const interaction = {
@@ -124,8 +121,7 @@ describe('Discord Bot', () => {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace
+      DB: {} as D1Database
     };
     
     const interaction = {
@@ -158,8 +154,7 @@ describe('Discord Bot', () => {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
       DISCORD_TOKEN: 'test_token',
-      SCHEDULES: {} as KVNamespace,
-      RESPONSES: {} as KVNamespace
+      DB: {} as D1Database
     };
     
     const interaction = {

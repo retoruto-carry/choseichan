@@ -37,7 +37,7 @@ describe('Delete Schedule with Message', () => {
     // Store the promises array separately for test assertions
     (mockEnv as any)._waitUntilPromises = waitUntilPromises;
     
-    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+    storage = new StorageServiceV2(mockEnv);
   });
 
   afterEach(() => {

@@ -2,32 +2,22 @@
  * データベースタイプに応じたリポジトリファクトリを作成
  */
 
-import { IRepositoryFactory, DatabaseConfig } from './interfaces';
-import { KVRepositoryFactory } from './kv/factory';
-import { D1RepositoryFactory } from './d1/factory';
-import { Env } from '../types/discord';
+import { IRepositoryFactory, DatabaseConfig } from '../../domain/repositories/interfaces';
+import { D1RepositoryFactory } from '../repositories/d1/factory';
+import { Env } from '../../types/discord';
 
 /**
  * 環境変数からデータベース設定を作成
  */
 export function createDatabaseConfig(env: Env): DatabaseConfig {
-  // DATABASE_TYPE環境変数でKVとD1を切り替え
-  const dbType = env.DATABASE_TYPE || 'kv';
-  
-  if (dbType === 'd1' && env.DB) {
-    return {
-      type: 'd1',
-      d1Database: env.DB
-    };
+  // D1データベースのみサポート
+  if (!env.DB) {
+    throw new Error('D1 database (DB) is required but not configured');
   }
   
-  // デフォルトはKV
   return {
-    type: 'kv',
-    kvNamespaces: {
-      schedules: env.SCHEDULES,
-      responses: env.RESPONSES
-    }
+    type: 'd1',
+    d1Database: env.DB
   };
 }
 
@@ -36,14 +26,7 @@ export function createDatabaseConfig(env: Env): DatabaseConfig {
  */
 export function createRepositoryFactory(env: Env): IRepositoryFactory {
   const config = createDatabaseConfig(env);
-  
-  switch (config.type) {
-    case 'd1':
-      return new D1RepositoryFactory(config);
-    case 'kv':
-    default:
-      return new KVRepositoryFactory(config);
-  }
+  return new D1RepositoryFactory(config);
 }
 
 /**

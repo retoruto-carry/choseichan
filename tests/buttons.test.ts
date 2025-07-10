@@ -309,7 +309,7 @@ describe('Button Interactions', () => {
     
     // Check that response was saved using StorageService
     const { StorageServiceV2 } = await import('../src/services/storage-v2');
-    const storage = new StorageServiceV2(env.SCHEDULES, env.RESPONSES, env);
+    const storage = new StorageServiceV2(env);
     
     const savedResponse = await storage.getResponse('test_schedule_id', 'user456', 'test-guild');
     expect(savedResponse).toBeTruthy();

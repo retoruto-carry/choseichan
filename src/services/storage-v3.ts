@@ -5,7 +5,7 @@
  */
 
 import { Schedule, Response, ScheduleSummary } from '../types/schedule-v2';
-import { IRepositoryFactory } from '../repositories/interfaces';
+import { IRepositoryFactory } from '../domain/repositories/interfaces';
 
 export class StorageServiceV3 {
   constructor(private repositoryFactory: IRepositoryFactory) {}
@@ -60,7 +60,7 @@ export class StorageServiceV3 {
 
   async listResponsesBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
     const repo = this.repositoryFactory.getResponseRepository();
-    return repo.findBySchedule(scheduleId, guildId);
+    return repo.findByScheduleId(scheduleId, guildId);
   }
 
   async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {

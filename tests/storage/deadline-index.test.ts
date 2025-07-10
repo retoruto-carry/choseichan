@@ -13,7 +13,7 @@ describe('Deadline Index Management', () => {
     db = createTestD1Database();
     await applyMigrations(db);
     env = createTestEnv(db);
-    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+    storage = new StorageServiceV2(env);
   });
 
   afterEach(() => {

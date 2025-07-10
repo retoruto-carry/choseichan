@@ -36,7 +36,7 @@ export function createTestSchedule(overrides: Partial<Schedule> = {}): Schedule 
  */
 export async function createTestStorage(env: Env): Promise<StorageServiceV2> {
   const { StorageServiceV2 } = await import('../../src/services/storage-v2');
-  return new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+  return new StorageServiceV2(env);
 }
 
 /**

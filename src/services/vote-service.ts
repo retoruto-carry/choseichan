@@ -4,8 +4,7 @@
  */
 
 import { Response, ResponseStatus } from '../types/schedule-v2';
-import { IRepositoryFactory } from '../repositories/interfaces';
-import { ConflictError, RepositoryError } from '../repositories/interfaces';
+import { IRepositoryFactory, ConflictError, RepositoryError } from '../domain/repositories/interfaces';
 
 export interface VoteData {
   scheduleId: string;

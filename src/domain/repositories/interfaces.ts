@@ -3,7 +3,7 @@
  * KVとD1の実装を切り替え可能にするための抽象層
  */
 
-import { Schedule, Response, ScheduleSummary } from '../types/schedule-v2';
+import { Schedule, Response, ScheduleSummary } from '../../types/schedule-v2';
 
 /**
  * スケジュールリポジトリのインターフェース
@@ -47,6 +47,16 @@ export interface IScheduleRepository {
    * ギルド内の全スケジュール数を取得
    */
   countByGuild(guildId: string): Promise<number>;
+
+  /**
+   * リマインダー送信状況を更新
+   */
+  updateReminders(params: {
+    scheduleId: string;
+    guildId: string;
+    remindersSent: string[];
+    reminderSent?: boolean;
+  }): Promise<void>;
 }
 
 /**
@@ -70,7 +80,7 @@ export interface IResponseRepository {
   /**
    * スケジュールの全レスポンスを取得
    */
-  findBySchedule(scheduleId: string, guildId: string): Promise<Response[]>;
+  findByScheduleId(scheduleId: string, guildId: string): Promise<Response[]>;
 
   /**
    * レスポンスを削除
@@ -127,12 +137,8 @@ export interface IRepositoryFactory {
  * データベース接続設定
  */
 export interface DatabaseConfig {
-  type: 'kv' | 'd1';
-  kvNamespaces?: {
-    schedules: KVNamespace;
-    responses: KVNamespace;
-  };
-  d1Database?: D1Database;
+  type: 'd1';
+  d1Database: D1Database;
 }
 
 /**

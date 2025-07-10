@@ -1,18 +1,18 @@
 import { Env } from '../types/discord';
-import { StorageServiceV2 as StorageService } from '../services/storage-v2';
+import { DependencyContainer } from '../infrastructure/factories/DependencyContainer';
 import { NotificationService } from '../services/notification';
-import { Schedule } from '../types/schedule';
 import { processBatches } from '../utils/rate-limiter';
 
-interface ReminderInfo {
-  schedule: Schedule;
-  reminderType: string; // '3d', '1d', '8h', '1h'
-  message: string; // カスタムメッセージ
+interface LegacyReminderInfo {
+  scheduleId: string;
+  guildId: string;
+  reminderType: string;
+  message: string;
 }
 
-interface DeadlineCheckResult {
-  upcomingReminders: ReminderInfo[];  // 送信すべきリマインダー
-  justClosed: Schedule[]; // 締切を過ぎたがまだ開いているスケジュール（自動クローズ対象）
+interface LegacyDeadlineCheckResult {
+  upcomingReminders: LegacyReminderInfo[];
+  justClosed: Array<{scheduleId: string; guildId: string}>;
 }
 
 // デフォルトのリマインダータイミング定義
@@ -79,93 +79,34 @@ function getTimingMessage(timing: string): string {
   }
 }
 
-export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
-  const now = new Date();
-  const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 過去1週間まで確認
+export async function checkDeadlines(env: Env): Promise<LegacyDeadlineCheckResult> {
+  const container = new DependencyContainer(env);
+  const deadlineReminderUseCase = container.deadlineReminderUseCase;
   
-  const result: DeadlineCheckResult = {
-    upcomingReminders: [],
-    justClosed: []
-  };
-
-  // Use StorageService to find schedules with deadlines in range
-  const schedules = await storage.getSchedulesWithDeadlineInRange(oneWeekAgo, threeDaysFromNow);
-
-  console.log(`Found ${schedules.length} schedules with deadlines in range`);
-
-  for (const schedule of schedules) {
-    if (schedule && schedule.deadline) {
-      const deadlineTime = schedule.deadline.getTime();
-      
-      console.log(`Schedule ${schedule.id}: deadline=${new Date(deadlineTime).toISOString()}, status=${schedule.status}, remindersSent=${schedule.remindersSent?.join(',') || 'none'}`);
-      
-      // Check which reminders need to be sent
-      if (schedule.status === 'open' && deadlineTime > now.getTime()) {
-        const remindersSent = schedule.remindersSent || [];
-        
-        // Use custom timings if available, otherwise use defaults
-        const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
-        const timings = isCustom
-          ? schedule.reminderTimings!.map(t => ({
-              type: t,
-              hours: parseTimingToHours(t) || 0,
-              message: getTimingMessage(t),
-              isCustom: true
-            })).filter(t => t.hours > 0)
-          : DEFAULT_REMINDER_TIMINGS.map(t => ({ ...t, isCustom: false }));
-        
-        for (const timing of timings) {
-          const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
-          
-          // Check if this reminder should be sent now
-          // リマインダー時刻を過ぎていて、まだ送信していない場合
-          if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
-            // Skip if reminder is too old based on its type
-            // リマインダータイプに応じた遅延許容時間を超えている場合はスキップ
-            const timeSinceReminder = now.getTime() - reminderTime;
-            // デフォルトリマインダーは固定8時間、カスタムは動的閾値
-            const threshold = (timing as any).isCustom 
-              ? getOldReminderThreshold(timing.type)
-              : 8 * 60 * 60 * 1000;
-            if (timeSinceReminder > threshold) {
-              const hoursLate = Math.floor(timeSinceReminder / (60 * 60 * 1000));
-              const minutesLate = Math.floor(timeSinceReminder / (60 * 1000));
-              const lateDisplay = hoursLate > 0 ? `${hoursLate} hours` : `${minutesLate} minutes`;
-              console.log(`Skipping old reminder for ${schedule.id} (${timing.type}) - ${lateDisplay} late (threshold: ${Math.floor(threshold / (60 * 1000))} minutes)`);
-              continue;
-            }
-            
-            console.log(`Adding ${schedule.id} to upcoming reminders (${timing.type})`);
-            result.upcomingReminders.push({
-              schedule,
-              reminderType: timing.type,
-              message: timing.message
-            });
-          }
-        }
-      }
-      
-      // Check if it's past deadline but still open
-      // 締切を過ぎているがまだ開いている場合（自動クローズ対象）
-      if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
-        // Skip if deadline is too old (more than 8 hours past)
-        // 締切を8時間以上過ぎている場合はスキップ
-        const timeSinceDeadline = now.getTime() - deadlineTime;
-        const CLOSURE_THRESHOLD_MS = 8 * 60 * 60 * 1000; // 締切通知は固定で8時間
-        if (timeSinceDeadline > CLOSURE_THRESHOLD_MS) {
-          console.log(`Skipping old closure for ${schedule.id} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
-          continue;
-        }
-        
-        console.log(`Adding ${schedule.id} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
-        result.justClosed.push(schedule);
-      }
-    }
+  const result = await deadlineReminderUseCase.checkDeadlines();
+  
+  if (!result.success || !result.result) {
+    console.error('Failed to check deadlines:', result.errors);
+    return {
+      upcomingReminders: [],
+      justClosed: []
+    };
   }
 
-  return result;
+  console.log(`Found ${result.result.upcomingReminders.length} upcoming reminders and ${result.result.justClosed.length} schedules to close`);
+
+  // Convert to legacy format for backward compatibility
+  const legacyReminders = result.result.upcomingReminders.map(r => ({
+    scheduleId: r.scheduleId,
+    guildId: r.guildId,
+    reminderType: r.reminderType,
+    message: r.message
+  }));
+
+  return {
+    upcomingReminders: legacyReminders,
+    justClosed: result.result.justClosed
+  };
 }
 
 export async function sendDeadlineReminders(env: Env): Promise<void> {
@@ -174,9 +115,18 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
     return;
   }
 
-  const storage = new StorageService(env.SCHEDULES, env.RESPONSES, env);
+  const container = new DependencyContainer(env);
+  const getScheduleUseCase = container.getScheduleUseCase;
+  const getScheduleSummaryUseCase = container.getScheduleSummaryUseCase;
+  const processReminderUseCase = container.processReminderUseCase;
+  const closeScheduleUseCase = container.closeScheduleUseCase;
+  
+  // Legacy NotificationService - this will eventually be refactored to clean architecture too  
+  // For now, we'll use StorageServiceV2 as a temporary bridge
+  const { StorageServiceV2 } = await import('../services/storage-v2');
+  const legacyStorage = new StorageServiceV2(env);
   const notificationService = new NotificationService(
-    storage,
+    legacyStorage,
     env.DISCORD_TOKEN,
     env.DISCORD_APPLICATION_ID
   );
@@ -185,41 +135,49 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
 
   console.log(`Processing ${upcomingReminders.length} upcoming reminders and ${justClosed.length} closure notifications`);
 
-  // Rate limiting configuration (can be overridden by environment variables)
+  // Rate limiting configuration
   const reminderBatchSize = env.REMINDER_BATCH_SIZE ? parseInt(env.REMINDER_BATCH_SIZE) : 20;
   const reminderBatchDelay = env.REMINDER_BATCH_DELAY ? parseInt(env.REMINDER_BATCH_DELAY) : 100;
 
   // Send reminders for upcoming deadlines with rate limiting
   await processBatches(upcomingReminders, async (reminderInfo) => {
     try {
-      const { schedule, reminderType, message } = reminderInfo;
+      const { scheduleId, guildId, reminderType, message } = reminderInfo;
       
-      // Get current response count
-      const summary = await storage.getScheduleSummary(schedule.id, schedule.guildId || 'default');
-      if (summary) {
-        schedule.totalResponses = summary.userResponses.length;
+      // Get schedule and summary using clean architecture
+      const scheduleResult = await getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        console.error(`Failed to get schedule ${scheduleId}:`, scheduleResult.errors);
+        return;
       }
-      
-      await notificationService.sendDeadlineReminder(schedule, message);
-      
-      // Update remindersSent array
-      const remindersSent = schedule.remindersSent || [];
-      if (!remindersSent.includes(reminderType)) {
-        remindersSent.push(reminderType);
+
+      const summaryResult = await getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      let totalResponses = 0;
+      if (summaryResult.success && summaryResult.summary) {
+        totalResponses = summaryResult.summary.totalResponseUsers;
       }
-      schedule.remindersSent = remindersSent;
+
+      // Convert to legacy format for notification service
+      const legacySchedule = {
+        ...scheduleResult.schedule,
+        deadline: scheduleResult.schedule.deadline ? new Date(scheduleResult.schedule.deadline) : undefined,
+        createdAt: new Date(scheduleResult.schedule.createdAt),
+        updatedAt: new Date(scheduleResult.schedule.updatedAt),
+        totalResponses
+      };
       
-      // Keep backward compatibility
-      if (reminderType === '8h') {
-        schedule.reminderSent = true;
-      }
+      await notificationService.sendDeadlineReminder(legacySchedule, message);
       
-      if (!schedule.guildId) schedule.guildId = 'default';
-      await storage.saveSchedule(schedule);
+      // Update reminder status using clean architecture
+      await processReminderUseCase.markReminderSent({
+        scheduleId,
+        guildId,
+        reminderType
+      });
       
-      console.log(`Sent ${reminderType} deadline reminder for schedule ${schedule.id}`);
+      console.log(`Sent ${reminderType} deadline reminder for schedule ${scheduleId}`);
     } catch (error) {
-      console.error(`Failed to send reminder for schedule ${reminderInfo.schedule.id}:`, error);
+      console.error(`Failed to send reminder for schedule ${reminderInfo.scheduleId}:`, error);
     }
   }, {
     batchSize: reminderBatchSize,
@@ -227,23 +185,47 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
   });
 
   // Send closure notifications with rate limiting
-  await processBatches(justClosed, async (schedule) => {
+  await processBatches(justClosed, async (closureInfo) => {
     try {
-      // Mark as closed
-      schedule.status = 'closed';
-      if (!schedule.guildId) schedule.guildId = 'default';
-      await storage.saveSchedule(schedule);
+      const { scheduleId, guildId } = closureInfo;
       
-      // Send summary and PR message in sequence (to avoid doubling API calls)
-      await notificationService.sendSummaryMessage(schedule.id, schedule.guildId || 'default');
-      await notificationService.sendPRMessage(schedule);
+      // Close schedule using clean architecture
+      const closeResult = await closeScheduleUseCase.execute({
+        scheduleId,
+        guildId,
+        editorUserId: 'system' // System closure
+      });
       
-      console.log(`Sent closure notification for schedule ${schedule.id}`);
+      if (!closeResult.success) {
+        console.error(`Failed to close schedule ${scheduleId}:`, closeResult.errors);
+        return;
+      }
+
+      // Get schedule for notification
+      const scheduleResult = await getScheduleUseCase.execute(scheduleId, guildId);
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        console.error(`Failed to get schedule ${scheduleId} for notification:`, scheduleResult.errors);
+        return;
+      }
+
+      // Convert to legacy format for notification service
+      const legacyScheduleForPR = {
+        ...scheduleResult.schedule,
+        deadline: scheduleResult.schedule.deadline ? new Date(scheduleResult.schedule.deadline) : undefined,
+        createdAt: new Date(scheduleResult.schedule.createdAt),
+        updatedAt: new Date(scheduleResult.schedule.updatedAt)
+      };
+
+      // Send summary and PR message in sequence
+      await notificationService.sendSummaryMessage(scheduleId, guildId);
+      await notificationService.sendPRMessage(legacyScheduleForPR);
+      
+      console.log(`Sent closure notification for schedule ${scheduleId}`);
     } catch (error) {
-      console.error(`Failed to send closure notification for schedule ${schedule.id}:`, error);
+      console.error(`Failed to send closure notification for schedule ${closureInfo.scheduleId}:`, error);
     }
   }, {
-    batchSize: 15,  // Process 15 closures in parallel (each sends 2 messages = 30 total)
-    delayBetweenBatches: 100  // 0.1 second delay between batches
+    batchSize: 15,
+    delayBetweenBatches: 100
   });
 }

@@ -2,9 +2,9 @@
  * D1実装のスケジュールリポジトリ
  */
 
-import { IScheduleRepository, NotFoundError, RepositoryError } from '../interfaces';
-import { Schedule, ScheduleDate } from '../../types/schedule-v2';
-import { TIME_CONSTANTS } from '../../constants';
+import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
+import { Schedule, ScheduleDate } from '../../../types/schedule-v2';
+import { TIME_CONSTANTS } from '../../../constants';
 
 export class D1ScheduleRepository implements IScheduleRepository {
   constructor(private db: D1Database) {}
@@ -223,6 +223,33 @@ export class D1ScheduleRepository implements IScheduleRepository {
       return Number(result?.count) || 0;
     } catch (error) {
       throw new RepositoryError('Failed to count schedules', 'COUNT_ERROR', error as Error);
+    }
+  }
+
+  async updateReminders(params: {
+    scheduleId: string;
+    guildId: string;
+    remindersSent: string[];
+    reminderSent?: boolean;
+  }): Promise<void> {
+    try {
+      const remindersSentJson = JSON.stringify(params.remindersSent);
+      const updatedAt = Math.floor(Date.now() / 1000);
+      
+      await this.db.prepare(`
+        UPDATE schedules 
+        SET 
+          reminders_sent = ?,
+          updated_at = ?
+        WHERE id = ? AND guild_id = ?
+      `).bind(
+        remindersSentJson,
+        updatedAt,
+        params.scheduleId,
+        params.guildId
+      ).run();
+    } catch (error) {
+      throw new RepositoryError('Failed to update reminders', 'UPDATE_ERROR', error as Error);
     }
   }
 

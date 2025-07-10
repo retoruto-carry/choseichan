@@ -2,9 +2,9 @@
  * D1実装のレスポンスリポジトリ
  */
 
-import { IResponseRepository, IScheduleRepository, RepositoryError, ConflictError } from '../interfaces';
-import { Response, ScheduleSummary, ResponseStatus } from '../../types/schedule-v2';
-import { TIME_CONSTANTS } from '../../constants';
+import { IResponseRepository, IScheduleRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
+import { Response, ScheduleSummary, ResponseStatus } from '../../../types/schedule-v2';
+import { TIME_CONSTANTS } from '../../../constants';
 
 export class D1ResponseRepository implements IResponseRepository {
   constructor(
@@ -100,7 +100,7 @@ export class D1ResponseRepository implements IResponseRepository {
     }
   }
 
-  async findBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
+  async findByScheduleId(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
     try {
       const result = await this.db.prepare(`
         SELECT * FROM responses 

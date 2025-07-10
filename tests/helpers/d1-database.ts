@@ -317,15 +317,11 @@ export async function applyMigrations(db: D1Database): Promise<void> {
 
 export function createTestEnv(db: D1Database): Env {
   // Create a properly typed Env object with DB as our test D1Database
-  // We need to cast to any first to bypass TypeScript's structural type checking
   const env = {
     DISCORD_PUBLIC_KEY: 'test-public-key',
     DISCORD_APPLICATION_ID: 'test-app-id',
     DISCORD_TOKEN: 'test-token',
-    DATABASE_TYPE: 'd1' as const,
     DB: db,
-    SCHEDULES: {} as KVNamespace,
-    RESPONSES: {} as KVNamespace,
   } as any as Env;
   
   return env;

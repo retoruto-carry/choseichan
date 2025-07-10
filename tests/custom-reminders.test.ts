@@ -42,7 +42,7 @@ describe('Custom Reminder Settings', () => {
       REMINDER_BATCH_DELAY: '50'
     };
     
-    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+    storage = new StorageServiceV2(mockEnv);
     
     // Create mock notification with spy
     mockNotification = {

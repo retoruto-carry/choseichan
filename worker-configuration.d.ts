@@ -5,11 +5,6 @@ interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_APPLICATION_ID: string;
   DISCORD_TOKEN: string;
-  DATABASE_TYPE?: string;
-  
-  // KV Namespaces (legacy)
-  SCHEDULES: KVNamespace;
-  RESPONSES: KVNamespace;
   
   // D1 Database
   DB: D1Database;

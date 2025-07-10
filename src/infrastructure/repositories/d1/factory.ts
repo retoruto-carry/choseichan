@@ -9,7 +9,7 @@ import {
   ITransaction,
   DatabaseConfig,
   TransactionError 
-} from '../interfaces';
+} from '../../../domain/repositories/interfaces';
 import { D1ScheduleRepository } from './schedule-repository';
 import { D1ResponseRepository } from './response-repository';
 

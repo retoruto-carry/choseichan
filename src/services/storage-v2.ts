@@ -12,7 +12,7 @@ import {
   convertToLegacyScheduleSummary
 } from '../types/schedule-v2';
 import { StorageServiceV3 } from './storage-v3';
-import { getRepositoryFactory } from '../repositories/factory';
+import { getRepositoryFactory } from '../infrastructure/factories/factory';
 import { Env } from '../types/discord';
 
 // Helper functions for Schedule type conversion
@@ -53,21 +53,10 @@ function convertScheduleSummaryFromV2(summary: ScheduleSummaryV2 | null, respons
 export class StorageServiceV2 {
   private storageV3: StorageServiceV3;
 
-  constructor(schedules: KVNamespace, responses: KVNamespace, env?: Env) {
-    // 環境変数からリポジトリファクトリを作成
-    const effectiveEnv: Env = env || {
-      DISCORD_PUBLIC_KEY: '',
-      DISCORD_APPLICATION_ID: '',
-      DISCORD_TOKEN: '',
-      SCHEDULES: schedules,
-      RESPONSES: responses,
-      DATABASE_TYPE: 'kv',
-      DB: undefined
-    };
-    
+  constructor(env: Env) {
     // テスト環境では常に新しいファクトリを作成
     const forceNew = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
-    const repositoryFactory = getRepositoryFactory(effectiveEnv, forceNew);
+    const repositoryFactory = getRepositoryFactory(env, forceNew);
     
     this.storageV3 = new StorageServiceV3(repositoryFactory);
   }
