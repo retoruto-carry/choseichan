@@ -3,9 +3,48 @@
  */
 
 import { Schedule, Response, ScheduleSummary } from '../types/schedule';
+import { 
+  Schedule as ScheduleV2, 
+  Response as ResponseV2, 
+  ScheduleSummary as ScheduleSummaryV2,
+  convertLegacyResponse,
+  convertResponseToLegacy,
+  convertToLegacyScheduleSummary
+} from '../types/schedule-v2';
 import { StorageServiceV3 } from './storage-v3';
 import { getRepositoryFactory } from '../repositories/factory';
 import { Env } from '../types/discord';
+
+// Helper functions for Schedule type conversion
+function convertScheduleToV2(schedule: Schedule): ScheduleV2 {
+  return {
+    ...schedule,
+    guildId: schedule.guildId || 'default',  // Ensure guildId is never undefined
+    dates: schedule.dates || [],
+    totalResponses: schedule.totalResponses || 0,
+    notificationSent: schedule.notificationSent || false,
+    createdAt: schedule.createdAt instanceof Date ? schedule.createdAt : new Date(schedule.createdAt),
+    updatedAt: schedule.updatedAt instanceof Date ? schedule.updatedAt : new Date(schedule.updatedAt)
+  };
+}
+
+function convertScheduleFromV2(schedule: ScheduleV2): Schedule {
+  return schedule as Schedule;  // V2 is compatible with V1
+}
+
+function convertScheduleSummaryFromV2(summary: ScheduleSummaryV2 | null, responses: ResponseV2[]): ScheduleSummary | null {
+  if (!summary) return null;
+  
+  // Convert to legacy format
+  const legacySummary = convertToLegacyScheduleSummary(summary, responses);
+  
+  return {
+    schedule: convertScheduleFromV2(summary.schedule),
+    responseCounts: legacySummary.responseCounts,
+    userResponses: legacySummary.userResponses,
+    bestDateId: legacySummary.bestDateId
+  } as ScheduleSummary;
+}
 
 /**
  * 既存のStorageServiceV2と同じインターフェースを提供
@@ -33,19 +72,23 @@ export class StorageServiceV2 {
 
   // Schedule operations
   async saveSchedule(schedule: Schedule): Promise<void> {
-    return this.storageV3.saveSchedule(schedule);
+    const scheduleV2 = convertScheduleToV2(schedule);
+    return this.storageV3.saveSchedule(scheduleV2);
   }
 
   async getSchedule(scheduleId: string, guildId: string = 'default'): Promise<Schedule | null> {
-    return this.storageV3.getSchedule(scheduleId, guildId);
+    const scheduleV2 = await this.storageV3.getSchedule(scheduleId, guildId);
+    return scheduleV2 ? convertScheduleFromV2(scheduleV2) : null;
   }
 
   async listSchedulesByChannel(channelId: string, guildId: string = 'default', limit: number = 100): Promise<Schedule[]> {
-    return this.storageV3.listSchedulesByChannel(channelId, guildId, limit);
+    const schedulesV2 = await this.storageV3.listSchedulesByChannel(channelId, guildId, limit);
+    return schedulesV2.map(convertScheduleFromV2);
   }
 
   async getSchedulesWithDeadlineInRange(startTime: Date, endTime: Date, guildId?: string): Promise<Schedule[]> {
-    return this.storageV3.getSchedulesWithDeadlineInRange(startTime, endTime, guildId);
+    const schedulesV2 = await this.storageV3.getSchedulesWithDeadlineInRange(startTime, endTime, guildId);
+    return schedulesV2.map(convertScheduleFromV2);
   }
 
   async deleteSchedule(scheduleId: string, guildId: string = 'default'): Promise<void> {
@@ -53,24 +96,31 @@ export class StorageServiceV2 {
   }
 
   async getScheduleByMessageId(messageId: string, guildId: string): Promise<Schedule | null> {
-    return this.storageV3.getScheduleByMessageId(messageId, guildId);
+    const scheduleV2 = await this.storageV3.getScheduleByMessageId(messageId, guildId);
+    return scheduleV2 ? convertScheduleFromV2(scheduleV2) : null;
   }
 
   // Response operations
   async saveResponse(response: Response, guildId: string = 'default'): Promise<void> {
-    return this.storageV3.saveResponse(response, guildId);
+    const responseV2 = convertLegacyResponse(response);
+    return this.storageV3.saveResponse(responseV2, guildId);
   }
 
   async getResponse(scheduleId: string, userId: string, guildId: string = 'default'): Promise<Response | null> {
-    return this.storageV3.getResponse(scheduleId, userId, guildId);
+    const responseV2 = await this.storageV3.getResponse(scheduleId, userId, guildId);
+    return responseV2 ? convertResponseToLegacy(responseV2) : null;
   }
 
   async listResponsesBySchedule(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
-    return this.storageV3.listResponsesBySchedule(scheduleId, guildId);
+    const responsesV2 = await this.storageV3.listResponsesBySchedule(scheduleId, guildId);
+    return responsesV2.map(convertResponseToLegacy);
   }
 
   async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
-    return this.storageV3.getScheduleSummary(scheduleId, guildId);
+    const summaryV2 = await this.storageV3.getScheduleSummary(scheduleId, guildId);
+    if (!summaryV2) return null;
+    const responsesV2 = await this.storageV3.listResponsesBySchedule(scheduleId, guildId);
+    return convertScheduleSummaryFromV2(summaryV2, responsesV2);
   }
 
   // Additional methods for backward compatibility
@@ -85,8 +135,14 @@ export class StorageServiceV2 {
     userId: string,
     optimisticResponse: Response
   ): Promise<ScheduleSummary | null> {
-    // For now, just save and return the updated summary
-    await this.saveResponse(optimisticResponse, guildId);
-    return this.getScheduleSummary(scheduleId, guildId);
+    // Convert and save the response
+    const responseV2 = convertLegacyResponse(optimisticResponse);
+    await this.storageV3.saveResponse(responseV2, guildId);
+    
+    // Get and convert the updated summary
+    const summaryV2 = await this.storageV3.getScheduleSummary(scheduleId, guildId);
+    if (!summaryV2) return null;
+    const responsesV2 = await this.storageV3.listResponsesBySchedule(scheduleId, guildId);
+    return convertScheduleSummaryFromV2(summaryV2, responsesV2);
   }
 }
