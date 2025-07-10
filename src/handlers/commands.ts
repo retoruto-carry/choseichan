@@ -4,6 +4,7 @@ import { STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
 import { StorageServiceV2 as StorageService } from '../services/storage-v2';
 import { formatDate } from '../utils/date';
 import { handleHelpCommand } from './help';
+import { DISCORD_FLAGS, ERROR_MESSAGES } from '../constants';
 
 export async function handleChoseichanCommand(
   interaction: CommandInteraction,
@@ -16,8 +17,8 @@ export async function handleChoseichanCommand(
     return new Response(JSON.stringify({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: 'サブコマンドを指定してください。',
-        flags: 64 // Ephemeral
+        content: ERROR_MESSAGES.INVALID_INPUT,
+        flags: DISCORD_FLAGS.EPHEMERAL
       }
     }), { headers: { 'Content-Type': 'application/json' } });
   }
@@ -35,8 +36,8 @@ export async function handleChoseichanCommand(
       return new Response(JSON.stringify({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: '不明なサブコマンドです。',
-          flags: 64
+          content: ERROR_MESSAGES.UNKNOWN_COMMAND,
+          flags: DISCORD_FLAGS.EPHEMERAL
         }
       }), { headers: { 'Content-Type': 'application/json' } });
   }

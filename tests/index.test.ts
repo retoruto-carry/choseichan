@@ -143,7 +143,7 @@ describe('Discord Bot', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toContain('サブコマンドを指定してください。');
+    expect(json.data.content).toContain('入力内容に問題があります。');
     expect(json.data.flags).toBe(64); // Ephemeral
   });
 

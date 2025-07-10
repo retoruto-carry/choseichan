@@ -2,6 +2,7 @@ import { Schedule, ScheduleSummary } from '../types/schedule';
 import { StorageServiceV2 as StorageService } from './storage-v2';
 import { formatDate } from '../utils/date';
 import { STATUS_EMOJI } from '../types/schedule';
+import { NOTIFICATION_SETTINGS } from '../constants';
 
 /**
  * 通知サービス
@@ -306,8 +307,8 @@ export class NotificationService {
       };
     }
 
-    // Send PR message 5 seconds after summary using Promise-based delay
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Send PR message with delay after summary using Promise-based delay
+    await new Promise(resolve => setTimeout(resolve, NOTIFICATION_SETTINGS.PR_MESSAGE_DELAY_MS));
     await this.sendChannelMessage(schedule.channelId, message);
   }
 }
