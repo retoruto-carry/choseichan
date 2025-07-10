@@ -239,7 +239,7 @@ export class NotificationService {
     const { schedule, responseCounts, userResponses, bestDateId } = summary;
     
     const message = {
-      content: `📊 日程調整「${schedule.title}」が締め切られました！`,
+      content: `**📊 日程調整「${schedule.title}」が締め切られました！**`,
       embeds: [{
         title: '📊 集計結果',
         color: 0x2ecc71,
