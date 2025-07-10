@@ -286,13 +286,8 @@ export class NotificationService {
       };
     }
 
-    // Send PR message 5 seconds after summary
-    setTimeout(async () => {
-      try {
-        await this.sendChannelMessage(schedule.channelId, message);
-      } catch (error) {
-        console.error('Failed to send PR message:', error);
-      }
-    }, 5000);
+    // Send PR message 5 seconds after summary using Promise-based delay
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    await this.sendChannelMessage(schedule.channelId, message);
   }
 }

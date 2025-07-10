@@ -179,13 +179,15 @@ describe('NotificationService', () => {
         json: async () => ({ id: 'pr-message-123' })
       });
 
-      await notificationService.sendPRMessage(schedule);
+      // Start the PR message sending (which includes the delay)
+      const sendPromise = notificationService.sendPRMessage(schedule);
 
       // Should not be called immediately
       expect(global.fetch).not.toHaveBeenCalled();
 
-      // Fast forward 5 seconds
+      // Fast forward 5 seconds and wait for the promise
       await vi.advanceTimersByTimeAsync(5000);
+      await sendPromise;
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://discord.com/api/v10/channels/channel123/messages',
