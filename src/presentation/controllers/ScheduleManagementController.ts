@@ -1,0 +1,518 @@
+/**
+ * Schedule Management Controller
+ * 
+ * スケジュール管理機能のコントローラー
+ * 元: src/handlers/schedule-handlers.ts の Clean Architecture版
+ */
+
+import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { ButtonInteraction, Env } from '../../types/discord';
+import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { ScheduleManagementUIBuilder } from '../builders/ScheduleManagementUIBuilder';
+
+export class ScheduleManagementController {
+  constructor(
+    private readonly dependencyContainer: DependencyContainer,
+    private readonly uiBuilder: ScheduleManagementUIBuilder
+  ) {}
+
+  /**
+   * スケジュール状況表示ボタンの処理
+   */
+  async handleStatusButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+
+      // メッセージIDの保存（必要な場合）
+      await this.saveMessageIdIfNeeded(scheduleId, guildId, interaction.message?.id);
+
+      // スケジュール概要取得
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase
+        .execute(scheduleId, guildId);
+
+      if (!summaryResult.success || !summaryResult.summary) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      // UI構築
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      const components = this.uiBuilder.createScheduleComponents(summaryResult.summary.schedule, true);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          embeds: [embed],
+          components
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleStatusButton:', error);
+      return this.createErrorResponse('スケジュール表示中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * 編集ボタンの処理
+   */
+  async handleEditButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
+
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
+
+      // スケジュール取得
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
+        .execute(scheduleId, guildId);
+
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      // メッセージIDの保存（必要な場合）
+      await this.saveMessageIdIfNeeded(scheduleId, guildId, interaction.message?.id);
+
+      // 編集権限確認
+      if (scheduleResult.schedule.authorId !== userId) {
+        return this.createErrorResponse('日程調整を編集できるのは作成者のみです。');
+      }
+
+      // 編集メニューUI構築
+      const originalMessageId = interaction.message?.id || '';
+      const components = this.uiBuilder.createEditMenuComponents(scheduleId, originalMessageId, scheduleResult.schedule);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: '編集する項目を選択してください：',
+          components,
+          flags: InteractionResponseFlags.EPHEMERAL
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleEditButton:', error);
+      return this.createErrorResponse('編集メニュー表示中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * 詳細表示ボタンの処理
+   */
+  async handleDetailsButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+
+      // スケジュール概要取得
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase
+        .execute(scheduleId, guildId);
+
+      if (!summaryResult.success || !summaryResult.summary) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      // 詳細表示用UI構築
+      const embed = this.uiBuilder.createDetailedInfoEmbed(summaryResult.summary);
+      const components = this.uiBuilder.createScheduleComponents(summaryResult.summary.schedule, true);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          embeds: [embed],
+          components
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleDetailsButton:', error);
+      return this.createErrorResponse('詳細表示中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * スケジュール締切ボタンの処理
+   */
+  async handleCloseButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: any
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
+
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
+
+      // スケジュール締切実行
+      const closeResult = await this.dependencyContainer.closeScheduleUseCase
+        .execute({
+          scheduleId,
+          guildId,
+          editorUserId: userId
+        });
+
+      if (!closeResult.success) {
+        return this.createErrorResponse(closeResult.errors?.[0] || 'スケジュールの締切に失敗しました。');
+      }
+
+      // メッセージ更新とnotifications処理
+      await this.handlePostCloseActions(scheduleId, guildId, interaction, env);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: '✅ スケジュールを締め切りました。',
+          flags: InteractionResponseFlags.EPHEMERAL
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleCloseButton:', error);
+      return this.createErrorResponse('スケジュール締切中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * スケジュール再開ボタンの処理
+   */
+  async handleReopenButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: any
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
+
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
+
+      // スケジュール取得と権限確認
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
+        .execute(scheduleId, guildId);
+
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      if (scheduleResult.schedule.authorId !== userId) {
+        return this.createErrorResponse('日程調整を再開できるのは作成者のみです。');
+      }
+
+      // 再開処理（一時的にStorageServiceV2を使用）
+      const { StorageServiceV2 } = await import('../../services/storage-v2');
+      const storage = new StorageServiceV2({} as any);
+      
+      const schedule = await storage.getSchedule(scheduleId, guildId);
+      if (!schedule) {
+        return this.createErrorResponse('スケジュールの取得に失敗しました。');
+      }
+      
+      schedule.status = 'open';
+      schedule.updatedAt = new Date();
+      await storage.saveSchedule(schedule);
+
+      // メッセージ更新処理
+      await this.handlePostReopenActions(scheduleId, guildId, interaction, env);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: '✅ スケジュールを再開しました。',
+          flags: InteractionResponseFlags.EPHEMERAL
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleReopenButton:', error);
+      return this.createErrorResponse('スケジュール再開中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * スケジュール削除ボタンの処理
+   */
+  async handleDeleteButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env?: any
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+      const userId = interaction.member?.user.id || interaction.user?.id;
+
+      if (!userId) {
+        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
+      }
+
+      // スケジュール取得と権限確認
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
+        .execute(scheduleId, guildId);
+
+      if (!scheduleResult.success || !scheduleResult.schedule) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      if (scheduleResult.schedule.authorId !== userId) {
+        return this.createErrorResponse('日程調整を削除できるのは作成者のみです。');
+      }
+
+      // Discord メッセージ削除処理
+      await this.handleDiscordMessageDeletion(scheduleResult.schedule, interaction, env);
+
+      // データベースから削除（後でClean Architectureに移行）
+      const { StorageServiceV2 } = await import('../../services/storage-v2');
+      const storage = new StorageServiceV2(env || {});
+      await storage.deleteSchedule(scheduleId, guildId);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          content: `日程調整「${scheduleResult.schedule.title}」を削除しました。`,
+          embeds: [],
+          components: []
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleDeleteButton:', error);
+      return this.createErrorResponse('スケジュール削除中にエラーが発生しました。');
+    }
+  }
+
+  /**
+   * 更新ボタンの処理
+   */
+  async handleRefreshButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+
+      // 最新のスケジュール概要取得
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase
+        .execute(scheduleId, guildId);
+
+      if (!summaryResult.success || !summaryResult.summary) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      // UI構築
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      const components = this.uiBuilder.createScheduleComponents(summaryResult.summary.schedule, false);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          embeds: [embed],
+          components
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleRefreshButton:', error);
+      return this.createErrorResponse('メッセージの更新に失敗しました。');
+    }
+  }
+
+  /**
+   * 詳細非表示ボタンの処理
+   */
+  async handleHideDetailsButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
+    try {
+      const [scheduleId] = params;
+      const guildId = interaction.guild_id || 'default';
+
+      // スケジュール概要取得
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase
+        .execute(scheduleId, guildId);
+
+      if (!summaryResult.success || !summaryResult.summary) {
+        return this.createErrorResponse('日程調整が見つかりません。');
+      }
+
+      // 簡易表示用UI構築
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      const components = this.uiBuilder.createScheduleComponents(summaryResult.summary.schedule, false);
+
+      return new Response(JSON.stringify({
+        type: InteractionResponseType.UPDATE_MESSAGE,
+        data: {
+          embeds: [embed],
+          components
+        }
+      }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in handleHideDetailsButton:', error);
+      return this.createErrorResponse('表示切替中にエラーが発生しました。');
+    }
+  }
+
+  private async saveMessageIdIfNeeded(scheduleId: string, guildId: string, messageId?: string): Promise<void> {
+    if (!messageId) return;
+
+    try {
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
+        .execute(scheduleId, guildId);
+
+      if (scheduleResult.success && scheduleResult.schedule && !scheduleResult.schedule.messageId) {
+        // MessageIDの更新は既存のユーティリティを使用
+        const { saveScheduleMessageId } = await import('../../utils/schedule-updater');
+        const { StorageServiceV2 } = await import('../../services/storage-v2');
+        
+        // 一時的にStorageServiceV2を使用（後でClean Architectureに移行予定）
+        const storage = new StorageServiceV2({ DB: null } as any);
+        await saveScheduleMessageId(scheduleId, messageId, storage, guildId);
+      }
+    } catch (error) {
+      console.error('Failed to save message ID:', error);
+    }
+  }
+
+  private async handlePostCloseActions(scheduleId: string, guildId: string, interaction: any, env: any): Promise<void> {
+    try {
+      // メインメッセージの更新
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
+        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater');
+        const { StorageServiceV2 } = await import('../../services/storage-v2');
+        const storage = new StorageServiceV2(env);
+        
+        const updatePromise = updateScheduleMainMessage(
+          scheduleId,
+          scheduleResult.schedule.messageId,
+          interaction.token,
+          storage,
+          env,
+          guildId
+        ).catch(error => console.error('Failed to update main message after closing:', error));
+        
+        if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+          env.ctx.waitUntil(updatePromise);
+        }
+      }
+
+      // 通知送信
+      if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
+        const { NotificationService } = await import('../../services/notification');
+        const { StorageServiceV2 } = await import('../../services/storage-v2');
+        const storage = new StorageServiceV2(env);
+        
+        const notificationService = new NotificationService(
+          storage,
+          env.DISCORD_TOKEN,
+          env.DISCORD_APPLICATION_ID
+        );
+        
+        env.ctx.waitUntil(
+          (async () => {
+            try {
+              await notificationService.sendSummaryMessage(scheduleId, guildId);
+              if (scheduleResult.success && scheduleResult.schedule) {
+                const legacySchedule = {
+                  ...scheduleResult.schedule,
+                  deadline: scheduleResult.schedule.deadline ? new Date(scheduleResult.schedule.deadline) : undefined,
+                  createdAt: new Date(scheduleResult.schedule.createdAt),
+                  updatedAt: new Date(scheduleResult.schedule.updatedAt)
+                };
+                await notificationService.sendPRMessage(legacySchedule);
+              }
+            } catch (error) {
+              console.error('Failed to send closure notifications:', error);
+            }
+          })()
+        );
+      }
+    } catch (error) {
+      console.error('Failed to handle post close actions:', error);
+    }
+  }
+
+  private async handlePostReopenActions(scheduleId: string, guildId: string, interaction: any, env: any): Promise<void> {
+    try {
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
+        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater');
+        const { StorageServiceV2 } = await import('../../services/storage-v2');
+        const storage = new StorageServiceV2(env);
+        
+        const updatePromise = updateScheduleMainMessage(
+          scheduleId,
+          scheduleResult.schedule.messageId,
+          interaction.token,
+          storage,
+          env,
+          guildId
+        ).catch(error => console.error('Failed to update main message after reopening:', error));
+        
+        if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+          env.ctx.waitUntil(updatePromise);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to handle post reopen actions:', error);
+    }
+  }
+
+  private async handleDiscordMessageDeletion(schedule: any, interaction: any, env?: any): Promise<void> {
+    if (schedule.messageId && env?.DISCORD_APPLICATION_ID && env?.ctx) {
+      env.ctx.waitUntil(
+        (async () => {
+          try {
+            const { deleteMessage } = await import('../../utils/discord');
+            await deleteMessage(env.DISCORD_APPLICATION_ID!, interaction.token, schedule.messageId!);
+          } catch (error) {
+            console.error('Failed to delete main Discord message:', error);
+          }
+        })()
+      );
+    }
+  }
+
+  private createErrorResponse(message: string): Response {
+    return new Response(JSON.stringify({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: message,
+        flags: InteractionResponseFlags.EPHEMERAL
+      }
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+/**
+ * Factory function for creating controller with dependencies
+ */
+export function createScheduleManagementController(env: Env): ScheduleManagementController {
+  const container = new DependencyContainer(env);
+  const uiBuilder = new ScheduleManagementUIBuilder();
+  
+  return new ScheduleManagementController(container, uiBuilder);
+}

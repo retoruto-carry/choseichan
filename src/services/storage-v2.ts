@@ -52,13 +52,20 @@ function convertScheduleSummaryFromV2(summary: ScheduleSummaryV2 | null, respons
  */
 export class StorageServiceV2 {
   private storageV3: StorageServiceV3;
+  private env: Env;
 
   constructor(env: Env) {
+    this.env = env;
     // テスト環境では常に新しいファクトリを作成
     const forceNew = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
     const repositoryFactory = getRepositoryFactory(env, forceNew);
     
     this.storageV3 = new StorageServiceV3(repositoryFactory);
+  }
+
+  // Helper method to get the environment
+  getEnv(): Env {
+    return this.env;
   }
 
   // Schedule operations
