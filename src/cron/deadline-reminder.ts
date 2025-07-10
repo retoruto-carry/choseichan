@@ -22,9 +22,30 @@ const DEFAULT_REMINDER_TIMINGS = [
   { type: '8h', hours: 8, message: '締切まで8時間' }
 ];
 
-// 古いリマインダーをスキップする閾値（8時間）
-// この時間以上遅れているリマインダーは送信しない
-const OLD_REMINDER_THRESHOLD_MS = 8 * 60 * 60 * 1000;
+// 古いリマインダーをスキップする閾値
+// リマインダータイプに応じて動的に決定
+function getOldReminderThreshold(timing: string): number {
+  const match = timing.match(/^(\d+)([dhm])$/);
+  if (!match) return 8 * 60 * 60 * 1000; // デフォルト8時間
+  
+  const value = parseInt(match[1]);
+  const unit = match[2];
+  
+  // 各単位に応じた許容遅延時間
+  switch (unit) {
+    case 'd':
+      // 日単位: 8時間の遅延を許容
+      return 8 * 60 * 60 * 1000;
+    case 'h':
+      // 時間単位: 2時間または設定値の25%のうち大きい方
+      return Math.max(2 * 60 * 60 * 1000, value * 0.25 * 60 * 60 * 1000);
+    case 'm':
+      // 分単位: 30分または設定値の50%のうち大きい方
+      return Math.max(30 * 60 * 1000, value * 0.5 * 60 * 1000);
+    default:
+      return 8 * 60 * 60 * 1000;
+  }
+}
 
 // カスタムタイミングの文字列（例: '3d', '8h', '30m'）を時間に変換
 function parseTimingToHours(timing: string): number | null {
@@ -104,13 +125,15 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
         const remindersSent = schedule.remindersSent || [];
         
         // Use custom timings if available, otherwise use defaults
-        const timings = schedule.reminderTimings && schedule.reminderTimings.length > 0
+        const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
+        const timings = isCustom
           ? schedule.reminderTimings.map(t => ({
               type: t,
               hours: parseTimingToHours(t) || 0,
-              message: getTimingMessage(t)
+              message: getTimingMessage(t),
+              isCustom: true
             })).filter(t => t.hours > 0)
-          : DEFAULT_REMINDER_TIMINGS;
+          : DEFAULT_REMINDER_TIMINGS.map(t => ({ ...t, isCustom: false }));
         
         for (const timing of timings) {
           const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
@@ -118,11 +141,18 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
           // Check if this reminder should be sent now
           // リマインダー時刻を過ぎていて、まだ送信していない場合
           if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
-            // Skip if reminder is too old (more than 8 hours past the reminder time)
-            // 8時間以上前のリマインダーはスキップ（大幅に過ぎている場合）
+            // Skip if reminder is too old based on its type
+            // リマインダータイプに応じた遅延許容時間を超えている場合はスキップ
             const timeSinceReminder = now.getTime() - reminderTime;
-            if (timeSinceReminder > OLD_REMINDER_THRESHOLD_MS) {
-              console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${Math.floor(timeSinceReminder / (60 * 60 * 1000))} hours late`);
+            // デフォルトリマインダーは固定8時間、カスタムは動的閾値
+            const threshold = (timing as any).isCustom 
+              ? getOldReminderThreshold(timing.type)
+              : 8 * 60 * 60 * 1000;
+            if (timeSinceReminder > threshold) {
+              const hoursLate = Math.floor(timeSinceReminder / (60 * 60 * 1000));
+              const minutesLate = Math.floor(timeSinceReminder / (60 * 1000));
+              const lateDisplay = hoursLate > 0 ? `${hoursLate} hours` : `${minutesLate} minutes`;
+              console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${lateDisplay} late (threshold: ${Math.floor(threshold / (60 * 1000))} minutes)`);
               continue;
             }
             
@@ -142,7 +172,8 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
         // Skip if deadline is too old (more than 8 hours past)
         // 締切を8時間以上過ぎている場合はスキップ
         const timeSinceDeadline = now.getTime() - deadlineTime;
-        if (timeSinceDeadline > OLD_REMINDER_THRESHOLD_MS) {
+        const CLOSURE_THRESHOLD_MS = 8 * 60 * 60 * 1000; // 締切通知は固定で8時間
+        if (timeSinceDeadline > CLOSURE_THRESHOLD_MS) {
           console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
           continue;
         }

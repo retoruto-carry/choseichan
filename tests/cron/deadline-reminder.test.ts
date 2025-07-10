@@ -312,7 +312,7 @@ describe('Deadline Reminder', () => {
     );
   });
 
-  it('should skip old reminders (more than 8 hours late)', async () => {
+  it('should skip old reminders based on dynamic thresholds', async () => {
     const now = new Date();
     const deadlineIn10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000);
     
@@ -356,5 +356,118 @@ describe('Deadline Reminder', () => {
     // - 3d and 1d reminders are more than 8 hours late (skipped)
     // - 8h reminder is not due yet (deadline is in 10 hours)
     expect(mockNotificationService.sendDeadlineReminder).not.toHaveBeenCalled();
+  });
+
+  it('should apply appropriate thresholds for different reminder types', async () => {
+    const now = new Date();
+    
+    // Test 1: Hour-based reminder with 1.5 hours late (should send - threshold is 2h)
+    const deadlineIn30Min = new Date(now.getTime() + 30 * 60 * 1000);
+    const schedule1: Schedule = {
+      id: 'test-hour-reminder',
+      title: 'Hour Reminder Test',
+      dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+      createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
+      channelId: 'channel123',
+      guildId: 'guild123',
+      deadline: deadlineIn30Min,
+      reminderSent: false,
+      remindersSent: [],
+      reminderTimings: ['2h'], // 2 hour reminder, currently 1.5 hours late
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'open',
+      notificationSent: false
+    };
+
+    await mockKV.put(
+      `guild:guild123:schedule:test-hour-reminder`,
+      JSON.stringify(schedule1)
+    );
+    const timestamp1 = Math.floor(deadlineIn30Min.getTime() / 1000);
+    await mockKV.put(
+      `deadline:${timestamp1}:guild123:test-hour-reminder`,
+      ''
+    );
+
+    // Test 2: Minute-based reminder with 25 minutes late (should send - threshold is 30m)
+    const deadlineIn5Min = new Date(now.getTime() + 5 * 60 * 1000);
+    const schedule2: Schedule = {
+      id: 'test-minute-reminder',
+      title: 'Minute Reminder Test',
+      dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+      createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
+      channelId: 'channel123',
+      guildId: 'guild123',
+      deadline: deadlineIn5Min,
+      reminderSent: false,
+      remindersSent: [],
+      reminderTimings: ['30m'], // 30 minute reminder, currently 25 minutes late
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'open',
+      notificationSent: false
+    };
+
+    await mockKV.put(
+      `guild:guild123:schedule:test-minute-reminder`,
+      JSON.stringify(schedule2)
+    );
+    const timestamp2 = Math.floor(deadlineIn5Min.getTime() / 1000);
+    await mockKV.put(
+      `deadline:${timestamp2}:guild123:test-minute-reminder`,
+      ''
+    );
+
+    // Test 3: Hour reminder more than 2 hours late (should skip)
+    const deadlinePast1Hour = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+    const schedule3: Schedule = {
+      id: 'test-old-hour-reminder',
+      title: 'Old Hour Reminder Test',
+      dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
+      createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
+      channelId: 'channel123',
+      guildId: 'guild123',
+      deadline: deadlinePast1Hour,
+      reminderSent: false,
+      remindersSent: [],
+      reminderTimings: ['1h'], // Should have been sent 2+ hours ago
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'open',
+      notificationSent: false
+    };
+
+    await mockKV.put(
+      `guild:guild123:schedule:test-old-hour-reminder`,
+      JSON.stringify(schedule3)
+    );
+    const timestamp3 = Math.floor(deadlinePast1Hour.getTime() / 1000);
+    await mockKV.put(
+      `deadline:${timestamp3}:guild123:test-old-hour-reminder`,
+      ''
+    );
+
+    await sendDeadlineReminders(mockEnv);
+
+    // Should send 2 reminders (hour and minute based)
+    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledTimes(2);
+    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'test-hour-reminder' }),
+      '締切まで2時間'
+    );
+    expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'test-minute-reminder' }),
+      '締切まで30分'
+    );
+
+    // Should also send closure notification for the past deadline
+    expect(mockNotificationService.sendSummaryMessage).toHaveBeenCalledWith(
+      'test-old-hour-reminder',
+      'guild123'
+    );
   });
 });
