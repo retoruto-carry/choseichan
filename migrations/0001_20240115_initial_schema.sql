@@ -1,7 +1,12 @@
 -- Discord 調整ちゃん D1 Database Schema
--- Migration: 0001_initial_schema.sql
+-- Migration: 0001_20240115_initial_schema.sql
+-- Description: Initial database schema for Discord scheduling bot
 
--- Drop existing tables if they exist
+-- Enable deferred foreign key constraints for this migration
+PRAGMA defer_foreign_keys = true;
+
+-- Drop existing tables if they exist (in reverse dependency order)
+DROP TABLE IF EXISTS response_date_status;
 DROP TABLE IF EXISTS responses;
 DROP TABLE IF EXISTS schedule_dates;
 DROP TABLE IF EXISTS schedules;
@@ -113,13 +118,13 @@ GROUP BY sd.schedule_id, sd.date_id, rds.status;
 CREATE TRIGGER update_schedule_timestamp 
 AFTER UPDATE ON schedules
 BEGIN
-  UPDATE schedules SET updated_at = unixepoch() WHERE id = NEW.id;
+  UPDATE schedules SET updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = NEW.id;
 END;
 
 CREATE TRIGGER update_response_timestamp 
 AFTER UPDATE ON responses
 BEGIN
-  UPDATE responses SET updated_at = unixepoch() WHERE id = NEW.id;
+  UPDATE responses SET updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = NEW.id;
 END;
 
 -- Trigger to update total_responses count
@@ -146,3 +151,6 @@ BEGIN
   )
   WHERE id = OLD.schedule_id;
 END;
+
+-- Reset foreign key constraint mode
+PRAGMA defer_foreign_keys = false;

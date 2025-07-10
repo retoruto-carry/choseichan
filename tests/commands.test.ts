@@ -1,39 +1,23 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
 import { handleChoseichanCommand } from '../src/handlers/commands';
 import { CommandInteraction, Env } from '../src/types/discord';
-
-// Mock KVNamespace
-const createMockKVNamespace = () => {
-  const storage = new Map();
-  return {
-    get: vi.fn(async (key: string) => storage.get(key) || null),
-    put: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      storage.delete(key);
-    }),
-    list: vi.fn(async (options: { prefix: string }) => {
-      const keys = Array.from(storage.keys())
-        .filter(k => k.startsWith(options.prefix))
-        .map(name => ({ name, metadata: {} }));
-      return { keys };
-    })
-  } as unknown as KVNamespace;
-};
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
+import type { D1Database } from './helpers/d1-database';
+import { expectInteractionResponse } from './helpers/interaction-schemas';
 
 describe('Choseichan Commands', () => {
+  let db: D1Database;
   let env: Env;
   
-  beforeEach(() => {
-    env = {
-      DISCORD_PUBLIC_KEY: 'test_public_key',
-      DISCORD_APPLICATION_ID: 'test_app_id',
-      DISCORD_TOKEN: 'test_token',
-      SCHEDULES: createMockKVNamespace(),
-      RESPONSES: createMockKVNamespace()
-    };
+  beforeEach(async () => {
+    db = createTestD1Database();
+    await applyMigrations(db);
+    env = createTestEnv(db);
+  });
+  
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   it('should show modal for schedule creation', async () => {
@@ -45,7 +29,8 @@ describe('Choseichan Commands', () => {
         name: 'choseichan',
         options: [{
           name: 'create',
-          type: 1
+          type: 1,
+          value: ''
         }]
       },
       channel_id: 'test_channel',
@@ -62,13 +47,13 @@ describe('Choseichan Commands', () => {
     };
 
     const response = await handleChoseichanCommand(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.MODAL);
-    expect(data.data.title).toBe('日程調整を作成');
-    expect(data.data.components).toHaveLength(4);
-    expect(data.data.custom_id).toBe('modal:create_schedule');
+    expect(data.data?.modal?.title).toBe('日程調整を作成');
+    expect(data.data?.modal?.components).toHaveLength(4);
+    expect(data.data?.modal?.custom_id).toBe('modal:create_schedule');
   });
 
 
@@ -81,6 +66,7 @@ describe('Choseichan Commands', () => {
         name: 'choseichan',
         options: [{
           name: 'list',
+        value: '',
           type: 1
         }]
       },
@@ -98,10 +84,10 @@ describe('Choseichan Commands', () => {
     };
 
     const response = await handleChoseichanCommand(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.flags).toBe(64);
+    expect(data.data?.flags).toBe(64);
   });
 });

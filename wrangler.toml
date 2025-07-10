@@ -36,6 +36,8 @@ preview_id = "a59f3cc9de6a4f0dbc463211ddbbaf6a"
 binding = "DB"
 database_name = "discord-choseisan-db"
 database_id = "f9c793aa-2850-4646-8d5d-271550fdc3ac"
+migrations_dir = "migrations"
+migrations_table = "d1_migrations"
 
 # Database type configuration
 [vars]

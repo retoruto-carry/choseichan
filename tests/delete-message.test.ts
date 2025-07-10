@@ -1,45 +1,53 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleDeleteButton } from '../src/handlers/schedule-handlers';
 import { ButtonInteraction, Env } from '../src/types/discord';
 import { StorageServiceV2 } from '../src/services/storage-v2';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
+import type { D1Database } from './helpers/d1-database';
 
 // Mock the discord utils
 vi.mock('../src/utils/discord', () => ({
-  deleteMessage: vi.fn()
+  deleteMessage: vi.fn().mockResolvedValue(undefined)
 }));
 
+
 describe('Delete Schedule with Message', () => {
-  let mockKV: any;
+  let db: D1Database;
   let mockEnv: Env;
   let storage: StorageServiceV2;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     
-    mockKV = {
-      get: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-      list: vi.fn().mockResolvedValue({ keys: [] })
-    };
+    // Setup D1 database
+    db = createTestD1Database();
+    await applyMigrations(db);
     
+    const waitUntilPromises: Promise<any>[] = [];
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test-public-key',
       DISCORD_APPLICATION_ID: 'test-app-id',
       DISCORD_TOKEN: 'test-token',
-      SCHEDULES: mockKV,
-      RESPONSES: mockKV,
+      DATABASE_TYPE: 'd1' as const,
+      DB: db as unknown as D1Database,
+      SCHEDULES: {} as KVNamespace,
+      RESPONSES: {} as KVNamespace,
       ctx: {
         waitUntil: vi.fn((promise: Promise<any>) => {
-          // Execute the promise immediately in tests
-          promise.catch(() => {}); // Catch to avoid unhandled rejection
-          return promise;
-        })
-      }
-    } as Env;
+          waitUntilPromises.push(promise);
+        }),
+        passThroughOnException: vi.fn()
+      } as unknown as ExecutionContext
+    };
+    // Store the promises array separately for test assertions
+    (mockEnv as any)._waitUntilPromises = waitUntilPromises;
     
-    storage = new StorageServiceV2(mockKV, mockKV, mockEnv);
+    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+  });
+
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   it('should delete both schedule and Discord message', async () => {
@@ -63,8 +71,8 @@ describe('Delete Schedule with Message', () => {
       totalResponses: 0
     };
     
-    // Mock schedule retrieval (called twice - once in handler, once in deleteSchedule)
-    mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+    // Save schedule
+    await storage.saveSchedule(schedule);
     
     const interaction: ButtonInteraction = {
       id: 'test-interaction',
@@ -89,26 +97,26 @@ describe('Delete Schedule with Message', () => {
     const { deleteMessage } = await import('../src/utils/discord');
     
     const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
-    const data = await response.json();
+    const data = await response.json() as any;
     
     // Verify response
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.content).toContain('削除しました');
     
-    // Wait for waitUntil to execute
-    await vi.waitFor(() => {
-      expect(deleteMessage).toHaveBeenCalledWith(
-        'test-app-id',
-        'test-token',
-        'test-message-123'
-      );
-    });
+    // Wait for all waitUntil promises to complete
+    await Promise.all((mockEnv as any)._waitUntilPromises || []);
     
-    // Verify schedule was deleted from storage (multiple delete calls)
-    expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:schedule:${scheduleId}`);
-    expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:channel:${schedule.channelId}:${scheduleId}`);
-    // Note: deadline index delete is also called since the schedule has a deadline
+    // Now verify deleteMessage was called
+    expect(deleteMessage).toHaveBeenCalledWith(
+      'test-app-id',
+      'test-token',
+      'test-message-123'
+    );
+    
+    // Verify schedule was deleted from storage
+    const deletedSchedule = await storage.getSchedule(scheduleId, guildId);
+    expect(deletedSchedule).toBeNull();
   });
 
   it('should continue deletion even if Discord message deletion fails', async () => {
@@ -132,8 +140,8 @@ describe('Delete Schedule with Message', () => {
       totalResponses: 0
     };
     
-    // Mock schedule retrieval (called twice - once in handler, once in deleteSchedule)
-    mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+    // Save schedule
+    await storage.saveSchedule(schedule);
     
     // Mock deleteMessage to throw an error
     const { deleteMessage } = await import('../src/utils/discord');
@@ -160,21 +168,19 @@ describe('Delete Schedule with Message', () => {
     };
     
     const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
-    const data = await response.json();
+    const data = await response.json() as any;
     
     // Verify response is still successful
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
     expect(data.data.content).toContain('削除しました');
     
-    // Wait for async operations to complete
-    await vi.waitFor(() => {
-      expect(mockKV.delete).toHaveBeenCalled();
-    });
+    // Wait for all waitUntil promises to complete
+    await Promise.all(mockEnv._waitUntilPromises || []);
     
     // Verify schedule was still deleted from storage
-    expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:schedule:${scheduleId}`);
-    expect(mockKV.delete).toHaveBeenCalledWith(`guild:${guildId}:channel:${schedule.channelId}:${scheduleId}`);
+    const deletedSchedule = await storage.getSchedule(scheduleId, guildId);
+    expect(deletedSchedule).toBeNull();
   });
 
   it('should not delete if user is not the creator', async () => {
@@ -197,8 +203,8 @@ describe('Delete Schedule with Message', () => {
       totalResponses: 0
     };
     
-    // Mock schedule retrieval (called twice - once in handler, once in deleteSchedule)
-    mockKV.get.mockResolvedValue(JSON.stringify(schedule));
+    // Save schedule
+    await storage.saveSchedule(schedule);
     
     const interaction: ButtonInteraction = {
       id: 'test-interaction-3',
@@ -223,7 +229,7 @@ describe('Delete Schedule with Message', () => {
     const { deleteMessage } = await import('../src/utils/discord');
     
     const response = await handleDeleteButton(interaction, storage, [scheduleId], mockEnv);
-    const data = await response.json();
+    const data = await response.json() as any;
     
     // Verify error response
     expect(response.status).toBe(200);
@@ -233,6 +239,10 @@ describe('Delete Schedule with Message', () => {
     
     // Verify nothing was deleted
     expect(deleteMessage).not.toHaveBeenCalled();
-    expect(mockKV.delete).not.toHaveBeenCalled();
+    
+    // Schedule should still exist
+    const existingSchedule = await storage.getSchedule(scheduleId, guildId);
+    expect(existingSchedule).not.toBeNull();
+    expect(existingSchedule?.id).toBe(scheduleId);
   });
 });

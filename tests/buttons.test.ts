@@ -1,47 +1,27 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { handleButtonInteraction } from '../src/handlers/buttons';
 import { ButtonInteraction, Env } from '../src/types/discord';
 import { Schedule } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
+import type { D1Database } from './helpers/d1-database';
+import { expectInteractionResponse } from './helpers/interaction-schemas';
 
 // Mock the discord utils
 vi.mock('../src/utils/discord', () => ({
   updateOriginalMessage: vi.fn(async () => {})
 }));
 
-// Mock KVNamespace
-const createMockKVNamespace = () => {
-  const storage = new Map();
-  return {
-    get: vi.fn(async (key: string) => storage.get(key) || null),
-    put: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      storage.delete(key);
-    }),
-    list: vi.fn(async (options: { prefix: string }) => {
-      const keys = Array.from(storage.keys())
-        .filter(k => k.startsWith(options.prefix))
-        .map(name => ({ name, metadata: {} }));
-      return { keys };
-    })
-  } as unknown as KVNamespace;
-};
-
 describe('Button Interactions', () => {
+  let db: D1Database;
   let env: Env;
   let testSchedule: Schedule;
   
   beforeEach(async () => {
-    env = {
-      DISCORD_PUBLIC_KEY: 'test_public_key',
-      DISCORD_APPLICATION_ID: 'test_app_id',
-      DISCORD_TOKEN: 'test_token',
-      SCHEDULES: createMockKVNamespace(),
-      RESPONSES: createMockKVNamespace()
-    };
+    db = createTestD1Database();
+    await applyMigrations(db);
+    env = createTestEnv(db);
 
     // Create test schedule
     testSchedule = {
@@ -52,18 +32,23 @@ describe('Button Interactions', () => {
         { id: 'date2', datetime: '2024-12-26T18:00:00Z' }
       ],
       createdBy: { id: 'user123', username: 'TestUser' },
+      authorId: 'user123',
       channelId: 'test_channel',
       guildId: 'test-guild',
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'open',
+      status: 'open' as const,
       notificationSent: false
     };
     
-    await env.SCHEDULES.put(
-      `guild:test-guild:schedule:${testSchedule.id}`,
-      JSON.stringify(testSchedule)
-    );
+    // Use StorageService to save the schedule
+    const { StorageServiceV2 } = await import('../src/services/storage-v2');
+    const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+    await storage.saveSchedule(testSchedule);
+  });
+  
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   it('should handle respond button click and show voting interface', async () => {
@@ -92,15 +77,15 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('Test Event');
-    expect(data.data.content).toContain('回答を選択してください');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-    expect(data.data.components).toBeDefined();
-    expect(data.data.embeds).toBeUndefined();
+    expect(data.data?.content).toContain('Test Event');
+    expect(data.data?.content).toContain('回答を選択してください');
+    expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data?.components).toBeDefined();
+    expect(data.data?.embeds).toBeUndefined();
   });
 
   it('should handle details button click', async () => {
@@ -129,13 +114,13 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(data.data.embeds).toHaveLength(1);
-    expect(data.data.embeds[0].title).toContain('Test Event - 詳細');
-    expect(data.data.components).toBeDefined();
+    expect(data.data?.embeds).toHaveLength(1);
+    expect(data.data?.embeds?.[0].title).toContain('Test Event - 詳細');
+    expect(data.data?.components).toBeDefined();
   });
 
   it('should handle close button by owner', async () => {
@@ -164,12 +149,12 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('締め切りました');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data?.content).toContain('締め切りました');
+    expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should handle edit button click for owner', async () => {
@@ -194,13 +179,13 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('編集する項目を選択してください');
-    expect(data.data.components).toHaveLength(2);
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data?.content).toContain('編集する項目を選択してください');
+    expect(data.data?.components).toHaveLength(2);
+    expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should reject edit button by non-owner', async () => {
@@ -225,12 +210,12 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('編集できるのは作成者のみです');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data?.content).toContain('編集できるのは作成者のみです');
+    expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should handle status button click', async () => {
@@ -255,12 +240,12 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(data.data.embeds).toHaveLength(1);
-    expect(data.data.embeds[0].title).toContain('Test Event');
+    expect(data.data?.embeds).toHaveLength(1);
+    expect(data.data?.embeds?.[0].title).toContain('Test Event');
   });
 
   it('should reject close button by non-owner', async () => {
@@ -289,12 +274,12 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(data.data.content).toContain('作成者のみです');
-    expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    expect(data.data?.content).toContain('作成者のみです');
+    expect(data.data?.flags).toBe(InteractionResponseFlags.EPHEMERAL);
   });
 
   it('should handle select menu interaction', async () => {
@@ -319,6 +304,7 @@ describe('Button Interactions', () => {
       token: 'test_token',
       message: {
         id: 'msg_id',
+        embeds: [],
         message_reference: {
           message_id: 'original_msg_id'
         }
@@ -326,7 +312,7 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, env);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(6); // DEFERRED_UPDATE_MESSAGE
@@ -338,9 +324,9 @@ describe('Button Interactions', () => {
     
     const savedResponse = await storage.getResponse('test_schedule_id', 'user456', 'test-guild');
     expect(savedResponse).toBeTruthy();
-    expect(savedResponse.responses).toHaveLength(1);
-    expect(savedResponse.responses[0].dateId).toBe('date1');
-    expect(savedResponse.responses[0].status).toBe('yes');
+    expect(savedResponse?.responses).toHaveLength(1);
+    expect(savedResponse?.responses[0].dateId).toBe('date1');
+    expect(savedResponse?.responses[0].status).toBe('yes');
   });
 
 
@@ -374,7 +360,7 @@ describe('Button Interactions', () => {
     };
 
     const response = await handleButtonInteraction(interaction, envWithContext);
-    const data = await response.json();
+    const data = expectInteractionResponse(await response.json());
     
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);

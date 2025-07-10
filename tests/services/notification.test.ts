@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NotificationService } from '../../src/services/notification';
-import { StorageService } from '../../src/services/storage-v2';
+import { StorageServiceV2 } from '../../src/services/storage-v2';
 import { Schedule, ScheduleSummary } from '../../src/types/schedule';
 
 // Mock fetch globally
@@ -8,7 +8,7 @@ global.fetch = vi.fn();
 
 describe('NotificationService', () => {
   let notificationService: NotificationService;
-  let mockStorage: StorageService;
+  let mockStorage: StorageServiceV2;
   const mockToken = 'test-discord-token';
   const mockAppId = 'test-app-id';
 

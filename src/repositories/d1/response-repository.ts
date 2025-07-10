@@ -23,36 +23,35 @@ export class D1ResponseRepository implements IResponseRepository {
     const expiresAt = Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) + TIME_CONSTANTS.SIX_MONTHS_SECONDS;
     
     try {
-      // Start transaction for atomic update
-      const tx = this.db.batch([
-        // Insert or update response
-        this.db.prepare(`
-          INSERT INTO responses (
-            schedule_id, guild_id, user_id, username, display_name, 
-            comment, updated_at, expires_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(schedule_id, user_id) DO UPDATE SET
-            username = excluded.username,
-            display_name = excluded.display_name,
-            comment = excluded.comment,
-            updated_at = excluded.updated_at,
-            expires_at = excluded.expires_at
-          RETURNING id
-        `).bind(
-          response.scheduleId,
-          guildId,
-          response.userId,
-          response.username,
-          response.displayName || null,
-          response.comment || null,
-          Math.floor(response.updatedAt.getTime() / 1000),
-          expiresAt
-        )
-      ]);
+      // First, insert or update the response
+      const responseResult = await this.db.prepare(`
+        INSERT INTO responses (
+          schedule_id, guild_id, user_id, username, display_name, 
+          comment, updated_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(schedule_id, user_id) DO UPDATE SET
+          username = excluded.username,
+          display_name = excluded.display_name,
+          comment = excluded.comment,
+          updated_at = excluded.updated_at,
+          expires_at = excluded.expires_at
+        RETURNING id
+      `).bind(
+        response.scheduleId,
+        guildId,
+        response.userId,
+        response.username,
+        response.displayName || null,
+        response.comment || null,
+        Math.floor(response.updatedAt.getTime() / 1000),
+        expiresAt
+      ).first<{ id: number }>();
 
-      const results = await tx;
-      const responseResult = results[0] as any;
-      const responseId = responseResult.results[0].id as number;
+      if (!responseResult) {
+        throw new Error('Failed to insert/update response');
+      }
+      
+      const responseId = responseResult.id;
       
       // Delete existing date statuses
       await this.db.prepare(`

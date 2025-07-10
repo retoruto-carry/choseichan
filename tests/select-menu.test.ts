@@ -43,12 +43,13 @@ describe('Select Menu Interactions', () => {
         { id: 'date-2', datetime: '2024-01-21 20:00' }
       ],
       createdBy: { id: 'user-123', username: 'TestUser' },
+      authorId: 'user-123',
       channelId: 'channel-123',
       guildId: 'test-guild',
       messageId: 'message-456', // Pre-saved message ID
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'open',
+      status: 'open' as const,
       notificationSent: false
     };
 

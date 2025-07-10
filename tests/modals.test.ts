@@ -1,50 +1,28 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { handleModalSubmit } from '../src/handlers/modals/index';
 import { Env } from '../src/types/discord';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
+import type { D1Database } from './helpers/d1-database';
+import { expectInteractionResponse } from './helpers/interaction-schemas';
 
 // Mock the discord utils
 vi.mock('../src/utils/discord', () => ({
   updateOriginalMessage: vi.fn(async () => {})
 }));
 
-// Mock KVNamespace
-const createMockKVNamespace = () => {
-  const storage = new Map();
-  return {
-    get: vi.fn(async (key: string) => {
-      const value = storage.get(key);
-      return value || null;
-    }),
-    put: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      storage.delete(key);
-    }),
-    list: vi.fn(async (options: { prefix: string }) => {
-      const keys = Array.from(storage.keys())
-        .filter(k => k.startsWith(options.prefix))
-        .map(name => ({ name, metadata: {} }));
-      return { keys };
-    })
-  } as unknown as KVNamespace;
-};
-
 describe('Modal Submit Interactions', () => {
+  let db: D1Database;
   let env: Env;
   
-  beforeEach(() => {
-    const schedulesKV = createMockKVNamespace();
-    const responsesKV = createMockKVNamespace();
-    
-    env = {
-      DISCORD_PUBLIC_KEY: 'test_public_key',
-      DISCORD_APPLICATION_ID: 'test_app_id',
-      DISCORD_TOKEN: 'test_token',
-      SCHEDULES: schedulesKV,
-      RESPONSES: responsesKV
-    };
+  beforeEach(async () => {
+    db = createTestD1Database();
+    await applyMigrations(db);
+    env = createTestEnv(db);
+  });
+  
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   describe('Create Schedule Modal', () => {
@@ -103,14 +81,14 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, env);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data).toBeDefined();
       expect(data.data.embeds).toHaveLength(1);
-      expect(data.data.embeds[0].title).toContain('忘年会');
-      expect(data.data.embeds[0].description).toContain('今年の忘年会です');
+      expect(data.data.embeds?.[0].title).toContain('忘年会');
+      expect(data.data.embeds?.[0].description).toContain('今年の忘年会です');
       expect(data.data.components).toBeDefined();
       
       // Check schedule was saved
@@ -173,7 +151,7 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, env);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
@@ -183,21 +161,14 @@ describe('Modal Submit Interactions', () => {
   });
 
   describe('Edit Schedule Modal', () => {
+    let editDb: D1Database;
     let editEnv: Env;
     
     beforeEach(async () => {
       // Create fresh environment for this test suite
-      const schedulesKV = createMockKVNamespace();
-      const responsesKV = createMockKVNamespace();
-      
-      editEnv = {
-        DISCORD_PUBLIC_KEY: 'test_public_key',
-        DISCORD_APPLICATION_ID: 'test_app_id',
-        DISCORD_TOKEN: 'test_token',
-        SCHEDULES: schedulesKV,
-        RESPONSES: responsesKV,
-        DATABASE_TYPE: 'kv'  // Use KV for tests
-      };
+      editDb = createTestD1Database();
+      await applyMigrations(editDb);
+      editEnv = createTestEnv(editDb);
       
       // Create a test schedule
       const schedule = {
@@ -214,15 +185,19 @@ describe('Modal Submit Interactions', () => {
         guildId: 'test-guild',
         createdAt: new Date(),
         updatedAt: new Date(),
-        status: 'open',
+        status: 'open' as const,
         notificationSent: false,
         totalResponses: 0
       };
       
       // Use StorageService to save the schedule
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
       await storage.saveSchedule(schedule);
+    });
+    
+    afterEach(() => {
+      closeTestDatabase(editDb);
     });
 
     it('should update schedule info from modal', async () => {
@@ -264,7 +239,7 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, editEnv);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
@@ -273,11 +248,11 @@ describe('Modal Submit Interactions', () => {
       
       // Check schedule was updated using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
       const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
-      expect(updatedSchedule.title).toBe('新年会');
-      expect(updatedSchedule.description).toBe('新年会の日程調整です');
+      expect(updatedSchedule?.title).toBe('新年会');
+      expect(updatedSchedule?.description).toBe('新年会の日程調整です');
     });
 
     it('should add dates from modal', async () => {
@@ -311,17 +286,17 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, editEnv);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.embeds).toBeDefined();
-      expect(data.data.embeds[0].title).toContain('日程を追加しました');
+      expect(data.data.embeds?.[0].title).toContain('日程を追加しました');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
       
       // Check dates were added using StorageService
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2(editEnv.SCHEDULES, editEnv.RESPONSES, editEnv);
+      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, editEnv);
       const updatedSchedule = await storage.getSchedule('test_schedule_id', 'test-guild');
       expect(updatedSchedule).toBeTruthy();
       expect(updatedSchedule.dates).toHaveLength(4); // Original 2 + new 2
@@ -329,21 +304,14 @@ describe('Modal Submit Interactions', () => {
   });
 
   describe('Edit Deadline Modal', () => {
+    let deadlineDb: D1Database;
     let deadlineEnv: Env;
     
     beforeEach(async () => {
       // Create fresh environment for this test suite
-      const schedulesKV = createMockKVNamespace();
-      const responsesKV = createMockKVNamespace();
-      
-      deadlineEnv = {
-        DISCORD_PUBLIC_KEY: 'test_public_key',
-        DISCORD_APPLICATION_ID: 'test_app_id',
-        DISCORD_TOKEN: 'test_token',
-        SCHEDULES: schedulesKV,
-        RESPONSES: responsesKV,
-        DATABASE_TYPE: 'kv'  // Use KV for tests
-      };
+      deadlineDb = createTestD1Database();
+      await applyMigrations(deadlineDb);
+      deadlineEnv = createTestEnv(deadlineDb);
       
       // Create a test schedule with deadline and reminders
       const schedule = {
@@ -359,19 +327,22 @@ describe('Modal Submit Interactions', () => {
         channelId: 'test_channel',
         guildId: 'test-guild',
         deadline: new Date('2024-12-20T23:59:00Z'),
-        reminderSent: true,
         remindersSent: ['3d', '1d'],
         createdAt: new Date(),
         updatedAt: new Date(),
-        status: 'open',
+        status: 'open' as const,
         notificationSent: false,
         totalResponses: 0
       };
       
       // Use StorageService to save the schedule
       const { StorageServiceV2 } = await import('../src/services/storage-v2');
-      const storage = new StorageServiceV2(deadlineEnv.SCHEDULES, deadlineEnv.RESPONSES, deadlineEnv);
+      const storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, deadlineEnv);
       await storage.saveSchedule(schedule);
+    });
+    
+    afterEach(() => {
+      closeTestDatabase(deadlineDb);
     });
 
     it('should reset reminders when deadline is changed', async () => {
@@ -405,7 +376,7 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, deadlineEnv);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
@@ -452,7 +423,7 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, deadlineEnv);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.data.content).toContain('締切日を削除しました');
@@ -479,7 +450,7 @@ describe('Modal Submit Interactions', () => {
         guildId: 'test-guild',
         createdAt: new Date(),
         updatedAt: new Date(),
-        status: 'open',
+        status: 'open' as const,
         notificationSent: false,
         totalResponses: 0
       };
@@ -519,7 +490,7 @@ describe('Modal Submit Interactions', () => {
       };
 
       const response = await handleModalSubmit(interaction, deadlineEnv);
-      const data = await response.json();
+      const data = expectInteractionResponse(await response.json());
       
       expect(response.status).toBe(200);
       expect(data.data.content).toContain('締切日を');

@@ -84,10 +84,22 @@ export function convertToLegacyScheduleSummary(summary: ScheduleSummary, respons
   // Convert responses to legacy format
   const legacyResponses = responses.map(r => convertResponseToLegacy(r));
   
+  // Calculate best date ID (date with most 'yes' votes)
+  let bestDateId: string | undefined;
+  let maxYesVotes = 0;
+  
+  for (const [dateId, counts] of Object.entries(legacyResponseCounts)) {
+    if (counts.yes > maxYesVotes) {
+      maxYesVotes = counts.yes;
+      bestDateId = dateId;
+    }
+  }
+  
   return {
     schedule: summary.schedule,
     responseCounts: legacyResponseCounts,
-    userResponses: legacyResponses
+    userResponses: legacyResponses,
+    bestDateId
   };
 }
 

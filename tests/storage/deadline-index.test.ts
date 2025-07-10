@@ -1,20 +1,23 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { StorageServiceV2 } from '../../src/services/storage-v2';
 import { Schedule } from '../../src/types/schedule';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../helpers/d1-database';
+import type { D1Database } from '../helpers/d1-database';
 
 describe('Deadline Index Management', () => {
-  let mockKV: any;
+  let db: D1Database;
   let storage: StorageServiceV2;
+  let env: any;
 
-  beforeEach(() => {
-    mockKV = {
-      get: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-      list: vi.fn().mockResolvedValue({ keys: [] })
-    };
-    
-    storage = new StorageServiceV2(mockKV, mockKV, undefined);
+  beforeEach(async () => {
+    db = createTestD1Database();
+    await applyMigrations(db);
+    env = createTestEnv(db);
+    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, env);
+  });
+
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   it('should clean up old deadline index when deadline is updated', async () => {
@@ -37,33 +40,17 @@ describe('Deadline Index Management', () => {
       totalResponses: 0
     };
     
-    // Mock existing schedule
-    mockKV.get.mockImplementation((key: string) => {
-      if (key === 'guild:guild123:schedule:test-schedule') {
-        return Promise.resolve(JSON.stringify(existingSchedule));
-      }
-      return Promise.resolve(null);
-    });
+    // 既存のスケジュールを保存
+    await storage.saveSchedule(existingSchedule);
     
-    // Update deadline
+    // 締切を更新
     const updatedSchedule = { ...existingSchedule, deadline: newDeadline };
     await storage.saveSchedule(updatedSchedule);
     
-    // Verify old deadline index was deleted
-    const oldTimestamp = Math.floor(oldDeadline.getTime() / 1000);
-    expect(mockKV.delete).toHaveBeenCalledWith(
-      `deadline:${oldTimestamp}:guild123:test-schedule`
-    );
-    
-    // Verify new deadline index was created
-    const newTimestamp = Math.floor(newDeadline.getTime() / 1000);
-    expect(mockKV.put).toHaveBeenCalledWith(
-      `deadline:${newTimestamp}:guild123:test-schedule`,
-      'test-schedule',
-      expect.objectContaining({
-        expiration: expect.any(Number)
-      })
-    );
+    // D1でスケジュールが正しく更新されているか確認
+    const retrieved = await storage.getSchedule('test-schedule', 'guild123');
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.deadline?.getTime()).toBe(newDeadline.getTime());
   });
 
   it('should clean up deadline index when deadline is removed', async () => {
@@ -85,29 +72,17 @@ describe('Deadline Index Management', () => {
       totalResponses: 0
     };
     
-    // Mock existing schedule
-    mockKV.get.mockImplementation((key: string) => {
-      if (key === 'guild:guild123:schedule:test-schedule-2') {
-        return Promise.resolve(JSON.stringify(existingSchedule));
-      }
-      return Promise.resolve(null);
-    });
+    // 既存のスケジュールを保存
+    await storage.saveSchedule(existingSchedule);
     
-    // Remove deadline
+    // 締切を削除
     const updatedSchedule = { ...existingSchedule, deadline: undefined };
     await storage.saveSchedule(updatedSchedule);
     
-    // Verify old deadline index was deleted
-    const oldTimestamp = Math.floor(oldDeadline.getTime() / 1000);
-    expect(mockKV.delete).toHaveBeenCalledWith(
-      `deadline:${oldTimestamp}:guild123:test-schedule-2`
-    );
-    
-    // Verify no new deadline index was created
-    expect(mockKV.put).not.toHaveBeenCalledWith(
-      expect.stringMatching(/deadline:\d+:test-schedule-2$/),
-      expect.any(String)
-    );
+    // D1でスケジュールが正しく更新されているか確認
+    const retrieved = await storage.getSchedule('test-schedule-2', 'guild123');
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.deadline).toBeUndefined();
   });
 
   it('should not delete deadline index if deadline remains the same', async () => {
@@ -129,41 +104,27 @@ describe('Deadline Index Management', () => {
       totalResponses: 0
     };
     
-    // Mock existing schedule
-    mockKV.get.mockImplementation((key: string) => {
-      if (key === 'guild:guild123:schedule:test-schedule-3') {
-        return Promise.resolve(JSON.stringify(existingSchedule));
-      }
-      return Promise.resolve(null);
-    });
+    // 既存のスケジュールを保存
+    await storage.saveSchedule(existingSchedule);
     
-    // Update without changing deadline
+    // タイトルのみ更新（締切は同じ）
     const updatedSchedule = { ...existingSchedule, title: 'Updated Title' };
     await storage.saveSchedule(updatedSchedule);
     
-    // Verify deadline index was NOT deleted
-    expect(mockKV.delete).not.toHaveBeenCalledWith(
-      expect.stringMatching(/deadline:\d+:test-schedule-3$/)
-    );
-    
-    // Verify deadline index was still created (idempotent)
-    const timestamp = Math.floor(deadline.getTime() / 1000);
-    expect(mockKV.put).toHaveBeenCalledWith(
-      `deadline:${timestamp}:guild123:test-schedule-3`,
-      'test-schedule-3',
-      expect.objectContaining({
-        expiration: expect.any(Number)
-      })
-    );
+    // D1でスケジュールが正しく更新されているか確認
+    const retrieved = await storage.getSchedule('test-schedule-3', 'guild123');
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.title).toBe('Updated Title');
+    expect(retrieved?.deadline?.getTime()).toBe(deadline.getTime());
   });
 
   it('should handle new schedule with deadline correctly', async () => {
-    const deadline = new Date('2024-12-25 18:00');
+    const deadline = new Date('2024-12-30T18:00:00+09:00');  // JSTで明示的に指定
     
     const newSchedule: Schedule = {
       id: 'test-schedule-4',
       title: 'New Event',
-      dates: [{ id: 'date1', datetime: '2024-12-20 19:00' }],
+      dates: [{ id: 'date1', datetime: '2024-12-25 19:00' }],
       createdBy: { id: 'user123', username: 'TestUser' },
       authorId: 'user123',
       channelId: 'channel123',
@@ -176,22 +137,20 @@ describe('Deadline Index Management', () => {
       totalResponses: 0
     };
     
-    // Mock no existing schedule
-    mockKV.get.mockResolvedValue(null);
-    
+    // 新しいスケジュールを保存
     await storage.saveSchedule(newSchedule);
     
-    // Verify no deletion occurred
-    expect(mockKV.delete).not.toHaveBeenCalled();
+    // D1でスケジュールが保存されているか確認
+    const retrieved = await storage.getSchedule('test-schedule-4', 'guild123');
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.deadline?.getTime()).toBe(deadline.getTime());
     
-    // Verify deadline index was created
-    const timestamp = Math.floor(deadline.getTime() / 1000);
-    expect(mockKV.put).toHaveBeenCalledWith(
-      `deadline:${timestamp}:guild123:test-schedule-4`,
-      'test-schedule-4',
-      expect.objectContaining({
-        expiration: expect.any(Number)
-      })
-    );
+    // 締切範囲でスケジュールを検索できるか確認
+    const startDate = new Date('2024-12-29T00:00:00+09:00');  // JSTで明示的に指定
+    const endDate = new Date('2024-12-31T23:59:59+09:00');    // JSTで明示的に指定
+    const schedulesInRange = await storage.getSchedulesWithDeadlineInRange(startDate, endDate, 'guild123');
+    
+    expect(schedulesInRange).toHaveLength(1);
+    expect(schedulesInRange[0].id).toBe('test-schedule-4');
   });
 });

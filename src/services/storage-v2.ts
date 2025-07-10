@@ -65,7 +65,9 @@ export class StorageServiceV2 {
       DB: undefined
     };
     
-    const repositoryFactory = getRepositoryFactory(effectiveEnv);
+    // テスト環境では常に新しいファクトリを作成
+    const forceNew = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+    const repositoryFactory = getRepositoryFactory(effectiveEnv, forceNew);
     
     this.storageV3 = new StorageServiceV3(repositoryFactory);
   }

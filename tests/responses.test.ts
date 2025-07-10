@@ -1,40 +1,28 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { StorageServiceV2 as StorageService } from '../src/services/storage-v2';
 import { Schedule, Response, ScheduleSummary } from '../src/types/schedule';
 import { generateId } from '../src/utils/id';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
+import type { D1Database } from './helpers/d1-database';
 
-// Mock KVNamespace
-const createMockKVNamespace = () => {
-  const storage = new Map();
-  return {
-    get: vi.fn(async (key: string) => storage.get(key) || null),
-    put: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      storage.delete(key);
-    }),
-    list: vi.fn(async (options: { prefix: string }) => {
-      const keys = Array.from(storage.keys())
-        .filter(k => k.startsWith(options.prefix))
-        .map(name => ({ name, metadata: {} }));
-      return { keys };
-    })
-  } as unknown as KVNamespace;
-};
 
 describe('Response Management', () => {
+  let db: D1Database;
   let storage: StorageService;
   let testSchedule: Schedule;
+  let mockEnv: any;
   
   beforeEach(async () => {
-    const schedules = createMockKVNamespace();
-    const responses = createMockKVNamespace();
-    storage = new StorageService(schedules, responses);
+    // Setup D1 database
+    db = createTestD1Database();
+    await applyMigrations(db);
+    
+    mockEnv = createTestEnv(db);
+    storage = new StorageService({} as KVNamespace, {} as KVNamespace, mockEnv);
 
-    // Create test schedule
+    // Create test schedule with unique ID
     testSchedule = {
-      id: 'test_schedule_id',
+      id: generateId(),
       title: 'Test Event',
       dates: [
         { id: 'date1', datetime: '2024-12-25T19:00:00Z' },
@@ -42,18 +30,30 @@ describe('Response Management', () => {
         { id: 'date3', datetime: '2024-12-27T19:00:00Z' }
       ],
       createdBy: { id: 'creator_id', username: 'Creator' },
+      authorId: 'creator_id',
       channelId: 'test_channel',
       guildId: 'test-guild',
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open',
-      notificationSent: false
+      notificationSent: false,
+      totalResponses: 0
     };
     
     await storage.saveSchedule(testSchedule);
   });
+  
+  afterEach(() => {
+    closeTestDatabase(db);
+  });
+  
 
   it('should save and retrieve user response', async () => {
+    // First verify the schedule was saved
+    const savedSchedule = await storage.getSchedule(testSchedule.id, 'test-guild');
+    expect(savedSchedule).toBeDefined();
+    expect(savedSchedule?.id).toBe(testSchedule.id);
+    
     const userResponse: Response = {
       scheduleId: testSchedule.id,
       userId: 'user1',
@@ -237,7 +237,7 @@ describe('Response Management', () => {
       userName: 'User One',
       responses: [{ dateId: 'date1', status: 'yes' }],
       updatedAt: new Date()
-    });
+    }, 'test-guild');
 
     // Delete schedule
     const guildId = 'test-guild';

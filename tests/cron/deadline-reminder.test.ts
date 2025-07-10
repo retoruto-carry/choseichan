@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { sendDeadlineReminders } from '../../src/cron/deadline-reminder';
 import { Schedule } from '../../src/types/schedule';
 import { NotificationService } from '../../src/services/notification';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../helpers/d1-database';
+import type { D1Database } from '../helpers/d1-database';
+import { StorageServiceV2 } from '../../src/services/storage-v2';
 
 // Create a shared mock instance
 const mockNotificationService = {
@@ -16,39 +19,33 @@ vi.mock('../../src/services/notification', () => ({
   NotificationService: vi.fn().mockImplementation(() => mockNotificationService)
 }));
 
-// Mock KVNamespace
-const createMockKVNamespace = () => {
-  const storage = new Map();
-  return {
-    get: vi.fn(async (key: string) => storage.get(key) || null),
-    put: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-    }),
-    delete: vi.fn(async (key: string) => {
-      storage.delete(key);
-    }),
-    list: vi.fn(async (options: { prefix: string }) => {
-      const keys = Array.from(storage.keys())
-        .filter(k => k.startsWith(options.prefix))
-        .map(name => ({ name, metadata: {} }));
-      return { keys, list_complete: true };
-    })
-  } as unknown as KVNamespace;
-};
 
 describe('Deadline Reminder', () => {
-  let mockKV: KVNamespace;
+  let db: D1Database;
+  let storage: StorageServiceV2;
   let mockEnv: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    mockKV = createMockKVNamespace();
+    
+    // Setup D1 database
+    db = createTestD1Database();
+    await applyMigrations(db);
+    
     mockEnv = {
-      SCHEDULES: mockKV,
-      RESPONSES: createMockKVNamespace(),
       DISCORD_TOKEN: 'test-token',
-      DISCORD_APPLICATION_ID: 'test-app'
+      DISCORD_APPLICATION_ID: 'test-app',
+      DATABASE_TYPE: 'd1',
+      DB: db,
+      SCHEDULES: {} as KVNamespace,
+      RESPONSES: {} as KVNamespace,
     };
+    
+    storage = new StorageServiceV2({} as KVNamespace, {} as KVNamespace, mockEnv);
+  });
+
+  afterEach(() => {
+    closeTestDatabase(db);
   });
 
   it('should send 8h reminder for schedule with deadline in 4 hours', async () => {
@@ -64,7 +61,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn4Hours,
-      reminderSent: false,
       remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -72,17 +68,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-schedule-1`,
-      JSON.stringify(schedule)
-    );
-    
-    // Add deadline index entry
-    const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:test-schedule-1`,
-      ''
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -94,10 +80,9 @@ describe('Deadline Reminder', () => {
       '締切まで8時間'
     );
     
-    // Check that reminderSent was updated
-    const updatedSchedule = await mockKV.get(`guild:guild123:schedule:test-schedule-1`);
-    const parsed = JSON.parse(updatedSchedule as string);
-    expect(parsed.reminderSent).toBe(true);
+    // Check that remindersSent was updated
+    const updatedSchedule = await storage.getSchedule('test-schedule-1', 'guild123');
+    expect(updatedSchedule?.remindersSent).toContain('8h');
   });
 
   it('should not send reminder if already sent', async () => {
@@ -121,10 +106,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-schedule-2`,
-      JSON.stringify(schedule)
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -144,24 +126,13 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: pastDeadline,
-      reminderSent: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'open', // Should be open to trigger closure notification
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-schedule-3`,
-      JSON.stringify(schedule)
-    );
-    
-    // Add deadline index entry for past deadline
-    const deadlineTimestamp = Math.floor(pastDeadline.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:test-schedule-3`,
-      ''
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -171,9 +142,8 @@ describe('Deadline Reminder', () => {
     );
     
     // Check that status was updated to closed
-    const updatedSchedule = await mockKV.get(`guild:guild123:schedule:test-schedule-3`);
-    const parsed = JSON.parse(updatedSchedule as string);
-    expect(parsed.status).toBe('closed');
+    const updatedSchedule = await storage.getSchedule('test-schedule-3', 'guild123');
+    expect(updatedSchedule?.status).toBe('closed');
   });
 
   it('should not send closure notification if already sent', async () => {
@@ -189,17 +159,13 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: pastDeadline,
-      reminderSent: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'closed',
       notificationSent: true // Already notified
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-schedule-4`,
-      JSON.stringify(schedule)
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -222,10 +188,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-schedule-5`,
-      JSON.stringify(schedule)
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -247,7 +210,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn4Hours,
-      reminderSent: false,
       remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -265,7 +227,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel456',
       guildId: 'guild456',
       deadline: deadlineIn4Hours,
-      reminderSent: false,
       remindersSent: ['3d', '1d'], // Already sent 3d and 1d
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -273,25 +234,8 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:multi-guild-1`,
-      JSON.stringify(schedule1)
-    );
-    await mockKV.put(
-      `guild:guild456:schedule:multi-guild-2`,
-      JSON.stringify(schedule2)
-    );
-    
-    // Add deadline index entries
-    const deadlineTimestamp = Math.floor(deadlineIn4Hours.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:multi-guild-1`,
-      ''
-    );
-    await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild456:multi-guild-2`,
-      ''
-    );
+    await storage.saveSchedule(schedule1);
+    await storage.saveSchedule(schedule2);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -330,7 +274,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn10Hours,
-      reminderSent: false,
       remindersSent: [], // No reminders sent yet
       createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // Created 4 days ago
       updatedAt: new Date(),
@@ -338,17 +281,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-old-reminder`,
-      JSON.stringify(schedule)
-    );
-    
-    // Add deadline index entry
-    const deadlineTimestamp = Math.floor(deadlineIn10Hours.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${deadlineTimestamp}:guild123:test-old-reminder`,
-      ''
-    );
+    await storage.saveSchedule(schedule);
 
     await sendDeadlineReminders(mockEnv);
 
@@ -372,7 +305,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn30Min,
-      reminderSent: false,
       remindersSent: [],
       reminderTimings: ['2h'], // 2 hour reminder, currently 1.5 hours late
       createdAt: new Date(),
@@ -381,15 +313,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-hour-reminder`,
-      JSON.stringify(schedule1)
-    );
-    const timestamp1 = Math.floor(deadlineIn30Min.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${timestamp1}:guild123:test-hour-reminder`,
-      ''
-    );
+    await storage.saveSchedule(schedule1);
 
     // Test 2: Minute-based reminder with 25 minutes late (should send - threshold is 30m)
     const deadlineIn5Min = new Date(now.getTime() + 5 * 60 * 1000);
@@ -402,7 +326,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlineIn5Min,
-      reminderSent: false,
       remindersSent: [],
       reminderTimings: ['30m'], // 30 minute reminder, currently 25 minutes late
       createdAt: new Date(),
@@ -411,15 +334,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-minute-reminder`,
-      JSON.stringify(schedule2)
-    );
-    const timestamp2 = Math.floor(deadlineIn5Min.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${timestamp2}:guild123:test-minute-reminder`,
-      ''
-    );
+    await storage.saveSchedule(schedule2);
 
     // Test 3: Hour reminder more than 2 hours late (should skip)
     const deadlinePast1Hour = new Date(now.getTime() - 1 * 60 * 60 * 1000);
@@ -432,7 +347,6 @@ describe('Deadline Reminder', () => {
       channelId: 'channel123',
       guildId: 'guild123',
       deadline: deadlinePast1Hour,
-      reminderSent: false,
       remindersSent: [],
       reminderTimings: ['1h'], // Should have been sent 2+ hours ago
       createdAt: new Date(),
@@ -441,15 +355,7 @@ describe('Deadline Reminder', () => {
       notificationSent: false
     };
 
-    await mockKV.put(
-      `guild:guild123:schedule:test-old-hour-reminder`,
-      JSON.stringify(schedule3)
-    );
-    const timestamp3 = Math.floor(deadlinePast1Hour.getTime() / 1000);
-    await mockKV.put(
-      `deadline:${timestamp3}:guild123:test-old-hour-reminder`,
-      ''
-    );
+    await storage.saveSchedule(schedule3);
 
     await sendDeadlineReminders(mockEnv);
 

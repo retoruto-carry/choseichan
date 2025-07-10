@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
-    "types": ["@cloudflare/workers-types", "@types/node"],
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers", "@types/node"],
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
@@ -13,12 +13,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*", "vitest-env.d.ts", "worker-configuration.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

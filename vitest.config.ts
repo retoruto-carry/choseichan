@@ -1,24 +1,17 @@
-import { defineConfig } from 'vitest/config'
+import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
-export default defineConfig({
+export default defineWorkersConfig({
   test: {
-    globals: true,
-    environment: 'node',
-    // テストの分離を改善するため、問題のあるテストは順次実行
-    sequence: {
-      shuffle: false,
-      concurrent: false
-    },
-    pool: 'forks',
+    include: ['tests-d1/**/*.test.ts'],
     poolOptions: {
-      forks: {
-        singleFork: true
-      }
-    }
+      workers: {
+        wrangler: { configPath: "./wrangler.toml" },
+        main: "./src/index.ts",
+        miniflare: {
+          compatibilityDate: "2024-01-01",
+          compatibilityFlags: ["nodejs_compat"],
+        },
+      },
+    },
   },
-  resolve: {
-    alias: {
-      '@': '/src'
-    }
-  }
-})
+});

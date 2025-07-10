@@ -12,10 +12,11 @@ describe('Embed Display', () => {
       { id: 'date2', datetime: '2024-12-26T18:00:00Z' }
     ],
     createdBy: { id: 'user123', username: 'TestUser' },
+    authorId: 'user123',
     channelId: 'test_channel',
     createdAt: new Date('2024-12-01T00:00:00Z'),
     updatedAt: new Date('2024-12-01T00:00:00Z'),
-    status: 'open',
+    status: 'open' as const,
     notificationSent: false
   };
 

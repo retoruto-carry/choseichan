@@ -90,33 +90,16 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
     justClosed: []
   };
 
-  // Scan global deadline index for schedules within past week to 3 days from now
-  // 過去の締切も含めて広範囲をスキャンして、まだ閉じられていないものを見つける
-  const startTime = Math.floor(oneWeekAgo.getTime() / 1000); // Convert to seconds for key comparison
-  const endTime = Math.floor(threeDaysFromNow.getTime() / 1000);
-  
-  // Use global deadline index for efficient cross-guild query
-  const deadlineKeys = await env.SCHEDULES.list({
-    prefix: 'deadline:',
-    limit: 1000
-  });
+  // Use StorageService to find schedules with deadlines in range
+  const schedules = await storage.getSchedulesWithDeadlineInRange(oneWeekAgo, threeDaysFromNow);
 
-  console.log(`Found ${deadlineKeys.keys.length} schedules with deadlines in range`);
+  console.log(`Found ${schedules.length} schedules with deadlines in range`);
 
-  for (const key of deadlineKeys.keys) {
-    const parts = key.name.split(':');
-    // Format: deadline:{timestamp}:{guildId}:{scheduleId}
-    const timestamp = parseInt(parts[1]) * 1000; // Convert back to milliseconds
-    const guildId = parts[2];
-    const scheduleId = parts[3];
-    
-    const schedule = await storage.getSchedule(scheduleId, guildId);
+  for (const schedule of schedules) {
     if (schedule && schedule.deadline) {
-      // Add guildId to schedule
-      schedule.guildId = guildId;
       const deadlineTime = schedule.deadline.getTime();
       
-      console.log(`Schedule ${scheduleId}: deadline=${new Date(deadlineTime).toISOString()}, status=${schedule.status}, remindersSent=${schedule.remindersSent?.join(',') || 'none'}`);
+      console.log(`Schedule ${schedule.id}: deadline=${new Date(deadlineTime).toISOString()}, status=${schedule.status}, remindersSent=${schedule.remindersSent?.join(',') || 'none'}`);
       
       // Check which reminders need to be sent
       if (schedule.status === 'open' && deadlineTime > now.getTime()) {
@@ -150,11 +133,11 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
               const hoursLate = Math.floor(timeSinceReminder / (60 * 60 * 1000));
               const minutesLate = Math.floor(timeSinceReminder / (60 * 1000));
               const lateDisplay = hoursLate > 0 ? `${hoursLate} hours` : `${minutesLate} minutes`;
-              console.log(`Skipping old reminder for ${scheduleId} (${timing.type}) - ${lateDisplay} late (threshold: ${Math.floor(threshold / (60 * 1000))} minutes)`);
+              console.log(`Skipping old reminder for ${schedule.id} (${timing.type}) - ${lateDisplay} late (threshold: ${Math.floor(threshold / (60 * 1000))} minutes)`);
               continue;
             }
             
-            console.log(`Adding ${scheduleId} to upcoming reminders (${timing.type})`);
+            console.log(`Adding ${schedule.id} to upcoming reminders (${timing.type})`);
             result.upcomingReminders.push({
               schedule,
               reminderType: timing.type,
@@ -172,11 +155,11 @@ export async function checkDeadlines(env: Env): Promise<DeadlineCheckResult> {
         const timeSinceDeadline = now.getTime() - deadlineTime;
         const CLOSURE_THRESHOLD_MS = 8 * 60 * 60 * 1000; // 締切通知は固定で8時間
         if (timeSinceDeadline > CLOSURE_THRESHOLD_MS) {
-          console.log(`Skipping old closure for ${scheduleId} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
+          console.log(`Skipping old closure for ${schedule.id} - deadline was ${Math.floor(timeSinceDeadline / (60 * 60 * 1000))} hours ago`);
           continue;
         }
         
-        console.log(`Adding ${scheduleId} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
+        console.log(`Adding ${schedule.id} to justClosed (deadline was ${new Date(deadlineTime).toISOString()})`);
         result.justClosed.push(schedule);
       }
     }
