@@ -3,12 +3,17 @@ export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   
   if (!isNaN(date.getTime())) {
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
+    // Get JST offset (UTC+9)
+    const jstOffset = 9 * 60; // 9 hours in minutes
+    const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+    const jstTime = new Date(utcTime + (jstOffset * 60000));
     
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+    const month = jstTime.getMonth() + 1;
+    const day = jstTime.getDate();
+    const hours = jstTime.getHours();
+    const minutes = jstTime.getMinutes();
+    
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][jstTime.getDay()];
     
     let result = `${month}/${day}(${dayOfWeek})`;
     
