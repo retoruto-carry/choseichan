@@ -241,7 +241,7 @@ export class NotificationService {
     const message = {
       content: `📊 日程調整「${schedule.title}」が締め切られました！`,
       embeds: [{
-        title: '最終集計結果',
+        title: '📊 集計結果',
         color: 0x2ecc71,
         description: schedule.description || undefined,
         fields: [
