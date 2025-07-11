@@ -34,7 +34,7 @@ export interface UpdateScheduleRequest {
   }>;
   reminderTimings?: string[];
   reminderMentions?: string[];
-  reminderStates?: any; // Reset reminder states when set
+  reminderStates?: Record<string, never>; // Empty object to reset reminder states when deadline changes
 }
 
 export interface AddDatesRequest {

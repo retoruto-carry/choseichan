@@ -75,7 +75,7 @@ export class ModalController {
   ): Promise<Response> {
     const { createCreateScheduleController } = await import('./CreateScheduleController');
     const controller = createCreateScheduleController(env);
-    return controller.handleCreateScheduleModal(interaction, env, storage);
+    return controller.handleCreateScheduleModal(interaction, env);
   }
 
   private async handleEditInfoModal(

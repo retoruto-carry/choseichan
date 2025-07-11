@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { createCommandController } from '../src/presentation/controllers/CommandController';
-import { CommandInteraction, Env } from '../src/types/discord';
-import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from './helpers/d1-database';
-import type { D1Database } from './helpers/d1-database';
-import { expectInteractionResponse } from './helpers/interaction-schemas';
+import { createCommandController } from './CommandController';
+import { CommandInteraction, Env } from '../../types/discord';
+import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../../../tests/helpers/d1-database';
+import type { D1Database } from '../../../tests/helpers/d1-database';
+import { expectInteractionResponse } from '../../../tests/helpers/interaction-schemas';
 
 describe('Choseichan Commands', () => {
   let db: D1Database;

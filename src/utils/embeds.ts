@@ -40,44 +40,31 @@ export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse)
 }
 
 export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, showDetails: boolean = false) {
-  // Handle both old and new types
   const schedule = summary.schedule;
   const responseCounts = summary.responseCounts;
-  const bestDateId = 'bestDateId' in summary ? summary.bestDateId : (summary as ScheduleSummaryResponse).statistics?.optimalDates?.optimalDateId;
-  const userResponses = 'userResponses' in summary ? (summary as any).userResponses : (summary as ScheduleSummaryResponse).responses || [];
+  const bestDateId = summary.bestDateId || summary.statistics?.optimalDates?.optimalDateId;
+  const userResponses = summary.responses || [];
   
   // 日程リストを作成（番号付き）
-  const dateFields = schedule.dates.map((date: any, idx: number) => {
+  const dateFields = schedule.dates.map((date, idx) => {
     const count = responseCounts[date.id];
-    const isBest = date.id === bestDateId && userResponses && (userResponses as any[]).length > 0;
+    const isBest = date.id === bestDateId && userResponses.length > 0;
     const dateStr = date.datetime;
     
     // 集計のみ（詳細なし）
     let fieldValue = `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
     
     // 詳細表示の場合は各ユーザーの回答も含める
-    if (showDetails && userResponses) {
-      const responses = (userResponses as any[])
-        .map((ur: any) => {
-          // Handle both old and new response types
-          if ('responses' in ur && Array.isArray(ur.responses)) {
-            // Old Response type
-            const response = ur.responses.find((r: any) => r.dateId === date.id);
-            if (!response) return null;
-            const comment = response.comment ? ` (${response.comment})` : '';
-            const username = 'userName' in ur ? ur.userName : 'username' in ur ? (ur as any).username : 'Unknown';
-            return `${STATUS_EMOJI[response.status as keyof typeof STATUS_EMOJI]} ${username}${comment}`;
-          } else if ('dateStatuses' in ur) {
-            // New ResponseDto type
-            const status = ur.dateStatuses[date.id];
-            if (!status) return null;
-            const statusEmoji = status === 'ok' ? STATUS_EMOJI.yes : status === 'maybe' ? STATUS_EMOJI.maybe : STATUS_EMOJI.no;
-            return `${statusEmoji} ${ur.username}`;
-          } else {
-            return null;
-          }
+    if (showDetails && userResponses.length > 0) {
+      const responses = userResponses
+        .map((ur) => {
+          const status = ur.dateStatuses[date.id];
+          if (!status) return null;
+          const statusEmoji = status === 'ok' ? STATUS_EMOJI.yes : status === 'maybe' ? STATUS_EMOJI.maybe : STATUS_EMOJI.no;
+          const comment = ur.comment ? ` (${ur.comment})` : '';
+          return `${statusEmoji} ${ur.username}${comment}`;
         })
-        .filter(Boolean);
+        .filter((r): r is string => r !== null);
       
       if (responses.length > 0) {
         fieldValue += '\n' + responses.join(', ');
@@ -107,7 +94,7 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, s
     descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
   }
   
-  descriptionParts.push(`回答者: ${userResponses ? (userResponses as any[]).length : 0}人`);
+  descriptionParts.push(`回答者: ${userResponses.length}人`);
   
   return {
     title: `📅 ${schedule.title}`,
@@ -116,13 +103,11 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, s
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
       text: [
-        `作成: ${'createdBy' in schedule && typeof schedule.createdBy === 'object' ? schedule.createdBy.username : '不明'}`,
+        `作成: ${schedule.createdBy.username}`,
         '最新の情報は更新をクリック'
-      ].filter(Boolean).join(' | ')
+      ].join(' | ')
     },
-    timestamp: (schedule.updatedAt as unknown) instanceof Date
-      ? (schedule.updatedAt as unknown as Date).toISOString() 
-      : schedule.updatedAt as string
+    timestamp: schedule.updatedAt
   };
 }
 

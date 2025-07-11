@@ -1,7 +1,7 @@
 /**
- * Clean Architecture Flow Integration Tests
+ * Schedule Operations Integration Tests
  * 
- * Clean Architectureの各層が正しく連携しているかを検証する統合テスト
+ * スケジュール操作の統合テスト
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -11,7 +11,7 @@ import type { D1Database } from '../helpers/d1-database';
 import { generateId } from '../../src/utils/id';
 import { Env } from '../../src/types/discord';
 
-describe('Clean Architecture Integration Flow', () => {
+describe('Schedule Operations', () => {
   let container: DependencyContainer;
   let env: Env;
   let db: D1Database;
@@ -41,8 +41,8 @@ describe('Clean Architecture Integration Flow', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Full Create Schedule Flow', () => {
-    it('should create schedule through all layers successfully', async () => {
+  describe('Schedule Creation', () => {
+    it('should create schedule successfully', async () => {
       // Arrange
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
       const request = {
@@ -83,7 +83,7 @@ describe('Clean Architecture Integration Flow', () => {
       expect(getResult.schedule!.id).toBe(result.schedule!.id);
     });
 
-    it('should validate through domain layer correctly', async () => {
+    it('should validate input correctly', async () => {
       // Arrange
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
       const request = {
@@ -106,8 +106,8 @@ describe('Clean Architecture Integration Flow', () => {
     });
   });
 
-  describe('Full Response Submission Flow', () => {
-    it('should submit response through all layers successfully', async () => {
+  describe('Response Submission', () => {
+    it('should submit response successfully', async () => {
       // Arrange - Create a schedule first
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
       const scheduleResult = await createScheduleUseCase.execute({
@@ -162,8 +162,8 @@ describe('Clean Architecture Integration Flow', () => {
     });
   });
 
-  describe('Full Schedule Summary Flow', () => {
-    it('should get schedule summary with responses through all layers', async () => {
+  describe('Schedule Summary', () => {
+    it('should get schedule summary with responses', async () => {
       // Arrange - Create schedule and add responses
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
       const scheduleResult = await createScheduleUseCase.execute({
@@ -239,8 +239,8 @@ describe('Clean Architecture Integration Flow', () => {
     });
   });
 
-  describe('Full Deadline Reminder Flow', () => {
-    it('should process deadline reminders through all layers', async () => {
+  describe('Deadline Reminders', () => {
+    it('should process deadline reminders', async () => {
       // Arrange - Create schedules with different deadline times
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
       
@@ -271,7 +271,7 @@ describe('Clean Architecture Integration Flow', () => {
     });
   });
 
-  describe('Repository Pattern Integration', () => {
+  describe('Transaction Handling', () => {
     it('should handle transaction rollback on error', async () => {
       // Arrange
       const createScheduleUseCase = container.applicationServices.createScheduleUseCase;
@@ -301,13 +301,13 @@ describe('Clean Architecture Integration Flow', () => {
     });
   });
 
-  describe('Clean Architecture Boundaries', () => {
-    it('should maintain layer separation throughout flow', async () => {
-      // This test verifies that:
-      // 1. Controllers only use use cases
-      // 2. Use cases only use domain services and repositories
-      // 3. Domain entities don't depend on external layers
-      // 4. Infrastructure adapts to domain interfaces
+  describe('End-to-End Schedule Flow', () => {
+    it('should complete full schedule lifecycle', async () => {
+      // This test verifies the complete schedule lifecycle:
+      // 1. Create schedule
+      // 2. Submit responses
+      // 3. View summary
+      // 4. Close schedule
 
       // Verify layer separation by creating through use case
       const createResult = await container.applicationServices.createScheduleUseCase.execute({

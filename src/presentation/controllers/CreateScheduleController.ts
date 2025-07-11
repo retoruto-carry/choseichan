@@ -26,8 +26,7 @@ export class CreateScheduleController {
    */
   async handleCreateScheduleModal(
     interaction: ModalInteraction,
-    env: Env,
-    storage?: any // For backwards compatibility with tests
+    env: Env
   ): Promise<Response> {
     try {
       const guildId = interaction.guild_id || 'default';

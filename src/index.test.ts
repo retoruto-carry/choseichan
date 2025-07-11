@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import app from '../src/index';
+import app from './index';
 import nacl from 'tweetnacl';
-import { expectInteractionResponse } from './helpers/interaction-schemas';
+import { expectInteractionResponse } from '../tests/helpers/interaction-schemas';
 
 // Mock Discord signature
 function createDiscordRequest(body: any, publicKey: string, privateKey: Uint8Array): Request {

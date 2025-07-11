@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { updateOriginalMessage, getOriginalMessage } from '../src/utils/discord';
+import { updateOriginalMessage, getOriginalMessage } from './discord';
 
 // Mock global fetch
 global.fetch = vi.fn();

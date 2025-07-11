@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateId, createButtonId, parseButtonId } from '../src/utils/id';
+import { generateId, createButtonId, parseButtonId } from './id';
 
 describe('ID Utilities', () => {
   describe('generateId', () => {

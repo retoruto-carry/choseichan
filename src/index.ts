@@ -4,6 +4,7 @@ import { Env, CommandInteraction, ButtonInteraction } from './types/discord';
 import { createCommandController } from './presentation/controllers/CommandController';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
 import { createModalController } from './presentation/controllers/ModalController';
+import { sendDeadlineReminders } from './cron/deadline-reminder';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -27,7 +28,6 @@ app.post('/cron/deadline-check', async (c) => {
   }
 
   try {
-    const { sendDeadlineReminders } = await import('./cron/deadline-reminder');
     await sendDeadlineReminders(c.env);
     return c.json({ success: true, message: 'Deadline check completed' });
   } catch (error) {
