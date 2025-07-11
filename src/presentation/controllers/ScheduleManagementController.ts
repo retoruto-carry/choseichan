@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, Env } from '../../types/discord';
+import { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { ScheduleManagementUIBuilder } from '../builders/ScheduleManagementUIBuilder';
 import { ScheduleResponse } from '../../application/dto/ScheduleDto';
@@ -284,7 +284,7 @@ export class ScheduleManagementController {
       const deleteResult = await this.dependencyContainer.deleteScheduleUseCase.execute({
         scheduleId,
         guildId,
-        editorUserId: userId
+        deletedByUserId: userId
       });
 
       if (!deleteResult.success) {
@@ -406,7 +406,7 @@ export class ScheduleManagementController {
       // メインメッセージの更新
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
       if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
-        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater-v2');
+        const { updateScheduleMainMessage } = await import('../../application/services/ScheduleUpdaterService');
         
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
@@ -456,7 +456,7 @@ export class ScheduleManagementController {
     try {
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
       if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
-        const { updateScheduleMainMessage } = await import('../../utils/schedule-updater-v2');
+        const { updateScheduleMainMessage } = await import('../../application/services/ScheduleUpdaterService');
         
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
@@ -481,7 +481,7 @@ export class ScheduleManagementController {
       env.ctx.waitUntil(
         (async () => {
           try {
-            const { deleteMessage } = await import('../../utils/discord');
+            const { deleteMessage } = await import('../../presentation/utils/discord');
             await deleteMessage(env.DISCORD_APPLICATION_ID!, interaction.token, schedule.messageId!);
           } catch (error) {
             console.error('Failed to delete main Discord message:', error);

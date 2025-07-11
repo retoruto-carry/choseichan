@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GetScheduleUseCase } from './GetScheduleUseCase';
-import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
+import { IScheduleRepository, IResponseRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
 import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('GetScheduleUseCase', () => {
   let useCase: GetScheduleUseCase;
   let mockScheduleRepository: IScheduleRepository;
+  let mockResponseRepository: IResponseRepository;
 
   const mockSchedule: DomainSchedule = {
     id: 'schedule-123',
@@ -30,12 +31,23 @@ describe('GetScheduleUseCase', () => {
       save: vi.fn(),
       findById: vi.fn(),
       findByChannel: vi.fn(),
-      findByGuild: vi.fn(),
-      findUpcomingDeadlines: vi.fn(),
-      deleteById: vi.fn()
-    };
+      findByAuthor: vi.fn(),
+      findByDeadlineRange: vi.fn(),
+      delete: vi.fn(),
+      findByMessageId: vi.fn(),
+      countByGuild: vi.fn(),
+      updateReminders: vi.fn()
+    } as any;
 
-    useCase = new GetScheduleUseCase(mockScheduleRepository);
+    mockResponseRepository = {
+      save: vi.fn(),
+      findByUser: vi.fn(),
+      findByScheduleId: vi.fn(),
+      delete: vi.fn(),
+      deleteBySchedule: vi.fn()
+    } as any;
+
+    useCase = new GetScheduleUseCase(mockScheduleRepository, mockResponseRepository);
   });
 
   describe('execute', () => {
@@ -84,13 +96,13 @@ describe('GetScheduleUseCase', () => {
 
     it('should handle NotFoundError from repository', async () => {
       vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(
-        new NotFoundError('Schedule not found')
+        new NotFoundError('Schedule', 'schedule-123')
       );
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors[0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle general repository errors', async () => {
@@ -101,7 +113,7 @@ describe('GetScheduleUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors[0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle unexpected errors', async () => {
@@ -112,7 +124,7 @@ describe('GetScheduleUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors[0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle schedules with all optional fields', async () => {

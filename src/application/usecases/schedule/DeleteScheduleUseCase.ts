@@ -11,11 +11,17 @@ import { ScheduleMapper } from '../../mappers/DomainMappers';
 export interface DeleteScheduleRequest {
   scheduleId: string;
   guildId: string;
-  editorUserId: string;
+  deletedByUserId: string;
 }
 
 export interface DeleteScheduleUseCaseResult {
   success: boolean;
+  deletedSchedule?: {
+    id: string;
+    title: string;
+    channelId: string;
+    responseCount: number;
+  };
   errors?: string[];
 }
 
@@ -28,10 +34,11 @@ export class DeleteScheduleUseCase {
   async execute(request: DeleteScheduleRequest): Promise<DeleteScheduleUseCaseResult> {
     try {
       // 1. 入力検証
-      if (!request.scheduleId?.trim() || !request.guildId?.trim() || !request.editorUserId?.trim()) {
+      const validation = this.validateRequest(request);
+      if (!validation.isValid) {
         return {
           success: false,
-          errors: ['必須パラメータが不足しています']
+          errors: validation.errors
         };
       }
 
@@ -41,7 +48,7 @@ export class DeleteScheduleUseCase {
       if (!scheduleData) {
         return {
           success: false,
-          errors: ['指定されたスケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません']
         };
       }
 
@@ -49,28 +56,58 @@ export class DeleteScheduleUseCase {
       const schedule = ScheduleMapper.toDomain(scheduleData);
 
       // 4. 権限チェック
-      if (!schedule.canBeEditedBy(request.editorUserId)) {
+      if (!schedule.canBeEditedBy(request.deletedByUserId)) {
         return {
           success: false,
           errors: ['このスケジュールを削除する権限がありません']
         };
       }
 
-      // 5. 関連する回答データの削除
+      // 5. 削除前の情報を保存
+      const deletedSchedule = {
+        id: schedule.id,
+        title: schedule.title,
+        channelId: schedule.channelId,
+        responseCount: schedule.totalResponses
+      };
+
+      // 6. 関連する回答データの削除
       await this.responseRepository.deleteBySchedule(request.scheduleId, request.guildId);
 
-      // 6. スケジュールの削除
+      // 7. スケジュールの削除
       await this.scheduleRepository.delete(request.scheduleId, request.guildId);
 
       return {
-        success: true
+        success: true,
+        deletedSchedule
       };
 
     } catch (error) {
       return {
         success: false,
-        errors: [error instanceof Error ? error.message : 'スケジュールの削除に失敗しました']
+        errors: [`スケジュールの削除に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
+  }
+
+  private validateRequest(request: DeleteScheduleRequest): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!request.scheduleId?.trim()) {
+      errors.push('スケジュールIDが必要です');
+    }
+
+    if (!request.guildId?.trim()) {
+      errors.push('Guild IDが必要です');
+    }
+
+    if (!request.deletedByUserId?.trim()) {
+      errors.push('削除者IDが必要です');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 }

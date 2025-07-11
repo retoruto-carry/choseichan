@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
 import { createCommandController } from './CommandController';
-import { CommandInteraction, Env } from '../../types/discord';
+import { CommandInteraction, Env } from '../../infrastructure/types/discord';
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../../../tests/helpers/d1-database';
 import type { D1Database } from '../../../tests/helpers/d1-database';
 import { expectInteractionResponse } from '../../../tests/helpers/interaction-schemas';

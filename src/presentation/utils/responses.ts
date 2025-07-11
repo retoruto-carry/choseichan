@@ -1,5 +1,5 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { DiscordEmbed, DiscordComponent } from '../types/discord-api';
+import { DiscordEmbed, DiscordComponent } from '../../infrastructure/types/discord-api';
 
 /**
  * Create an ephemeral response

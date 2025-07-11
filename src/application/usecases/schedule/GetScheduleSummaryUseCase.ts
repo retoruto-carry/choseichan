@@ -100,11 +100,19 @@ export class GetScheduleSummaryUseCase {
     
     for (const [dateId, status] of Object.entries(dateStatuses)) {
       switch (status) {
-        case 'available':
+        // Current format
+        case 'ok':
           converted[dateId] = 'ok';
           break;
         case 'maybe':
           converted[dateId] = 'maybe';
+          break;
+        case 'ng':
+          converted[dateId] = 'ng';
+          break;
+        // Legacy format
+        case 'available':
+          converted[dateId] = 'ok';
           break;
         case 'unavailable':
           converted[dateId] = 'ng';
@@ -117,7 +125,7 @@ export class GetScheduleSummaryUseCase {
     return converted;
   }
 
-  private calculateResponseCounts(dates: Array<{id: string, datetime: string}>, responses: any[]): Record<string, { yes: number; maybe: number; no: number }> {
+  private calculateResponseCounts(dates: Array<{id: string, datetime: string}>, responses: ResponseDto[]): Record<string, { yes: number; maybe: number; no: number }> {
     const counts: Record<string, { yes: number; maybe: number; no: number }> = {};
     
     for (const date of dates) {
@@ -131,7 +139,7 @@ export class GetScheduleSummaryUseCase {
     return counts;
   }
 
-  private calculateStatistics(dates: Array<{id: string, datetime: string}>, responses: any[]) {
+  private calculateStatistics(dates: Array<{id: string, datetime: string}>, responses: ResponseDto[]) {
     // Calculate participation statistics
     const fullyAvailable = responses.filter(r => 
       dates.every(date => r.dateStatuses[date.id] === 'ok')

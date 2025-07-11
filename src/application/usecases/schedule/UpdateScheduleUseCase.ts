@@ -58,7 +58,15 @@ export class UpdateScheduleUseCase {
         };
       }
 
-      // 5. ドメインサービスによる業務ルール検証
+      // 5. 締め切られたスケジュールのチェック
+      if (scheduleEntity.isClosed()) {
+        return {
+          success: false,
+          errors: ['締め切られたスケジュールは編集できません']
+        };
+      }
+
+      // 6. ドメインサービスによる業務ルール検証
       const domainValidation = ScheduleDomainService.validateScheduleForUpdate({
         schedule: scheduleEntity,
         title: request.title,
@@ -73,7 +81,7 @@ export class UpdateScheduleUseCase {
         };
       }
 
-      // 6. スケジュールの更新
+      // 7. スケジュールの更新
       let updatedSchedule = scheduleEntity;
       
       if (request.title !== undefined) {

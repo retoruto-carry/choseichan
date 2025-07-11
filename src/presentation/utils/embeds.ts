@@ -1,12 +1,12 @@
 import { STATUS_EMOJI, EMBED_COLORS } from '../constants/ui';
-import { ScheduleSummaryResponse, ScheduleResponse } from '../application/dto/ScheduleDto';
-import { DomainSchedule } from '../domain/types/DomainTypes';
-import { createButtonId } from './id';
-import { formatDate } from './date';
+import { ScheduleSummaryResponse, ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { DomainSchedule } from '../../domain/types/DomainTypes';
+import { createButtonId } from '../../utils/id';
+import { formatDate } from '../../utils/date';
 
 export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse) {
   const dateList = schedule.dates
-    .map((date: any, index: number) => `${index + 1}. ${date.datetime}`)
+    .map((date, index) => `${index + 1}. ${date.datetime}`)
     .join('\n');
   
   const descriptionParts = [

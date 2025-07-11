@@ -6,10 +6,10 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
-import { ButtonInteraction, Env } from '../../types/discord';
+import { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { DisplayUIBuilder } from '../builders/DisplayUIBuilder';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 
 export class DisplayController {
   constructor(

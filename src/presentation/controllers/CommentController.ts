@@ -8,7 +8,7 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalInteraction, ButtonInteraction, Env } from '../../types/discord';
+import { ModalInteraction, ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CommentUIBuilder } from '../builders/CommentUIBuilder';
 

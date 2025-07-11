@@ -65,7 +65,7 @@ export class DeadlineReminderUseCase {
                   hours: this.parseTimingToHours(t) || 0,
                   message: this.getTimingMessage(t),
                   isCustom: true
-                })).filter((t: any) => t.hours > 0)
+                })).filter((t) => t.hours > 0)
               : this.DEFAULT_REMINDER_TIMINGS.map(t => ({ ...t, isCustom: false }));
             
             for (const timing of timings) {
@@ -75,7 +75,7 @@ export class DeadlineReminderUseCase {
               if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
                 // Skip if reminder is too old based on its type
                 const timeSinceReminder = now.getTime() - reminderTime;
-                const threshold = (timing as any).isCustom 
+                const threshold = 'isCustom' in timing && timing.isCustom 
                   ? this.getOldReminderThreshold(timing.type)
                   : 8 * 60 * 60 * 1000;
                   

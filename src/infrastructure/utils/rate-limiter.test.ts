@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { processBatches, RateLimiter } from '../../src/utils/rate-limiter';
+import { processBatches, RateLimiter } from './rate-limiter';
 
 describe('Rate Limiter', () => {
   describe('processBatches', () => {

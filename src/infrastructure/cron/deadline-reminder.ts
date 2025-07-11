@@ -1,5 +1,5 @@
 import { Env } from '../types/discord';
-import { DependencyContainer } from '../infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../factories/DependencyContainer';
 
 export async function sendDeadlineReminders(env: Env): Promise<void> {
   const container = new DependencyContainer(env);

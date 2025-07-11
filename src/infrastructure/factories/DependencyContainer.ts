@@ -8,7 +8,7 @@
 import { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import { IDiscordApiService, DiscordApiService } from '../services/DiscordApiService';
 import { createRepositoryFactory } from './factory';
-import { Env } from '../../types/discord';
+import { Env } from '../types/discord';
 
 // Application Layer Use Cases
 import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
@@ -174,7 +174,7 @@ export class DependencyContainer {
     serviceName: K,
     mockService: ApplicationServices[K]
   ): void {
-    (this._applicationServices as any)[serviceName] = mockService;
+    (this._applicationServices as Record<keyof ApplicationServices, unknown>)[serviceName] = mockService;
   }
 
   /**
@@ -184,6 +184,6 @@ export class DependencyContainer {
     serviceName: K,
     mockService: InfrastructureServices[K]
   ): void {
-    (this._infrastructureServices as any)[serviceName] = mockService;
+    (this._infrastructureServices as Record<keyof InfrastructureServices, unknown>)[serviceName] = mockService;
   }
 }

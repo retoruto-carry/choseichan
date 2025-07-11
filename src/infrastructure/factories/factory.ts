@@ -4,7 +4,7 @@
 
 import { IRepositoryFactory, DatabaseConfig } from '../../domain/repositories/interfaces';
 import { D1RepositoryFactory } from '../repositories/d1/factory';
-import { Env } from '../../types/discord';
+import { Env } from '../types/discord';
 
 /**
  * 環境変数からデータベース設定を作成

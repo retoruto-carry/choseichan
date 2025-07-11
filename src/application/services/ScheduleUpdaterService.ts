@@ -1,7 +1,7 @@
-import { Env } from '../types/discord';
-import { DependencyContainer } from '../infrastructure/factories/DependencyContainer';
-import { updateOriginalMessage } from './discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from './embeds';
+import { Env } from '../../infrastructure/types/discord';
+import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { updateOriginalMessage } from '../../presentation/utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../presentation/utils/embeds';
 
 /**
  * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版

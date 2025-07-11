@@ -232,22 +232,29 @@ export class D1ResponseRepository implements IResponseRepository {
   /**
    * Map database row to Response object
    */
-  private mapRowToResponse(row: any, statusRows: any[]): DomainResponse | null {
-    if (!row) return null;
+  private mapRowToResponse(row: unknown, statusRows: unknown[]): DomainResponse | null {
+    if (!row || typeof row !== 'object') return null;
+    
+    const r = row as Record<string, unknown>;
     
     const dateStatuses: Record<string, DomainResponseStatus> = {};
     for (const statusRow of statusRows) {
-      dateStatuses[statusRow.date_id] = statusRow.status as DomainResponseStatus;
+      if (typeof statusRow === 'object' && statusRow !== null) {
+        const sr = statusRow as Record<string, unknown>;
+        if (typeof sr.date_id === 'string' && typeof sr.status === 'string') {
+          dateStatuses[sr.date_id] = sr.status as DomainResponseStatus;
+        }
+      }
     }
     
     return {
-      scheduleId: row.schedule_id,
-      userId: row.user_id,
-      username: row.username,
-      displayName: row.display_name || undefined,
+      scheduleId: r.schedule_id as string,
+      userId: r.user_id as string,
+      username: r.username as string,
+      displayName: (r.display_name as string) || undefined,
       dateStatuses,
-      comment: row.comment || undefined,
-      updatedAt: new Date(row.updated_at * 1000)
+      comment: (r.comment as string) || undefined,
+      updatedAt: new Date((r.updated_at as number) * 1000)
     };
   }
 

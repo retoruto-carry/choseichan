@@ -1,5 +1,5 @@
-import { Env } from '../types/discord';
-import { DiscordComponent } from '../types/discord-api';
+import { Env } from '../../infrastructure/types/discord';
+import { DiscordComponent } from '../../infrastructure/types/discord-api';
 
 /**
  * Send a followup message using webhook

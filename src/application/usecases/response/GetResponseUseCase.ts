@@ -112,54 +112,59 @@ export class GetResponseUseCase {
         // 日程IDの抽出（最初のレスポンスから）
         const dateIds = Object.keys(responses[0].dateStatuses);
         
-        // レスポンスエンティティはすでに上で構築済み
-        
-        // 統計情報の計算
-        const responseStats = ResponseDomainService.calculateResponseStatistics(
-          responseEntities,
-          dateIds
-        );
+        // No date IDs means no statistics to calculate
+        if (dateIds.length === 0) {
+          statistics = undefined;
+        } else {
+          // レスポンスエンティティはすでに上で構築済み
+          
+          // 統計情報の計算
+          const responseStats = ResponseDomainService.calculateResponseStatistics(
+            responseEntities,
+            dateIds
+          );
 
-        // 最適な日程の計算
-        const optimalDates = ResponseDomainService.findOptimalDates(
-          responseEntities,
-          dateIds
-        );
+          // 最適な日程の計算
+          const optimalDates = ResponseDomainService.findOptimalDates(
+            responseEntities,
+            dateIds
+          );
 
-        // 日程別の詳細な統計
-        const responsesByDate: Record<string, {
-          yes: number;
-          maybe: number;
-          no: number;
-          total: number;
-          percentage: {
+          // 日程別の詳細な統計
+          const responsesByDate: Record<string, {
             yes: number;
             maybe: number;
             no: number;
-          };
-        }> = {};
-
-        Object.entries(responseStats.responsesByDate).forEach(([dateId, counts]) => {
-          const total = counts.total || 1; // ゼロ除算を避ける
-          responsesByDate[dateId] = {
-            yes: counts.yes,
-            maybe: counts.maybe,
-            no: counts.no,
-            total: counts.total,
+            total: number;
             percentage: {
-              yes: Math.round((counts.yes / total) * 100),
-              maybe: Math.round((counts.maybe / total) * 100),
-              no: Math.round((counts.no / total) * 100)
-            }
-          };
-        });
+              yes: number;
+              maybe: number;
+              no: number;
+            };
+          }> = {};
 
-        statistics = {
-          totalUsers: responseStats.totalUsers,
-          responsesByDate,
-          overallParticipation: responseStats.overallParticipation,
-          optimalDates
-        };
+          Object.entries(responseStats.responsesByDate).forEach(([dateId, counts]) => {
+            const total = counts.total || 1; // ゼロ除算を避ける
+            responsesByDate[dateId] = {
+              yes: counts.yes,
+              maybe: counts.maybe,
+              no: counts.no,
+              total: counts.total,
+              percentage: {
+                yes: Math.round((counts.yes / total) * 100),
+                maybe: Math.round((counts.maybe / total) * 100),
+                no: Math.round((counts.no / total) * 100)
+              }
+            };
+          });
+
+          statistics = {
+            totalUsers: responseStats.totalUsers,
+            responsesByDate,
+            overallParticipation: responseStats.overallParticipation,
+            optimalDates
+          };
+        }
       }
 
       return {
@@ -214,9 +219,9 @@ export class GetResponseUseCase {
 
     return {
       scheduleId: primitives.scheduleId,
-      userId: primitives.userId,
-      username: primitives.username,
-      displayName: primitives.displayName,
+      userId: primitives.user.id,
+      username: primitives.user.username,
+      displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
       updatedAt: primitives.updatedAt.toISOString()

@@ -5,7 +5,7 @@
  */
 
 import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
-import { DiscordModalData } from '../../types/discord-api';
+import { DiscordModalData } from '../../infrastructure/types/discord-api';
 import { DISCORD_LIMITS } from '../../constants';
 
 export class VoteUIBuilder {

@@ -4,8 +4,9 @@
  * コマンド関連のUI構築専用クラス
  */
 
-import { EMBED_COLORS } from '../../constants/ui';
+import { EMBED_COLORS } from '../constants/ui';
 import { formatDate } from '../../utils/date';
+import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class CommandUIBuilder {
   /**
@@ -73,13 +74,13 @@ export class CommandUIBuilder {
   /**
    * スケジュール一覧エンベッドを作成
    */
-  createScheduleListEmbed(schedules: any[]) {
+  createScheduleListEmbed(schedules: ScheduleResponse[]) {
     return {
       title: '📋 日程調整一覧',
       color: EMBED_COLORS.INFO,
       fields: schedules.slice(0, 10).map(schedule => ({
         name: `${schedule.status === 'open' ? '🟢' : '🔴'} ${schedule.title}`,
-        value: `ID: ${schedule.id}\n作成者: ${schedule.createdBy?.username || schedule.authorUsername || 'Unknown'}\n作成日: ${formatDate(schedule.createdAt)}`,
+        value: `ID: ${schedule.id}\n作成者: ${schedule.createdBy?.username || 'Unknown'}\n作成日: ${formatDate(schedule.createdAt)}`,
         inline: false
       })),
       footer: {

@@ -3,7 +3,7 @@ import { VoteController } from './VoteController';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, ModalInteraction, Env } from '../../types/discord';
+import { ButtonInteraction, ModalInteraction, Env } from '../../infrastructure/types/discord';
 import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
 
 describe('VoteController', () => {
@@ -148,7 +148,7 @@ describe('VoteController', () => {
 
       // Verify
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
       expect(data.data).toEqual(mockModal);
 
@@ -210,7 +210,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('日程調整が見つかりません');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
@@ -230,7 +230,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('この日程調整は締め切られています');
     });
 
@@ -245,7 +245,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('エラーが発生しました');
     });
   });
@@ -302,7 +302,9 @@ describe('VoteController', () => {
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
-        success: true
+        success: true,
+        response: mockResponse,
+        isNewResponse: true
       });
 
       const response = await controller.handleVoteModal(
@@ -311,7 +313,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('✅ Responder さんの回答を受け付けました');
       expect(data.data.content).toContain('○ 2024/01/20 19:00');
@@ -376,13 +378,15 @@ describe('VoteController', () => {
         });
 
         vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
-          success: true
+          success: true,
+          response: mockResponse,
+          isNewResponse: false
         });
 
         await controller.handleVoteModal(interaction, ['schedule-123'], mockEnv);
 
         const call = vi.mocked(mockContainer.submitResponseUseCase.execute).mock.lastCall;
-        expect(call[0].responses[0].status).toBe(testCase.expected);
+        expect(call?.[0].responses[0].status).toBe(testCase.expected);
       }
     });
 
@@ -393,7 +397,9 @@ describe('VoteController', () => {
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
-        success: true
+        success: true,
+        response: mockResponse,
+        isNewResponse: false
       });
 
       await controller.handleVoteModal(mockModalInteraction, ['schedule-123'], mockEnv);
@@ -421,7 +427,9 @@ describe('VoteController', () => {
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
-        success: true
+        success: true,
+        response: mockResponse,
+        isNewResponse: false
       });
 
       const response = await controller.handleVoteModal(
@@ -430,7 +438,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('✅ TestUser さんの回答を受け付けました');
     });
 
@@ -441,7 +449,10 @@ describe('VoteController', () => {
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
-        success: false
+        success: false,
+        response: {} as ResponseDto,
+        isNewResponse: false,
+        errors: ['投票の処理中にエラーが発生しました']
       });
 
       const response = await controller.handleVoteModal(
@@ -450,7 +461,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('回答の保存に失敗しました');
     });
   });
@@ -492,13 +503,15 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
-      expect(data.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+      const data = await response.json() as any;
+      expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(data.data.content).toContain('✅ 日程調整を締め切りました');
+      expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
 
       expect(mockContainer.closeScheduleUseCase.execute).toHaveBeenCalledWith({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        closedByUserId: 'user-123'
+        editorUserId: 'user-123'
       });
     });
 
@@ -526,7 +539,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('この日程調整を締め切る権限がありません');
     });
 
@@ -544,7 +557,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json();
+      const data = await response.json() as any;
       expect(data.data.content).toContain('この日程調整は既に締め切られています');
     });
   });

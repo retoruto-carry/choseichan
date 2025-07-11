@@ -6,14 +6,14 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, ModalInteraction, Env } from '../../types/discord';
+import { ButtonInteraction, ModalInteraction, Env } from '../../infrastructure/types/discord';
 // ResponseStatus type - should be moved to a proper type file
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
-import { createEphemeralResponse, createErrorResponse } from '../../utils/responses';
-import { sendFollowupMessage } from '../../utils/discord-webhook';
-import { updateOriginalMessage } from '../../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
+import { sendFollowupMessage } from '../utils/discord-webhook';
+import { updateOriginalMessage } from '../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { NotificationService } from '../../application/services/NotificationService';
 import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 

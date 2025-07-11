@@ -83,12 +83,13 @@ export class ResponseDomainService {
 
     if (existingResponse) {
       // 既存のレスポンスを更新
-      let updatedResponse = existingResponse;
-      
-      // 各日程のステータスを更新
+      // 新しいステータスマップを作成
+      const newDateStatuses = new Map<string, ResponseStatus>();
       responseData.forEach(data => {
-        updatedResponse = updatedResponse.updateDateStatus(data.dateId, data.status);
+        newDateStatuses.set(data.dateId, data.status);
       });
+      
+      let updatedResponse = existingResponse.updateStatuses(newDateStatuses);
 
       // コメントを更新
       if (comment !== undefined) {
@@ -98,12 +99,18 @@ export class ResponseDomainService {
       return updatedResponse;
     } else {
       // 新しいレスポンスを作成
-      return Response.create(
+      const dateStatusesMap = new Map<string, ResponseStatus>();
+      Object.entries(dateStatuses).forEach(([dateId, status]) => {
+        dateStatusesMap.set(dateId, status);
+      });
+      
+      return Response.create({
+        id: `${scheduleId}-${user.id}`,
         scheduleId,
         user,
-        dateStatuses,
+        dateStatuses: dateStatusesMap,
         comment
-      );
+      });
     }
   }
 

@@ -8,6 +8,11 @@ describe('UpdateScheduleUseCase', () => {
   let useCase: UpdateScheduleUseCase;
   let mockScheduleRepository: IScheduleRepository;
 
+  // Set dates in the future to avoid validation errors
+  const futureDate1 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+  const futureDate2 = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000); // 8 days from now
+  const futureDeadline = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000); // 6 days from now (before schedule dates)
+  
   const mockSchedule: DomainSchedule = {
     id: 'schedule-123',
     guildId: 'guild-123',
@@ -15,8 +20,8 @@ describe('UpdateScheduleUseCase', () => {
     title: 'Original Title',
     description: 'Original Description',
     dates: [
-      { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-1', datetime: `${futureDate1.getFullYear()}/${(futureDate1.getMonth() + 1).toString().padStart(2, '0')}/${futureDate1.getDate().toString().padStart(2, '0')} 19:00` },
+      { id: 'date-2', datetime: `${futureDate2.getFullYear()}/${(futureDate2.getMonth() + 1).toString().padStart(2, '0')}/${futureDate2.getDate().toString().padStart(2, '0')} 19:00` }
     ],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
@@ -32,10 +37,13 @@ describe('UpdateScheduleUseCase', () => {
       save: vi.fn(),
       findById: vi.fn(),
       findByChannel: vi.fn(),
-      findByGuild: vi.fn(),
-      findUpcomingDeadlines: vi.fn(),
-      deleteById: vi.fn()
-    };
+      findByAuthor: vi.fn(),
+      findByDeadlineRange: vi.fn(),
+      delete: vi.fn(),
+      findByMessageId: vi.fn(),
+      countByGuild: vi.fn(),
+      updateReminders: vi.fn()
+    } as any;
 
     useCase = new UpdateScheduleUseCase(mockScheduleRepository);
   });
@@ -82,7 +90,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const deadline = '2024-02-01T12:00:00Z';
+      const deadline = futureDeadline.toISOString();
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
@@ -102,7 +110,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should remove deadline when null is provided', async () => {
       const scheduleWithDeadline = {
         ...mockSchedule,
-        deadline: new Date('2024-02-01')
+        deadline: futureDeadline
       };
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleWithDeadline);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
@@ -184,9 +192,12 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
+      const futureDate3 = new Date(Date.now() + 9 * 24 * 60 * 60 * 1000); // 9 days from now
+      const futureDate4 = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 10 days from now
+      
       const newDates = [
-        { id: 'date-3', datetime: '2024/01/22 19:00' },
-        { id: 'date-4', datetime: '2024/01/23 19:00' }
+        { id: 'date-3', datetime: `${futureDate3.getFullYear()}/${(futureDate3.getMonth() + 1).toString().padStart(2, '0')}/${futureDate3.getDate().toString().padStart(2, '0')} 19:00` },
+        { id: 'date-4', datetime: `${futureDate4.getFullYear()}/${(futureDate4.getMonth() + 1).toString().padStart(2, '0')}/${futureDate4.getDate().toString().padStart(2, '0')} 19:00` }
       ];
 
       const request: UpdateScheduleRequest = {
@@ -212,12 +223,14 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('スケジュールIDが必要です');
-      expect(result.errors).toContain('Guild IDが必要です');
-      expect(result.errors).toContain('編集者IDが必要です');
+      expect(result.errors!).toContain('スケジュールIDが必要です');
+      expect(result.errors!).toContain('Guild IDが必要です');
+      expect(result.errors!).toContain('編集者IDが必要です');
     });
 
     it('should validate empty title', async () => {
+      vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
+      
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
@@ -228,10 +241,12 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('タイトルが空です');
+      expect(result.errors!).toContain('タイトルが空です');
     });
 
     it('should validate empty dates', async () => {
+      vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
+      
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
@@ -242,7 +257,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('Schedule must have at least one date');
+      expect(result.errors![0]).toContain('Schedule must have at least one date');
     });
 
     it('should return error when schedule not found', async () => {
@@ -258,7 +273,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('スケジュールが見つかりません');
+      expect(result.errors!).toContain('スケジュールが見つかりません');
     });
 
     it('should return error when user is not authorized', async () => {
@@ -274,7 +289,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('このスケジュールを編集する権限がありません');
+      expect(result.errors!).toContain('このスケジュールを編集する権限がありません');
     });
 
     it('should return error when schedule is closed', async () => {
@@ -291,7 +306,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('締め切られたスケジュールは編集できません');
+      expect(result.errors!).toContain('締め切られたスケジュールは編集できません');
     });
 
     it('should handle repository errors', async () => {
@@ -309,7 +324,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors[0]).toContain('スケジュールの更新に失敗しました');
+      expect(result.errors![0]).toContain('スケジュールの更新に失敗しました');
     });
 
     it('should update multiple fields at once', async () => {
@@ -322,16 +337,20 @@ describe('UpdateScheduleUseCase', () => {
         editorUserId: 'user-123',
         title: 'New Title',
         description: 'New Description',
-        deadline: '2024-02-15T10:00:00Z',
+        deadline: futureDeadline.toISOString(),
         messageId: 'msg-789'
       };
 
       const result = await useCase.execute(request);
 
+      if (!result.success) {
+        console.error('Update failed with errors:', result.errors);
+      }
+
       expect(result.success).toBe(true);
       expect(result.schedule?.title).toBe('New Title');
       expect(result.schedule?.description).toBe('New Description');
-      expect(result.schedule?.deadline).toBe('2024-02-15T10:00:00Z');
+      expect(result.schedule?.deadline).toBe(futureDeadline.toISOString());
       expect(result.schedule?.messageId).toBe('msg-789');
     });
   });

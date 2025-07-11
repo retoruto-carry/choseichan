@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Env } from '../../src/types/discord';
+import { Env } from '../../src/infrastructure/types/discord';
 
 // D1Database互換のインターフェース
 export interface D1Database {

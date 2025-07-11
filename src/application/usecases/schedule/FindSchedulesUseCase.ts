@@ -6,6 +6,7 @@
 
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleResponse } from '../../dto/ScheduleDto';
+import { Schedule } from '../../../domain/entities/Schedule';
 
 export interface FindSchedulesByChannelUseCaseResult {
   success: boolean;
@@ -111,7 +112,7 @@ export class FindSchedulesUseCase {
     }
   }
 
-  private buildScheduleResponse(schedule: any): ScheduleResponse {
+  private buildScheduleResponse(schedule: Schedule): ScheduleResponse {
     return {
       id: schedule.id,
       guildId: schedule.guildId,

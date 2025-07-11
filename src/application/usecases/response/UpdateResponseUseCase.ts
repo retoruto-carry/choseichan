@@ -101,9 +101,11 @@ export class UpdateResponseUseCase {
 
       // レスポンスデータの更新
       if (request.responses) {
+        const newStatuses = new Map<string, ResponseStatus>();
         responseData.forEach(data => {
-          updatedResponse = updatedResponse.updateDateStatus(data.dateId, data.status);
+          newStatuses.set(data.dateId, data.status);
         });
+        updatedResponse = updatedResponse.updateStatuses(newStatuses);
       }
 
       // コメントの更新
@@ -198,9 +200,9 @@ export class UpdateResponseUseCase {
 
     return {
       scheduleId: primitives.scheduleId,
-      userId: primitives.userId,
-      username: primitives.username,
-      displayName: primitives.displayName,
+      userId: primitives.user.id,
+      username: primitives.user.username,
+      displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
       updatedAt: primitives.updatedAt.toISOString()

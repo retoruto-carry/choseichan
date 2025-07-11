@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { ModalUIBuilder } from '../builders/ModalUIBuilder';
 

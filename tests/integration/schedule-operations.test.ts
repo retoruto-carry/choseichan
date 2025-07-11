@@ -9,7 +9,7 @@ import { DependencyContainer } from '../../src/infrastructure/factories/Dependen
 import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../helpers/d1-database';
 import type { D1Database } from '../helpers/d1-database';
 import { generateId } from '../../src/utils/id';
-import { Env } from '../../src/types/discord';
+import { Env } from '../../src/infrastructure/types/discord';
 
 describe('Schedule Operations', () => {
   let container: DependencyContainer;

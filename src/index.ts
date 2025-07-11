@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { InteractionType, InteractionResponseType, verifyKey } from 'discord-interactions';
-import { Env, CommandInteraction, ButtonInteraction } from './types/discord';
+import { Env, CommandInteraction, ButtonInteraction } from './infrastructure/types/discord';
 import { createCommandController } from './presentation/controllers/CommandController';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
 import { createModalController } from './presentation/controllers/ModalController';
-import { sendDeadlineReminders } from './cron/deadline-reminder';
+import { sendDeadlineReminders } from './infrastructure/cron/deadline-reminder';
 
 const app = new Hono<{ Bindings: Env }>();
 

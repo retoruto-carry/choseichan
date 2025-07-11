@@ -4,7 +4,7 @@
  * 締切リマインダー処理のユースケース
  */
 
-import { Env } from '../../types/discord';
+import { Env } from '../../infrastructure/types/discord';
 import { GetScheduleUseCase } from './schedule/GetScheduleUseCase';
 import { GetScheduleSummaryUseCase } from './schedule/GetScheduleSummaryUseCase';
 import { ProcessReminderUseCase } from './schedule/ProcessReminderUseCase';
@@ -12,7 +12,7 @@ import { CloseScheduleUseCase } from './schedule/CloseScheduleUseCase';
 import { DeadlineReminderUseCase } from './schedule/DeadlineReminderUseCase';
 import { NotificationService } from '../services/NotificationService';
 import { ReminderInfo, DeadlineCheckResult } from '../types/ReminderTypes';
-import { processBatches } from '../../utils/rate-limiter';
+import { processBatches } from '../../infrastructure/utils/rate-limiter';
 
 export class ProcessDeadlineRemindersUseCase {
   constructor(
@@ -71,42 +71,49 @@ export class ProcessDeadlineRemindersUseCase {
     batchSize: number,
     batchDelay: number
   ): Promise<void> {
-    await processBatches(reminders, async (reminderInfo) => {
-      try {
-        const { scheduleId, guildId, reminderType, message } = reminderInfo;
-        
-        // Get schedule
-        const scheduleResult = await this.getScheduleUseCase.execute(scheduleId, guildId);
-        if (!scheduleResult.success || !scheduleResult.schedule) {
-          console.error(`Failed to get schedule ${scheduleId}:`, scheduleResult.errors);
-          return;
-        }
+    const result = await processBatches(reminders, async (reminderInfo) => {
+      const { scheduleId, guildId, reminderType, message } = reminderInfo;
+      
+      // Get schedule and summary in parallel for better performance
+      const [scheduleResult, summaryResult] = await Promise.allSettled([
+        this.getScheduleUseCase.execute(scheduleId, guildId),
+        this.getScheduleSummaryUseCase.execute(scheduleId, guildId)
+      ]);
 
-        // Get total responses
-        const summaryResult = await this.getScheduleSummaryUseCase.execute(scheduleId, guildId);
-        let totalResponses = 0;
-        if (summaryResult.success && summaryResult.summary) {
-          totalResponses = summaryResult.summary.totalResponseUsers;
-        }
-
-        // Pass schedule as-is (ScheduleResponse)
-        await this.notificationService.sendDeadlineReminder(scheduleResult.schedule, message);
-        
-        // Update reminder status
-        await this.processReminderUseCase.markReminderSent({
-          scheduleId,
-          guildId,
-          reminderType
-        });
-        
-        console.log(`Sent ${reminderType} deadline reminder for schedule ${scheduleId}`);
-      } catch (error) {
-        console.error(`Failed to send reminder for schedule ${reminderInfo.scheduleId}:`, error);
+      // Handle schedule result
+      if (scheduleResult.status === 'rejected') {
+        throw new Error(`Failed to get schedule ${scheduleId}: ${scheduleResult.reason}`);
       }
-    }, {
-      batchSize,
-      delayBetweenBatches: batchDelay
+      
+      if (!scheduleResult.value?.success || !scheduleResult.value?.schedule) {
+        throw new Error(`Failed to get schedule ${scheduleId}`);
+      }
+
+      // Send reminder (summary is optional)
+      await this.notificationService.sendDeadlineReminder(scheduleResult.value.schedule, message);
+      
+      // Update reminder status
+      await this.processReminderUseCase.markReminderSent({
+        scheduleId,
+        guildId,
+        reminderType
+      });
+      
+      console.log(`Sent ${reminderType} deadline reminder for schedule ${scheduleId}`);
+    }, { 
+      batchSize, 
+      delayBetweenBatches: batchDelay,
+      maxRetries: 2,
+      onProgress: (processed, total, errors) => {
+        console.log(`Reminder progress: ${processed}/${total} processed, ${errors} errors`);
+      },
+      onError: (item, error, retryCount) => {
+        console.error(`Failed to send reminder for schedule ${item.scheduleId} (retry ${retryCount}):`, error);
+        return retryCount < 2; // Retry up to 2 times
+      }
     });
+
+    console.log(`Reminders completed: ${result.processed} processed, ${result.retried} retried, ${result.errors.length} final errors`);
   }
 
   private async processClosures(

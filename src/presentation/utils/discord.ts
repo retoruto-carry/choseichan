@@ -1,7 +1,7 @@
 export async function updateOriginalMessage(
   applicationId: string,
   token: string,
-  data: import('../types/discord-api').DiscordMessageData,
+  data: import('../../infrastructure/types/discord-api').DiscordMessageData,
   messageId?: string
 ): Promise<void> {
   const url = messageId 
@@ -65,7 +65,7 @@ export async function deleteMessage(
 export async function sendFollowupMessage(
   applicationId: string,
   token: string,
-  data: import('../types/discord-api').DiscordMessageData
+  data: import('../../infrastructure/types/discord-api').DiscordMessageData
 ): Promise<unknown> {
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
   

@@ -19,11 +19,11 @@ import { D1ResponseRepository } from './response-repository';
 class D1Transaction implements ITransaction {
   private committed = false;
   private rolledBack = false;
-  private operations: Array<() => Promise<any>> = [];
+  private operations: Array<() => Promise<unknown>> = [];
 
   constructor(private db: D1Database) {}
 
-  async addOperation(operation: () => Promise<any>): Promise<void> {
+  async addOperation(operation: () => Promise<unknown>): Promise<void> {
     if (this.committed || this.rolledBack) {
       throw new TransactionError('Transaction already completed');
     }

@@ -6,14 +6,14 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { EditModalUIBuilder } from '../builders/EditModalUIBuilder';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
-import { EMBED_COLORS } from '../../constants/ui';
-import { updateOriginalMessage } from '../../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { EMBED_COLORS } from '../constants/ui';
+import { updateOriginalMessage } from '../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { UpdateScheduleRequest } from '../../application/dto/ScheduleDto';
 
 export class EditModalController {

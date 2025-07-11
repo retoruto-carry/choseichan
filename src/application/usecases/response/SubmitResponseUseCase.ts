@@ -195,9 +195,9 @@ export class SubmitResponseUseCase {
 
     return {
       scheduleId: primitives.scheduleId,
-      userId: primitives.userId,
-      username: primitives.username,
-      displayName: primitives.displayName,
+      userId: primitives.user.id,
+      username: primitives.user.username,
+      displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
       updatedAt: primitives.updatedAt.toISOString()

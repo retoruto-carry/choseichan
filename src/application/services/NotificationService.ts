@@ -95,7 +95,7 @@ export class NotificationService {
     return [];
   }
 
-  private createReminderMessage(schedule: Schedule | ScheduleResponse, nonRespondents: string[]): any {
+  private createReminderMessage(schedule: Schedule | ScheduleResponse, nonRespondents: string[]): object {
     const deadline = schedule.deadline instanceof Date ? schedule.deadline : new Date(schedule.deadline!);
     return {
       content: `⏰ **リマインダー**: 日程調整「${schedule.title}」の締切が近づいています！`,
@@ -127,7 +127,7 @@ export class NotificationService {
     };
   }
 
-  private async sendChannelMessage(channelId: string, message: any): Promise<void> {
+  private async sendChannelMessage(channelId: string, message: object): Promise<void> {
     const url = `https://discord.com/api/v10/channels/${channelId}/messages`;
     
     const response = await fetch(url, {
@@ -308,7 +308,7 @@ export class NotificationService {
   }
 
   async sendPRMessage(schedule: Schedule | ScheduleResponse): Promise<void> {
-    const message: any = {
+    const message = {
       content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています`
     };
 

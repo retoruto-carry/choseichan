@@ -14,7 +14,7 @@ interface ScheduleRow {
   message_id?: string;
   title: string;
   description?: string;
-  created_by: string;
+  created_by_id: string;
   created_by_username: string;
   author_id: string;
   deadline?: number;
@@ -147,15 +147,24 @@ export class D1ScheduleRepository implements IScheduleRepository {
         LIMIT ?
       `).bind(guildId, channelId, limit).all();
       
-      const schedules: DomainSchedule[] = [];
-      for (const row of result.results) {
-        const datesResult = await this.db.prepare(`
+      // Optimize: Execute date queries in parallel instead of sequentially
+      const scheduleRows = result.results as unknown as ScheduleRow[];
+      const dateQueries = scheduleRows.map(row => 
+        this.db.prepare(`
           SELECT date_id, datetime FROM schedule_dates 
           WHERE schedule_id = ? 
           ORDER BY display_order
-        `).bind(row.id).all();
-        
-        const schedule = this.mapRowToSchedule(row as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
+        `).bind(row.id).all()
+      );
+      
+      const dateResults = await Promise.all(dateQueries);
+      
+      const schedules: DomainSchedule[] = [];
+      for (let i = 0; i < scheduleRows.length; i++) {
+        const schedule = this.mapRowToSchedule(
+          scheduleRows[i], 
+          dateResults[i].results as unknown as ScheduleDateRow[]
+        );
         if (schedule) schedules.push(schedule);
       }
       
@@ -189,15 +198,24 @@ export class D1ScheduleRepository implements IScheduleRepository {
       
       const result = await this.db.prepare(query).bind(...params).all();
       
-      const schedules: DomainSchedule[] = [];
-      for (const row of result.results) {
-        const datesResult = await this.db.prepare(`
+      // Optimize: Execute date queries in parallel instead of sequentially
+      const scheduleRows = result.results as unknown as ScheduleRow[];
+      const dateQueries = scheduleRows.map(row => 
+        this.db.prepare(`
           SELECT date_id, datetime FROM schedule_dates 
           WHERE schedule_id = ? 
           ORDER BY display_order
-        `).bind(row.id).all();
-        
-        const schedule = this.mapRowToSchedule(row as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
+        `).bind(row.id).all()
+      );
+      
+      const dateResults = await Promise.all(dateQueries);
+      
+      const schedules: DomainSchedule[] = [];
+      for (let i = 0; i < scheduleRows.length; i++) {
+        const schedule = this.mapRowToSchedule(
+          scheduleRows[i], 
+          dateResults[i].results as unknown as ScheduleDateRow[]
+        );
         if (schedule) schedules.push(schedule);
       }
       
@@ -300,7 +318,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
       description: row.description || undefined,
       dates,
       createdBy: {
-        id: row.created_by,
+        id: row.created_by_id,
         username: row.created_by_username
       },
       authorId: row.author_id,

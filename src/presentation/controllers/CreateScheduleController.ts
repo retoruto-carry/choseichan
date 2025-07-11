@@ -6,14 +6,14 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ModalInteraction, Env } from '../../types/discord';
+import { ModalInteraction, Env } from '../../infrastructure/types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CreateScheduleUIBuilder } from '../builders/CreateScheduleUIBuilder';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
-import { getOriginalMessage } from '../../utils/discord';
-import { sendFollowupMessage } from '../../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { getOriginalMessage } from '../utils/discord';
+import { sendFollowupMessage } from '../utils/discord';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class CreateScheduleController {

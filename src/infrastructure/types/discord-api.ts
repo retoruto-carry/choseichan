@@ -141,15 +141,15 @@ export const TEXT_INPUT_STYLES = {
 /**
  * 型ガード関数
  */
-export function isDiscordEmbed(obj: any): obj is DiscordEmbed {
+export function isDiscordEmbed(obj: unknown): obj is DiscordEmbed {
   return typeof obj === 'object' && obj !== null;
 }
 
-export function isDiscordComponent(obj: any): obj is DiscordComponent {
-  return typeof obj === 'object' && obj !== null && typeof obj.type === 'number';
+export function isDiscordComponent(obj: unknown): obj is DiscordComponent {
+  return typeof obj === 'object' && obj !== null && typeof (obj as DiscordComponent).type === 'number';
 }
 
-export function isDiscordMessageData(obj: any): obj is DiscordMessageData {
+export function isDiscordMessageData(obj: unknown): obj is DiscordMessageData {
   return typeof obj === 'object' && obj !== null;
 }
 
