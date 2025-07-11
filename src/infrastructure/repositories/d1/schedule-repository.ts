@@ -3,13 +3,13 @@
  */
 
 import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
-import { Schedule, ScheduleDate } from '../../../types/schedule-v2';
+import { DomainSchedule, DomainScheduleDate } from '../../types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants';
 
 export class D1ScheduleRepository implements IScheduleRepository {
   constructor(private db: D1Database) {}
 
-  async save(schedule: Schedule): Promise<void> {
+  async save(schedule: DomainSchedule): Promise<void> {
     const guildId = schedule.guildId || 'default';
     
     // Calculate expiration time
@@ -88,7 +88,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
     }
   }
 
-  async findById(scheduleId: string, guildId: string = 'default'): Promise<Schedule | null> {
+  async findById(scheduleId: string, guildId: string = 'default'): Promise<DomainSchedule | null> {
     try {
       // Get schedule data
       const scheduleRow = await this.db.prepare(`
@@ -111,7 +111,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
     }
   }
 
-  async findByChannel(channelId: string, guildId: string = 'default', limit: number = 100): Promise<Schedule[]> {
+  async findByChannel(channelId: string, guildId: string = 'default', limit: number = 100): Promise<DomainSchedule[]> {
     try {
       const result = await this.db.prepare(`
         SELECT * FROM schedules 
@@ -120,7 +120,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         LIMIT ?
       `).bind(guildId, channelId, limit).all();
       
-      const schedules: Schedule[] = [];
+      const schedules: DomainSchedule[] = [];
       for (const row of result.results) {
         const datesResult = await this.db.prepare(`
           SELECT date_id, datetime FROM schedule_dates 
@@ -142,7 +142,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
     startTime: Date, 
     endTime: Date, 
     guildId?: string
-  ): Promise<Schedule[]> {
+  ): Promise<DomainSchedule[]> {
     try {
       const startTimestamp = Math.floor(startTime.getTime() / 1000);
       const endTimestamp = Math.floor(endTime.getTime() / 1000);
@@ -162,7 +162,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
       
       const result = await this.db.prepare(query).bind(...params).all();
       
-      const schedules: Schedule[] = [];
+      const schedules: DomainSchedule[] = [];
       for (const row of result.results) {
         const datesResult = await this.db.prepare(`
           SELECT date_id, datetime FROM schedule_dates 
@@ -192,7 +192,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
     }
   }
 
-  async findByMessageId(messageId: string, guildId: string): Promise<Schedule | null> {
+  async findByMessageId(messageId: string, guildId: string): Promise<DomainSchedule | null> {
     try {
       const scheduleRow = await this.db.prepare(`
         SELECT * FROM schedules 
@@ -256,10 +256,10 @@ export class D1ScheduleRepository implements IScheduleRepository {
   /**
    * Map database row to Schedule object
    */
-  private mapRowToSchedule(row: any, dateRows: any[]): Schedule | null {
+  private mapRowToSchedule(row: any, dateRows: any[]): DomainSchedule | null {
     if (!row) return null;
     
-    const dates: ScheduleDate[] = dateRows.map(dateRow => ({
+    const dates: DomainScheduleDate[] = dateRows.map(dateRow => ({
       id: dateRow.date_id,
       datetime: dateRow.datetime
     }));

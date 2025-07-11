@@ -2,17 +2,17 @@
  * D1実装のレスポンスリポジトリ
  */
 
-import { IScheduleRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
-import { Response, ScheduleSummary, ResponseStatus } from '../../../types/schedule-v2';
+import { IScheduleRepository, IResponseRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
+import { DomainResponse, DomainScheduleSummary, DomainResponseStatus } from '../../types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants';
 
-export class D1ResponseRepository {
+export class D1ResponseRepository implements IResponseRepository {
   constructor(
     private db: D1Database,
     private scheduleRepository: IScheduleRepository
   ) {}
 
-  async save(response: Response, guildId: string = 'default'): Promise<void> {
+  async save(response: DomainResponse, guildId: string = 'default'): Promise<void> {
     // Get schedule to determine expiration time
     const schedule = await this.scheduleRepository.findById(response.scheduleId, guildId);
     if (!schedule) {
@@ -79,7 +79,7 @@ export class D1ResponseRepository {
     scheduleId: string, 
     userId: string, 
     guildId: string = 'default'
-  ): Promise<Response | null> {
+  ): Promise<DomainResponse | null> {
     try {
       const responseRow = await this.db.prepare(`
         SELECT * FROM responses 
@@ -100,7 +100,7 @@ export class D1ResponseRepository {
     }
   }
 
-  async findByScheduleId(scheduleId: string, guildId: string = 'default'): Promise<Response[]> {
+  async findByScheduleId(scheduleId: string, guildId: string = 'default'): Promise<DomainResponse[]> {
     try {
       const result = await this.db.prepare(`
         SELECT * FROM responses 
@@ -108,7 +108,7 @@ export class D1ResponseRepository {
         ORDER BY updated_at DESC
       `).bind(scheduleId, guildId).all();
       
-      const responses: Response[] = [];
+      const responses: DomainResponse[] = [];
       for (const row of result.results) {
         const statusResult = await this.db.prepare(`
           SELECT date_id, status FROM response_date_status 
@@ -147,7 +147,7 @@ export class D1ResponseRepository {
     }
   }
 
-  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<ScheduleSummary | null> {
+  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<DomainScheduleSummary | null> {
     const schedule = await this.scheduleRepository.findById(scheduleId, guildId);
     if (!schedule) return null;
     
@@ -160,7 +160,7 @@ export class D1ResponseRepository {
       `).bind(scheduleId).all();
       
       // Initialize response counts
-      const responseCounts: Record<string, Record<ResponseStatus, number>> = {};
+      const responseCounts: Record<string, Record<DomainResponseStatus, number>> = {};
       for (const date of schedule.dates) {
         responseCounts[date.id] = {
           ok: 0,
@@ -172,7 +172,7 @@ export class D1ResponseRepository {
       // Fill in actual counts
       for (const row of countResult.results) {
         const dateId = row.date_id as string;
-        const status = row.status as ResponseStatus;
+        const status = row.status as DomainResponseStatus;
         const count = Number(row.count);
         
         if (responseCounts[dateId]) {
@@ -191,11 +191,11 @@ export class D1ResponseRepository {
         WHERE r.schedule_id = ? AND r.guild_id = ?
       `).bind(scheduleId, guildId).all();
       
-      const userResponses: Record<string, Record<string, ResponseStatus>> = {};
+      const userResponses: Record<string, Record<string, DomainResponseStatus>> = {};
       for (const row of userResponsesResult.results) {
         const userId = row.user_id as string;
         const dateId = row.date_id as string;
-        const status = row.status as ResponseStatus;
+        const status = row.status as DomainResponseStatus;
         
         if (!userResponses[userId]) {
           userResponses[userId] = {};
@@ -210,11 +210,19 @@ export class D1ResponseRepository {
         WHERE schedule_id = ? AND guild_id = ?
       `).bind(scheduleId, guildId).first();
       
+      // Get all responses for the summary
+      const responses = await this.findByScheduleId(scheduleId, guildId);
+      
+      // Calculate statistics
+      const statistics = this.calculateStatistics(responses, responseCounts, schedule.dates);
+      
       return {
         schedule,
+        responses,
         responseCounts,
-        userResponses,
-        totalResponses: Number(totalResult?.total) || 0
+        totalResponseUsers: Number(totalResult?.total) || 0,
+        bestDateId: statistics.optimalDates.optimalDateId,
+        statistics
       };
     } catch (error) {
       throw new RepositoryError('Failed to get schedule summary', 'SUMMARY_ERROR', error as Error);
@@ -224,12 +232,12 @@ export class D1ResponseRepository {
   /**
    * Map database row to Response object
    */
-  private mapRowToResponse(row: any, statusRows: any[]): Response | null {
+  private mapRowToResponse(row: any, statusRows: any[]): DomainResponse | null {
     if (!row) return null;
     
-    const dateStatuses: Record<string, ResponseStatus> = {};
+    const dateStatuses: Record<string, DomainResponseStatus> = {};
     for (const statusRow of statusRows) {
-      dateStatuses[statusRow.date_id] = statusRow.status as ResponseStatus;
+      dateStatuses[statusRow.date_id] = statusRow.status as DomainResponseStatus;
     }
     
     return {
@@ -240,6 +248,55 @@ export class D1ResponseRepository {
       dateStatuses,
       comment: row.comment || undefined,
       updatedAt: new Date(row.updated_at * 1000)
+    };
+  }
+
+  /**
+   * Calculate statistics for schedule summary
+   */
+  private calculateStatistics(
+    responses: DomainResponse[],
+    responseCounts: Record<string, Record<string, number>>,
+    dates: DomainScheduleDate[]
+  ): DomainScheduleSummary['statistics'] {
+    // Overall participation calculation
+    let fullyAvailable = 0;
+    let partiallyAvailable = 0;
+    let unavailable = 0;
+
+    for (const response of responses) {
+      const statuses = Object.values(response.dateStatuses);
+      if (statuses.every(s => s === 'ok')) {
+        fullyAvailable++;
+      } else if (statuses.some(s => s === 'ok' || s === 'maybe')) {
+        partiallyAvailable++;
+      } else {
+        unavailable++;
+      }
+    }
+
+    // Optimal dates calculation
+    const scores: Record<string, number> = {};
+    for (const date of dates) {
+      const counts = responseCounts[date.id] || { ok: 0, maybe: 0, ng: 0 };
+      scores[date.id] = counts.ok * 2 + counts.maybe * 1;
+    }
+
+    const sortedDates = Object.entries(scores)
+      .sort(([, a], [, b]) => b - a)
+      .map(([dateId]) => dateId);
+
+    return {
+      overallParticipation: {
+        fullyAvailable,
+        partiallyAvailable,
+        unavailable
+      },
+      optimalDates: {
+        optimalDateId: sortedDates[0],
+        alternativeDateIds: sortedDates.slice(1, 3),
+        scores
+      }
     };
   }
 }

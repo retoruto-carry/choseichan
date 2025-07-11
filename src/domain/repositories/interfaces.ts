@@ -3,7 +3,7 @@
  * KVとD1の実装を切り替え可能にするための抽象層
  */
 
-import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../types/Schedule';
+import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../../infrastructure/types/DomainTypes';
 
 /**
  * スケジュールリポジトリのインターフェース

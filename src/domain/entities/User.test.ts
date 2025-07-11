@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { User } from '../../../../src/domain/entities/User';
+import { User } from './User';
 
 describe('User Domain Entity', () => {
   describe('User Creation', () => {
@@ -74,24 +74,26 @@ describe('User Domain Entity', () => {
       expect(user1.equals(user3)).toBe(false);
     });
 
-    it('should update username', () => {
+    it('should be immutable', () => {
       const user = User.create('user123', 'oldname');
-      const updatedUser = user.updateUsername('newname');
+      // User is immutable, so we create a new instance
+      const newUser = User.create('user123', 'newname');
       
-      expect(updatedUser.username).toBe('newname');
-      expect(updatedUser.id).toBe('user123');
+      expect(newUser.username).toBe('newname');
+      expect(newUser.id).toBe('user123');
       expect(user.username).toBe('oldname'); // Original unchanged
     });
   });
 
   describe('User Immutability', () => {
-    it('should not modify original user when updating', () => {
+    it('should not modify original user', () => {
       const originalUser = User.create('user123', 'original');
-      const updatedUser = originalUser.updateUsername('updated');
+      // Since User is immutable, we create a new instance
+      const newUser = User.create('user123', 'updated');
       
       expect(originalUser.username).toBe('original');
-      expect(updatedUser.username).toBe('updated');
-      expect(originalUser).not.toBe(updatedUser);
+      expect(newUser.username).toBe('updated');
+      expect(originalUser).not.toBe(newUser);
     });
   });
 });

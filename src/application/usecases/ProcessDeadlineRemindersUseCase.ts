@@ -11,7 +11,7 @@ import { ProcessReminderUseCase } from './schedule/ProcessReminderUseCase';
 import { CloseScheduleUseCase } from './schedule/CloseScheduleUseCase';
 import { DeadlineReminderUseCase } from './schedule/DeadlineReminderUseCase';
 import { NotificationService } from '../services/NotificationService';
-import { ReminderInfo, DeadlineCheckResult } from '../services/ReminderService';
+import { ReminderInfo, DeadlineCheckResult } from '../types/ReminderTypes';
 import { processBatches } from '../../utils/rate-limiter';
 
 export class ProcessDeadlineRemindersUseCase {

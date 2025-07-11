@@ -5,15 +5,15 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SubmitResponseUseCase } from '../../../src/application/usecases/response/SubmitResponseUseCase';
-import { IScheduleRepository, IResponseRepository } from '../../../src/domain/repositories/interfaces';
-import { SubmitResponseRequest } from '../../../src/application/dto/ResponseDto';
+import { SubmitResponseUseCase } from './SubmitResponseUseCase';
+import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
+import { SubmitResponseRequest } from '../../dto/ResponseDto';
 import { 
   createMockScheduleRepository, 
   createMockResponseRepository, 
   createTestScheduleData, 
   createTestResponseData 
-} from '../mocks/MockRepositoryFactory';
+} from '../../../../tests/test-utils/MockRepositoryFactory';
 
 describe('SubmitResponseUseCase', () => {
   let useCase: SubmitResponseUseCase;
@@ -37,10 +37,10 @@ describe('SubmitResponseUseCase', () => {
         userId: 'user456',
         username: 'responder',
         displayName: 'Test Responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe'
-        },
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' }
+        ],
         comment: 'Looking forward to it!'
       };
 
@@ -78,10 +78,10 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe'
-        },
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' }
+        ],
         comment: 'Changed my mind!'
       };
 
@@ -152,9 +152,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -169,9 +169,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: '',
         username: '',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -187,7 +187,7 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {}
+        responses: []
       };
 
       const result = await useCase.execute(request);
@@ -202,9 +202,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'invalid' as any
-        }
+        responses: [
+          { dateId: 'date1', status: 'invalid' as any }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -221,9 +221,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        },
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ],
         comment: longComment
       };
 
@@ -241,9 +241,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -261,9 +261,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -282,9 +282,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -302,9 +302,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'non-existent-date': 'ok'
-        }
+        responses: [
+          { dateId: 'non-existent-date', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -322,11 +322,11 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe',
-          'invalid-date': 'ng'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' },
+          { dateId: 'invalid-date', status: 'ng' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -345,9 +345,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -368,9 +368,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -392,10 +392,10 @@ describe('SubmitResponseUseCase', () => {
         userId: 'user456',
         username: 'responder',
         displayName: 'Test Responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe'
-        },
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' }
+        ],
         comment: 'Test comment'
       };
 
@@ -428,9 +428,9 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok'
-        },
+        responses: [
+          { dateId: 'date1', status: 'ok' }
+        ],
         comment: unicodeComment
       };
 

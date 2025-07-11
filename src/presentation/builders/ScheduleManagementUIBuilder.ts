@@ -5,7 +5,7 @@
  */
 
 import { ScheduleSummaryResponse, ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { STATUS_EMOJI, EMBED_COLORS } from '../../types/schedule';
+import { STATUS_EMOJI, EMBED_COLORS } from '../../constants/ui';
 import { createButtonId } from '../../utils/id';
 
 export class ScheduleManagementUIBuilder {

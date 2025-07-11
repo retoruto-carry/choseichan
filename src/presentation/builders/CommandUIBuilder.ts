@@ -4,7 +4,7 @@
  * コマンド関連のUI構築専用クラス
  */
 
-import { EMBED_COLORS } from '../../types/schedule';
+import { EMBED_COLORS } from '../../constants/ui';
 import { formatDate } from '../../utils/date';
 
 export class CommandUIBuilder {

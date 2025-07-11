@@ -10,7 +10,7 @@ import { CommandInteraction, Env } from '../../types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CommandUIBuilder } from '../builders/CommandUIBuilder';
 import { DISCORD_FLAGS, ERROR_MESSAGES } from '../../constants';
-import { EMBED_COLORS } from '../../types/schedule';
+import { EMBED_COLORS } from '../../constants/ui';
 
 export class CommandController {
   constructor(

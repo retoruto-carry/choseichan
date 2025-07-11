@@ -1,8 +1,8 @@
 /**
- * Domain Types for Schedule
+ * Domain Type Interfaces for Infrastructure Layer
  * 
- * ドメイン層の純粋な型定義
- * 外部依存を持たない純粋なドメインオブジェクト
+ * これらのインターフェースはインフラストラクチャー層での型変換に使用される
+ * ドメインエンティティのシンプルなデータ表現
  */
 
 export interface DomainUser {
@@ -13,7 +13,10 @@ export interface DomainUser {
 export interface DomainScheduleDate {
   id: string;
   datetime: string;
+  description?: string;
 }
+
+export type DomainResponseStatus = 'ok' | 'maybe' | 'ng';
 
 export interface DomainSchedule {
   id: string;
@@ -46,12 +49,10 @@ export interface DomainResponse {
   updatedAt: Date;
 }
 
-export type DomainResponseStatus = 'ok' | 'maybe' | 'ng';
-
 export interface DomainScheduleSummary {
   schedule: DomainSchedule;
   responses: DomainResponse[];
-  responseCounts: Record<string, Record<DomainResponseStatus, number>>;
+  responseCounts: Record<string, Record<string, number>>;
   totalResponseUsers: number;
   bestDateId?: string;
   statistics: {

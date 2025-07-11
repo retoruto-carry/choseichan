@@ -11,7 +11,8 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { EditModalUIBuilder } from '../builders/EditModalUIBuilder';
 import { generateId } from '../../utils/id';
 import { parseUserInputDate } from '../../utils/date';
-import { EMBED_COLORS, ScheduleDate } from '../../types/schedule';
+import { EMBED_COLORS } from '../../constants/ui';
+import { DomainScheduleDate } from '../../infrastructure/types/DomainTypes';
 import { updateOriginalMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 
@@ -114,7 +115,7 @@ export class EditModalController {
       }
 
       // Create new dates
-      const newDates: ScheduleDate[] = parsedDates.map((datetime: string) => ({
+      const newDates: DomainScheduleDate[] = parsedDates.map((datetime: string) => ({
         id: generateId(),
         datetime: datetime.trim()
       }));
@@ -187,7 +188,7 @@ export class EditModalController {
       }
 
       // Add new dates to existing ones
-      const newDates: ScheduleDate[] = parsedDates.map((datetime: string) => ({
+      const newDates: DomainScheduleDate[] = parsedDates.map((datetime: string) => ({
         id: generateId(),
         datetime: datetime.trim()
       }));

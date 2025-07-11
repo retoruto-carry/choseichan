@@ -1,4 +1,5 @@
-import { Schedule, ScheduleSummary, STATUS_EMOJI, EMBED_COLORS } from '../types/schedule';
+import { Schedule, ScheduleSummary } from '../types/schedule';
+import { STATUS_EMOJI, EMBED_COLORS } from '../constants/ui';
 import { ScheduleSummaryResponse, ScheduleResponse } from '../application/dto/ScheduleDto';
 import { createButtonId } from './id';
 import { formatDate } from './date';
@@ -118,7 +119,7 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
   };
 }
 
-export function createSimpleScheduleComponents(schedule: Schedule | ScheduleResponse, showDetails: boolean = false) {
+export function createSimpleScheduleComponents(schedule: DomainSchedule | ScheduleResponse, showDetails: boolean = false) {
   const components = [];
 
   // 回答するボタン（開いている時のみ）

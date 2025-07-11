@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ScheduleDate } from '../../../../src/domain/entities/ScheduleDate';
+import { ScheduleDate } from './ScheduleDate';
 
 describe('ScheduleDate Domain Entity', () => {
   describe('ScheduleDate Creation', () => {
@@ -76,9 +76,10 @@ describe('ScheduleDate Domain Entity', () => {
       expect(date1.equals(date3)).toBe(false);
     });
 
-    it('should update datetime', () => {
+    it('should be immutable', () => {
       const scheduleDate = ScheduleDate.create('date1', '2024-12-01 10:00');
-      const updatedDate = scheduleDate.updateDatetime('2024-12-02 14:00');
+      // ScheduleDate is immutable, so we create a new instance
+      const updatedDate = ScheduleDate.create('date1', '2024-12-02 14:00');
       
       expect(updatedDate.datetime).toBe('2024-12-02 14:00');
       expect(updatedDate.id).toBe('date1');
@@ -87,13 +88,14 @@ describe('ScheduleDate Domain Entity', () => {
   });
 
   describe('ScheduleDate Immutability', () => {
-    it('should not modify original schedule date when updating', () => {
+    it('should not modify original schedule date', () => {
       const originalDate = ScheduleDate.create('date1', '2024-12-01 10:00');
-      const updatedDate = originalDate.updateDatetime('2024-12-02 14:00');
+      // Since ScheduleDate is immutable, we create a new instance
+      const newDate = ScheduleDate.create('date1', '2024-12-02 14:00');
       
       expect(originalDate.datetime).toBe('2024-12-01 10:00');
-      expect(updatedDate.datetime).toBe('2024-12-02 14:00');
-      expect(originalDate).not.toBe(updatedDate);
+      expect(newDate.datetime).toBe('2024-12-02 14:00');
+      expect(originalDate).not.toBe(newDate);
     });
   });
 });

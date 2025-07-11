@@ -4,14 +4,15 @@
  * スケジュール取得のユースケース
  */
 
-import { Schedule } from '../../../domain/entities/Schedule';
-import { Response } from '../../../domain/entities/Response';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
 import { ResponseDto } from '../../dto/ResponseDto';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
-import { ResponseMapper } from '../../mappers/ResponseMapper';
+import { DomainSchedule, DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { Schedule } from '../../../domain/entities/Schedule';
+import { Response } from '../../../domain/entities/Response';
+import { User } from '../../../domain/entities/User';
+import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 
 export interface GetScheduleUseCaseResult {
   success: boolean;
@@ -104,11 +105,9 @@ export class GetScheduleUseCase {
       // 3. レスポンスの取得
       const responses = await this.responseRepository.findByScheduleId(scheduleId, guildId);
 
-      // 4. スケジュールエンティティの構築
-      const scheduleEntity = ScheduleMapper.toDomain(schedule);
-      
-      // 5. レスポンスエンティティの構築
-      const responseEntities = ResponseMapper.toDomainList(responses);
+      // 4. ドメインエンティティの構築
+      const scheduleEntity = this.toDomainSchedule(schedule);
+      const responseEntities = responses.map(r => this.toDomainResponse(r));
       
       // 6. 統計情報の計算
       const dateIds = scheduleEntity.dates.map(d => d.id);
@@ -170,7 +169,7 @@ export class GetScheduleUseCase {
     }
   }
 
-  private buildScheduleResponse(schedule: any): ScheduleResponse {
+  private buildScheduleResponse(schedule: DomainSchedule): ScheduleResponse {
     return {
       id: schedule.id,
       guildId: schedule.guildId,
@@ -191,6 +190,50 @@ export class GetScheduleUseCase {
       createdAt: schedule.createdAt.toISOString(),
       updatedAt: schedule.updatedAt.toISOString()
     };
+  }
+
+  private toDomainSchedule(schedule: DomainSchedule): Schedule {
+    const user = User.create(
+      schedule.createdBy.id,
+      schedule.createdBy.username
+    );
+
+    const dates = schedule.dates.map(d => 
+      ScheduleDate.create(d.id, d.datetime)
+    );
+
+    return Schedule.create({
+      id: schedule.id,
+      guildId: schedule.guildId,
+      channelId: schedule.channelId,
+      title: schedule.title,
+      description: schedule.description,
+      dates,
+      createdBy: user,
+      authorId: schedule.authorId,
+      deadline: schedule.deadline,
+      reminderTimings: schedule.reminderTimings,
+      reminderMentions: schedule.reminderMentions,
+      remindersSent: schedule.remindersSent,
+      status: schedule.status,
+      notificationSent: schedule.notificationSent,
+      totalResponses: schedule.totalResponses,
+      createdAt: schedule.createdAt,
+      updatedAt: schedule.updatedAt,
+      messageId: schedule.messageId
+    });
+  }
+
+  private toDomainResponse(response: DomainResponse): Response {
+    return Response.create({
+      scheduleId: response.scheduleId,
+      userId: response.userId,
+      username: response.username,
+      displayName: response.displayName,
+      dateStatuses: response.dateStatuses,
+      comment: response.comment,
+      updatedAt: response.updatedAt
+    });
   }
 
   private buildResponseDto(response: Response): ResponseDto {

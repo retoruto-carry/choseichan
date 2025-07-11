@@ -7,7 +7,7 @@
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { ButtonInteraction, Env } from '../../types/discord';
-import { ResponseStatus } from '../../types/schedule';
+// ResponseStatus type - should be moved to a proper type file
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { createEphemeralResponse, createErrorResponse } from '../../utils/responses';

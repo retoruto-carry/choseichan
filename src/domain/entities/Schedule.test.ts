@@ -6,9 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Schedule, ScheduleStatus } from '../../../../src/domain/entities/Schedule';
-import { User } from '../../../../src/domain/entities/User';
-import { ScheduleDate } from '../../../../src/domain/entities/ScheduleDate';
+import { Schedule, ScheduleStatus } from './Schedule';
+import { User } from './User';
+import { ScheduleDate } from './ScheduleDate';
 
 describe('Schedule Domain Entity', () => {
   let validUser: User;

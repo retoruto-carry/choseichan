@@ -12,8 +12,6 @@ import {
 } from '../../../domain/repositories/interfaces';
 import { D1ScheduleRepository } from './schedule-repository';
 import { D1ResponseRepository } from './response-repository';
-import { DomainScheduleRepositoryAdapter } from '../adapters/DomainScheduleRepositoryAdapter';
-import { DomainResponseRepositoryAdapter } from '../adapters/DomainResponseRepositoryAdapter';
 
 /**
  * D1トランザクション実装
@@ -76,11 +74,8 @@ export class D1RepositoryFactory implements IRepositoryFactory {
     }
 
     this.db = config.d1Database;
-    const d1ScheduleRepo = new D1ScheduleRepository(this.db);
-    const d1ResponseRepo = new D1ResponseRepository(this.db, d1ScheduleRepo);
-    
-    this.scheduleRepository = new DomainScheduleRepositoryAdapter(d1ScheduleRepo);
-    this.responseRepository = new DomainResponseRepositoryAdapter(d1ResponseRepo);
+    this.scheduleRepository = new D1ScheduleRepository(this.db);
+    this.responseRepository = new D1ResponseRepository(this.db, this.scheduleRepository);
   }
 
   getScheduleRepository(): IScheduleRepository {

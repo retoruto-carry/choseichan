@@ -60,12 +60,12 @@ export class DeadlineReminderUseCase {
             // Use custom timings if available, otherwise use defaults
             const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
             const timings = isCustom
-              ? schedule.reminderTimings!.map(t => ({
+              ? schedule.reminderTimings!.map((t: string) => ({
                   type: t,
                   hours: this.parseTimingToHours(t) || 0,
                   message: this.getTimingMessage(t),
                   isCustom: true
-                })).filter(t => t.hours > 0)
+                })).filter((t: any) => t.hours > 0)
               : this.DEFAULT_REMINDER_TIMINGS.map(t => ({ ...t, isCustom: false }));
             
             for (const timing of timings) {
