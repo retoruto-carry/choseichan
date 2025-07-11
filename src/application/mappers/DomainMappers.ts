@@ -9,7 +9,7 @@ import { Response } from '../../domain/entities/Response';
 import { User } from '../../domain/entities/User';
 import { ScheduleDate } from '../../domain/entities/ScheduleDate';
 import { ResponseStatus } from '../../domain/entities/ResponseStatus';
-import { DomainSchedule, DomainResponse, DomainResponseStatus } from '../../infrastructure/types/DomainTypes';
+import { DomainSchedule, DomainResponse, DomainResponseStatus } from '../../domain/types/DomainTypes';
 
 export class ScheduleMapper {
   /**

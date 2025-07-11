@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CreateScheduleUseCase } from './CreateScheduleUseCase';
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../infrastructure/types/DomainTypes';
+import { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { CreateScheduleRequest } from '../../dto/ScheduleDto';
 
 // Mock Repository Implementation

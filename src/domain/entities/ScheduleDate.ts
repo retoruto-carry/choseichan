@@ -20,11 +20,11 @@ export class ScheduleDate {
   ) {}
 
   static create(id: string, datetime: string): ScheduleDate {
-    if (!id.trim()) {
-      throw new Error('Schedule Date ID cannot be empty');
+    if (!id || !id.trim()) {
+      throw new Error('日程IDは必須です');
     }
-    if (!datetime.trim()) {
-      throw new Error('DateTime cannot be empty');
+    if (!datetime || !datetime.trim()) {
+      throw new Error('日程時刻は必須です');
     }
 
     return new ScheduleDate(

@@ -5,8 +5,8 @@
  * DIパターンを使用したテストを支援
  */
 
-import { IRepositoryFactory, IScheduleRepository, IResponseRepository } from '../domain/repositories/interfaces';
-import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../infrastructure/types/DomainTypes';
+import { IRepositoryFactory, IScheduleRepository, IResponseRepository } from '../../src/domain/repositories/interfaces';
+import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../../src/domain/types/DomainTypes';
 
 export class MockScheduleRepository implements IScheduleRepository {
   private schedules: Map<string, DomainSchedule> = new Map();

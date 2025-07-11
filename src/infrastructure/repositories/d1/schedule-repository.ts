@@ -3,7 +3,7 @@
  */
 
 import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
-import { DomainSchedule, DomainScheduleDate } from '../../types/DomainTypes';
+import { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants';
 
 export class D1ScheduleRepository implements IScheduleRepository {

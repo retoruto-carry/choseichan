@@ -21,11 +21,14 @@ export class User {
   ) {}
 
   static create(id: string, username: string, displayName?: string): User {
-    if (!id.trim()) {
-      throw new Error('User ID cannot be empty');
+    if (!id || !id.trim()) {
+      throw new Error('ユーザーIDは必須です');
     }
-    if (!username.trim()) {
-      throw new Error('Username cannot be empty');
+    if (!username || !username.trim()) {
+      throw new Error('ユーザー名は必須です');
+    }
+    if (username.length > 100) {
+      throw new Error('ユーザー名は100文字以内で入力してください');
     }
 
     return new User(

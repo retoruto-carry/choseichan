@@ -29,11 +29,11 @@ describe('User Domain Entity', () => {
     });
 
     it('should throw error for too long username', () => {
-      const longUsername = 'a'.repeat(33); // Over 32 characters
+      const longUsername = 'a'.repeat(101); // Over 100 characters
       
       expect(() => {
         User.create('user123', longUsername);
-      }).toThrow('ユーザー名は32文字以下で入力してください');
+      }).toThrow('ユーザー名は100文字以内で入力してください');
     });
 
     it('should handle unicode characters in username', () => {

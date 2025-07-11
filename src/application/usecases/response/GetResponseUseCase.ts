@@ -8,7 +8,7 @@ import { Response } from '../../../domain/entities/Response';
 import { IResponseRepository } from '../../../domain/repositories/interfaces';
 import { GetResponseRequest, ResponseDto, ResponseStatistics } from '../../dto/ResponseDto';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { DomainResponse } from '../../../domain/types/DomainTypes';
 import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetResponseUseCaseResult {

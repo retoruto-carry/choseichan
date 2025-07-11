@@ -8,7 +8,7 @@ import { IScheduleRepository, IResponseRepository } from '../../../domain/reposi
 import { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
 import { ResponseDto } from '../../dto/ResponseDto';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { DomainSchedule, DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
 import { Schedule, ScheduleStatus } from '../../../domain/entities/Schedule';
 import { Response } from '../../../domain/entities/Response';
 import { User } from '../../../domain/entities/User';

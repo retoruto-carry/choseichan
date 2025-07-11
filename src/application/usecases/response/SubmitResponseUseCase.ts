@@ -13,7 +13,7 @@ import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
 import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { SubmitResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
-import { DomainSchedule, DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
 import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export class SubmitResponseUseCase {

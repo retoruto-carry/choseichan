@@ -1,6 +1,6 @@
 import { STATUS_EMOJI, EMBED_COLORS } from '../constants/ui';
 import { ScheduleSummaryResponse, ScheduleResponse } from '../application/dto/ScheduleDto';
-import { DomainSchedule } from '../infrastructure/types/DomainTypes';
+import { DomainSchedule } from '../domain/types/DomainTypes';
 import { createButtonId } from './id';
 import { formatDate } from './date';
 
@@ -101,7 +101,9 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, s
   
   if (schedule.deadline) {
     // Handle both Date and string types
-    const deadlineStr = (schedule.deadline && typeof schedule.deadline === 'object' && 'toISOString' in schedule.deadline) ? schedule.deadline.toISOString() : String(schedule.deadline);
+    const deadlineStr = (schedule.deadline as unknown) instanceof Date
+      ? (schedule.deadline as unknown as Date).toISOString() 
+      : schedule.deadline as string;
     descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
   }
   
@@ -118,7 +120,9 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, s
         '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
-    timestamp: (schedule.updatedAt && typeof schedule.updatedAt === 'object' && 'toISOString' in schedule.updatedAt) ? schedule.updatedAt.toISOString() : String(schedule.updatedAt)
+    timestamp: (schedule.updatedAt as unknown) instanceof Date
+      ? (schedule.updatedAt as unknown as Date).toISOString() 
+      : schedule.updatedAt as string
   };
 }
 

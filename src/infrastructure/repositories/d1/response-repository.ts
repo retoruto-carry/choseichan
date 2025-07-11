@@ -3,7 +3,7 @@
  */
 
 import { IScheduleRepository, IResponseRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
-import { DomainResponse, DomainScheduleSummary, DomainResponseStatus } from '../../types/DomainTypes';
+import { DomainResponse, DomainScheduleSummary, DomainResponseStatus, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants';
 
 export class D1ResponseRepository implements IResponseRepository {
@@ -257,7 +257,7 @@ export class D1ResponseRepository implements IResponseRepository {
   private calculateStatistics(
     responses: DomainResponse[],
     responseCounts: Record<string, Record<string, number>>,
-    dates: import('../../types/DomainTypes').DomainScheduleDate[]
+    dates: DomainScheduleDate[]
   ): DomainScheduleSummary['statistics'] {
     // Overall participation calculation
     let fullyAvailable = 0;
