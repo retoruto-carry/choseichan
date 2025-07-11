@@ -9,6 +9,7 @@ import { InteractionResponseType, InteractionResponseFlags } from 'discord-inter
 import { ButtonInteraction, Env } from '../../types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { ScheduleManagementUIBuilder } from '../builders/ScheduleManagementUIBuilder';
+import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class ScheduleManagementController {
   constructor(
@@ -150,7 +151,7 @@ export class ScheduleManagementController {
   async handleCloseButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -196,7 +197,7 @@ export class ScheduleManagementController {
   async handleReopenButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -253,7 +254,7 @@ export class ScheduleManagementController {
   async handleDeleteButton(
     interaction: ButtonInteraction,
     params: string[],
-    env?: any
+    env?: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -400,7 +401,7 @@ export class ScheduleManagementController {
     }
   }
 
-  private async handlePostCloseActions(scheduleId: string, guildId: string, interaction: any, env: any): Promise<void> {
+  private async handlePostCloseActions(scheduleId: string, guildId: string, interaction: ButtonInteraction, env: Env): Promise<void> {
     try {
       // メインメッセージの更新
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
@@ -451,7 +452,7 @@ export class ScheduleManagementController {
     }
   }
 
-  private async handlePostReopenActions(scheduleId: string, guildId: string, interaction: any, env: any): Promise<void> {
+  private async handlePostReopenActions(scheduleId: string, guildId: string, interaction: ButtonInteraction, env: Env): Promise<void> {
     try {
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
       if (scheduleResult.success && scheduleResult.schedule?.messageId && env.DISCORD_APPLICATION_ID) {
@@ -475,7 +476,7 @@ export class ScheduleManagementController {
     }
   }
 
-  private async handleDiscordMessageDeletion(schedule: any, interaction: any, env?: any): Promise<void> {
+  private async handleDiscordMessageDeletion(schedule: ScheduleResponse, interaction: ButtonInteraction, env?: Env): Promise<void> {
     if (schedule.messageId && env?.DISCORD_APPLICATION_ID && env?.ctx) {
       env.ctx.waitUntil(
         (async () => {

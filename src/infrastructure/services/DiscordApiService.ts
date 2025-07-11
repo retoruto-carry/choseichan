@@ -5,12 +5,12 @@
  * 外部依存を分離し、テスタビリティを向上
  */
 
-import { APIInteractionResponseChannelMessageWithSource, APIEmbed, APIActionRowComponent } from 'discord-api-types/v10';
+import { APIInteractionResponseChannelMessageWithSource, APIEmbed, APIMessageComponent, APIGuildMember } from 'discord-api-types/v10';
 
 export interface DiscordMessage {
   content?: string;
   embeds?: APIEmbed[];
-  components?: APIActionRowComponent<any>[];
+  components?: APIMessageComponent[];
   ephemeral?: boolean;
 }
 
@@ -38,7 +38,7 @@ export interface IDiscordApiService {
   /**
    * ギルドメンバー情報を取得
    */
-  getGuildMember(guildId: string, userId: string, botToken: string): Promise<any>;
+  getGuildMember(guildId: string, userId: string, botToken: string): Promise<APIGuildMember>;
 
   /**
    * Discord Interaction Response を作成
@@ -79,7 +79,7 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async getGuildMember(guildId: string, userId: string, botToken: string): Promise<any> {
+  async getGuildMember(guildId: string, userId: string, botToken: string): Promise<APIGuildMember> {
     const response = await fetch(`${this.baseUrl}/guilds/${guildId}/members/${userId}`, {
       headers: {
         'Authorization': `Bot ${botToken}`,

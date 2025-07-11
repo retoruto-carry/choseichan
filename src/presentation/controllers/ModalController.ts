@@ -22,7 +22,6 @@ export class ModalController {
   async handleModalSubmit(
     interaction: ModalInteraction,
     env: Env,
-    storage?: any // For backwards compatibility with tests
   ): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
@@ -35,28 +34,28 @@ export class ModalController {
 
       switch (modalAction) {
         case 'create_schedule':
-          return this.handleCreateScheduleModal(interaction, env, storage);
+          return this.handleCreateScheduleModal(interaction, env);
           
         case 'edit_info':
-          return this.handleEditInfoModal(interaction, modalParams, env, storage);
+          return this.handleEditInfoModal(interaction, modalParams, env);
           
         case 'update_dates':
-          return this.handleUpdateDatesModal(interaction, modalParams, env, storage);
+          return this.handleUpdateDatesModal(interaction, modalParams, env);
           
         case 'add_dates':
-          return this.handleAddDatesModal(interaction, modalParams, env, storage);
+          return this.handleAddDatesModal(interaction, modalParams, env);
           
         case 'add_comment':
-          return this.handleAddCommentModal(interaction, modalParams, env, storage);
+          return this.handleAddCommentModal(interaction, modalParams, env);
           
         case 'date_comment':
-          return this.handleDateCommentModal(interaction, modalParams, env, storage);
+          return this.handleDateCommentModal(interaction, modalParams, env);
           
         case 'edit_deadline':
-          return this.handleEditDeadlineModal(interaction, modalParams, env, storage);
+          return this.handleEditDeadlineModal(interaction, modalParams, env);
           
         case 'edit_reminder':
-          return this.handleEditReminderModal(interaction, modalParams, env, storage);
+          return this.handleEditReminderModal(interaction, modalParams, env);
           
         default:
           return this.createErrorResponse('不明なモーダルです。');
@@ -70,8 +69,7 @@ export class ModalController {
 
   private async handleCreateScheduleModal(
     interaction: ModalInteraction,
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createCreateScheduleController } = await import('./CreateScheduleController');
     const controller = createCreateScheduleController(env);
@@ -81,79 +79,72 @@ export class ModalController {
   private async handleEditInfoModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
-    return controller.handleEditInfoModal(interaction, params, env, storage);
+    return controller.handleEditInfoModal(interaction, params, env);
   }
 
   private async handleUpdateDatesModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
-    return controller.handleUpdateDatesModal(interaction, params, env, storage);
+    return controller.handleUpdateDatesModal(interaction, params, env);
   }
 
   private async handleAddDatesModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
-    return controller.handleAddDatesModal(interaction, params, env, storage);
+    return controller.handleAddDatesModal(interaction, params, env);
   }
 
   private async handleAddCommentModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createCommentController } = await import('./CommentController');
     const controller = createCommentController(env);
-    return controller.handleAddCommentModal(interaction, params, env, storage);
+    return controller.handleAddCommentModal(interaction, params, env);
   }
 
   private async handleDateCommentModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createCommentController } = await import('./CommentController');
     const controller = createCommentController(env);
     // Comment functionality has been removed, use the generic handler
-    return controller.handleAddCommentModal(interaction, params, env, storage);
+    return controller.handleAddCommentModal(interaction, params, env);
   }
 
   private async handleEditDeadlineModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
-    return controller.handleEditDeadlineModal(interaction, params, env, storage);
+    return controller.handleEditDeadlineModal(interaction, params, env);
   }
 
   private async handleEditReminderModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage: any
+    env: Env
   ): Promise<Response> {
     const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
-    return controller.handleEditReminderModal(interaction, params, env, storage);
+    return controller.handleEditReminderModal(interaction, params, env);
   }
 
   private createErrorResponse(message: string): Response {

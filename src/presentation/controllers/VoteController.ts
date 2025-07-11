@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, Env } from '../../types/discord';
+import { ButtonInteraction, ModalInteraction, Env } from '../../types/discord';
 // ResponseStatus type - should be moved to a proper type file
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
@@ -15,6 +15,7 @@ import { sendFollowupMessage } from '../../utils/discord-webhook';
 import { updateOriginalMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
 import { NotificationService } from '../../application/services/NotificationService';
+import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class VoteController {
   constructor(
@@ -28,8 +29,7 @@ export class VoteController {
   async handleRespondButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env,
-    storage?: any // For backwards compatibility with tests
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -92,8 +92,7 @@ export class VoteController {
   async handleToggleDetailsButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId, currentState] = params;
@@ -133,10 +132,9 @@ export class VoteController {
    * 投票モーダル処理
    */
   async handleVoteModal(
-    interaction: any, // ModalInteraction type
+    interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -214,8 +212,7 @@ export class VoteController {
   async handleCloseButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -343,7 +340,7 @@ export class VoteController {
    * 回答メッセージを作成
    */
   private createResponseMessage(
-    schedule: any,
+    schedule: ScheduleResponse,
     responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }>,
     username: string
   ): string {
@@ -351,7 +348,7 @@ export class VoteController {
     
     // Add response summary
     for (const response of responses) {
-      const date = schedule.dates.find((d: any) => d.id === response.dateId);
+      const date = schedule.dates.find((d) => d.id === response.dateId);
       if (date) {
         const statusEmoji = response.status === 'ok' ? '○' : 
                            response.status === 'maybe' ? '△' : '×';

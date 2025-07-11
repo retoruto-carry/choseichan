@@ -14,6 +14,7 @@ import { parseUserInputDate } from '../../utils/date';
 import { getOriginalMessage } from '../../utils/discord';
 import { sendFollowupMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class CreateScheduleController {
   constructor(
@@ -143,7 +144,7 @@ export class CreateScheduleController {
    * 締切通知設定のフォローアップメッセージを送信
    */
   async sendReminderFollowup(
-    schedule: any,
+    schedule: ScheduleResponse,
     interactionToken: string,
     env: Env
   ): Promise<void> {

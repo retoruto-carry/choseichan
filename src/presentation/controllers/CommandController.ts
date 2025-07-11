@@ -74,8 +74,7 @@ export class CommandController {
    * スケジュール一覧コマンド処理
    */
   private async handleListCommand(
-    interaction: CommandInteraction,
-    storage?: any // For backwards compatibility with tests
+    interaction: CommandInteraction
   ): Promise<Response> {
     try {
       const channelId = interaction.channel_id;
@@ -86,20 +85,13 @@ export class CommandController {
       }
 
       // スケジュール一覧取得
-      let schedules = [];
-      if (storage) {
-        // Use passed storage for test compatibility
-        schedules = await storage.listSchedulesByChannel(channelId, guildId);
-      } else {
-        // Use Clean Architecture
-        const schedulesResult = await this.dependencyContainer.findSchedulesUseCase
-          .findByChannel(channelId, guildId, 10);
-        
-        if (!schedulesResult.success) {
-          return this.createErrorResponse(schedulesResult.errors?.[0] || 'スケジュール一覧の取得に失敗しました。');
-        }
-        schedules = schedulesResult.schedules || [];
+      const schedulesResult = await this.dependencyContainer.findSchedulesUseCase
+        .findByChannel(channelId, guildId, 10);
+      
+      if (!schedulesResult.success) {
+        return this.createErrorResponse(schedulesResult.errors?.[0] || 'スケジュール一覧の取得に失敗しました。');
       }
+      const schedules = schedulesResult.schedules || [];
       
       if (schedules.length === 0) {
         return new Response(JSON.stringify({

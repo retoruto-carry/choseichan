@@ -6,6 +6,33 @@ import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../do
 import { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants';
 
+// Database row types
+interface ScheduleRow {
+  id: string;
+  guild_id: string;
+  channel_id: string;
+  message_id?: string;
+  title: string;
+  description?: string;
+  created_by: string;
+  created_by_username: string;
+  author_id: string;
+  deadline?: number;
+  reminder_timings?: string;
+  reminder_mentions?: string;
+  reminders_sent?: string;
+  status: string;
+  notification_sent: number;
+  total_responses: number;
+  created_at: number;
+  updated_at: number;
+}
+
+interface ScheduleDateRow {
+  date_id: string;
+  datetime: string;
+}
+
 export class D1ScheduleRepository implements IScheduleRepository {
   constructor(private db: D1Database) {}
 
@@ -105,7 +132,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         ORDER BY display_order
       `).bind(scheduleId).all();
       
-      return this.mapRowToSchedule(scheduleRow, datesResult.results);
+      return this.mapRowToSchedule(scheduleRow as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
     } catch (error) {
       throw new RepositoryError('Failed to find schedule', 'FIND_ERROR', error as Error);
     }
@@ -128,7 +155,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
           ORDER BY display_order
         `).bind(row.id).all();
         
-        const schedule = this.mapRowToSchedule(row, datesResult.results);
+        const schedule = this.mapRowToSchedule(row as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
         if (schedule) schedules.push(schedule);
       }
       
@@ -151,7 +178,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         SELECT * FROM schedules 
         WHERE deadline >= ? AND deadline <= ? AND status = 'open'
       `;
-      const params: any[] = [startTimestamp, endTimestamp];
+      const params: (number | string)[] = [startTimestamp, endTimestamp];
       
       if (guildId) {
         query += ' AND guild_id = ?';
@@ -170,7 +197,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
           ORDER BY display_order
         `).bind(row.id).all();
         
-        const schedule = this.mapRowToSchedule(row, datesResult.results);
+        const schedule = this.mapRowToSchedule(row as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
         if (schedule) schedules.push(schedule);
       }
       
@@ -207,7 +234,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         ORDER BY display_order
       `).bind(scheduleRow.id).all();
       
-      return this.mapRowToSchedule(scheduleRow, datesResult.results);
+      return this.mapRowToSchedule(scheduleRow as unknown as ScheduleRow, datesResult.results as unknown as ScheduleDateRow[]);
     } catch (error) {
       throw new RepositoryError('Failed to find schedule by message ID', 'FIND_ERROR', error as Error);
     }
@@ -256,7 +283,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
   /**
    * Map database row to Schedule object
    */
-  private mapRowToSchedule(row: any, dateRows: any[]): DomainSchedule | null {
+  private mapRowToSchedule(row: ScheduleRow, dateRows: ScheduleDateRow[]): DomainSchedule | null {
     if (!row) return null;
     
     const dates: DomainScheduleDate[] = dateRows.map(dateRow => ({
@@ -273,7 +300,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
       description: row.description || undefined,
       dates,
       createdBy: {
-        id: row.created_by_id,
+        id: row.created_by,
         username: row.created_by_username
       },
       authorId: row.author_id,
@@ -281,7 +308,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
       reminderTimings: row.reminder_timings ? JSON.parse(row.reminder_timings) : undefined,
       reminderMentions: row.reminder_mentions ? JSON.parse(row.reminder_mentions) : undefined,
       remindersSent: row.reminders_sent ? JSON.parse(row.reminders_sent) : undefined,
-      status: row.status,
+      status: row.status as 'open' | 'closed',
       notificationSent: row.notification_sent === 1,
       totalResponses: row.total_responses,
       createdAt: new Date(row.created_at * 1000),

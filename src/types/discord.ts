@@ -1,5 +1,5 @@
 import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { DiscordEmbed } from './discord-api';
+import { DiscordEmbed, DiscordComponent } from './discord-api';
 
 export interface Env {
   DISCORD_PUBLIC_KEY: string;
@@ -65,6 +65,7 @@ export interface ButtonInteraction {
   message?: {
     id: string;
     embeds: DiscordEmbed[];
+    components?: DiscordComponent[];
     message_reference?: {
       message_id: string;
     };
@@ -96,6 +97,7 @@ export interface ModalInteraction {
   message?: {
     id: string;
     embeds: DiscordEmbed[];
+    components?: DiscordComponent[];
     message_reference?: {
       message_id: string;
     };

@@ -1,9 +1,10 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { DiscordEmbed, DiscordComponent } from '../types/discord-api';
 
 /**
  * Create an ephemeral response
  */
-export function createEphemeralResponse(content: string, embeds?: any[], components?: any[]): Response {
+export function createEphemeralResponse(content: string, embeds?: DiscordEmbed[], components?: DiscordComponent[]): Response {
   return new Response(JSON.stringify({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

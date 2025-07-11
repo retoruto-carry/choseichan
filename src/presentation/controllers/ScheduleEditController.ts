@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction } from '../../types/discord';
+import { ButtonInteraction, Env } from '../../types/discord';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { ScheduleEditUIBuilder } from '../builders/ScheduleEditUIBuilder';
 
@@ -307,7 +307,7 @@ export class ScheduleEditController {
 /**
  * Factory function for creating controller with dependencies
  */
-export function createScheduleEditController(env: any): ScheduleEditController {
+export function createScheduleEditController(env: Env): ScheduleEditController {
   const container = new DependencyContainer(env);
   const uiBuilder = new ScheduleEditUIBuilder();
   

@@ -5,6 +5,7 @@
  */
 
 import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
+import { DiscordModalData } from '../../types/discord-api';
 import { DISCORD_LIMITS } from '../../constants';
 
 export class VoteUIBuilder {
@@ -57,7 +58,7 @@ export class VoteUIBuilder {
   /**
    * 投票モーダルを作成
    */
-  createVoteModal(schedule: any, currentResponses: any[]): any {
+  createVoteModal(schedule: ScheduleResponse, currentResponses: Array<{ dateId: string; status: string; comment?: string }>): DiscordModalData {
     const components = [];
     
     // Create input for each date (up to Discord's limit)

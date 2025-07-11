@@ -7,6 +7,7 @@
 
 import { User } from './User';
 import { ScheduleDate } from './ScheduleDate';
+import { DomainSchedule } from '../types/DomainTypes';
 
 export interface ScheduleId {
   readonly value: string;
@@ -119,8 +120,8 @@ export class Schedule {
     );
   }
 
-  static fromPrimitives(data: any): Schedule {
-    const dates = data.dates.map((d: any) => 
+  static fromPrimitives(data: DomainSchedule): Schedule {
+    const dates = data.dates.map((d) => 
       ScheduleDate.fromPrimitives(d)
     );
     
@@ -513,7 +514,7 @@ export class Schedule {
     );
   }
 
-  toPrimitives(): any {
+  toPrimitives(): DomainSchedule {
     return {
       id: this.id,
       guildId: this.guildId,

@@ -14,6 +14,7 @@ import { parseUserInputDate } from '../../utils/date';
 import { EMBED_COLORS } from '../../constants/ui';
 import { updateOriginalMessage } from '../../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../utils/embeds';
+import { UpdateScheduleRequest } from '../../application/dto/ScheduleDto';
 
 export class EditModalController {
   constructor(
@@ -27,8 +28,7 @@ export class EditModalController {
   async handleEditInfoModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any // For backwards compatibility with tests
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId, messageId] = params;
@@ -87,8 +87,7 @@ export class EditModalController {
   async handleUpdateDatesModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId, messageId] = params;
@@ -159,8 +158,7 @@ export class EditModalController {
   async handleAddDatesModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -238,8 +236,7 @@ export class EditModalController {
   async handleEditDeadlineModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -273,7 +270,7 @@ export class EditModalController {
       }
 
       // Update schedule with new deadline (and reset reminders if deadline changed)
-      const updateData: any = {
+      const updateData: UpdateScheduleRequest = {
         scheduleId,
         guildId,
         editorUserId: userId,
@@ -341,8 +338,7 @@ export class EditModalController {
   async handleEditReminderModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;

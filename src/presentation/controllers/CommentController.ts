@@ -24,8 +24,7 @@ export class CommentController {
   async handleAddCommentModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     return this.createErrorResponse('コメント機能は廃止されました。');
   }
@@ -33,8 +32,7 @@ export class CommentController {
   async handleAddCommentButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env,
-    storage?: any
+    env: Env
   ): Promise<Response> {
     return this.createErrorResponse('コメント機能は廃止されました。');
   }
