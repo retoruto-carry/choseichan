@@ -8,6 +8,7 @@
 export interface DomainUser {
   id: string;
   username: string;
+  displayName?: string;
 }
 
 export interface DomainScheduleDate {

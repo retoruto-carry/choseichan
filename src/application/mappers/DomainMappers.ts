@@ -43,13 +43,6 @@ export class ScheduleMapper {
     });
   }
 
-  /**
-   * Convert Schedule entity to DomainSchedule
-   * Uses the entity's toPrimitives() method
-   */
-  static toLegacy(schedule: Schedule): DomainSchedule {
-    return schedule.toPrimitives();
-  }
 }
 
 export class ResponseMapper {
@@ -75,29 +68,6 @@ export class ResponseMapper {
     });
   }
 
-  /**
-   * Convert Response entity to DomainResponse
-   * Uses the entity's toPrimitives() method
-   */
-  static toLegacy(response: Response): DomainResponse {
-    const primitives = response.toPrimitives();
-    // dateStatuses is already Record<string, string> from toPrimitives
-    // Convert to Record<string, DomainResponseStatus>
-    const dateStatuses: Record<string, DomainResponseStatus> = {};
-    Object.entries(primitives.dateStatuses).forEach(([dateId, status]) => {
-      dateStatuses[dateId] = status as DomainResponseStatus;
-    });
-    
-    return {
-      scheduleId: primitives.scheduleId,
-      userId: primitives.user.id,
-      username: primitives.user.username,
-      displayName: primitives.user.displayName,
-      dateStatuses,
-      comment: primitives.comment,
-      updatedAt: primitives.updatedAt
-    };
-  }
 }
 
 // Main DomainMappers class for application layer

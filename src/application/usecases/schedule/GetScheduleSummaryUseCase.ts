@@ -39,9 +39,20 @@ export class GetScheduleSummaryUseCase {
 
       const responses = await this.responseRepository.findByScheduleId(scheduleId, guildId);
 
+      // Convert DomainResponse to ResponseDto
+      const responsesDtos = responses.map(response => ({
+        scheduleId: response.scheduleId,
+        userId: response.userId,
+        username: response.username,
+        displayName: response.displayName,
+        dateStatuses: response.dateStatuses,
+        comment: response.comment,
+        updatedAt: response.updatedAt.toISOString()
+      }));
+
       // Build summary response
-      const responseCounts = this.calculateResponseCounts(schedule.dates, responses);
-      const statistics = this.calculateStatistics(schedule.dates, responses);
+      const responseCounts = this.calculateResponseCounts(schedule.dates, responsesDtos);
+      const statistics = this.calculateStatistics(schedule.dates, responsesDtos);
       
       const summary: ScheduleSummaryResponse = {
         schedule: {

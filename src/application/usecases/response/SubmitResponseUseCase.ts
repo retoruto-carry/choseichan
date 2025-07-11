@@ -13,7 +13,7 @@ import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
 import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { SubmitResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
-import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
+import { DomainSchedule, DomainResponse, DomainResponseStatus } from '../../../domain/types/DomainTypes';
 import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export class SubmitResponseUseCase {
@@ -103,7 +103,17 @@ export class SubmitResponseUseCase {
       );
 
       // 9. リポジトリへの保存
-      await this.responseRepository.save(ResponseMapper.toLegacy(response), request.guildId);
+      const primitives = response.toPrimitives();
+      const domainResponse: DomainResponse = {
+        scheduleId: primitives.scheduleId,
+        userId: primitives.user.id,
+        username: primitives.user.username,
+        displayName: primitives.user.displayName,
+        dateStatuses: primitives.dateStatuses as Record<string, DomainResponseStatus>,
+        comment: primitives.comment,
+        updatedAt: primitives.updatedAt
+      };
+      await this.responseRepository.save(domainResponse, request.guildId);
 
       // 10. スケジュールの総回答数を更新
       const allResponses = await this.responseRepository.findByScheduleId(
@@ -112,7 +122,7 @@ export class SubmitResponseUseCase {
       );
       
       const updatedSchedule = scheduleEntity.updateTotalResponses(allResponses.length);
-      await this.scheduleRepository.save(ScheduleMapper.toLegacy(updatedSchedule));
+      await this.scheduleRepository.save(updatedSchedule.toPrimitives());
 
       // 11. レスポンスの構築
       const responseDto = this.buildResponseDto(response);

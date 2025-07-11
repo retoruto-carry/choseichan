@@ -4,7 +4,7 @@
 
 import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
 import { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
-import { TIME_CONSTANTS } from '../../../constants';
+import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
 
 // Database row types
 interface ScheduleRow {

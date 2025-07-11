@@ -6,6 +6,7 @@
 
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleResponse } from '../../dto/ScheduleDto';
+import { ScheduleMapper } from '../../mappers/DomainMappers';
 import { Schedule } from '../../../domain/entities/Schedule';
 
 export interface FindSchedulesByChannelUseCaseResult {
@@ -41,7 +42,7 @@ export class FindSchedulesUseCase {
       }
 
       const schedules = await this.scheduleRepository.findByChannel(channelId, guildId, limit);
-      const scheduleResponses = schedules.map(this.buildScheduleResponse);
+      const scheduleResponses = schedules.map(schedule => this.buildScheduleResponse(ScheduleMapper.toDomain(schedule)));
 
       return {
         success: true,
@@ -66,7 +67,7 @@ export class FindSchedulesUseCase {
       }
 
       const schedules = await this.scheduleRepository.findByDeadlineRange(startTime, endTime, guildId);
-      const scheduleResponses = schedules.map(this.buildScheduleResponse);
+      const scheduleResponses = schedules.map(schedule => this.buildScheduleResponse(ScheduleMapper.toDomain(schedule)));
 
       return {
         success: true,
@@ -101,7 +102,7 @@ export class FindSchedulesUseCase {
 
       return {
         success: true,
-        schedule: this.buildScheduleResponse(schedule)
+        schedule: this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
       };
 
     } catch (error) {

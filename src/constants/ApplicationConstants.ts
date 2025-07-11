@@ -51,6 +51,11 @@ export const DISCORD_CONSTANTS = {
   INITIAL_RESPONSE_TIMEOUT_SECONDS: 3,
   FOLLOWUP_RESPONSE_TIMEOUT_SECONDS: 3,
   
+  // Message Flags
+  FLAGS: {
+    EPHEMERAL: 64
+  },
+  
   // Colors (Discord embed colors)
   COLORS: {
     SUCCESS: 0x00ff00,

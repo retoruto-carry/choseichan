@@ -6,7 +6,7 @@
 
 import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
 import { DiscordModalData } from '../../infrastructure/types/discord-api';
-import { DISCORD_LIMITS } from '../../constants';
+import { DISCORD_CONSTANTS } from '../../constants/ApplicationConstants';
 
 export class VoteUIBuilder {
   /**
@@ -62,7 +62,7 @@ export class VoteUIBuilder {
     const components = [];
     
     // Create input for each date (up to Discord's limit)
-    const maxDates = Math.min(schedule.dates.length, DISCORD_LIMITS.MAX_BUTTON_ROWS - 1);
+    const maxDates = Math.min(schedule.dates.length, DISCORD_CONSTANTS.MAX_ACTION_ROWS - 1);
     
     for (let i = 0; i < maxDates; i++) {
       const date = schedule.dates[i];

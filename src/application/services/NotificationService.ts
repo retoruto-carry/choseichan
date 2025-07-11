@@ -6,7 +6,7 @@
  */
 
 import { formatDate } from '../../utils/date';
-import { NOTIFICATION_SETTINGS } from '../../constants';
+import { NOTIFICATION_CONSTANTS } from '../../constants/ApplicationConstants';
 import { IScheduleRepository } from '../../domain/repositories/interfaces';
 import { IResponseRepository } from '../../domain/repositories/interfaces';
 import { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
@@ -308,7 +308,7 @@ export class NotificationService {
   }
 
   async sendPRMessage(schedule: Schedule | ScheduleResponse): Promise<void> {
-    const message = {
+    const message: any = {
       content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています`
     };
 
@@ -320,7 +320,7 @@ export class NotificationService {
     }
 
     // Send PR message with delay after summary using Promise-based delay
-    await new Promise(resolve => setTimeout(resolve, NOTIFICATION_SETTINGS.PR_MESSAGE_DELAY_MS));
+    await new Promise(resolve => setTimeout(resolve, NOTIFICATION_CONSTANTS.PR_MESSAGE_DELAY_MS));
     await this.sendChannelMessage(schedule.channelId, message);
   }
 }

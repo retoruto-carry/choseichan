@@ -12,6 +12,7 @@ import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
 import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { UpdateResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
+import { DomainResponse, DomainResponseStatus } from '../../../domain/types/DomainTypes';
 import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export class UpdateResponseUseCase {
@@ -114,7 +115,17 @@ export class UpdateResponseUseCase {
       }
 
       // 9. リポジトリへの保存
-      await this.responseRepository.save(ResponseMapper.toLegacy(updatedResponse), request.guildId);
+      const primitives = updatedResponse.toPrimitives();
+      const domainResponse: DomainResponse = {
+        scheduleId: primitives.scheduleId,
+        userId: primitives.user.id,
+        username: primitives.user.username,
+        displayName: primitives.user.displayName,
+        dateStatuses: primitives.dateStatuses as Record<string, DomainResponseStatus>,
+        comment: primitives.comment,
+        updatedAt: primitives.updatedAt
+      };
+      await this.responseRepository.save(domainResponse, request.guildId);
 
       // 10. レスポンスの構築
       const responseDto = this.buildResponseDto(updatedResponse);

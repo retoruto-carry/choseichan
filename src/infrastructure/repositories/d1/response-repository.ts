@@ -4,7 +4,7 @@
 
 import { IScheduleRepository, IResponseRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
 import { DomainResponse, DomainScheduleSummary, DomainResponseStatus, DomainScheduleDate } from '../../../domain/types/DomainTypes';
-import { TIME_CONSTANTS } from '../../../constants';
+import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
 
 export class D1ResponseRepository implements IResponseRepository {
   constructor(
