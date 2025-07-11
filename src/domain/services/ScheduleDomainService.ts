@@ -148,24 +148,26 @@ export class ScheduleDomainService {
     const errors: string[] = [];
 
     // タイトルチェック
-    if (!data.title.trim()) {
+    if (!data.title || !data.title.trim()) {
       errors.push('タイトルは必須です');
     } else if (data.title.length > 100) {
       errors.push('タイトルは100文字以内で入力してください');
     }
 
     // 日程チェック
-    if (data.dates.length === 0) {
+    if (!data.dates || data.dates.length === 0) {
       errors.push('日程候補を1つ以上入力してください');
     } else if (data.dates.length > 10) {
       errors.push('日程候補は10個以内で入力してください');
     }
 
     // 重複チェック
-    const dateIds = data.dates.map(d => d.id);
-    const uniqueDateIds = [...new Set(dateIds)];
-    if (dateIds.length !== uniqueDateIds.length) {
-      errors.push('日程候補に重複があります');
+    if (data.dates && data.dates.length > 0) {
+      const dateIds = data.dates.map(d => d.id);
+      const uniqueDateIds = [...new Set(dateIds)];
+      if (dateIds.length !== uniqueDateIds.length) {
+        errors.push('日程候補に重複があります');
+      }
     }
 
     // 締切チェック
@@ -176,12 +178,14 @@ export class ScheduleDomainService {
       }
 
       // 締切が最も早い日程候補より後かチェック
-      const earliestDate = data.dates
-        .map(d => d.getDateTimeAsDate())
-        .sort((a, b) => a.getTime() - b.getTime())[0];
-      
-      if (earliestDate && data.deadline > earliestDate) {
-        errors.push('締切は最も早い日程候補より前に設定してください');
+      if (data.dates && data.dates.length > 0) {
+        const earliestDate = data.dates
+          .map(d => d.getDateTimeAsDate())
+          .sort((a, b) => a.getTime() - b.getTime())[0];
+        
+        if (earliestDate && data.deadline > earliestDate) {
+          errors.push('締切は最も早い日程候補より前に設定してください');
+        }
       }
     }
 

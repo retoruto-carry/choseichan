@@ -10,7 +10,7 @@ import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { UpdateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
+import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface UpdateScheduleUseCaseResult {
   success: boolean;

@@ -9,7 +9,7 @@ import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { CloseScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
+import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface CloseScheduleUseCaseResult {
   success: boolean;

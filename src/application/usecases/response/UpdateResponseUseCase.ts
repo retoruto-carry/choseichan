@@ -12,8 +12,7 @@ import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
 import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { UpdateResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
-import { ResponseMapper } from '../../mappers/ResponseMapper';
+import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export class UpdateResponseUseCase {
   constructor(

@@ -104,10 +104,10 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -125,10 +125,10 @@ describe('SubmitResponseUseCase', () => {
         guildId: 'guild123',
         userId: 'user456',
         username: 'responder',
-        dateStatuses: {
-          'date1': 'ok',
-          'date2': 'maybe'
-        }
+        responses: [
+          { dateId: 'date1', status: 'ok' },
+          { dateId: 'date2', status: 'maybe' }
+        ]
       };
 
       const result = await useCase.execute(request);
@@ -193,7 +193,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('少なくとも1つの日程への回答が必要です');
+      expect(result.errors).toContain('レスポンスが必要です');
     });
 
     it('should reject request with invalid date status', async () => {
@@ -210,7 +210,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('日程date1への回答が無効です: invalid');
+      expect(result.errors).toContain('レスポンス1: 無効なステータスです');
     });
 
     it('should reject request with too long comment', async () => {
@@ -230,7 +230,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('コメントは1000文字以下で入力してください');
+      expect(result.errors).toContain('コメントは500文字以内で入力してください');
     });
   });
 
@@ -269,7 +269,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('このスケジュールは既に締切られています');
+      expect(result.errors).toContain('この日程調整は締め切られています');
     });
 
     it('should reject response for schedule with passed deadline', async () => {
@@ -290,7 +290,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('このスケジュールは締切を過ぎています');
+      expect(result.errors).toContain('回答期限が過ぎています');
     });
 
     it('should reject response for non-existent dates', async () => {
@@ -310,7 +310,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('日程non-existent-dateはこのスケジュールに存在しません');
+      expect(result.errors).toContain('無効な日程候補です: non-existent-date');
     });
 
     it('should validate all date statuses correspond to schedule dates', async () => {
@@ -332,7 +332,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('日程invalid-dateはこのスケジュールに存在しません');
+      expect(result.errors).toContain('無効な日程候補です: invalid-date');
     });
   });
 
@@ -353,7 +353,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('回答の送信に失敗しました: Database error');
+      expect(result.errors).toContain('レスポンスの投稿に失敗しました: Database error');
       expect(findByIdSpy).toHaveBeenCalled();
     });
 
@@ -376,7 +376,7 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('回答の送信に失敗しました: Save error');
+      expect(result.errors).toContain('レスポンスの投稿に失敗しました: Save error');
       expect(saveSpy).toHaveBeenCalled();
     });
   });

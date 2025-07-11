@@ -8,7 +8,8 @@ import { Response } from '../../../domain/entities/Response';
 import { IResponseRepository } from '../../../domain/repositories/interfaces';
 import { GetResponseRequest, ResponseDto, ResponseStatistics } from '../../dto/ResponseDto';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { ResponseMapper } from '../../mappers/ResponseMapper';
+import { DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetResponseUseCaseResult {
   success: boolean;
@@ -64,7 +65,7 @@ export class GetResponseUseCase {
       }
 
       // 3. レスポンスの構築
-      const responseEntity = ResponseMapper.toDomain(responseData);
+      const responseEntity = this.toDomainResponse(responseData);
       const responseDto = this.buildResponseDto(responseEntity);
 
       return {
@@ -101,8 +102,8 @@ export class GetResponseUseCase {
       );
 
       // 3. レスポンスDTOの構築
-      const responseEntities = ResponseMapper.toDomainList(responsesData);
-      const responses = responseEntities.map(r => this.buildResponseDto(r));
+      const responseEntities = responsesData.map(r => this.toDomainResponse(r));
+      const responses = responseEntities.map((r: Response) => this.buildResponseDto(r));
 
       // 4. 統計情報の計算
       let statistics: ResponseStatistics | undefined;
@@ -190,6 +191,10 @@ export class GetResponseUseCase {
       isValid: errors.length === 0,
       errors
     };
+  }
+
+  private toDomainResponse(response: DomainResponse): Response {
+    return ResponseMapper.toDomain(response);
   }
 
   private buildResponseDto(response: Response): ResponseDto {

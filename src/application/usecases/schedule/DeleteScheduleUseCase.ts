@@ -6,7 +6,7 @@
 
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { Schedule } from '../../../domain/entities/Schedule';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
+import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface DeleteScheduleRequest {
   scheduleId: string;

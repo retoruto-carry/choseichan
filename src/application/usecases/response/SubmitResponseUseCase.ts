@@ -8,12 +8,13 @@
 import { Schedule } from '../../../domain/entities/Schedule';
 import { Response } from '../../../domain/entities/Response';
 import { User } from '../../../domain/entities/User';
+import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
 import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
 import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
 import { SubmitResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
-import { ResponseMapper } from '../../mappers/ResponseMapper';
+import { DomainSchedule, DomainResponse } from '../../../infrastructure/types/DomainTypes';
+import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export class SubmitResponseUseCase {
   constructor(

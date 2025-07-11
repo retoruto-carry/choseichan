@@ -9,10 +9,11 @@ import { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto
 import { ResponseDto } from '../../dto/ResponseDto';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
 import { DomainSchedule, DomainResponse } from '../../../infrastructure/types/DomainTypes';
-import { Schedule } from '../../../domain/entities/Schedule';
+import { Schedule, ScheduleStatus } from '../../../domain/entities/Schedule';
 import { Response } from '../../../domain/entities/Response';
 import { User } from '../../../domain/entities/User';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
+import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetScheduleUseCaseResult {
   success: boolean;
@@ -193,47 +194,11 @@ export class GetScheduleUseCase {
   }
 
   private toDomainSchedule(schedule: DomainSchedule): Schedule {
-    const user = User.create(
-      schedule.createdBy.id,
-      schedule.createdBy.username
-    );
-
-    const dates = schedule.dates.map(d => 
-      ScheduleDate.create(d.id, d.datetime)
-    );
-
-    return Schedule.create({
-      id: schedule.id,
-      guildId: schedule.guildId,
-      channelId: schedule.channelId,
-      title: schedule.title,
-      description: schedule.description,
-      dates,
-      createdBy: user,
-      authorId: schedule.authorId,
-      deadline: schedule.deadline,
-      reminderTimings: schedule.reminderTimings,
-      reminderMentions: schedule.reminderMentions,
-      remindersSent: schedule.remindersSent,
-      status: schedule.status,
-      notificationSent: schedule.notificationSent,
-      totalResponses: schedule.totalResponses,
-      createdAt: schedule.createdAt,
-      updatedAt: schedule.updatedAt,
-      messageId: schedule.messageId
-    });
+    return ScheduleMapper.toDomain(schedule);
   }
 
   private toDomainResponse(response: DomainResponse): Response {
-    return Response.create({
-      scheduleId: response.scheduleId,
-      userId: response.userId,
-      username: response.username,
-      displayName: response.displayName,
-      dateStatuses: response.dateStatuses,
-      comment: response.comment,
-      updatedAt: response.updatedAt
-    });
+    return ResponseMapper.toDomain(response);
   }
 
   private buildResponseDto(response: Response): ResponseDto {

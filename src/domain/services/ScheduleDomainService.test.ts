@@ -73,7 +73,7 @@ describe('ScheduleDomainService', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('タイトルは256文字以下で入力してください');
+      expect(validation.errors).toContain('タイトルは100文字以内で入力してください');
     });
 
     it('should reject empty dates', () => {
@@ -83,7 +83,7 @@ describe('ScheduleDomainService', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('少なくとも1つの日程候補が必要です');
+      expect(validation.errors).toContain('日程候補を1つ以上入力してください');
     });
 
     it('should reject too many dates', () => {
@@ -97,7 +97,7 @@ describe('ScheduleDomainService', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('日程候補は25個以下で設定してください');
+      expect(validation.errors).toContain('日程候補は10個以内で入力してください');
     });
 
     it('should reject past deadline', () => {
@@ -110,7 +110,7 @@ describe('ScheduleDomainService', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('締切は現在時刻より後に設定してください');
+      expect(validation.errors).toContain('締切は未来の日時で設定してください');
     });
 
     it('should accept no deadline', () => {
@@ -132,8 +132,8 @@ describe('ScheduleDomainService', () => {
       expect(validation.isValid).toBe(false);
       expect(validation.errors).toHaveLength(3);
       expect(validation.errors).toContain('タイトルは必須です');
-      expect(validation.errors).toContain('少なくとも1つの日程候補が必要です');
-      expect(validation.errors).toContain('締切は現在時刻より後に設定してください');
+      expect(validation.errors).toContain('日程候補を1つ以上入力してください');
+      expect(validation.errors).toContain('締切は未来の日時で設定してください');
     });
   });
 

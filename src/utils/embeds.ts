@@ -1,12 +1,12 @@
-import { Schedule, ScheduleSummary } from '../types/schedule';
 import { STATUS_EMOJI, EMBED_COLORS } from '../constants/ui';
 import { ScheduleSummaryResponse, ScheduleResponse } from '../application/dto/ScheduleDto';
+import { DomainSchedule } from '../infrastructure/types/DomainTypes';
 import { createButtonId } from './id';
 import { formatDate } from './date';
 
-export function createScheduleEmbed(schedule: Schedule) {
+export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse) {
   const dateList = schedule.dates
-    .map((date, index) => `${index + 1}. ${date.datetime}`)
+    .map((date: any, index: number) => `${index + 1}. ${date.datetime}`)
     .join('\n');
   
   const descriptionParts = [
@@ -15,7 +15,10 @@ export function createScheduleEmbed(schedule: Schedule) {
   ];
   
   if (schedule.deadline) {
-    descriptionParts.push(`⏰ 締切: ${formatDate(schedule.deadline.toISOString())}`);
+    const deadlineStr = schedule.deadline instanceof Date 
+      ? schedule.deadline.toISOString() 
+      : schedule.deadline;
+    descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
     descriptionParts.push('');
   }
   
@@ -32,34 +35,34 @@ export function createScheduleEmbed(schedule: Schedule) {
     footer: {
       text: `作成: ${schedule.createdBy.username}`
     },
-    timestamp: schedule.createdAt.toISOString()
+    timestamp: schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt
   };
 }
 
-export function createScheduleEmbedWithTable(summary: ScheduleSummary | ScheduleSummaryResponse, showDetails: boolean = false) {
+export function createScheduleEmbedWithTable(summary: ScheduleSummaryResponse, showDetails: boolean = false) {
   // Handle both old and new types
   const schedule = summary.schedule;
   const responseCounts = summary.responseCounts;
   const bestDateId = 'bestDateId' in summary ? summary.bestDateId : (summary as ScheduleSummaryResponse).statistics?.optimalDates?.optimalDateId;
-  const userResponses = 'userResponses' in summary ? summary.userResponses : (summary as ScheduleSummaryResponse).responses;
+  const userResponses = 'userResponses' in summary ? (summary as any).userResponses : (summary as ScheduleSummaryResponse).responses || [];
   
   // 日程リストを作成（番号付き）
-  const dateFields = schedule.dates.map((date, idx) => {
+  const dateFields = schedule.dates.map((date: any, idx: number) => {
     const count = responseCounts[date.id];
-    const isBest = date.id === bestDateId && userResponses.length > 0;
+    const isBest = date.id === bestDateId && userResponses && (userResponses as any[]).length > 0;
     const dateStr = date.datetime;
     
     // 集計のみ（詳細なし）
     let fieldValue = `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
     
     // 詳細表示の場合は各ユーザーの回答も含める
-    if (showDetails) {
-      const responses = userResponses
-        .map((ur) => {
+    if (showDetails && userResponses) {
+      const responses = (userResponses as any[])
+        .map((ur: any) => {
           // Handle both old and new response types
           if ('responses' in ur && Array.isArray(ur.responses)) {
             // Old Response type
-            const response = ur.responses.find((r) => r.dateId === date.id);
+            const response = ur.responses.find((r: any) => r.dateId === date.id);
             if (!response) return null;
             const comment = response.comment ? ` (${response.comment})` : '';
             const username = 'userName' in ur ? ur.userName : 'username' in ur ? (ur as any).username : 'Unknown';
@@ -98,11 +101,11 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
   
   if (schedule.deadline) {
     // Handle both Date and string types
-    const deadlineStr = schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
+    const deadlineStr = (schedule.deadline && typeof schedule.deadline === 'object' && 'toISOString' in schedule.deadline) ? schedule.deadline.toISOString() : String(schedule.deadline);
     descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
   }
   
-  descriptionParts.push(`回答者: ${userResponses.length}人`);
+  descriptionParts.push(`回答者: ${userResponses ? (userResponses as any[]).length : 0}人`);
   
   return {
     title: `📅 ${schedule.title}`,
@@ -115,7 +118,7 @@ export function createScheduleEmbedWithTable(summary: ScheduleSummary | Schedule
         '最新の情報は更新をクリック'
       ].filter(Boolean).join(' | ')
     },
-    timestamp: schedule.updatedAt instanceof Date ? schedule.updatedAt.toISOString() : schedule.updatedAt
+    timestamp: (schedule.updatedAt && typeof schedule.updatedAt === 'object' && 'toISOString' in schedule.updatedAt) ? schedule.updatedAt.toISOString() : String(schedule.updatedAt)
   };
 }
 

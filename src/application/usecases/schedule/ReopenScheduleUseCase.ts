@@ -7,7 +7,7 @@
 import { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleResponse } from '../../dto/ScheduleDto';
-import { ScheduleMapper } from '../../mappers/ScheduleMapper';
+import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface ReopenScheduleRequest {
   scheduleId: string;

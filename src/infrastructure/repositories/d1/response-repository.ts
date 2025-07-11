@@ -257,7 +257,7 @@ export class D1ResponseRepository implements IResponseRepository {
   private calculateStatistics(
     responses: DomainResponse[],
     responseCounts: Record<string, Record<string, number>>,
-    dates: DomainScheduleDate[]
+    dates: import('../../types/DomainTypes').DomainScheduleDate[]
   ): DomainScheduleSummary['statistics'] {
     // Overall participation calculation
     let fullyAvailable = 0;
