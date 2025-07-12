@@ -12,9 +12,9 @@ import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseUserInputDate } from '../../utils/date';
 import { generateId } from '../../utils/id';
+import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 import { EMBED_COLORS } from '../constants/ui';
 import { updateOriginalMessage } from '../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 
 export class EditModalController {
   private readonly logger = getLogger();
@@ -513,17 +513,17 @@ export class EditModalController {
         return;
       }
 
-      // Update the message using Discord API
-      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
-      const components = createSimpleScheduleComponents(scheduleResult.schedule, false);
+      // Update the message using ScheduleMainMessageBuilder
+      const messageData = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        scheduleResult.schedule,
+        false // showDetails - keep simple view
+      );
 
       await updateOriginalMessage(
         env.DISCORD_APPLICATION_ID,
         interactionToken,
-        {
-          embeds: [embed],
-          components,
-        },
+        messageData,
         messageId
       );
     } catch (error) {
