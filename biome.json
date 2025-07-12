@@ -43,16 +43,7 @@
     }
   },
   "files": {
-    "includes": [
-      "**/src/**/*",
-      "**/tests/**/*",
-      "**/*.ts",
-      "**/*.js",
-      "**/*.json",
-      "!**/node_modules",
-      "!**/dist",
-      "!**/coverage",
-      "!**/*.d.ts"
-    ]
+    "ignoreUnknown": false,
+    "includes": ["src/**/*", "tests/**/*", "scripts/**/*", "*.ts", "*.js", "*.json"]
   }
 }

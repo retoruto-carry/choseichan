@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns';
+// import { parseISO } from 'date-fns'; // 未使用のインポートを削除
 
 /**
  * スケジュールの日付を短い形式で表示
@@ -6,7 +6,7 @@ import { parseISO } from 'date-fns';
  * @returns 12/25 19:00 形式の文字列
  */
 export function formatDateShort(dateString: string): string {
-  const date = parseISO(dateString);
+  const date = new Date(dateString);
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const hours = date.getHours().toString().padStart(2, '0');
@@ -20,7 +20,7 @@ export function formatDateShort(dateString: string): string {
  * @returns 12月25日(月) 19:00 形式の文字列
  */
 export function formatDate(dateString: string): string {
-  const date = parseISO(dateString);
+  const date = new Date(dateString);
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -214,7 +214,7 @@ export function parseUserInputDate(input: string): Date | null {
   // ISO-8601形式
   const match7 = cleanedInput.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/);
   if (match7) {
-    return parseISO(cleanedInput);
+    return new Date(cleanedInput);
   }
 
   // YYYYMMDD (締切日)

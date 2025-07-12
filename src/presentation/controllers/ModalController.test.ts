@@ -47,13 +47,13 @@ describe('ModalController', () => {
         getResponseUseCase: { execute: vi.fn() },
       },
       get createScheduleUseCase() {
-        return this.applicationServices.createScheduleUseCase;
+        return (this as any).applicationServices.createScheduleUseCase;
       },
       get updateScheduleUseCase() {
-        return this.applicationServices.updateScheduleUseCase;
+        return (this as any).applicationServices.updateScheduleUseCase;
       },
       get submitResponseUseCase() {
-        return this.applicationServices.submitResponseUseCase;
+        return (this as any).applicationServices.submitResponseUseCase;
       },
     } as unknown as DependencyContainer;
 
