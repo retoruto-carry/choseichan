@@ -175,7 +175,7 @@ export function createVoteButtonId(scheduleId: string, dateId: string, status: s
 
 export function createEditReminderButtonId(scheduleId: string): string {
   return createButtonIdFromParams({
-    action: 'edit_reminder',
+    action: 'reminder_edit',
     scheduleId,
   });
 }
