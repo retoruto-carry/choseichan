@@ -33,7 +33,7 @@ export function formatDate(dateString: string): string {
   // 明示的にJST（UTC+9）として変換
   const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
   const jstDate = new Date(date.getTime() + jstOffset);
-  
+
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
   const month = jstDate.getUTCMonth() + 1;
   const day = jstDate.getUTCDate();

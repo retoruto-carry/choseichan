@@ -251,7 +251,7 @@ export class ResponseUIBuilder {
     // 明示的にJST（UTC+9）として変換
     const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
     const jstDate = new Date(date.getTime() + jstOffset);
-    
+
     return `${jstDate.getUTCMonth() + 1}/${jstDate.getUTCDate()} ${String(jstDate.getUTCHours()).padStart(2, '0')}:${String(jstDate.getUTCMinutes()).padStart(2, '0')}`;
   }
 
