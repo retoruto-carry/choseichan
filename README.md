@@ -93,8 +93,8 @@ wrangler d1 create discord-choseisan-db
 
 6. マイグレーションを実行
 ```bash
-# 新しいマイグレーションコマンドを使用
-npm run db:migrate
+# 新しいマイグレーションコマンドを使用（本番環境）
+npm run db:migrate:remote
 
 # または手動で実行
 wrangler d1 migrations apply discord-choseisan-db
@@ -120,8 +120,8 @@ npm run register
 # 新しいマイグレーションファイルを作成
 npm run db:migrate:create
 
-# 本番環境にマイグレーションを適用
-npm run db:migrate
+# 本番環境（リモート）にマイグレーションを適用
+npm run db:migrate:remote
 
 # ローカル環境にマイグレーションを適用
 npm run db:migrate:local
