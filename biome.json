@@ -16,6 +16,9 @@
       "suspicious": {
         "noExplicitAny": "off",
         "noArrayIndexKey": "off"
+      },
+      "complexity": {
+        "noStaticOnlyClass": "off"
       }
     }
   },

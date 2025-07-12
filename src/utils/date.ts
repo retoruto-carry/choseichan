@@ -1,34 +1,40 @@
-export function formatDate(dateString: string): string {
-  // 有効な日付形式の場合、綺麗にフォーマット
-  const date = new Date(dateString);
+import { parseISO } from 'date-fns';
 
-  if (!Number.isNaN(date.getTime())) {
-    // JSTオフセットを取得（UTC+9）
-    const jstOffset = 9 * 60; // 9 hours in minutes
-    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-    const jstTime = new Date(utcTime + jstOffset * 60000);
-
-    const month = jstTime.getMonth() + 1;
-    const day = jstTime.getDate();
-    const hours = jstTime.getHours();
-    const minutes = jstTime.getMinutes();
-
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][jstTime.getDay()];
-
-    let result = `${month}/${day}(${dayOfWeek})`;
-
-    if (hours !== 0 || minutes !== 0) {
-      result += ` ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-
-    return result;
-  }
-
-  // そうでなければそのまま返す
-  return dateString;
+/**
+ * スケジュールの日付を短い形式で表示
+ * @param dateString ISO形式の日付文字列
+ * @returns 12/25 19:00 形式の文字列
+ */
+export function formatDateShort(dateString: string): string {
+  const date = parseISO(dateString);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${month}/${day} ${hours}:${minutes}`;
 }
 
-// JST入力からUTC日付を作成するヘルパー関数
+/**
+ * ISO形式の日付をJST形式で表示 (ブラウザ依存なし)
+ * @param dateString ISO形式の日付文字列
+ * @returns 12月25日(月) 19:00 形式の文字列
+ */
+export function formatDate(dateString: string): string {
+  const date = parseISO(dateString);
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const weekday = weekdays[date.getDay()];
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${month}月${day}日(${weekday}) ${hours}:${minutes}`;
+}
+
+/**
+ * JST（日本標準時）として日付を作成
+ * Dateコンストラクタは自動的にローカルタイムゾーンを使用するため、
+ * 明示的にJSTオフセットを適用してUTCとして作成
+ */
 function createJSTDate(
   year: number,
   month: number,
@@ -44,14 +50,14 @@ function createJSTDate(
 
 export function parseUserInputDate(input: string): Date | null {
   // 入力をクリーンアップ
-  input = input.trim();
+  const cleanedInput = input.trim();
 
   const now = new Date();
   const currentYear = now.getFullYear();
 
   // 一般的な日本語形式
   // MM月DD日 HH:mm
-  const matchJp1 = input.match(/^(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[:\s時](\d{2})分?$/);
+  const matchJp1 = cleanedInput.match(/^(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[:\s時](\d{2})分?$/);
   if (matchJp1) {
     const [, month, day, hour, minute] = matchJp1;
     const date = createJSTDate(
@@ -74,7 +80,7 @@ export function parseUserInputDate(input: string): Date | null {
   }
 
   // MM月DD日
-  const matchJp2 = input.match(/^(\d{1,2})月(\d{1,2})日$/);
+  const matchJp2 = cleanedInput.match(/^(\d{1,2})月(\d{1,2})日$/);
   if (matchJp2) {
     const [, month, day] = matchJp2;
     const date = createJSTDate(currentYear, parseInt(month) - 1, parseInt(day), 23, 59, 59);
@@ -85,61 +91,104 @@ export function parseUserInputDate(input: string): Date | null {
   }
 
   // MM/DD HH:mm または MM-DD HH:mm
-  const match1 = input.match(/^(\d{1,2})[/-](\d{1,2})\s+(\d{1,2})[:\s](\d{2})$/);
+  const match1 = cleanedInput.match(/^(\d{1,2})[/-](\d{1,2})\s+(\d{1,2})[:\s](\d{2})$/);
   if (match1) {
     const [, month, day, hour, minute] = match1;
     const monthNum = parseInt(month);
     const dayNum = parseInt(day);
 
     // 月と日を検証
-    if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
-      const date = createJSTDate(
-        currentYear,
+    if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+      return null;
+    }
+
+    const date = createJSTDate(
+      currentYear,
+      monthNum - 1,
+      dayNum,
+      parseInt(hour),
+      parseInt(minute)
+    );
+    if (date < now) {
+      return createJSTDate(
+        currentYear + 1,
         monthNum - 1,
         dayNum,
         parseInt(hour),
         parseInt(minute)
       );
-
-      // 過去の日付の場合、来年と仮定
-      if (date < now) {
-        return createJSTDate(
-          currentYear + 1,
-          monthNum - 1,
-          dayNum,
-          parseInt(hour),
-          parseInt(minute)
-        );
-      }
-
-      return date;
     }
+    return date;
   }
 
   // MM/DD または MM-DD
-  const match2 = input.match(/^(\d{1,2})[/-](\d{1,2})$/);
+  const match2 = cleanedInput.match(/^(\d{1,2})[/-](\d{1,2})$/);
   if (match2) {
     const [, month, day] = match2;
     const monthNum = parseInt(month);
     const dayNum = parseInt(day);
 
     // 月と日を検証
-    if (monthNum >= 1 && monthNum <= 12 && dayNum >= 1 && dayNum <= 31) {
-      const date = createJSTDate(currentYear, monthNum - 1, dayNum, 23, 59, 59);
-
-      // 過去の日付の場合、来年と仮定
-      if (date < now) {
-        return createJSTDate(currentYear + 1, monthNum - 1, dayNum, 23, 59, 59);
-      }
-
-      return date;
+    if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+      return null;
     }
+
+    const date = createJSTDate(currentYear, monthNum - 1, dayNum, 23, 59, 59);
+    if (date < now) {
+      return createJSTDate(currentYear + 1, monthNum - 1, dayNum, 23, 59, 59);
+    }
+    return date;
   }
 
-  // YYYY/MM/DD HH:mm または YYYY-MM-DD HH:mm
-  const match3 = input.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s+(\d{1,2})[:\s](\d{2})$/);
+  // HH:mm のみ（今日の日付）
+  const match3 = cleanedInput.match(/^(\d{1,2})[:\s](\d{2})$/);
   if (match3) {
-    const [, year, month, day, hour, minute] = match3;
+    const [, hour, minute] = match3;
+    const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const date = createJSTDate(
+      jstNow.getUTCFullYear(),
+      jstNow.getUTCMonth(),
+      jstNow.getUTCDate(),
+      parseInt(hour),
+      parseInt(minute)
+    );
+    if (date < now) {
+      // 明日の同じ時刻
+      const tomorrow = new Date(jstNow);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      return createJSTDate(
+        tomorrow.getUTCFullYear(),
+        tomorrow.getUTCMonth(),
+        tomorrow.getUTCDate(),
+        parseInt(hour),
+        parseInt(minute)
+      );
+    }
+    return date;
+  }
+
+  // 明日 HH:mm
+  const match4 = cleanedInput.match(/^明日\s*(\d{1,2})[:\s](\d{2})$/);
+  if (match4) {
+    const [, hour, minute] = match4;
+    const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const tomorrow = new Date(jstNow);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    return createJSTDate(
+      tomorrow.getUTCFullYear(),
+      tomorrow.getUTCMonth(),
+      tomorrow.getUTCDate(),
+      parseInt(hour),
+      parseInt(minute)
+    );
+  }
+
+  // YYYY年MM月DD日 HH:mm
+  const match5 = cleanedInput.match(
+    /^(\d{4})年(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[:\s時](\d{2})分?$/
+  );
+  if (match5) {
+    const [, year, month, day, hour, minute] = match5;
     return createJSTDate(
       parseInt(year),
       parseInt(month) - 1,
@@ -149,43 +198,89 @@ export function parseUserInputDate(input: string): Date | null {
     );
   }
 
-  // YYYY/MM/DD または YYYY-MM-DD
-  const match4 = input.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
-  if (match4) {
-    const [, year, month, day] = match4;
+  // YYYY/MM/DD HH:mm
+  const match6 = cleanedInput.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+  if (match6) {
+    const [, year, month, day, hour, minute] = match6;
+    return createJSTDate(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute)
+    );
+  }
+
+  // ISO-8601形式
+  const match7 = cleanedInput.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/);
+  if (match7) {
+    return parseISO(cleanedInput);
+  }
+
+  // YYYYMMDD (締切日)
+  const match8Digit = cleanedInput.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (match8Digit) {
+    const [, year, month, day] = match8Digit;
     return createJSTDate(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59);
   }
 
-  // 最後の手段としてネイティブDateパーシングを試すが、特定の形式のみ
-  // 「invalid」を有効な日付としてパーシングすることを避けるため
-  if (input.match(/^[a-zA-Z]+ \d{1,2}$/i) || input.match(/^\d{1,2} [a-zA-Z]+$/i)) {
-    // 「July 11」、「11 Jul」などの形式
-    const nativeDate = new Date(`${input} ${currentYear}`);
-    if (!Number.isNaN(nativeDate.getTime())) {
-      // If the date is in the past, try next year
-      if (nativeDate < now) {
-        nativeDate.setFullYear(currentYear + 1);
-      }
-      // 日付のみの形式の場合は23:59:59に設定してUTCに変換
-      const jstDate = createJSTDate(
-        nativeDate.getFullYear(),
-        nativeDate.getMonth(),
-        nativeDate.getDate(),
-        23,
-        59,
-        59
-      );
-      return jstDate;
-    }
-  }
-
-  // ISO日付やその他の特定形式用
-  if (input.match(/^\d{4}-\d{2}-\d{2}T/) || input.match(/^\d{4}\/\d{2}\/\d{2}T/)) {
-    const nativeDate = new Date(input);
-    if (!Number.isNaN(nativeDate.getTime())) {
-      return nativeDate;
-    }
+  // YYMMDD (締切日の短縮版)
+  const match6Digit = cleanedInput.match(/^(\d{2})(\d{2})(\d{2})$/);
+  if (match6Digit) {
+    const [, year, month, day] = match6Digit;
+    const fullYear = 2000 + parseInt(year);
+    return createJSTDate(fullYear, parseInt(month) - 1, parseInt(day), 23, 59, 59);
   }
 
   return null;
+}
+
+/**
+ * 相対的な日時を絶対的な日時に変換
+ * 例: "1d" -> 1日後の日時
+ */
+export function parseRelativeTime(input: string, baseTime: Date = new Date()): Date | null {
+  const match = input.match(/^(\d+)([dhm])$/);
+  if (!match) return null;
+
+  const [, valueStr, unit] = match;
+  const value = parseInt(valueStr);
+
+  const result = new Date(baseTime);
+  switch (unit) {
+    case 'd':
+      result.setDate(result.getDate() + value);
+      break;
+    case 'h':
+      result.setHours(result.getHours() + value);
+      break;
+    case 'm':
+      result.setMinutes(result.getMinutes() + value);
+      break;
+  }
+
+  return result;
+}
+
+/**
+ * 日付が有効な未来の日付かチェック
+ */
+export function isFutureDate(date: Date): boolean {
+  return date > new Date();
+}
+
+/**
+ * 時刻を丸める（分単位）
+ * @param date 対象の日時
+ * @param intervalMinutes 丸める間隔（分）
+ * @returns 丸められた日時
+ */
+export function roundToNearestMinutes(date: Date, intervalMinutes: number): Date {
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.round(minutes / intervalMinutes) * intervalMinutes;
+  const result = new Date(date);
+  result.setMinutes(roundedMinutes);
+  result.setSeconds(0);
+  result.setMilliseconds(0);
+  return result;
 }

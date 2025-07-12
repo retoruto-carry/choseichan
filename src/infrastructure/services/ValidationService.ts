@@ -26,7 +26,7 @@ export class ValidationService {
     }
 
     const parsed = new Date(trimmedDate);
-    if (isNaN(parsed.getTime())) {
+    if (Number.isNaN(parsed.getTime())) {
       return { isValid: false, error: '無効な日付形式です' };
     }
 

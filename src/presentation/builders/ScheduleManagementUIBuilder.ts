@@ -13,7 +13,7 @@ export class ScheduleManagementUIBuilder {
    * 詳細なスケジュール表示用のEmbedを作成
    */
   createDetailedScheduleEmbed(summary: ScheduleSummaryResponse) {
-    const { schedule, responses, responseCounts } = summary;
+    const { schedule, responses } = summary;
 
     return {
       title: `📅 ${schedule.title}`,
