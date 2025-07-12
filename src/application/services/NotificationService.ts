@@ -328,12 +328,12 @@ export class NotificationService {
         return;
       }
 
-      // 締切済みスケジュールなので投票ボタンは非表示
+      // 締切済みスケジュールなので投票ボタンのみ非表示、その他のボタンは表示
       const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
         summaryResult.summary,
         undefined,
         false, // 簡易表示
-        false // 投票ボタン非表示（締切済み）
+        false // 投票ボタン非表示（締切済み、編集・更新・詳細ボタンは表示）
       );
 
       await this.discordApi.updateMessage(

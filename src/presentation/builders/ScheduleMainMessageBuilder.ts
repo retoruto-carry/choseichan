@@ -48,12 +48,10 @@ export class ScheduleMainMessageBuilder {
     showVoteButton: boolean = true
   ) {
     const components = [];
+    const firstRowButtons = [];
 
-    // 第1行: 回答ボタン・詳細切り替え・更新ボタン
+    // 回答ボタン（スケジュールが開いている且つ表示フラグがtrueの場合のみ）
     if (schedule.status === 'open' && showVoteButton) {
-      const firstRowButtons = [];
-
-      // 回答ボタン
       firstRowButtons.push({
         type: 2, // BUTTON
         style: 1, // PRIMARY (青) - 統一仕様
@@ -61,36 +59,40 @@ export class ScheduleMainMessageBuilder {
         custom_id: createButtonId('respond', schedule.id),
         emoji: { name: '✏️' }, // 統一仕様
       });
+    }
 
-      // 詳細/簡易表示切り替えボタン
-      firstRowButtons.push({
-        type: 2, // BUTTON
-        style: 2, // SECONDARY
-        label: showDetails ? '簡易表示' : '詳細',
-        custom_id: showDetails
-          ? createButtonId('hide_details', schedule.id)
-          : createButtonId('status', schedule.id),
-        emoji: { name: showDetails ? '📊' : '👥' }, // 統一仕様
-      });
+    // 以下のボタンは締切状態に関係なく常に表示
 
-      // 更新ボタン
-      firstRowButtons.push({
-        type: 2, // BUTTON
-        style: 2, // SECONDARY
-        label: '更新',
-        custom_id: createButtonId('refresh', schedule.id),
-        emoji: { name: '🔄' },
-      });
+    // 詳細/簡易表示切り替えボタン
+    firstRowButtons.push({
+      type: 2, // BUTTON
+      style: 2, // SECONDARY
+      label: showDetails ? '簡易表示' : '詳細',
+      custom_id: showDetails
+        ? createButtonId('hide_details', schedule.id)
+        : createButtonId('status', schedule.id),
+      emoji: { name: showDetails ? '📊' : '👥' }, // 統一仕様
+    });
 
-      // 編集ボタンも第1行に追加
-      firstRowButtons.push({
-        type: 2, // BUTTON
-        style: 2, // SECONDARY
-        label: '編集',
-        custom_id: createButtonId('edit', schedule.id),
-        emoji: { name: '⚙️' }, // 統一仕様
-      });
+    // 更新ボタン
+    firstRowButtons.push({
+      type: 2, // BUTTON
+      style: 2, // SECONDARY
+      label: '更新',
+      custom_id: createButtonId('refresh', schedule.id),
+      emoji: { name: '🔄' },
+    });
 
+    // 編集ボタン
+    firstRowButtons.push({
+      type: 2, // BUTTON
+      style: 2, // SECONDARY
+      label: '編集',
+      custom_id: createButtonId('edit', schedule.id),
+      emoji: { name: '⚙️' }, // 統一仕様
+    });
+
+    if (firstRowButtons.length > 0) {
       components.push({
         type: 1, // ACTION_ROW
         components: firstRowButtons,
