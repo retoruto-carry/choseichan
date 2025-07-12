@@ -53,8 +53,6 @@ export function createScheduleEmbed(
 
   descriptionParts.push('**候補日時:**');
   descriptionParts.push(dateList);
-  descriptionParts.push('');
-  descriptionParts.push('下の「回答する」ボタンを押して参加可否を入力してください。');
 
   return {
     title: `📅 ${schedule.title}`,
