@@ -16,7 +16,7 @@ vars = { ENVIRONMENT = "production" }
 # D1 Database configuration
 [[d1_databases]]
 binding = "DB"
-database_name = "choseichan-db"
+database_name = "chouseichan-db"
 database_id = "b3fe7070-6294-4c22-bc6c-7e2c5b7aa85d"
 migrations_dir = "migrations"
 migrations_table = "d1_migrations"
@@ -25,22 +25,22 @@ migrations_table = "d1_migrations"
 
 # Queues configuration for message update batching
 [[queues.producers]]
-queue = "choseichan-message-update-queue"
+queue = "chouseichan-message-update-queue"
 binding = "MESSAGE_UPDATE_QUEUE"
 
 [[queues.consumers]]
-queue = "choseichan-message-update-queue"
+queue = "chouseichan-message-update-queue"
 max_batch_size = 10
 max_batch_timeout = 5
 max_retries = 3
 
 # Queues configuration for deadline reminder processing
 [[queues.producers]]
-queue = "choseichan-deadline-reminder-queue"
+queue = "chouseichan-deadline-reminder-queue"
 binding = "DEADLINE_REMINDER_QUEUE"
 
 [[queues.consumers]]
-queue = "choseichan-deadline-reminder-queue"
+queue = "chouseichan-deadline-reminder-queue"
 max_batch_size = 20
 max_batch_timeout = 10
 max_retries = 3

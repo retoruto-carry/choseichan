@@ -11,7 +11,7 @@ import { expectInteractionResponse } from '../../../tests/helpers/interaction-sc
 import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
 import { createCommandController } from './CommandController';
 
-describe('Choseichan Commands', () => {
+describe('Chouseichan Commands', () => {
   let db: D1Database;
   let env: Env;
 
@@ -31,7 +31,7 @@ describe('Choseichan Commands', () => {
       type: InteractionType.APPLICATION_COMMAND,
       data: {
         id: 'cmd_id',
-        name: 'choseichan',
+        name: 'chouseichan',
         options: [
           {
             name: 'create',
@@ -53,7 +53,7 @@ describe('Choseichan Commands', () => {
       token: 'test_token',
     };
 
-    const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
+    const response = await createCommandController(env).handleChouseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
 
     expect(response.status).toBe(200);
@@ -69,7 +69,7 @@ describe('Choseichan Commands', () => {
       type: InteractionType.APPLICATION_COMMAND,
       data: {
         id: 'cmd_id',
-        name: 'choseichan',
+        name: 'chouseichan',
         options: [
           {
             name: 'list',
@@ -91,7 +91,7 @@ describe('Choseichan Commands', () => {
       token: 'test_token',
     };
 
-    const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
+    const response = await createCommandController(env).handleChouseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
 
     expect(response.status).toBe(200);

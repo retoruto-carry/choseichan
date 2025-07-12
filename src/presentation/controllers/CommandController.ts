@@ -25,7 +25,7 @@ export class CommandController {
   /**
    * メインコマンドハンドラー
    */
-  async handleChoseichanCommand(interaction: CommandInteraction, _env: Env): Promise<Response> {
+  async handleChouseichanCommand(interaction: CommandInteraction, _env: Env): Promise<Response> {
     try {
       const subcommand = interaction.data.options?.[0];
 
@@ -45,10 +45,10 @@ export class CommandController {
       }
     } catch (error) {
       this.logger.error(
-        'Error in handleChoseichanCommand',
+        'Error in handleChouseichanCommand',
         error instanceof Error ? error : new Error(String(error)),
         {
-          operation: 'handle-choseichan-command',
+          operation: 'handle-chouseichan-command',
           useCase: 'CommandController',
           subcommand: interaction.data.options?.[0]?.name,
           guildId: interaction.guild_id,

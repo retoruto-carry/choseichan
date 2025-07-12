@@ -103,7 +103,7 @@ describe('Discord Bot', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should handle choseichan command without subcommand', async () => {
+  it('should handle chouseichan command without subcommand', async () => {
     const mockExecutionContext = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
@@ -121,7 +121,7 @@ describe('Discord Bot', () => {
       id: 'test_id',
       data: {
         id: 'cmd_id',
-        name: 'choseichan',
+        name: 'chouseichan',
       },
       token: 'test_token',
     };

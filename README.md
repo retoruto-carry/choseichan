@@ -21,13 +21,13 @@ Discord サーバー内で簡単に日程調整ができるボットです。調
 
 #### コマンド一覧
 
-- `/choseichan create` - 新しい日程調整を作成
-- `/choseichan list` - このチャンネルの日程調整一覧を表示
-- `/choseichan help` - ヘルプを表示
+- `/chouseichan create` - 新しい日程調整を作成
+- `/chouseichan list` - このチャンネルの日程調整一覧を表示
+- `/chouseichan help` - ヘルプを表示
 
 #### 日程調整の流れ
 
-1. `/choseichan create` コマンドを実行
+1. `/chouseichan create` コマンドを実行
 2. フォームに以下を入力:
    - タイトル（必須）
    - 説明（任意）

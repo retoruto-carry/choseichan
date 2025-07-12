@@ -86,10 +86,10 @@ app.post('/interactions', async (c) => {
     const command = interaction as CommandInteraction;
 
     switch (command.data.name) {
-      case 'choseichan': {
+      case 'chouseichan': {
         const envWithContext = { ...c.env, ctx: c.executionCtx };
         const controller = createCommandController(envWithContext);
-        const response = await controller.handleChoseichanCommand(command, envWithContext);
+        const response = await controller.handleChouseichanCommand(command, envWithContext);
         // Honoは生のResponseオブジェクトもそのまま返せる
         return response;
       }
@@ -141,9 +141,9 @@ export async function queue(
   _ctx: ExecutionContext
 ): Promise<void> {
   // キューの名前で処理を分岐
-  if (batch.queue === 'choseichan-message-update-queue') {
+  if (batch.queue === 'chouseichan-message-update-queue') {
     await handleMessageUpdateBatch(batch as MessageBatch<MessageUpdateTask>, env);
-  } else if (batch.queue === 'choseichan-deadline-reminder-queue') {
+  } else if (batch.queue === 'chouseichan-deadline-reminder-queue') {
     await handleDeadlineReminderBatch(batch as MessageBatch<DeadlineReminderTask>, env);
   }
 }
