@@ -104,7 +104,7 @@ export class SelectMenuController {
 
       // 反映時間の注記がまだ含まれていない場合は追加
       if (!updatedContent.includes('※反映には約5秒~10秒かかります')) {
-        updatedContent += '\n\n-# ※反映には約5秒~10秒かかります';
+        updatedContent += ' -# ※反映には約5秒~10秒かかります';
       }
 
       // メッセージを更新して反映時間の注記を表示
