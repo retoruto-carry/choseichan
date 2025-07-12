@@ -39,7 +39,7 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_KV_NAMESPACE_ID: ${{ secrets.CLOUDFLARE_KV_NAMESPACE_ID }}
+          CLOUDFLARE_D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 ```
 
@@ -73,10 +73,10 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
 
 ### 処理フロー
 1. **ギルド一覧取得**
-   - KVストレージから全ギルドIDを抽出
+   - D1データベースから全ギルドIDを抽出
    
 2. **締切インデックス検索**
-   - 各ギルドの締切インデックスを効率的に検索
+   - SQLクエリで締切が設定されたスケジュールを効率的に検索
    
 3. **リマインダー判定**
    - 現在時刻と締切時刻を比較
@@ -137,7 +137,7 @@ GitHub Actionsの失敗時にメール通知を受け取ることが可能
 - `DISCORD_TOKEN`
 - `DISCORD_APPLICATION_ID`
 - `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_KV_NAMESPACE_ID`
+- `CLOUDFLARE_D1_DATABASE_ID`
 - `CLOUDFLARE_API_TOKEN`
 
 ### 権限管理
@@ -152,7 +152,7 @@ GitHub Actionsの失敗時にメール通知を受け取ることが可能
 export DISCORD_TOKEN=xxx
 export DISCORD_APPLICATION_ID=xxx
 export CLOUDFLARE_ACCOUNT_ID=xxx
-export CLOUDFLARE_KV_NAMESPACE_ID=xxx
+export CLOUDFLARE_D1_DATABASE_ID=xxx
 export CLOUDFLARE_API_TOKEN=xxx
 
 # 実行

@@ -72,7 +72,7 @@ Embed で美しく整形された表を表示：
 
 - **Runtime**: Cloudflare Workers
 - **Language**: TypeScript
-- **Database**: Cloudflare KV
+- **Database**: Cloudflare D1 (SQLite)
 - **Discord**: discord-interactions library
 - **Test**: Vitest
 - **Deploy**: Wrangler
@@ -124,7 +124,7 @@ User → /choseichan create → モーダル表示
      ↓
 モーダル入力（タイトル、説明、日程、締切）
      ↓
-Schedule作成 → KV保存
+Schedule作成 → D1保存
      ↓
 Embed付きメッセージ送信（ボタン付き）
 ```
