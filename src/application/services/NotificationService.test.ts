@@ -63,6 +63,7 @@ describe('NotificationService', () => {
       updateMessage: vi.fn(),
       sendMessage: vi.fn(),
       sendNotification: vi.fn(),
+      fetchGuildMembers: vi.fn(),
     };
 
     mockScheduleRepository = {
@@ -262,28 +263,8 @@ describe('NotificationService', () => {
         { user: { id: '555555555', username: 'TestUser3', discriminator: '0003' } },
       ];
 
-      // Mock all fetch calls
-      (global.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/users/@me/channels')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'dm-channel-123' }),
-          });
-        }
-        if (url.includes('/guilds') && url.includes('/members')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => mockMembers,
-          });
-        }
-        if (url.includes('/messages')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'message-sent' }),
-          });
-        }
-        return Promise.resolve({ ok: false });
-      });
+      // Mock fetchGuildMembers
+      vi.mocked(mockDiscordApi.fetchGuildMembers).mockResolvedValue(mockMembers);
 
       const scheduleWithMentions = Schedule.create({
         id: 'test-schedule',
@@ -312,27 +293,22 @@ describe('NotificationService', () => {
       await notificationService.sendDeadlineReminder(scheduleWithMentions, '締切まで1時間');
 
       // Check that guild members were fetched
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/guilds/guild123/members?limit=1000',
-        expect.objectContaining({
-          headers: {
-            Authorization: 'Bot test-discord-token',
-          },
-        })
-      );
+      expect(mockDiscordApi.fetchGuildMembers).toHaveBeenCalledWith('guild123', mockToken);
 
       // Check that message was sent with resolved mentions
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/messages'),
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          body: expect.stringContaining('<@123456789>'), // TestUser1's ID
-        })
+          content: expect.stringContaining('<@123456789>'), // TestUser1's ID
+        }),
+        mockToken
       );
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/messages'),
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          body: expect.stringContaining('<@987654321>'), // TestUser2's ID
-        })
+          content: expect.stringContaining('<@987654321>'), // TestUser2's ID
+        }),
+        mockToken
       );
     });
 
@@ -361,36 +337,18 @@ describe('NotificationService', () => {
         updatedAt: new Date('2024-01-01'),
       });
 
-      (global.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/users/@me/channels')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'dm-channel-123' }),
-          });
-        }
-        if (url.includes('/messages')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'message-sent' }),
-          });
-        }
-        return Promise.resolve({ ok: false });
-      });
-
       await notificationService.sendDeadlineReminder(scheduleWithSpecialMentions, '締切まで1時間');
 
       // Should not fetch guild members for @everyone/@here
-      expect(global.fetch).not.toHaveBeenCalledWith(
-        expect.stringContaining('/guilds/guild123/members'),
-        expect.any(Object)
-      );
+      expect(mockDiscordApi.fetchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains @everyone and @here
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/messages'),
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          body: expect.stringContaining('@everyone @here'),
-        })
+          content: expect.stringContaining('@everyone @here'),
+        }),
+        mockToken
       );
     });
 
@@ -419,39 +377,21 @@ describe('NotificationService', () => {
         updatedAt: new Date('2024-01-01'),
       });
 
-      (global.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/users/@me/channels')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'dm-channel-123' }),
-          });
-        }
-        if (url.includes('/messages')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ id: 'message-sent' }),
-          });
-        }
-        return Promise.resolve({ ok: false });
-      });
-
       await notificationService.sendDeadlineReminder(
         scheduleWithFormattedMentions,
         '締切まで1時間'
       );
 
       // Should not fetch guild members for already formatted mentions
-      expect(global.fetch).not.toHaveBeenCalledWith(
-        expect.stringContaining('/guilds/guild123/members'),
-        expect.any(Object)
-      );
+      expect(mockDiscordApi.fetchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains the mentions as-is
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/messages'),
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          body: expect.stringContaining('<@123456789> <@987654321>'),
-        })
+          content: expect.stringContaining('<@123456789> <@987654321>'),
+        }),
+        mockToken
       );
     });
 
@@ -461,18 +401,8 @@ describe('NotificationService', () => {
         { user: { id: '222222222', username: 'Bob', discriminator: '0002' } },
       ];
 
-      (global.fetch as any).mockImplementation((url: string) => {
-        if (url.includes('/guilds') && url.includes('/members')) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => mockMembers,
-          });
-        }
-        if (url.includes('/messages')) {
-          return Promise.resolve({ ok: true });
-        }
-        return Promise.resolve({ ok: false });
-      });
+      // Mock fetchGuildMembers for mixed mentions
+      vi.mocked(mockDiscordApi.fetchGuildMembers).mockResolvedValue(mockMembers);
 
       const scheduleWithMixedMentions = Schedule.create({
         id: 'test-schedule',
@@ -507,18 +437,13 @@ describe('NotificationService', () => {
       await notificationService.sendDeadlineReminder(scheduleWithMixedMentions, '締切まで1時間');
 
       // Check that message contains all resolved mentions
-      const messageCall = (global.fetch as any).mock.calls.find((call: any[]) =>
-        call[0].includes('/messages')
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
+        expect.objectContaining({
+          content: expect.stringMatching(/@everyone.*<@111111111>.*<@333333333>.*<@222222222>.*@NonExistentUser/),
+        }),
+        mockToken
       );
-
-      expect(messageCall).toBeDefined();
-      const body = JSON.parse(messageCall[1].body);
-
-      expect(body.content).toContain('@everyone');
-      expect(body.content).toContain('<@111111111>'); // Alice
-      expect(body.content).toContain('<@333333333>'); // Already formatted
-      expect(body.content).toContain('<@222222222>'); // Bob
-      expect(body.content).toContain('@NonExistentUser'); // Kept as fallback
     });
   });
 });

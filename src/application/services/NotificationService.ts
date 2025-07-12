@@ -203,42 +203,15 @@ export class NotificationService {
     }
 
     const members = new Map<string, { id: string; username: string }>();
-    let after: string | undefined;
 
     try {
-      // Discord APIは一度に最大1000人のメンバーを取得可能
-      while (true) {
-        const url = `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000${after ? `&after=${after}` : ''}`;
+      const memberList = await this.discordApi.fetchGuildMembers(guildId, this.discordToken);
 
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bot ${this.discordToken}`,
-          },
+      for (const member of memberList) {
+        members.set(member.user.username.toLowerCase(), {
+          id: member.user.id,
+          username: member.user.username,
         });
-
-        if (!response.ok) {
-          this.logger.error(
-            `Failed to fetch guild members: ${response.status}`,
-            new Error(`HTTP ${response.status}: Failed to fetch guild members`)
-          );
-          break;
-        }
-
-        const memberList = (await response.json()) as Array<{
-          user: { id: string; username: string; discriminator: string };
-        }>;
-
-        if (memberList.length === 0) break;
-
-        for (const member of memberList) {
-          members.set(member.user.username.toLowerCase(), {
-            id: member.user.id,
-            username: member.user.username,
-          });
-        }
-
-        if (memberList.length < 1000) break;
-        after = memberList[memberList.length - 1].user.id;
       }
 
       // 5分間キャッシュ

@@ -25,4 +25,11 @@ export interface IDiscordApiPort {
    * 通知を送信
    */
   sendNotification(channelId: string, content: string, token: string): Promise<void>;
+
+  /**
+   * ギルドメンバーを取得
+   */
+  fetchGuildMembers(guildId: string, token: string): Promise<Array<{
+    user: { id: string; username: string; discriminator: string };
+  }>>;
 }
