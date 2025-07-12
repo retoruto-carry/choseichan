@@ -216,10 +216,12 @@ describe('ButtonInteractionController', () => {
 
       const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
-      expect(result).toEqual({
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: '❌ ボタンIDの解析に失敗しました',
+          content: 'ボタンIDの解析に失敗しました',
           flags: InteractionResponseFlags.EPHEMERAL
         }
       });
@@ -232,10 +234,12 @@ describe('ButtonInteractionController', () => {
 
       const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
-      expect(result).toEqual({
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: '❌ エラーが発生しました: Parse error',
+          content: 'ボタンの処理中にエラーが発生しました。',
           flags: InteractionResponseFlags.EPHEMERAL
         }
       });

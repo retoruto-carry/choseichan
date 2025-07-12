@@ -3,17 +3,17 @@ import { CreateScheduleController } from './CreateScheduleController';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { generateScheduleId, generateDateId } from '../../utils/id';
-import { formatDate } from '../../utils/date';
+import { generateId } from '../../utils/id';
+import { formatDate, parseUserInputDate } from '../../utils/date';
 
 // Mock dependencies
 vi.mock('../../utils/id', () => ({
-  generateScheduleId: vi.fn(),
-  generateDateId: vi.fn()
+  generateId: vi.fn()
 }));
 
 vi.mock('../../utils/date', () => ({
-  formatDate: vi.fn()
+  formatDate: vi.fn(),
+  parseUserInputDate: vi.fn()
 }));
 
 vi.mock('../builders/CreateScheduleUIBuilder', () => ({
@@ -94,8 +94,7 @@ describe('CreateScheduleController', () => {
 
   describe('handle', () => {
     it('should create a schedule successfully', async () => {
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId).mockReturnValue('date-1').mockReturnValue('date-2');
+      vi.mocked(generateId).mockReturnValue('date-1');
       vi.mocked(formatDate).mockReturnValue('2024-12-25 19:00');
       
       vi.mocked(mockCreateScheduleUseCase.execute).mockResolvedValueOnce({
@@ -112,7 +111,9 @@ describe('CreateScheduleController', () => {
 
       const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
-      expect(result).toEqual({
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           embeds: [{
@@ -142,8 +143,7 @@ describe('CreateScheduleController', () => {
       mockInteraction.data.components[1].components[0].value = ''; // No description
       mockInteraction.data.components[3].components[0].value = ''; // No deadline
       
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId).mockReturnValue('date-1');
+      vi.mocked(generateId).mockReturnValue('date-1');
       
       vi.mocked(mockCreateScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
@@ -156,7 +156,9 @@ describe('CreateScheduleController', () => {
 
       const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
-      expect(result.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       
       const executeCall = vi.mocked(mockCreateScheduleUseCase.execute).mock.calls[0][0];
       expect(executeCall.description).toBeUndefined();
@@ -166,8 +168,7 @@ describe('CreateScheduleController', () => {
     it('should parse multiple dates correctly', async () => {
       mockInteraction.data.components[2].components[0].value = '12/25 19:00\n12/26 20:00\n12/27 21:00';
       
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId)
+      vi.mocked(generateId)
         .mockReturnValueOnce('date-1')
         .mockReturnValueOnce('date-2')
         .mockReturnValueOnce('date-3');
@@ -193,8 +194,7 @@ describe('CreateScheduleController', () => {
     });
 
     it('should handle creation failure', async () => {
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId).mockReturnValue('date-1');
+      vi.mocked(generateId).mockReturnValue('date-1');
       
       vi.mocked(mockCreateScheduleUseCase.execute).mockResolvedValueOnce({
         success: false,
@@ -203,7 +203,9 @@ describe('CreateScheduleController', () => {
 
       const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
-      expect(result).toEqual({
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           content: '❌ 日程調整の作成に失敗しました:\nタイトルは必須です',
@@ -213,16 +215,18 @@ describe('CreateScheduleController', () => {
     });
 
     it('should handle unexpected errors', async () => {
-      vi.mocked(generateScheduleId).mockImplementation(() => {
+      vi.mocked(generateId).mockImplementation(() => {
         throw new Error('ID generation failed');
       });
 
       const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
-      expect(result).toEqual({
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: '❌ エラーが発生しました: ID generation failed',
+          content: '❌ スケジュール作成中にエラーが発生しました。',
           flags: InteractionResponseFlags.EPHEMERAL
         }
       });
@@ -231,8 +235,8 @@ describe('CreateScheduleController', () => {
     it('should filter empty date lines', async () => {
       mockInteraction.data.components[2].components[0].value = '12/25 19:00\n\n12/26 20:00\n  \n';
       
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId)
+      vi.mocked(generateId).mockReturnValue('date-1');
+      vi.mocked(generateId)
         .mockReturnValueOnce('date-1')
         .mockReturnValueOnce('date-2');
       
@@ -257,8 +261,7 @@ describe('CreateScheduleController', () => {
 
   describe('parseModalData', () => {
     it('should extract form data from interaction', async () => {
-      vi.mocked(generateScheduleId).mockReturnValue('schedule-123');
-      vi.mocked(generateDateId).mockReturnValue('date-1');
+      vi.mocked(generateId).mockReturnValue('date-1');
       
       vi.mocked(mockCreateScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,

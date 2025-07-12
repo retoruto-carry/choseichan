@@ -24,7 +24,13 @@ export class ButtonInteractionController {
     try {
       const customId = interaction.data.custom_id;
       const { parseButtonId } = await import('../../utils/id');
-      const { action, params } = parseButtonId(customId);
+      const parsed = parseButtonId(customId);
+      
+      if (!parsed) {
+        return this.createErrorResponse('ボタンIDの解析に失敗しました');
+      }
+      
+      const { action, params } = parsed;
 
       // Route to appropriate controller based on action
       switch (action) {
