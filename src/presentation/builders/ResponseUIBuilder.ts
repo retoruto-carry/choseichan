@@ -30,8 +30,7 @@ export class ResponseUIBuilder {
       schedule.dates.forEach((date, index) => {
         const status = userResponse.dateStatuses[date.id];
         const statusEmoji = ResponseUIBuilder.getStatusEmoji(status);
-        const dateTime = new Date(date.datetime);
-        currentVote += `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)} ${statusEmoji}\n`;
+        currentVote += `${index + 1}. ${date.datetime} ${statusEmoji}\n`;
       });
 
       fields.push({
@@ -73,8 +72,7 @@ export class ResponseUIBuilder {
     schedule.dates.forEach((date, index) => {
       const status = submittedResponse.dateStatuses[date.id];
       const statusEmoji = ResponseUIBuilder.getStatusEmoji(status);
-      const dateTime = new Date(date.datetime);
-      responseText += `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)} ${statusEmoji}\n`;
+      responseText += `${index + 1}. ${date.datetime} ${statusEmoji}\n`;
     });
 
     const fields: APIEmbed['fields'] = [
@@ -107,7 +105,6 @@ export class ResponseUIBuilder {
     schedule.dates.forEach((date, index) => {
       const stats = statistics.responsesByDate[date.id];
       if (stats) {
-        const dateTime = new Date(date.datetime);
         const total = stats.total;
 
         let statText = '';
@@ -121,7 +118,7 @@ export class ResponseUIBuilder {
         }
 
         fields.push({
-          name: `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)}`,
+          name: `${index + 1}. ${date.datetime}`,
           value: statText,
           inline: true,
         });
@@ -152,7 +149,7 @@ export class ResponseUIBuilder {
         const optimalScore = statistics.optimalDates.scores[statistics.optimalDates.optimalDateId];
         fields.push({
           name: '🏆 最適な日程',
-          value: `${ResponseUIBuilder.formatDateTime(new Date(optimalDate.datetime))}\nスコア: ${optimalScore} ポイント`,
+          value: `${optimalDate.datetime}\nスコア: ${optimalScore} ポイント`,
           inline: false,
         });
       }

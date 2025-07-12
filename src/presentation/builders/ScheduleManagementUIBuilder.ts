@@ -29,7 +29,7 @@ export class ScheduleManagementUIBuilder {
 
     // 日程候補と集計
     schedule.dates.forEach((date, index) => {
-      const dateStr = formatDateTime(date.datetime);
+      const dateStr = date.datetime;
       let fieldValue = '';
 
       if (responseCounts?.[date.id]) {

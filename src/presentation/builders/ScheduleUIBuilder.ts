@@ -46,8 +46,7 @@ export class ScheduleUIBuilder {
 
     // 日程候補と集計
     schedule.dates.forEach((date, index) => {
-      const dateTime = new Date(date.datetime);
-      const dateStr = ScheduleUIBuilder.formatDateTime(dateTime);
+      const dateStr = date.datetime;
       let fieldValue = '';
 
       if (responseCounts?.[date.id]) {
@@ -84,11 +83,10 @@ export class ScheduleUIBuilder {
    */
   static buildDateSelectMenu(schedule: ScheduleResponse, customId: string): APISelectMenuComponent {
     const options = schedule.dates.map((date, index) => {
-      const dateTime = new Date(date.datetime);
       return {
-        label: `${index + 1}. ${ScheduleUIBuilder.formatDateTimeShort(dateTime)}`,
+        label: `${index + 1}. ${date.datetime}`,
         value: date.id,
-        description: ScheduleUIBuilder.formatDateTime(dateTime),
+        description: date.datetime,
       };
     });
 
