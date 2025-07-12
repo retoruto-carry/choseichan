@@ -79,13 +79,41 @@ export class VoteController {
         }
       }
 
-      // Create vote modal
-      const modal = this.uiBuilder.createVoteModal(schedule, currentResponses);
+      // Create vote select menus
+      const selectMenus = this.uiBuilder.createVoteSelectMenus(
+        schedule,
+        responseResult.response || null
+      );
+
+      // Max 5 select menus per message
+      const firstBatch = selectMenus.slice(0, 5);
+      const hasMore = selectMenus.length > 5;
 
       return new Response(
         JSON.stringify({
-          type: InteractionResponseType.MODAL,
-          data: modal,
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：`,
+            components: [
+              ...firstBatch,
+              {
+                type: 1,
+                components: [
+                  {
+                    type: 2,
+                    style: 2,
+                    label: hasMore ? '残りの日程を回答' : '完了',
+                    custom_id: hasMore
+                      ? `vote_continue:${schedule.id}:5`
+                      : `vote_complete:${schedule.id}`,
+                    disabled: true,
+                    emoji: { name: hasMore ? '➡️' : '✅' },
+                  },
+                ],
+              },
+            ],
+            flags: 64, // Ephemeral
+          },
         }),
         { headers: { 'Content-Type': 'application/json' } }
       );

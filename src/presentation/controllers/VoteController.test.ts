@@ -105,6 +105,7 @@ describe('VoteController', () => {
     // Mock UIBuilder
     mockUIBuilder = {
       createVoteModal: vi.fn(),
+      createVoteSelectMenus: vi.fn(),
     } as any;
 
     controller = new VoteController(mockContainer, mockUIBuilder);
@@ -146,12 +147,20 @@ describe('VoteController', () => {
         response: mockResponse,
       });
 
-      const mockModal = {
-        custom_id: 'vote:schedule-123',
-        title: 'Vote Modal',
-        components: [],
-      };
-      vi.mocked(mockUIBuilder.createVoteModal).mockReturnValueOnce(mockModal);
+      const mockSelectMenus = [
+        {
+          type: 1,
+          components: [
+            {
+              type: 3,
+              custom_id: 'dateselect:schedule-123:date-1',
+              placeholder: '選択してください',
+              options: [],
+            },
+          ],
+        },
+      ];
+      vi.mocked(mockUIBuilder.createVoteSelectMenus).mockReturnValueOnce(mockSelectMenus);
 
       // Execute
       const response = await controller.handleRespondButton(
@@ -163,8 +172,8 @@ describe('VoteController', () => {
       // Verify
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
-      expect(data.type).toBe(InteractionResponseType.MODAL);
-      expect(data.data).toEqual(mockModal);
+      expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(data.data.flags).toBe(64); // Ephemeral
 
       expect(mockContainer.getScheduleUseCase.execute).toHaveBeenCalledWith(
         'schedule-123',
@@ -175,13 +184,7 @@ describe('VoteController', () => {
         userId: 'user-456',
         guildId: 'guild-123',
       });
-      expect(mockUIBuilder.createVoteModal).toHaveBeenCalledWith(
-        mockSchedule,
-        expect.arrayContaining([
-          { dateId: 'date-1', status: 'ok' },
-          { dateId: 'date-2', status: 'maybe' },
-        ])
-      );
+      expect(mockUIBuilder.createVoteSelectMenus).toHaveBeenCalledWith(mockSchedule, mockResponse);
     });
 
     it('should save message ID if not already saved', async () => {
@@ -200,11 +203,19 @@ describe('VoteController', () => {
         success: false,
       });
 
-      vi.mocked(mockUIBuilder.createVoteModal).mockReturnValueOnce({
-        custom_id: 'vote:schedule-123',
-        title: 'Vote Modal',
-        components: [],
-      });
+      vi.mocked(mockUIBuilder.createVoteSelectMenus).mockReturnValueOnce([
+        {
+          type: 1,
+          components: [
+            {
+              type: 3,
+              custom_id: 'dateselect:schedule-123:date-1',
+              placeholder: '選択してください',
+              options: [],
+            },
+          ],
+        },
+      ]);
 
       await controller.handleRespondButton(mockInteraction, ['schedule-123'], mockEnv);
 

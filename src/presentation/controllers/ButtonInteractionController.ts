@@ -34,6 +34,7 @@ export class ButtonInteractionController {
       switch (action) {
         // Vote actions
         case 'respond':
+        case 'vote': // 後方互換性のため
           return this.handleRespondButton(interaction, params, env);
 
         // Schedule management actions

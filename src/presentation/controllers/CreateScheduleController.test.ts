@@ -53,7 +53,8 @@ describe('CreateScheduleController', () => {
       getScheduleSummaryUseCase: mockGetScheduleSummaryUseCase,
     } as unknown as DependencyContainer;
 
-    controller = new CreateScheduleController(mockContainer);
+    const mockUIBuilder = {} as any;
+    controller = new CreateScheduleController(mockContainer, mockUIBuilder);
 
     mockEnv = {
       DISCORD_TOKEN: 'test-token',

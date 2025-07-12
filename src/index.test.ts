@@ -153,7 +153,7 @@ describe('Discord Bot', () => {
       type: InteractionType.MESSAGE_COMPONENT,
       id: 'test_id',
       data: {
-        custom_id: 'unknown_button', // Unknown button
+        custom_id: 'unknown:button', // Unknown button with correct format
         component_type: 2,
       },
       token: 'test_token',

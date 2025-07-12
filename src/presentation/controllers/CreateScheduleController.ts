@@ -12,13 +12,16 @@ import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseUserInputDate } from '../../utils/date';
 import { generateId } from '../../utils/id';
+import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
 import { getOriginalMessage, sendFollowupMessage } from '../utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 
 export class CreateScheduleController {
   private readonly logger = getLogger();
 
-  constructor(private readonly dependencyContainer: DependencyContainer) {}
+  constructor(
+    private readonly dependencyContainer: DependencyContainer,
+    private readonly uiBuilder: ScheduleCreationUIBuilder
+  ) {}
 
   /**
    * スケジュール作成モーダル処理
@@ -116,8 +119,8 @@ export class CreateScheduleController {
         return this.createErrorResponse('スケジュール情報の取得に失敗しました。');
       }
 
-      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
-      const components = createSimpleScheduleComponents(schedule, false);
+      const embed = this.uiBuilder.createScheduleEmbed(summaryResult.summary, false);
+      const components = this.uiBuilder.createScheduleComponents(schedule, false);
 
       // バックグラウンドでメッセージIDを保存
       if (env.ctx) {
@@ -217,5 +220,6 @@ export class CreateScheduleController {
 
 export function createCreateScheduleController(env: Env): CreateScheduleController {
   const container = new DependencyContainer(env);
-  return new CreateScheduleController(container);
+  const uiBuilder = new ScheduleCreationUIBuilder();
+  return new CreateScheduleController(container, uiBuilder);
 }

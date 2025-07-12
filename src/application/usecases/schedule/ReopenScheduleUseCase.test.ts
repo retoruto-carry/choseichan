@@ -200,7 +200,7 @@ describe('ReopenScheduleUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.schedule?.description).toBeUndefined();
       expect(result.schedule?.deadline).toBeUndefined();
-      expect(result.schedule?.reminderTimings).toBeUndefined();
+      expect(result.schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
     });
 
     it('should handle repository save errors', async () => {

@@ -34,82 +34,48 @@ export class ScheduleUIBuilder {
   ): APIEmbed {
     const fields: APIEmbed['fields'] = [];
 
-    // 日程候補フィールド
-    if (schedule.dates.length > 0) {
-      let datesValue = '';
-
-      schedule.dates.forEach((date, index) => {
-        const dateTime = new Date(date.datetime);
-        const dateStr = ScheduleUIBuilder.formatDateTime(dateTime);
-
-        if (responseCounts?.[date.id]) {
-          const counts = responseCounts[date.id];
-          const total = counts.yes + counts.maybe + counts.no;
-          const yesPercent = total > 0 ? Math.round((counts.yes / total) * 100) : 0;
-          datesValue += `**${index + 1}.** ${dateStr}\n`;
-          datesValue += `　✅ ${counts.yes} 票 (${yesPercent}%) ❔ ${counts.maybe} 票 ❌ ${counts.no} 票\n\n`;
-        } else {
-          datesValue += `**${index + 1}.** ${dateStr}\n\n`;
-        }
-      });
-
-      fields.push({
-        name: '📅 日程候補',
-        value: datesValue || '日程が設定されていません',
-        inline: false,
-      });
-    }
-
-    // 締切日時
+    // 締切と回答者数を最初に表示
+    let headerText = '';
     if (schedule.deadline) {
       const deadline = new Date(schedule.deadline);
-      fields.push({
-        name: '⏰ 回答期限',
-        value: ScheduleUIBuilder.formatDateTime(deadline),
-        inline: true,
-      });
+      headerText += `⏰ 締切: ${ScheduleUIBuilder.formatDateTime(deadline)}\n`;
     }
-
-    // 作成者
-    const authorName = schedule.createdBy.displayName || schedule.createdBy.username;
-    fields.push({
-      name: '👤 作成者',
-      value: authorName,
-      inline: true,
-    });
-
-    // 回答状況
     if (schedule.totalResponses > 0) {
-      fields.push({
-        name: '📊 回答数',
-        value: `${schedule.totalResponses} 人が回答済み`,
-        inline: true,
-      });
+      headerText += `回答者: ${schedule.totalResponses}人`;
     }
 
-    // 説明（存在する場合）
-    if (schedule.description) {
+    // 日程候補と集計
+    schedule.dates.forEach((date, index) => {
+      const dateTime = new Date(date.datetime);
+      const dateStr = ScheduleUIBuilder.formatDateTime(dateTime);
+      let fieldValue = '';
+
+      if (responseCounts?.[date.id]) {
+        const counts = responseCounts[date.id];
+        fieldValue = `集計: ✅ ${counts.yes}人 ❔ ${counts.maybe}人 ❌ ${counts.no}人`;
+      } else {
+        fieldValue = '集計: まだ回答がありません';
+      }
+
       fields.push({
-        name: '📝 説明',
-        value: schedule.description,
+        name: `${index + 1}. ${dateStr}`,
+        value: fieldValue,
         inline: false,
       });
-    }
+    });
 
-    // ステータスによる色とフッター
+    // ステータスによる色
     const isOpen = schedule.status === 'open';
     const color = isOpen ? 0x00ff00 : 0xff0000; // 緑 or 赤
-    const statusText = isOpen ? '募集中' : '締切済み';
 
     return {
-      title: `📋 ${schedule.title}`,
-      description: `ステータス: **${statusText}**`,
+      title: `📅 ${schedule.title}`,
+      description: headerText || schedule.description || undefined,
       color,
       fields,
       footer: {
-        text: `作成日: ${ScheduleUIBuilder.formatDateTime(new Date(schedule.createdAt))}`,
+        text: `ID: ${schedule.id}`,
       },
-      timestamp: new Date(schedule.updatedAt).toISOString(),
     };
   }
 
@@ -147,17 +113,38 @@ export class ScheduleUIBuilder {
 
     // 投票ボタン行
     if (options.showVoteButtons && schedule.status === 'open') {
+      const buttons = [
+        {
+          type: 2, // BUTTON
+          style: 3, // SUCCESS (緑)
+          label: '回答する',
+          custom_id: `respond:${schedule.id}`,
+          emoji: { name: '🗳️' },
+        },
+      ];
+
+      // 詳細/簡易表示切り替えボタン
+      const showDetails = options.currentUserId !== undefined;
+      buttons.push({
+        type: 2, // BUTTON
+        style: 2, // SECONDARY
+        label: showDetails ? '簡易表示' : '詳細',
+        custom_id: showDetails ? `hide_details:${schedule.id}` : `status:${schedule.id}`,
+        emoji: { name: showDetails ? '📊' : '📋' },
+      });
+
+      // 更新ボタン
+      buttons.push({
+        type: 2, // BUTTON
+        style: 2, // SECONDARY
+        label: '更新',
+        custom_id: `refresh:${schedule.id}`,
+        emoji: { name: '🔄' },
+      });
+
       rows.push({
         type: 1, // ACTION_ROW
-        components: [
-          {
-            type: 2, // BUTTON
-            style: 3, // SUCCESS (緑)
-            label: '投票する',
-            custom_id: `vote:${schedule.id}`,
-            emoji: { name: '🗳️' },
-          },
-        ],
+        components: buttons,
       });
     }
 
@@ -249,8 +236,11 @@ export class ScheduleUIBuilder {
   /**
    * 日時フォーマット（詳細）
    */
-  private static formatDateTime(date: Date): string {
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  private static formatDateTime(date: Date | string): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const days = ['日', '月', '火', '水', '木', '金', '土'];
+    const dayOfWeek = days[dateObj.getDay()];
+    return `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${dayOfWeek}) ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
   }
 
   /**

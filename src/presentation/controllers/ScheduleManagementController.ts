@@ -46,8 +46,8 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // UI構築
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      // UI構築（詳細表示）
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, true);
       const components = this.uiBuilder.createScheduleComponents(
         summaryResult.summary.schedule,
         true
@@ -374,8 +374,8 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // UI構築
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      // UI構築（簡易表示）
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, false);
       const components = this.uiBuilder.createScheduleComponents(
         summaryResult.summary.schedule,
         false
@@ -422,7 +422,7 @@ export class ScheduleManagementController {
       }
 
       // 簡易表示用UI構築
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary);
+      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, false);
       const components = this.uiBuilder.createScheduleComponents(
         summaryResult.summary.schedule,
         false

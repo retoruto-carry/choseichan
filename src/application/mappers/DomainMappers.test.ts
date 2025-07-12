@@ -80,8 +80,8 @@ describe('DomainMappers', () => {
       expect(result.description).toBeUndefined();
       expect(result.messageId).toBeUndefined();
       expect(result.deadline).toBeUndefined();
-      expect(result.reminderTimings).toBeUndefined();
-      expect(result.reminderMentions).toBeUndefined();
+      expect(result.reminderTimings).toEqual(['3d', '1d', '8h']);
+      expect(result.reminderMentions).toEqual(['@here']);
       expect(result.remindersSent).toBeUndefined();
       expect(result.createdBy.displayName).toBe('TestUser'); // Falls back to username
     });

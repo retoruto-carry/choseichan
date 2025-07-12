@@ -1,3 +1,4 @@
+import type { MessageBatch } from '@cloudflare/workers-types';
 import { InteractionResponseType, InteractionType, verifyKey } from 'discord-interactions';
 import { Hono } from 'hono';
 import { sendDeadlineReminders } from './infrastructure/cron/deadline-reminder';
@@ -5,7 +6,6 @@ import { Logger } from './infrastructure/logging/Logger';
 import type { DeadlineReminderTask } from './infrastructure/ports/DeadlineReminderQueuePort';
 import type { MessageUpdateTask } from './infrastructure/ports/MessageUpdateQueuePort';
 import type { ButtonInteraction, CommandInteraction, Env } from './infrastructure/types/discord';
-import type { MessageBatch } from '@cloudflare/workers-types';
 import { handleDeadlineReminderBatch } from './infrastructure/utils/deadline-reminder-queue';
 import { handleMessageUpdateBatch } from './infrastructure/utils/message-update-queue';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
@@ -104,13 +104,24 @@ app.post('/interactions', async (c) => {
     }
   }
 
-  // ボタンインタラクションを処理
+  // ボタンとセレクトメニューインタラクションを処理
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
-    const button = interaction as ButtonInteraction;
-    // 実行コンテキストをenv経由で渡す
+    const component = interaction as ButtonInteraction;
     const envWithContext = { ...c.env, ctx: c.executionCtx };
+
+    // セレクトメニューの場合
+    if (component.data.component_type === 3) {
+      // SELECT_MENU
+      const { createSelectMenuController } = await import(
+        './presentation/controllers/SelectMenuController'
+      );
+      const selectMenuController = createSelectMenuController(envWithContext);
+      return selectMenuController.handleSelectMenuInteraction(component, envWithContext);
+    }
+
+    // ボタンの場合
     const buttonController = createButtonInteractionController(envWithContext);
-    return buttonController.handleButtonInteraction(button, envWithContext);
+    return buttonController.handleButtonInteraction(component, envWithContext);
   }
 
   // モーダル送信を処理

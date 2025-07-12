@@ -112,8 +112,8 @@ export class Schedule {
       data.messageId ? { value: data.messageId } : undefined,
       data.description ? { value: data.description } : undefined,
       data.deadline,
-      data.reminderTimings,
-      data.reminderMentions,
+      data.reminderTimings || ['3d', '1d', '8h'],
+      data.reminderMentions || ['@here'],
       data.remindersSent,
       data.notificationSent || false,
       data.totalResponses || 0

@@ -92,6 +92,22 @@ describe('ModalController', () => {
                 },
               ],
             },
+            {
+              components: [
+                {
+                  custom_id: 'description',
+                  value: 'Test Description',
+                },
+              ],
+            },
+            {
+              components: [
+                {
+                  custom_id: 'dates',
+                  value: '2024-12-25 10:00',
+                },
+              ],
+            },
           ],
         },
         member: {
@@ -250,6 +266,22 @@ describe('ModalController', () => {
                 },
               ],
             },
+            {
+              components: [
+                {
+                  custom_id: 'description',
+                  value: 'Test Description',
+                },
+              ],
+            },
+            {
+              components: [
+                {
+                  custom_id: 'dates',
+                  value: '2024-12-25 10:00',
+                },
+              ],
+            },
           ],
         },
         member: {
@@ -271,7 +303,7 @@ describe('ModalController', () => {
 
       expect(result).toBeInstanceOf(Response);
       const response = (await result.json()) as any;
-      expect(response.data.content).toContain('エラーが発生しました');
+      expect(response.data.content).toContain('スケジュール情報の取得に失敗しました');
     });
 
     it('should handle modal with parameters', async () => {
