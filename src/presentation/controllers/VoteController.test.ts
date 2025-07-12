@@ -591,7 +591,7 @@ describe('VoteController', () => {
       );
 
       const data = (await response.json()) as any;
-      expect(data.data.content).toContain('この日程調整は既に締め切られています');
+      expect(data.data.content).toContain('この日程調整は締め切られています');
     });
   });
 });

@@ -5,6 +5,7 @@
  * 認可チェックとビジネスルールの検証を実行
  */
 
+import { ERROR_MESSAGES } from '../../../constants/ApplicationConstants';
 import type { Schedule } from '../../../domain/entities/Schedule';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
@@ -40,7 +41,7 @@ export class CloseScheduleUseCase {
       if (!existingSchedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません'],
+          errors: [ERROR_MESSAGES.SCHEDULE_NOT_FOUND],
         };
       }
 
@@ -57,7 +58,7 @@ export class CloseScheduleUseCase {
         if (!editPermission.canEdit) {
           return {
             success: false,
-            errors: [editPermission.reason || 'このスケジュールを編集する権限がありません'],
+            errors: [ERROR_MESSAGES.PERMISSION_DENIED],
           };
         }
       }
@@ -66,7 +67,7 @@ export class CloseScheduleUseCase {
       if (scheduleEntity.isClosed()) {
         return {
           success: false,
-          errors: ['このスケジュールは既に締め切られています'],
+          errors: [ERROR_MESSAGES.SCHEDULE_CLOSED],
         };
       }
 
@@ -83,12 +84,10 @@ export class CloseScheduleUseCase {
         success: true,
         schedule: response,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        errors: [
-          `スケジュールの締め切りに失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ],
+        errors: [ERROR_MESSAGES.INTERNAL_ERROR],
       };
     }
   }
@@ -97,15 +96,15 @@ export class CloseScheduleUseCase {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {
-      errors.push('スケジュールIDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     if (!request.guildId?.trim()) {
-      errors.push('Guild IDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     if (!request.editorUserId?.trim()) {
-      errors.push('編集者IDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     return {

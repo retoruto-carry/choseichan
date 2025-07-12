@@ -73,7 +73,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toEqual(['スケジュールが見つかりません']);
+      expect(result.errors).toEqual(['日程調整が見つかりません。']);
       expect(mockScheduleRepository.save).not.toHaveBeenCalled();
     });
 
@@ -87,7 +87,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toEqual(['編集できるのは作成者のみです']);
+      expect(result.errors).toEqual(['権限がありません。']);
       expect(mockScheduleRepository.save).not.toHaveBeenCalled();
     });
 
@@ -102,7 +102,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toEqual(['このスケジュールは既に締め切られています']);
+      expect(result.errors).toEqual(['この日程調整は既に締め切られています。']);
       expect(mockScheduleRepository.save).not.toHaveBeenCalled();
     });
 
@@ -118,7 +118,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('処理中にエラーが発生しました。');
     });
 
     it('should handle repository save errors', async () => {
@@ -134,7 +134,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('処理中にエラーが発生しました。');
     });
 
     it('should handle unexpected errors', async () => {
@@ -149,7 +149,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('処理中にエラーが発生しました。');
     });
 
     it('should preserve totalResponses when closing', async () => {

@@ -322,7 +322,7 @@ export class VoteController {
       }
 
       if (schedule.status === 'closed') {
-        return createErrorResponse('この日程調整は既に締め切られています。');
+        return createErrorResponse('この日程調整は締め切られています。');
       }
 
       // Close schedule using Clean Architecture

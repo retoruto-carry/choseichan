@@ -7,6 +7,7 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { ERROR_MESSAGES } from '../../constants/ApplicationConstants';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
@@ -45,7 +46,7 @@ export class CreateScheduleController {
       // 日程をパース
       const dates = datesText.split('\n').filter((line: string) => line.trim());
       if (dates.length === 0) {
-        return this.createErrorResponse('日程候補を入力してください。');
+        return this.createErrorResponse(ERROR_MESSAGES.DATES_REQUIRED);
       }
 
       const scheduleDates = dates.map((date: string) => ({
@@ -58,7 +59,7 @@ export class CreateScheduleController {
       if (deadlineStr?.trim()) {
         const parsedDate = parseUserInputDate(deadlineStr);
         if (!parsedDate) {
-          return this.createErrorResponse('締切日時の形式が正しくありません。');
+          return this.createErrorResponse(ERROR_MESSAGES.INVALID_DEADLINE_FORMAT);
         }
         deadlineDate = parsedDate.toISOString();
       }
@@ -95,8 +96,7 @@ export class CreateScheduleController {
           errors: createResult.errors,
         });
         // エラー詳細を含めて返す（デバッグ用）
-        const errorMessage =
-          createResult.errors?.join('\n') || 'スケジュールの作成に失敗しました。';
+        const errorMessage = createResult.errors?.join('\n') || ERROR_MESSAGES.INVALID_INPUT;
         return this.createErrorResponse(errorMessage);
       }
 

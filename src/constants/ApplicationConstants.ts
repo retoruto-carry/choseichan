@@ -146,34 +146,17 @@ export const SUCCESS_MESSAGES = {
 
 // エラーメッセージ定数
 export const ERROR_MESSAGES = {
-  // バリデーションエラー
-  REQUIRED_FIELD: (field: string) => `${field}は必須です`,
-  INVALID_LENGTH: (field: string, min: number, max: number) =>
-    `${field}は${min}文字以上${max}文字以内で入力してください`,
-  INVALID_FORMAT: (field: string) => `${field}の形式が正しくありません`,
-
-  // ビジネスロジックエラー
   SCHEDULE_NOT_FOUND: '日程調整が見つかりません。',
-  SCHEDULE_ALREADY_CLOSED: 'この日程調整は既に締め切られています。',
-  SCHEDULE_PERMISSION_DENIED: '権限がありません。',
-  RESPONSE_NOT_FOUND: '回答が見つかりません',
-  INVALID_RESPONSE_STATUS: '無効な回答ステータスです',
   INVALID_INPUT: '入力内容に問題があります。',
   INTERNAL_ERROR: '処理中にエラーが発生しました。',
+  PERMISSION_DENIED: '権限がありません。',
+  SCHEDULE_CLOSED: 'この日程調整は既に締め切られています。',
   UNKNOWN_BUTTON: '不明なボタンです。',
   UNKNOWN_MODAL: '不明なモーダルです。',
   UNKNOWN_COMMAND: '不明なコマンドです。',
-
-  // システムエラー
-  DATABASE_ERROR: 'データベースエラーが発生しました',
-  NETWORK_ERROR: 'ネットワークエラーが発生しました',
-  TIMEOUT_ERROR: 'タイムアウトが発生しました',
-  RATE_LIMIT_ERROR: 'レート制限に達しました',
-
-  // Discordエラー
-  DISCORD_API_ERROR: 'Discord APIエラーが発生しました',
-  DISCORD_PERMISSION_ERROR: 'Discord上で必要な権限がありません',
-  DISCORD_RATE_LIMIT: 'Discord APIのレート制限に達しました',
+  DATES_REQUIRED: '日程候補を入力してください。',
+  TITLE_REQUIRED: 'タイトルを入力してください。',
+  INVALID_DEADLINE_FORMAT: '締切日時の形式が正しくありません。',
 } as const;
 
 // 通知関連定数

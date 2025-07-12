@@ -236,9 +236,7 @@ describe('UpdateScheduleUseCase', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
-      expect(result.errors).toContain('スケジュールIDが必要です');
-      expect(result.errors).toContain('Guild IDが必要です');
-      expect(result.errors).toContain('編集者IDが必要です');
+      expect(result.errors).toContain('入力内容に問題があります。');
     });
 
     it('should validate empty title', async () => {
@@ -255,7 +253,7 @@ describe('UpdateScheduleUseCase', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
-      expect(result.errors).toContain('タイトルが空です');
+      expect(result.errors).toContain('入力内容に問題があります。');
     });
 
     it('should validate empty dates', async () => {
@@ -271,7 +269,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors?.[0]).toContain('Schedule must have at least one date');
+      expect(result.errors?.[0]).toContain('処理中にエラーが発生しました。');
     });
 
     it('should return error when schedule not found', async () => {
@@ -288,7 +286,7 @@ describe('UpdateScheduleUseCase', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
-      expect(result.errors).toContain('スケジュールが見つかりません');
+      expect(result.errors).toContain('日程調整が見つかりません。');
     });
 
     it('should return error when user is not authorized', async () => {
@@ -305,7 +303,7 @@ describe('UpdateScheduleUseCase', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors).toBeDefined();
-      expect(result.errors).toContain('このスケジュールを編集する権限がありません');
+      expect(result.errors).toContain('権限がありません。');
     });
 
     it('should allow editing closed schedules (to match old behavior)', async () => {
@@ -379,7 +377,7 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors?.[0]).toContain('スケジュールの更新に失敗しました');
+      expect(result.errors?.[0]).toContain('処理中にエラーが発生しました。');
     });
 
     it('should update multiple fields at once', async () => {

@@ -11,12 +11,10 @@ import type {
   MessageComponent,
   MessageEmbed,
 } from '../../application/ports/MessageFormatterPort';
-import {
-  createScheduleEmbedWithTable,
-  createSimpleScheduleComponents,
-} from '../../presentation/utils/embeds';
+import { ScheduleManagementUIBuilder } from '../../presentation/builders/ScheduleManagementUIBuilder';
 
 export class DiscordMessageFormatter implements IMessageFormatter {
+  private readonly uiBuilder = new ScheduleManagementUIBuilder();
   /**
    * スケジュールメッセージ（EmbedとComponents）を作成
    */
@@ -32,8 +30,8 @@ export class DiscordMessageFormatter implements IMessageFormatter {
    * スケジュールサマリーからEmbedを作成
    */
   createScheduleEmbed(summary: ScheduleSummaryResponse, isDetailed: boolean): MessageEmbed {
-    // プレゼンテーション層のユーティリティを呼び出し
-    const embed = createScheduleEmbedWithTable(summary, isDetailed);
+    // ScheduleManagementUIBuilderを使用して統一性を確保
+    const embed = this.uiBuilder.createDetailedScheduleEmbed(summary, isDetailed);
 
     // Discord APIのEmbed形式をアプリケーション層の形式にマッピング
     return {
@@ -42,7 +40,7 @@ export class DiscordMessageFormatter implements IMessageFormatter {
       color: embed.color,
       fields: embed.fields,
       footer: embed.footer,
-      timestamp: embed.timestamp,
+      timestamp: summary.schedule.updatedAt,
     };
   }
 
@@ -53,8 +51,8 @@ export class DiscordMessageFormatter implements IMessageFormatter {
     summary: ScheduleSummaryResponse,
     showDetails: boolean
   ): MessageComponent[] {
-    // プレゼンテーション層のユーティリティを呼び出し
-    const components = createSimpleScheduleComponents(summary.schedule, showDetails);
+    // ScheduleManagementUIBuilderを使用して統一性を確保
+    const components = this.uiBuilder.createScheduleComponents(summary.schedule, showDetails);
 
     // そのまま返す（型は互換性がある）
     return components as MessageComponent[];

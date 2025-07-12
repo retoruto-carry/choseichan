@@ -5,6 +5,7 @@
  * 認可チェックとビジネスルールの検証を実行
  */
 
+import { ERROR_MESSAGES } from '../../../constants/ApplicationConstants';
 import type { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
@@ -41,7 +42,7 @@ export class UpdateScheduleUseCase {
       if (!existingSchedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません'],
+          errors: [ERROR_MESSAGES.SCHEDULE_NOT_FOUND],
         };
       }
 
@@ -52,7 +53,7 @@ export class UpdateScheduleUseCase {
       if (!scheduleEntity.canBeEditedBy(request.editorUserId)) {
         return {
           success: false,
-          errors: ['このスケジュールを編集する権限がありません'],
+          errors: [ERROR_MESSAGES.PERMISSION_DENIED],
         };
       }
 
@@ -117,12 +118,10 @@ export class UpdateScheduleUseCase {
         success: true,
         schedule: response,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
-        errors: [
-          `スケジュールの更新に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ],
+        errors: [ERROR_MESSAGES.INTERNAL_ERROR],
       };
     }
   }
@@ -134,27 +133,27 @@ export class UpdateScheduleUseCase {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {
-      errors.push('スケジュールIDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     if (!request.guildId?.trim()) {
-      errors.push('Guild IDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     if (!request.editorUserId?.trim()) {
-      errors.push('編集者IDが必要です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     // タイトルが指定されている場合の検証
     if (request.title !== undefined && !request.title.trim()) {
-      errors.push('タイトルが空です');
+      errors.push(ERROR_MESSAGES.INVALID_INPUT);
     }
 
     // 締切日時の検証
     if (request.deadline !== undefined && request.deadline !== null) {
       const deadline = new Date(request.deadline);
       if (Number.isNaN(deadline.getTime())) {
-        errors.push('締切日時の形式が正しくありません');
+        errors.push(ERROR_MESSAGES.INVALID_INPUT);
       }
     }
 

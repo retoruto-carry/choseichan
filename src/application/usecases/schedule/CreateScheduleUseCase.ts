@@ -5,6 +5,7 @@
  * ビジネスルールの検証とスケジュール作成処理を実行
  */
 
+import { ERROR_MESSAGES } from '../../../constants/ApplicationConstants';
 import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { User } from '../../../domain/entities/User';
@@ -95,9 +96,7 @@ export class CreateScheduleUseCase {
       );
       return {
         success: false,
-        errors: [
-          `スケジュールの作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ],
+        errors: [ERROR_MESSAGES.INTERNAL_ERROR],
       };
     }
   }

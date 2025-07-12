@@ -377,7 +377,7 @@ describe('CreateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('スケジュールの作成に失敗しました: Database error');
+      expect(result.errors).toContain('処理中にエラーが発生しました。');
       expect(saveSpy).toHaveBeenCalled();
     });
   });
