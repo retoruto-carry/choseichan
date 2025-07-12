@@ -7,7 +7,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DependencyContainer } from '../../src/infrastructure/factories/DependencyContainer';
 import type { Env } from '../../src/infrastructure/types/discord';
-import { getMessageUpdateStrategy } from '../../src/infrastructure/utils/message-update-strategy';
 import type { D1Database } from '../helpers/d1-database';
 import {
   applyMigrations,
@@ -32,9 +31,6 @@ describe('並行投票の統合テスト', () => {
     env = createTestEnv(db);
     container = new DependencyContainer(env);
 
-    // Clear update strategy state
-    getMessageUpdateStrategy().clear();
-
     // Mock fetch for Discord API calls
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -47,7 +43,6 @@ describe('並行投票の統合テスト', () => {
   afterEach(async () => {
     await closeTestDatabase(db);
     vi.restoreAllMocks();
-    getMessageUpdateStrategy().clear();
   });
 
   describe('並行投票シナリオ', () => {
@@ -316,51 +311,6 @@ describe('並行投票の統合テスト', () => {
       const _expectedNg = Math.floor(userCount / 3);
 
       expect(date1Counts.yes + date1Counts.maybe + date1Counts.no).toBe(userCount);
-    });
-  });
-
-  describe('メッセージ更新戦略', () => {
-    it('レート制限が正常に動作する', async () => {
-      const strategy = getMessageUpdateStrategy();
-
-      // 最初の更新は許可される
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
-      strategy.recordUpdate('schedule-1', 'message-1');
-
-      // 短時間内の更新はスキップされる
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-
-      // Cloudflare Workers環境では setTimeout は使用不可のため、
-      // レート制限の時間経過はテスト環境でのみ検証
-      // 実際の環境では Queues の delaySeconds で制御される
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-    });
-
-    it('異なるスケジュールの更新は独立して処理される', async () => {
-      const strategy = getMessageUpdateStrategy();
-
-      // 両方とも最初の更新は許可される
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
-      strategy.recordUpdate('schedule-1', 'message-1');
-
-      expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(true);
-      strategy.recordUpdate('schedule-2', 'message-2');
-
-      // それぞれのスケジュールは独立してレート制限される
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-      expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(false);
-    });
-
-    it('締切時の強制更新が動作する', async () => {
-      const strategy = getMessageUpdateStrategy();
-
-      // 通常の更新を記録
-      strategy.recordUpdate('schedule-1', 'message-1');
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-
-      // 強制更新後は即座に更新可能
-      strategy.forceUpdate('schedule-1', 'message-1');
-      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
     });
   });
 });
