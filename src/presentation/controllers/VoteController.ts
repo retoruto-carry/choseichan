@@ -364,7 +364,8 @@ export class VoteController {
         this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
         this.dependencyContainer.getScheduleSummaryUseCase,
         discordToken,
-        applicationId
+        applicationId,
+        this.dependencyContainer.infrastructureServices.backgroundExecutor
       );
 
       // Send summary message
@@ -376,7 +377,7 @@ export class VoteController {
         guildId
       );
       if (scheduleResult.success && scheduleResult.schedule) {
-        await notificationService.sendPRMessage(scheduleResult.schedule);
+        notificationService.sendPRMessage(scheduleResult.schedule);
       }
     } catch (error) {
       this.logger.error(

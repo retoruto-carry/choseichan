@@ -27,6 +27,7 @@ interface ScheduleRow {
   total_responses: number;
   created_at: number;
   updated_at: number;
+  expires_at: number;
 }
 
 interface ScheduleDateRow {
@@ -120,31 +121,76 @@ export class D1ScheduleRepository implements IScheduleRepository {
 
   async findById(scheduleId: string, guildId: string = 'default'): Promise<DomainSchedule | null> {
     try {
-      // Get schedule data
-      const scheduleRow = await this.db
+      // N+1クエリ問題を解決：JOINクエリで一度に取得
+      const result = await this.db
         .prepare(`
-        SELECT * FROM schedules 
-        WHERE id = ? AND guild_id = ?
+        SELECT 
+          s.id,
+          s.guild_id,
+          s.channel_id,
+          s.message_id,
+          s.title,
+          s.description,
+          s.created_by_id,
+          s.created_by_username,
+          s.author_id,
+          s.deadline,
+          s.reminder_timings,
+          s.reminder_mentions,
+          s.reminders_sent,
+          s.status,
+          s.notification_sent,
+          s.total_responses,
+          s.created_at,
+          s.updated_at,
+          s.expires_at,
+          sd.date_id,
+          sd.datetime,
+          sd.display_order
+        FROM schedules s
+        LEFT JOIN schedule_dates sd ON s.id = sd.schedule_id
+        WHERE s.id = ? AND s.guild_id = ?
+        ORDER BY sd.display_order
       `)
         .bind(scheduleId, guildId)
-        .first();
-
-      if (!scheduleRow) return null;
-
-      // Get schedule dates
-      const datesResult = await this.db
-        .prepare(`
-        SELECT date_id, datetime FROM schedule_dates 
-        WHERE schedule_id = ? 
-        ORDER BY display_order
-      `)
-        .bind(scheduleId)
         .all();
 
-      return this.mapRowToSchedule(
-        scheduleRow as unknown as ScheduleRow,
-        datesResult.results as unknown as ScheduleDateRow[]
-      );
+      if (!result.results || result.results.length === 0) return null;
+
+      // 最初の行からスケジュール情報を取得
+      const firstRow = result.results[0] as any;
+      const scheduleRow: ScheduleRow = {
+        id: firstRow.id,
+        guild_id: firstRow.guild_id,
+        channel_id: firstRow.channel_id,
+        message_id: firstRow.message_id,
+        title: firstRow.title,
+        description: firstRow.description,
+        created_by_id: firstRow.created_by_id,
+        created_by_username: firstRow.created_by_username,
+        author_id: firstRow.author_id,
+        deadline: firstRow.deadline,
+        reminder_timings: firstRow.reminder_timings,
+        reminder_mentions: firstRow.reminder_mentions,
+        reminders_sent: firstRow.reminders_sent,
+        status: firstRow.status,
+        notification_sent: firstRow.notification_sent,
+        total_responses: firstRow.total_responses,
+        created_at: firstRow.created_at,
+        updated_at: firstRow.updated_at,
+        expires_at: firstRow.expires_at,
+      };
+
+      // 日付データを抽出（date_idがnullでない場合のみ）
+      const dateRows: ScheduleDateRow[] = result.results
+        .filter((row: any) => row.date_id)
+        .map((row: any) => ({
+          date_id: row.date_id,
+          datetime: row.datetime,
+          display_order: row.display_order,
+        }));
+
+      return this.mapRowToSchedule(scheduleRow, dateRows);
     } catch (error) {
       throw new RepositoryError('Failed to find schedule', 'FIND_ERROR', error as Error);
     }

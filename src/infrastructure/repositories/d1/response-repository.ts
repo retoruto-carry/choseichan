@@ -128,7 +128,8 @@ export class D1ResponseRepository implements IResponseRepository {
     guildId: string = 'default'
   ): Promise<DomainResponse[]> {
     try {
-      const result = await this.db
+      // まず基本的なレスポンス情報を取得
+      const responseResult = await this.db
         .prepare(`
         SELECT * FROM responses 
         WHERE schedule_id = ? AND guild_id = ?
@@ -137,18 +138,41 @@ export class D1ResponseRepository implements IResponseRepository {
         .bind(scheduleId, guildId)
         .all();
 
-      const responses: DomainResponse[] = [];
-      for (const row of result.results) {
-        const statusResult = await this.db
-          .prepare(`
-          SELECT date_id, status FROM response_date_status 
-          WHERE response_id = ?
-        `)
-          .bind(row.id)
-          .all();
+      if (!responseResult.results || responseResult.results.length === 0) {
+        return [];
+      }
 
-        const response = this.mapRowToResponse(row, statusResult.results);
-        if (response) responses.push(response);
+      // 次に、すべてのレスポンスの日付ステータスを一度に取得
+      const responseIds = responseResult.results.map((row: any) => row.id);
+      const placeholders = responseIds.map(() => '?').join(',');
+      
+      const statusResult = await this.db
+        .prepare(`
+        SELECT response_id, date_id, status 
+        FROM response_date_status 
+        WHERE response_id IN (${placeholders})
+      `)
+        .bind(...responseIds)
+        .all();
+
+      // ステータスマップを作成
+      const statusMap = new Map<string, Record<string, DomainResponseStatus>>();
+      for (const row of statusResult.results as any[]) {
+        if (!statusMap.has(row.response_id)) {
+          statusMap.set(row.response_id, {});
+        }
+        statusMap.get(row.response_id)![row.date_id] = row.status;
+      }
+
+      // DomainResponseオブジェクトを構築
+      const responses: DomainResponse[] = [];
+      for (const row of responseResult.results as any[]) {
+        const response = this.mapRowToResponse(row, []);
+        if (response) {
+          // ステータスマップから日付ステータスを設定
+          response.dateStatuses = statusMap.get(row.id) || {};
+          responses.push(response);
+        }
       }
 
       return responses;
@@ -193,12 +217,18 @@ export class D1ResponseRepository implements IResponseRepository {
     if (!schedule) return null;
 
     try {
-      // Get response counts using the view
+      // Get response counts using direct query instead of view for better reliability
       const countResult = await this.db
         .prepare(`
-        SELECT date_id, status, count 
-        FROM date_response_counts 
-        WHERE schedule_id = ?
+        SELECT 
+          sd.date_id,
+          rds.status,
+          COUNT(*) as count
+        FROM schedule_dates sd
+        LEFT JOIN responses r ON sd.schedule_id = r.schedule_id
+        LEFT JOIN response_date_status rds ON r.id = rds.response_id AND sd.date_id = rds.date_id
+        WHERE sd.schedule_id = ? AND rds.status IS NOT NULL
+        GROUP BY sd.date_id, rds.status
       `)
         .bind(scheduleId)
         .all();

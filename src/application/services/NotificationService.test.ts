@@ -9,6 +9,7 @@ import type {
 import type { ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
+import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 import { NotificationService } from './NotificationService';
 
@@ -22,6 +23,7 @@ describe('NotificationService', () => {
   let mockScheduleRepository: IScheduleRepository;
   let mockResponseRepository: IResponseRepository;
   let mockGetScheduleSummaryUseCase: GetScheduleSummaryUseCase;
+  let mockBackgroundExecutor: BackgroundExecutorPort;
   const mockToken = 'test-discord-token';
   const mockAppId = 'test-app-id';
 
@@ -131,6 +133,10 @@ describe('NotificationService', () => {
       } as ScheduleSummaryResponse,
     });
 
+    mockBackgroundExecutor = {
+      execute: vi.fn(),
+    };
+
     notificationService = new NotificationService(
       mockLogger,
       mockDiscordApi,
@@ -138,7 +144,8 @@ describe('NotificationService', () => {
       mockResponseRepository,
       mockGetScheduleSummaryUseCase,
       mockToken,
-      mockAppId
+      mockAppId,
+      mockBackgroundExecutor
     );
   });
 
@@ -258,18 +265,50 @@ describe('NotificationService', () => {
   });
 
   describe('sendPRMessage', () => {
-    it('should send PR message with message reference after delay', async () => {
-      vi.useFakeTimers();
+    it('should schedule PR message as background task', async () => {
+      notificationService.sendPRMessage(mockSchedule);
 
-      // Start the PR message sending (which includes the delay)
-      const sendPromise = notificationService.sendPRMessage(mockSchedule);
+      // BackgroundExecutor が呼ばれることを確認
+      expect(mockBackgroundExecutor.execute).toHaveBeenCalledWith(expect.any(Function));
+    });
 
-      // Should not be called immediately
-      expect(mockDiscordApi.sendMessage).not.toHaveBeenCalled();
+    it('should handle message without messageId', async () => {
+      const scheduleWithoutMessageId = Schedule.create({
+        id: 'test-schedule',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        messageId: undefined, // messageIdなし
+        title: 'Test Event',
+        description: 'Test Description',
+        dates: [
+          ScheduleDate.create('date1', '2024-12-25 19:00'),
+          ScheduleDate.create('date2', '2024-12-26 19:00'),
+        ],
+        createdBy: User.create('user123', 'TestUser'),
+        authorId: 'user123',
+        deadline: new Date('2024-12-25T10:00:00Z'),
+        reminderTimings: ['8h'],
+        reminderMentions: ['@here'],
+        remindersSent: [],
+        status: ScheduleStatus.OPEN,
+        notificationSent: false,
+        totalResponses: 0,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      });
 
-      // Fast forward 5 seconds and wait for the promise
-      await vi.advanceTimersByTimeAsync(5000);
-      await sendPromise;
+      notificationService.sendPRMessage(scheduleWithoutMessageId);
+
+      expect(mockBackgroundExecutor.execute).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should execute the task with correct message content', async () => {
+      // BackgroundExecutor の実行をモックして、実際にタスクを実行
+      vi.mocked(mockBackgroundExecutor.execute).mockImplementation(async (task) => {
+        await task();
+      });
+
+      notificationService.sendPRMessage(mockSchedule);
 
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
         'channel123',
@@ -281,8 +320,6 @@ describe('NotificationService', () => {
         }),
         mockToken
       );
-
-      vi.useRealTimers();
     });
   });
 

@@ -6,6 +6,8 @@
 
 // Application Services
 import { NotificationService } from '../../application/services/NotificationService';
+import { TestBackgroundExecutor } from '../adapters/TestBackgroundExecutor';
+import { WorkersBackgroundExecutor } from '../adapters/WorkersBackgroundExecutor';
 import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 // Use Cases - Response
@@ -74,6 +76,13 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
     SERVICE_TOKENS.ENVIRONMENT_ADAPTER,
     (c) => new EnvironmentAdapter(c.resolve(SERVICE_TOKENS.ENV))
   );
+
+  container.registerSingleton(SERVICE_TOKENS.BACKGROUND_EXECUTOR, (c) => {
+    const env = c.resolve(SERVICE_TOKENS.ENV) as Env;
+    return env.ctx 
+      ? new WorkersBackgroundExecutor(env.ctx)
+      : new TestBackgroundExecutor();
+  });
 }
 
 function registerApplicationServices(container: IDIContainer, env: Env): void {
@@ -94,7 +103,8 @@ function registerApplicationServices(container: IDIContainer, env: Env): void {
         c.resolve(SERVICE_TOKENS.RESPONSE_REPOSITORY),
         c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
         discordToken,
-        applicationId
+        applicationId,
+        c.resolve(SERVICE_TOKENS.BACKGROUND_EXECUTOR)
       );
     });
   }

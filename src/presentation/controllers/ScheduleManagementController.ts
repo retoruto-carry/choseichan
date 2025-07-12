@@ -518,32 +518,19 @@ export class ScheduleManagementController {
       }
 
       // 通知送信
-      if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
-        const notificationService = new NotificationService(
-          new LoggerAdapter(),
-          new DiscordApiAdapter(),
-          this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
-          this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
-          this.dependencyContainer.getScheduleSummaryUseCase,
-          env.DISCORD_TOKEN,
-          env.DISCORD_APPLICATION_ID
-        );
-
-        env.ctx.waitUntil(
-          (async () => {
-            try {
-              await notificationService.sendSummaryMessage(scheduleId, guildId);
-              if (scheduleResult.success && scheduleResult.schedule) {
-                await notificationService.sendPRMessage(scheduleResult.schedule);
-              }
-            } catch (error) {
-              this.logger.error(
-                'Failed to send closure notifications:',
-                error instanceof Error ? error : new Error(String(error))
-              );
-            }
-          })()
-        );
+      const notificationService = this.dependencyContainer.applicationServices.notificationService;
+      if (notificationService) {
+        try {
+          await notificationService.sendSummaryMessage(scheduleId, guildId);
+          if (scheduleResult.success && scheduleResult.schedule) {
+            notificationService.sendPRMessage(scheduleResult.schedule);
+          }
+        } catch (error) {
+          this.logger.error(
+            'Failed to send closure notifications:',
+            error instanceof Error ? error : new Error(String(error))
+          );
+        }
       }
     } catch (error) {
       this.logger.error(

@@ -178,10 +178,9 @@ export class ProcessDeadlineRemindersUseCase {
             return { success: false, scheduleId };
           }
 
-          // Convert to format expected by notification service
-          // Send summary and PR message in sequence
+          // Send summary and PR message
           await this.notificationService.sendSummaryMessage(scheduleId, guildId);
-          await this.notificationService.sendPRMessage(scheduleResult.schedule);
+          this.notificationService.sendPRMessage(scheduleResult.schedule);
 
           this.logger.info(`Sent closure notification for schedule ${scheduleId}`);
           return { success: true, scheduleId };

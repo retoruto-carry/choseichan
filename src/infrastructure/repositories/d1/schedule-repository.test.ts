@@ -97,34 +97,60 @@ describe('D1ScheduleRepository', () => {
 
   describe('findById', () => {
     it('should find a schedule by id', async () => {
-      const mockScheduleRow = {
-        id: 'test-id',
-        guild_id: 'guild-123',
-        channel_id: 'channel-123',
-        message_id: null,
-        title: 'Test Schedule',
-        description: null,
-        created_by_id: 'user-123',
-        created_by_username: 'TestUser',
-        author_id: 'user-123',
-        deadline: null,
-        reminder_timings: null,
-        reminder_mentions: null,
-        reminders_sent: null,
-        status: 'open',
-        notification_sent: 0,
-        total_responses: 0,
-        created_at: Math.floor(Date.now() / 1000),
-        updated_at: Math.floor(Date.now() / 1000),
-      };
-
-      const mockDateRows = [
-        { date_id: 'date-1', datetime: '2024-12-25 19:00' },
-        { date_id: 'date-2', datetime: '2024-12-26 19:00' },
+      // N+1クエリ修正後のJOINクエリ用のモックデータ
+      const mockJoinedRows = [
+        {
+          id: 'test-id',
+          guild_id: 'guild-123',
+          channel_id: 'channel-123',
+          message_id: null,
+          title: 'Test Schedule',
+          description: null,
+          created_by_id: 'user-123',
+          created_by_username: 'TestUser',
+          author_id: 'user-123',
+          deadline: null,
+          reminder_timings: null,
+          reminder_mentions: null,
+          reminders_sent: null,
+          status: 'open',
+          notification_sent: 0,
+          total_responses: 0,
+          created_at: Math.floor(Date.now() / 1000),
+          updated_at: Math.floor(Date.now() / 1000),
+          expires_at: null,
+          date_id: 'date-1',
+          datetime: '2024-12-25 19:00',
+          display_order: 0,
+        },
+        {
+          id: 'test-id',
+          guild_id: 'guild-123',
+          channel_id: 'channel-123',
+          message_id: null,
+          title: 'Test Schedule',
+          description: null,
+          created_by_id: 'user-123',
+          created_by_username: 'TestUser',
+          author_id: 'user-123',
+          deadline: null,
+          reminder_timings: null,
+          reminder_mentions: null,
+          reminders_sent: null,
+          status: 'open',
+          notification_sent: 0,
+          total_responses: 0,
+          created_at: Math.floor(Date.now() / 1000),
+          updated_at: Math.floor(Date.now() / 1000),
+          expires_at: null,
+          date_id: 'date-2',
+          datetime: '2024-12-26 19:00',
+          display_order: 1,
+        },
       ];
 
-      mockDb._mockStatement.first.mockResolvedValueOnce(mockScheduleRow);
-      mockDb._mockResults.results = mockDateRows as any;
+      // JOINクエリの結果をモック
+      mockDb._mockStatement.all.mockResolvedValueOnce({ results: mockJoinedRows });
 
       const result = await repository.findById('test-id', 'guild-123');
 
@@ -135,7 +161,7 @@ describe('D1ScheduleRepository', () => {
     });
 
     it('should return null when schedule not found', async () => {
-      mockDb._mockStatement.first.mockResolvedValueOnce(null);
+      mockDb._mockStatement.all.mockResolvedValueOnce({ results: [] });
 
       const result = await repository.findById('non-existent', 'guild-123');
 
@@ -143,7 +169,7 @@ describe('D1ScheduleRepository', () => {
     });
 
     it('should handle find errors', async () => {
-      mockDb._mockStatement.first.mockRejectedValueOnce(new Error('Database error'));
+      mockDb._mockStatement.all.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(repository.findById('test-id', 'guild-123')).rejects.toThrow(RepositoryError);
     });

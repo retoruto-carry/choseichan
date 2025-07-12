@@ -198,6 +198,7 @@ export const SERVICE_TOKENS = {
   LOGGER_ADAPTER: Symbol('LoggerAdapter'),
   DISCORD_API_ADAPTER: Symbol('DiscordApiAdapter'),
   ENVIRONMENT_ADAPTER: Symbol('EnvironmentAdapter'),
+  BACKGROUND_EXECUTOR: Symbol('BackgroundExecutor'),
 
   // Application Services
   NOTIFICATION_SERVICE: Symbol('NotificationService'),

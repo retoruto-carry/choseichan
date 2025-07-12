@@ -14,6 +14,7 @@ import { formatDate } from '../../utils/date';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
+import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 
 interface DiscordMessage {
@@ -39,7 +40,8 @@ export class NotificationService {
     private responseRepository: IResponseRepository,
     private getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
     private discordToken: string,
-    private applicationId: string
+    private applicationId: string,
+    private backgroundExecutor: BackgroundExecutorPort
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
@@ -341,7 +343,7 @@ export class NotificationService {
     await this.sendChannelMessage(schedule.channelId, message);
   }
 
-  async sendPRMessage(schedule: Schedule | ScheduleResponse): Promise<void> {
+  sendPRMessage(schedule: Schedule | ScheduleResponse): void {
     const message: DiscordMessage = {
       content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています`,
     };
@@ -353,8 +355,9 @@ export class NotificationService {
       };
     }
 
-    // Cloudflare Workers環境では setTimeout は使用不可
-    // PRメッセージの遅延送信は Queues の delaySeconds オプションを使用することを推奨
-    await this.sendChannelMessage(schedule.channelId, message);
+    // バックグラウンドで送信
+    this.backgroundExecutor.execute(async () => {
+      await this.sendChannelMessage(schedule.channelId, message);
+    });
   }
 }

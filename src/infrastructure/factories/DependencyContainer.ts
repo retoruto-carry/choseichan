@@ -7,6 +7,8 @@
 
 import { MessageUpdateServiceImpl } from '../../application/services/MessageUpdateServiceImpl';
 import { NotificationService } from '../../application/services/NotificationService';
+import { TestBackgroundExecutor } from '../adapters/TestBackgroundExecutor';
+import { WorkersBackgroundExecutor } from '../adapters/WorkersBackgroundExecutor';
 import { ProcessMessageUpdateUseCase } from '../../application/usecases/message/ProcessMessageUpdateUseCase';
 import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
@@ -31,6 +33,7 @@ import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
 import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
+import type { BackgroundExecutorPort } from '../../application/ports/BackgroundExecutorPort';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
 
@@ -55,11 +58,15 @@ export interface ApplicationServices {
 
   // Message Update Use Cases
   processMessageUpdateUseCase: ProcessMessageUpdateUseCase | null;
+  
+  // Notification Service
+  notificationService: NotificationService | null;
 }
 
 export interface InfrastructureServices {
   repositoryFactory: IRepositoryFactory;
   messageUpdateQueuePort: MessageUpdateQueuePort;
+  backgroundExecutor: BackgroundExecutorPort;
 }
 
 export interface DomainServices {
@@ -102,10 +109,16 @@ export class DependencyContainer {
   private createInfrastructureServices(env: Env): InfrastructureServices {
     const repositoryFactory = createRepositoryFactory(env);
     const messageUpdateQueuePort = new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE);
+    
+    // BackgroundExecutor: Workers環境かどうかでアダプターを切り替え
+    const backgroundExecutor = env.ctx 
+      ? new WorkersBackgroundExecutor(env.ctx)
+      : new TestBackgroundExecutor();
 
     return {
       repositoryFactory,
       messageUpdateQueuePort,
+      backgroundExecutor,
     };
   }
 
@@ -162,7 +175,8 @@ export class DependencyContainer {
         responseRepository,
         getScheduleSummaryUseCase,
         this._env.DISCORD_TOKEN,
-        this._env.DISCORD_APPLICATION_ID
+        this._env.DISCORD_APPLICATION_ID,
+        infrastructure.backgroundExecutor
       );
     }
 
@@ -212,6 +226,9 @@ export class DependencyContainer {
 
       // Message Update Use Cases
       processMessageUpdateUseCase,
+      
+      // Notification Service
+      notificationService,
     };
   }
 

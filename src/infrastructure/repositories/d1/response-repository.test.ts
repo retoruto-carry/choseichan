@@ -167,13 +167,15 @@ describe('D1ResponseRepository', () => {
 
   describe('findByScheduleId', () => {
     it('should find all responses for a schedule', async () => {
+      // 新しい実装：最初にレスポンス、次にステータスを取得
       const mockResponseRows = [
         {
           id: 1,
           schedule_id: 'schedule-123',
           user_id: 'user-456',
           username: 'User1',
-          display_name: null,
+          guild_id: 'guild-123',
+          created_at: Math.floor(Date.now() / 1000),
           updated_at: Math.floor(Date.now() / 1000),
         },
         {
@@ -181,23 +183,30 @@ describe('D1ResponseRepository', () => {
           schedule_id: 'schedule-123',
           user_id: 'user-789',
           username: 'User2',
-          display_name: 'Display User 2',
+          guild_id: 'guild-123',
+          created_at: Math.floor(Date.now() / 1000),
           updated_at: Math.floor(Date.now() / 1000),
         },
+      ];
+
+      const mockStatusRows = [
+        { response_id: 1, date_id: 'date-1', status: 'ok' },
+        { response_id: 2, date_id: 'date-1', status: 'ng' },
       ];
 
       // 最初の呼び出しでレスポンス一覧を返す
       mockDb._mockStatement.all
         .mockResolvedValueOnce({ results: mockResponseRows })
-        // 各レスポンスのステータス照会
-        .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'ok' }] })
-        .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'ng' }] });
+        // 次の呼び出しでステータス一覧を返す
+        .mockResolvedValueOnce({ results: mockStatusRows });
 
       const results = await repository.findByScheduleId('schedule-123', 'guild-123');
 
       expect(results).toHaveLength(2);
       expect(results[0].username).toBe('User1');
+      expect(results[0].dateStatuses['date-1']).toBe('ok');
       expect(results[1].username).toBe('User2');
+      expect(results[1].dateStatuses['date-1']).toBe('ng');
     });
 
     it('should return empty array when no responses found', async () => {
@@ -282,21 +291,17 @@ describe('D1ResponseRepository', () => {
       ];
 
       mockDb._mockStatement.all
-        .mockResolvedValueOnce({ results: mockCountRows }) // counts
-        .mockResolvedValueOnce({ results: mockUserResponseRows }) // user responses
-        .mockResolvedValueOnce({ results: mockResponseRows }) // responses
+        .mockResolvedValueOnce({ results: mockCountRows }) // counts for getScheduleSummary
+        .mockResolvedValueOnce({ results: mockUserResponseRows }) // user responses for getScheduleSummary
+        .mockResolvedValueOnce({ results: mockResponseRows }) // responses for findByScheduleId
         .mockResolvedValueOnce({
           results: [
-            { date_id: 'date-1', status: 'ok' },
-            { date_id: 'date-2', status: 'ok' },
+            { response_id: 1, date_id: 'date-1', status: 'ok' },
+            { response_id: 1, date_id: 'date-2', status: 'ok' },
+            { response_id: 2, date_id: 'date-1', status: 'maybe' },
+            { response_id: 2, date_id: 'date-2', status: 'ng' },
           ],
-        }) // user-1 statuses
-        .mockResolvedValueOnce({
-          results: [
-            { date_id: 'date-1', status: 'maybe' },
-            { date_id: 'date-2', status: 'ng' },
-          ],
-        }); // user-2 statuses
+        }); // status for findByScheduleId
 
       mockDb._mockStatement.first.mockResolvedValueOnce({ total: 2 }); // total responses
 
