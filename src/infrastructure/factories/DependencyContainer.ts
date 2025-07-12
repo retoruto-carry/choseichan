@@ -30,8 +30,9 @@ import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 import { DiscordApiService, type IDiscordApiService } from '../services/DiscordApiService';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
-import type { IMessageFormatter } from '../../application/ports/MessageFormatterPort';
+import type { IMessageFormatter, IDiscordMessageUpdater } from '../../application/ports/MessageFormatterPort';
 import { DiscordMessageFormatter } from '../formatters/DiscordMessageFormatter';
+import { DiscordMessageUpdater } from '../formatters/DiscordMessageUpdater';
 
 export interface ApplicationServices {
   // Schedule Use Cases
@@ -61,6 +62,7 @@ export interface InfrastructureServices {
   discordApiService: IDiscordApiService;
   messageUpdateQueuePort: MessageUpdateQueuePort;
   messageFormatter: IMessageFormatter;
+  messageUpdater: IDiscordMessageUpdater;
 }
 
 export interface DomainServices {
@@ -105,12 +107,14 @@ export class DependencyContainer {
     const discordApiService = new DiscordApiService();
     const messageUpdateQueuePort = new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE);
     const messageFormatter = new DiscordMessageFormatter();
+    const messageUpdater = new DiscordMessageUpdater();
 
     return {
       repositoryFactory,
       discordApiService,
       messageUpdateQueuePort,
       messageFormatter,
+      messageUpdater,
     };
   }
 

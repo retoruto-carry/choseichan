@@ -1,10 +1,6 @@
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { Env } from '../../infrastructure/types/discord';
-import { updateOriginalMessage } from '../../presentation/utils/discord';
-import {
-  createScheduleEmbedWithTable,
-  createSimpleScheduleComponents,
-} from '../../presentation/utils/embeds';
+import type { IMessageFormatter, IDiscordMessageUpdater } from '../ports/MessageFormatterPort';
 
 /**
  * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版
@@ -14,6 +10,8 @@ import {
  * @param container DependencyContainer インスタンス
  * @param env 環境変数
  * @param guildId ギルドID
+ * @param messageFormatter メッセージフォーマッター
+ * @param messageUpdater メッセージ更新サービス
  * @returns 更新が成功したかどうか
  */
 export async function updateScheduleMainMessage(
@@ -22,7 +20,9 @@ export async function updateScheduleMainMessage(
   interactionToken: string,
   container: DependencyContainer,
   env: Env,
-  guildId: string = 'default'
+  guildId: string = 'default',
+  messageFormatter?: IMessageFormatter,
+  messageUpdater?: IDiscordMessageUpdater
 ): Promise<boolean> {
   try {
     // 最新のスケジュール情報を取得
@@ -48,10 +48,19 @@ export async function updateScheduleMainMessage(
     }
     const summary = summaryResult.summary;
 
+    // フォーマッターとアップデーターが提供されていない場合はDependencyContainerから取得
+    const formatter = messageFormatter || container.infrastructureServices.messageFormatter;
+    const updater = messageUpdater || container.infrastructureServices.messageUpdater;
+
+    if (!formatter || !updater) {
+      console.error('MessageFormatter or MessageUpdater not available');
+      return false;
+    }
+
     // 現在の状態（showDetails）を維持したいが、これは別途管理が必要
     // とりあえずシンプルな表示で更新
-    const embed = createScheduleEmbedWithTable(summary, false);
-    const components = createSimpleScheduleComponents(schedule, false);
+    const embed = formatter.createScheduleEmbed(summary, false);
+    const components = formatter.createScheduleComponents(summary, false);
 
     // Discord APIを使ってメッセージを更新
     if (!env.DISCORD_APPLICATION_ID) {
@@ -59,7 +68,7 @@ export async function updateScheduleMainMessage(
       return false;
     }
 
-    await updateOriginalMessage(
+    await updater.updateOriginalMessage(
       env.DISCORD_APPLICATION_ID,
       interactionToken,
       {

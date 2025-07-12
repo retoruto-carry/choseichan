@@ -57,3 +57,22 @@ export interface IMessageFormatter {
    */
   createScheduleComponents(summary: ScheduleSummaryResponse, showDetails: boolean): MessageComponent[];
 }
+
+/**
+ * Discord メッセージ更新のインターフェース
+ */
+export interface IDiscordMessageUpdater {
+  /**
+   * オリジナルメッセージを更新
+   */
+  updateOriginalMessage(
+    applicationId: string,
+    interactionToken: string,
+    data: {
+      embeds?: MessageEmbed[];
+      components?: MessageComponent[];
+      content?: string;
+    },
+    messageId?: string
+  ): Promise<void>;
+}
