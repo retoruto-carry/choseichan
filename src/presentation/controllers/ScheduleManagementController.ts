@@ -14,6 +14,7 @@ import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFo
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
+import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 import { ScheduleManagementUIBuilder } from '../builders/ScheduleManagementUIBuilder';
 import { deleteMessage } from '../utils/discord';
 
@@ -46,11 +47,12 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // UI構築（詳細表示）
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, true);
-      const components = this.uiBuilder.createScheduleComponents(
-        summaryResult.summary.schedule,
-        true
+      // 統一UIBuilderを使用（詳細表示・投票ボタン表示）
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        undefined,
+        true, // 詳細表示
+        true // 投票ボタン表示
       );
 
       return new Response(
@@ -310,11 +312,12 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // UI構築（簡易表示）
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, false);
-      const components = this.uiBuilder.createScheduleComponents(
-        summaryResult.summary.schedule,
-        false
+      // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        undefined,
+        false, // 簡易表示
+        true // 投票ボタン表示
       );
 
       return new Response(
@@ -357,11 +360,12 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // 簡易表示用UI構築
-      const embed = this.uiBuilder.createDetailedScheduleEmbed(summaryResult.summary, false);
-      const components = this.uiBuilder.createScheduleComponents(
-        summaryResult.summary.schedule,
-        false
+      // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        undefined,
+        false, // 簡易表示
+        true // 投票ボタン表示
       );
 
       return new Response(

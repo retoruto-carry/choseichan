@@ -14,6 +14,7 @@ import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseUserInputDate } from '../../utils/date';
 import { generateId } from '../../utils/id';
 import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
+import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 import { getOriginalMessage, sendFollowupMessage } from '../utils/discord';
 
 export class CreateScheduleController {
@@ -122,8 +123,13 @@ export class CreateScheduleController {
         return this.createErrorResponse('スケジュール情報の取得に失敗しました。');
       }
 
-      const embed = this.uiBuilder.createScheduleEmbed(summaryResult.summary, false);
-      const components = this.uiBuilder.createScheduleComponents(schedule, false);
+      // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        undefined,
+        false, // 簡易表示
+        true // 投票ボタン表示
+      );
 
       // バックグラウンドでメッセージIDを保存
       if (env.ctx) {

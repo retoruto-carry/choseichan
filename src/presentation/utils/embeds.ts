@@ -27,7 +27,7 @@ export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse)
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: [],
     footer: {
-      text: `作成: ${schedule.createdBy.username}`,
+      text: [`作成: ${schedule.createdBy.username}`, '最新の情報は更新をクリック'].join(' | '),
     },
     timestamp:
       schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt,

@@ -114,10 +114,10 @@ export class ScheduleUIBuilder {
       const buttons = [
         {
           type: 2, // BUTTON
-          style: 3, // SUCCESS (緑)
+          style: 1, // PRIMARY (青)
           label: '回答する',
           custom_id: `respond:${schedule.id}`,
-          emoji: { name: '🗳️' },
+          emoji: { name: '✏️' },
         },
       ];
 
@@ -128,7 +128,7 @@ export class ScheduleUIBuilder {
         style: 2, // SECONDARY
         label: showDetails ? '簡易表示' : '詳細',
         custom_id: showDetails ? `hide_details:${schedule.id}` : `status:${schedule.id}`,
-        emoji: { name: showDetails ? '📊' : '📋' },
+        emoji: { name: showDetails ? '📊' : '👥' },
       });
 
       // 更新ボタン
@@ -156,7 +156,7 @@ export class ScheduleUIBuilder {
           style: 2, // SECONDARY
           label: '編集',
           custom_id: `edit:${schedule.id}`,
-          emoji: { name: '✏️' },
+          emoji: { name: '⚙️' },
         });
       }
 

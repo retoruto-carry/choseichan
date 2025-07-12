@@ -7,20 +7,19 @@
 
 import type { ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
 import type { IMessageFormatterPort } from '../../application/ports/MessageFormatterPort';
-import { ScheduleUIBuilder } from '../../presentation/builders/ScheduleUIBuilder';
+import { ScheduleMainMessageBuilder } from '../../presentation/builders/ScheduleMainMessageBuilder';
 
 export class MessageFormatterAdapter implements IMessageFormatterPort {
   formatScheduleMessage(
     summary: ScheduleSummaryResponse,
     showVoteButton: boolean
   ): { embed: object; components: object[] } {
-    const embed = ScheduleUIBuilder.buildScheduleEmbed(summary.schedule, summary.responseCounts, {
-      showVoteButtons: showVoteButton,
-    });
-    const components = ScheduleUIBuilder.buildActionButtons(summary.schedule, {
-      showVoteButtons: showVoteButton,
-    });
-
-    return { embed, components };
+    // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
+    return ScheduleMainMessageBuilder.createMainMessage(
+      summary,
+      undefined,
+      false, // 簡易表示
+      showVoteButton
+    );
   }
 }
