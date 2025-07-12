@@ -171,7 +171,7 @@ export class NotificationService {
               inline: true,
             },
             {
-              name: '締切',
+              name: '回答締切',
               value: schedule.deadline ? formatDate(deadline.toISOString()) : '未設定',
               inline: true,
             },
