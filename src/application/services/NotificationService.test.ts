@@ -156,7 +156,7 @@ describe('NotificationService', () => {
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
         'channel123',
         expect.objectContaining({
-          content: expect.stringContaining('⏰ **締切リマインダー**'),
+          content: expect.stringContaining('⏰ 「Test Event」'),
           embeds: expect.arrayContaining([
             expect.objectContaining({
               color: 0xffcc00,
@@ -359,7 +359,7 @@ describe('NotificationService', () => {
         updatedAt: new Date('2024-01-01'),
       });
 
-      await notificationService.sendDeadlineReminder(scheduleWithMentions, '締切まで1時間');
+      await notificationService.sendDeadlineReminder(scheduleWithMentions, '回答締切まで残り1時間');
 
       // Check that guild members were searched
       expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
@@ -423,7 +423,10 @@ describe('NotificationService', () => {
         updatedAt: new Date('2024-01-01'),
       });
 
-      await notificationService.sendDeadlineReminder(scheduleWithSpecialMentions, '締切まで1時間');
+      await notificationService.sendDeadlineReminder(
+        scheduleWithSpecialMentions,
+        '回答締切まで残り1時間'
+      );
 
       // Should not search guild members for @everyone/@here
       expect(mockDiscordApi.searchGuildMembers).not.toHaveBeenCalled();
@@ -465,7 +468,7 @@ describe('NotificationService', () => {
 
       await notificationService.sendDeadlineReminder(
         scheduleWithFormattedMentions,
-        '締切まで1時間'
+        '回答締切まで残り1時間'
       );
 
       // Should not search guild members for already formatted mentions
@@ -522,7 +525,10 @@ describe('NotificationService', () => {
         updatedAt: new Date('2024-01-01'),
       });
 
-      await notificationService.sendDeadlineReminder(scheduleWithMixedMentions, '締切まで1時間');
+      await notificationService.sendDeadlineReminder(
+        scheduleWithMixedMentions,
+        '回答締切まで残り1時間'
+      );
 
       // Check that message contains all resolved mentions
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(

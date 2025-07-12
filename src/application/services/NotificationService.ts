@@ -83,13 +83,13 @@ export class NotificationService {
 
     // チャンネルにリマインダーを送信
     const message = {
-      content: `${mentions}⏰ **締切リマインダー**: 「${schedule.title}」の${customMessage}です！`,
+      content: `${mentions}⏰ 「${schedule.title}」の${customMessage}です！`,
       embeds: [
         {
           color: 0xffcc00,
           fields: [
             {
-              name: '締切時刻',
+              name: '回答締切',
               value: deadlineDate.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
               inline: true,
             },

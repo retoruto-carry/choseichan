@@ -33,9 +33,9 @@ export class DeadlineReminderUseCase {
 
   // デフォルトのリマインダータイミング定義
   private readonly DEFAULT_REMINDER_TIMINGS = [
-    { type: '3d', hours: 72, message: '締切まで3日' },
-    { type: '1d', hours: 24, message: '締切まで1日' },
-    { type: '8h', hours: 8, message: '締切まで8時間' },
+    { type: '3d', hours: 72, message: '回答締切まで残り3日' },
+    { type: '1d', hours: 24, message: '回答締切まで残り1日' },
+    { type: '8h', hours: 8, message: '回答締切まで残り8時間' },
   ];
 
   async checkDeadlines(guildId?: string): Promise<DeadlineReminderUseCaseResult> {
@@ -172,20 +172,20 @@ export class DeadlineReminderUseCase {
 
   private getTimingMessage(timing: string): string {
     const match = timing.match(/^(\d+)([dhm])$/);
-    if (!match) return `締切まで${timing}`;
+    if (!match) return `回答締切まで残り${timing}`;
 
     const value = parseInt(match[1]);
     const unit = match[2];
 
     switch (unit) {
       case 'd':
-        return `締切まで${value}日`;
+        return `回答締切まで残り${value}日`;
       case 'h':
-        return `締切まで${value}時間`;
+        return `回答締切まで残り${value}時間`;
       case 'm':
-        return `締切まで${value}分`;
+        return `回答締切まで残り${value}分`;
       default:
-        return `締切まで${timing}`;
+        return `回答締切まで残り${timing}`;
     }
   }
 }

@@ -135,13 +135,13 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日',
+              message: '回答締切まで残り1日',
             },
             {
               scheduleId: 'schedule-456',
               guildId: 'guild-123',
               reminderType: '8h',
-              message: '締切まで8時間',
+              message: '回答締切まで残り8時間',
             },
           ],
           justClosed: [{ scheduleId: 'schedule-789', guildId: 'guild-123' }],
@@ -176,7 +176,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledTimes(2);
       expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
         mockSchedule,
-        '締切まで1日'
+        '回答締切まで残り1日'
       );
 
       // Verify reminder status was updated
@@ -277,13 +277,13 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日',
+              message: '回答締切まで残り1日',
             },
             {
               scheduleId: 'schedule-456',
               guildId: 'guild-123',
               reminderType: '8h',
-              message: '締切まで8時間',
+              message: '回答締切まで残り8時間',
             },
           ],
           justClosed: [],
@@ -312,7 +312,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledTimes(1);
       expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
         mockSchedule,
-        '締切まで8時間'
+        '回答締切まで残り8時間'
       );
     });
 
@@ -325,7 +325,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日',
+              message: '回答締切まで残り1日',
             },
           ],
           justClosed: [],
@@ -347,7 +347,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       // Should still send reminder
       expect(mockNotificationService.sendDeadlineReminder).toHaveBeenCalledWith(
         mockSchedule,
-        '締切まで1日'
+        '回答締切まで残り1日'
       );
     });
 
@@ -360,7 +360,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日',
+              message: '回答締切まで残り1日',
             },
           ],
           justClosed: [],
@@ -424,7 +424,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         scheduleId: `schedule-${i}`,
         guildId: 'guild-123',
         reminderType: '1d',
-        message: '締切まで1日',
+        message: '回答締切まで残り1日',
       }));
 
       vi.mocked(mockDeadlineReminderUseCase.checkDeadlines).mockResolvedValueOnce({
