@@ -2,8 +2,10 @@ import { InteractionResponseType, InteractionType, verifyKey } from 'discord-int
 import { Hono } from 'hono';
 import { sendDeadlineReminders } from './infrastructure/cron/deadline-reminder';
 import { Logger } from './infrastructure/logging/Logger';
+import type { DeadlineReminderTask } from './infrastructure/ports/DeadlineReminderQueuePort';
 import type { MessageUpdateTask } from './infrastructure/ports/MessageUpdateQueuePort';
 import type { ButtonInteraction, CommandInteraction, Env } from './infrastructure/types/discord';
+import { handleDeadlineReminderBatch } from './infrastructure/utils/deadline-reminder-queue';
 import { handleMessageUpdateBatch } from './infrastructure/utils/message-update-queue';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
 import { createCommandController } from './presentation/controllers/CommandController';
@@ -121,8 +123,17 @@ app.post('/interactions', async (c) => {
 });
 
 // Cloudflare Queuesコンシューマー
-export async function queue(batch: MessageBatch<MessageUpdateTask>, env: Env): Promise<void> {
-  await handleMessageUpdateBatch(batch, env);
+export async function queue(
+  batch: MessageBatch<MessageUpdateTask | DeadlineReminderTask>,
+  env: Env,
+  _ctx: ExecutionContext
+): Promise<void> {
+  // キューの名前で処理を分岐
+  if (batch.queue === 'message-update-queue') {
+    await handleMessageUpdateBatch(batch as MessageBatch<MessageUpdateTask>, env);
+  } else if (batch.queue === 'deadline-reminder-queue') {
+    await handleDeadlineReminderBatch(batch as MessageBatch<DeadlineReminderTask>, env);
+  }
 }
 
 export default app;

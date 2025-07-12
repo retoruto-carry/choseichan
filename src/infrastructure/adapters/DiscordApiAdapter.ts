@@ -28,45 +28,34 @@ export class DiscordApiAdapter implements IDiscordApiPort {
     await this.discordApiService.sendNotification(channelId, content, token);
   }
 
-  async fetchGuildMembers(
+  async searchGuildMembers(
     guildId: string,
-    token: string
+    query: string,
+    token: string,
+    limit: number = 5
   ): Promise<
     Array<{
       user: { id: string; username: string; discriminator: string };
     }>
   > {
-    const members: Array<{
-      user: { id: string; username: string; discriminator: string };
-    }> = [];
-    let after: string | undefined;
+    const url = `https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(
+      query
+    )}&limit=${limit}`;
 
-    // Discord APIは一度に最大1000人のメンバーを取得可能
-    while (true) {
-      const url = `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000${after ? `&after=${after}` : ''}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bot ${token}`,
+      },
+    });
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bot ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch guild members: ${response.status}`);
-      }
-
-      const memberList = (await response.json()) as Array<{
-        user: { id: string; username: string; discriminator: string };
-      }>;
-
-      if (memberList.length === 0) break;
-
-      members.push(...memberList);
-
-      if (memberList.length < 1000) break;
-      after = memberList[memberList.length - 1].user.id;
+    if (!response.ok) {
+      // 検索エラーの場合は空配列を返す（エラーを投げない）
+      console.error(`Failed to search guild members: ${response.status}`);
+      return [];
     }
 
-    return members;
+    return (await response.json()) as Array<{
+      user: { id: string; username: string; discriminator: string };
+    }>;
   }
 }

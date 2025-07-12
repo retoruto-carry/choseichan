@@ -15,8 +15,10 @@ export interface Env {
   DB: D1Database;
   // Message Update Queue
   MESSAGE_UPDATE_QUEUE?: Queue<MessageUpdateTask>;
+  // Deadline Reminder Queue
+  DEADLINE_REMINDER_QUEUE?: Queue<any>;
   // 動的な環境変数アクセスを許可
-  [key: string]: string | D1Database | Queue<MessageUpdateTask> | ExecutionContext | undefined;
+  [key: string]: string | D1Database | Queue<any> | ExecutionContext | undefined;
 }
 
 export interface DiscordUser {

@@ -34,3 +34,15 @@ max_batch_size = 10
 max_batch_timeout = 5
 max_retries = 3
 dead_letter_queue = "message-update-dlq"
+
+# Queues configuration for deadline reminder processing
+[[queues.producers]]
+queue = "deadline-reminder-queue"
+binding = "DEADLINE_REMINDER_QUEUE"
+
+[[queues.consumers]]
+queue = "deadline-reminder-queue"
+max_batch_size = 20
+max_batch_timeout = 10
+max_retries = 3
+dead_letter_queue = "deadline-reminder-dlq"

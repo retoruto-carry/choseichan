@@ -31,8 +31,6 @@ const _STATUS_EMOJI = {
 };
 
 export class NotificationService {
-  private memberCache: Map<string, Map<string, { id: string; username: string }>> = new Map();
-
   constructor(
     private logger: ILogger,
     private discordApi: IDiscordApiPort,
@@ -195,78 +193,48 @@ export class NotificationService {
     await this.discordApi.sendMessage(channelId, message, this.discordToken);
   }
 
-  private async fetchGuildMembers(
-    guildId: string
-  ): Promise<Map<string, { id: string; username: string }>> {
-    const cachedMembers = this.memberCache.get(guildId);
-    if (cachedMembers) {
-      return cachedMembers;
-    }
-
-    const members = new Map<string, { id: string; username: string }>();
-
-    try {
-      const memberList = await this.discordApi.fetchGuildMembers(guildId, this.discordToken);
-
-      for (const member of memberList) {
-        members.set(member.user.username.toLowerCase(), {
-          id: member.user.id,
-          username: member.user.username,
-        });
-      }
-
-      // 5分間キャッシュ（Workers環境ではTTLベースキャッシュを推奨）
-      this.memberCache.set(guildId, members);
-      // setTimeout は Cloudflare Workers で使用不可のため、
-      // TTLベースのキャッシュまたは Durable Objects を使用することを推奨
-
-      return members;
-    } catch (error) {
-      this.logger.error(
-        'Error fetching guild members',
-        error instanceof Error ? error : new Error(String(error))
-      );
-      return members;
-    }
-  }
-
   private async resolveUserMentions(mentions: string[], guildId: string): Promise<string[]> {
     const resolved: string[] = [];
-
-    // メンバーを取得する必要があるかチェック
-    const needsResolution = mentions.some(
-      (m) => m !== '@everyone' && m !== '@here' && !(m.startsWith('<@') && m.endsWith('>'))
-    );
-
-    if (!needsResolution) {
-      return mentions;
-    }
-
-    const members = await this.fetchGuildMembers(guildId);
 
     for (const mention of mentions) {
       if (mention === '@everyone' || mention === '@here') {
         resolved.push(mention);
       } else if (mention.startsWith('<@') && mention.endsWith('>')) {
         resolved.push(mention); // すでに正しい形式
-      } else if (mention.startsWith('@')) {
-        // @プレフィックスを削除してユーザー名を検索
-        const username = mention.substring(1).toLowerCase();
-        const member = members.get(username);
-
-        if (member) {
-          resolved.push(`<@${member.id}>`);
-        } else {
-          this.logger.warn(`Could not resolve user mention: ${mention}`);
-          // フォールバックとして元のメンションを保持
-          resolved.push(mention);
-        }
       } else {
-        // @プレフィックスなしで試す
-        const member = members.get(mention.toLowerCase());
-        if (member) {
-          resolved.push(`<@${member.id}>`);
-        } else {
+        // ユーザー名で検索
+        const searchQuery = mention.startsWith('@') ? mention.substring(1) : mention;
+
+        try {
+          const searchResults = await this.discordApi.searchGuildMembers(
+            guildId,
+            searchQuery,
+            this.discordToken,
+            1 // 最初の1件のみ取得
+          );
+
+          if (searchResults.length > 0) {
+            // 大文字小文字を無視して完全一致を確認
+            const exactMatch = searchResults.find(
+              (member) => member.user.username.toLowerCase() === searchQuery.toLowerCase()
+            );
+
+            if (exactMatch) {
+              resolved.push(`<@${exactMatch.user.id}>`);
+            } else {
+              // 完全一致がない場合は最初の結果を使用
+              resolved.push(`<@${searchResults[0].user.id}>`);
+            }
+          } else {
+            this.logger.warn(`Could not resolve user mention: ${mention}`);
+            // フォールバックとして元のメンションを保持
+            resolved.push(mention);
+          }
+        } catch (error) {
+          this.logger.error(
+            'Error searching for user',
+            error instanceof Error ? error : new Error(String(error))
+          );
           resolved.push(mention);
         }
       }

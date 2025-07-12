@@ -65,7 +65,7 @@ describe('NotificationService', () => {
       updateMessage: vi.fn(),
       sendMessage: vi.fn(),
       sendNotification: vi.fn(),
-      fetchGuildMembers: vi.fn(),
+      searchGuildMembers: vi.fn(),
     };
 
     mockScheduleRepository = {
@@ -324,15 +324,16 @@ describe('NotificationService', () => {
   });
 
   describe('Mention Resolution', () => {
-    it('should fetch and cache guild members', async () => {
-      const mockMembers = [
-        { user: { id: '123456789', username: 'TestUser1', discriminator: '0001' } },
-        { user: { id: '987654321', username: 'TestUser2', discriminator: '0002' } },
-        { user: { id: '555555555', username: 'TestUser3', discriminator: '0003' } },
-      ];
-
-      // Mock fetchGuildMembers
-      vi.mocked(mockDiscordApi.fetchGuildMembers).mockResolvedValue(mockMembers);
+    it('should search and resolve guild members', async () => {
+      // Mock searchGuildMembers
+      vi.mocked(mockDiscordApi.searchGuildMembers)
+        .mockResolvedValueOnce([
+          { user: { id: '123456789', username: 'TestUser1', discriminator: '0001' } },
+        ])
+        .mockResolvedValueOnce([
+          { user: { id: '987654321', username: 'TestUser2', discriminator: '0002' } },
+        ])
+        .mockResolvedValueOnce([]); // nonexistent user
 
       const scheduleWithMentions = Schedule.create({
         id: 'test-schedule',
@@ -360,8 +361,25 @@ describe('NotificationService', () => {
 
       await notificationService.sendDeadlineReminder(scheduleWithMentions, '締切まで1時間');
 
-      // Check that guild members were fetched
-      expect(mockDiscordApi.fetchGuildMembers).toHaveBeenCalledWith('guild123', mockToken);
+      // Check that guild members were searched
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
+        'guild123',
+        'TestUser1',
+        mockToken,
+        1
+      );
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
+        'guild123',
+        'TestUser2',
+        mockToken,
+        1
+      );
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
+        'guild123',
+        'nonexistent',
+        mockToken,
+        1
+      );
 
       // Check that message was sent with resolved mentions
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
@@ -407,8 +425,8 @@ describe('NotificationService', () => {
 
       await notificationService.sendDeadlineReminder(scheduleWithSpecialMentions, '締切まで1時間');
 
-      // Should not fetch guild members for @everyone/@here
-      expect(mockDiscordApi.fetchGuildMembers).not.toHaveBeenCalled();
+      // Should not search guild members for @everyone/@here
+      expect(mockDiscordApi.searchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains @everyone and @here
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
@@ -450,8 +468,8 @@ describe('NotificationService', () => {
         '締切まで1時間'
       );
 
-      // Should not fetch guild members for already formatted mentions
-      expect(mockDiscordApi.fetchGuildMembers).not.toHaveBeenCalled();
+      // Should not search guild members for already formatted mentions
+      expect(mockDiscordApi.searchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains the mentions as-is
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
@@ -464,13 +482,15 @@ describe('NotificationService', () => {
     });
 
     it('should handle mixed mention formats', async () => {
-      const mockMembers = [
-        { user: { id: '111111111', username: 'Alice', discriminator: '0001' } },
-        { user: { id: '222222222', username: 'Bob', discriminator: '0002' } },
-      ];
-
-      // Mock fetchGuildMembers for mixed mentions
-      vi.mocked(mockDiscordApi.fetchGuildMembers).mockResolvedValue(mockMembers);
+      // Mock searchGuildMembers for mixed mentions
+      vi.mocked(mockDiscordApi.searchGuildMembers).mockImplementation(async (_guildId, query) => {
+        if (query === 'Alice') {
+          return [{ user: { id: '111111111', username: 'Alice', discriminator: '0001' } }];
+        } else if (query === 'Bob') {
+          return [{ user: { id: '222222222', username: 'Bob', discriminator: '0002' } }];
+        }
+        return [];
+      });
 
       const scheduleWithMixedMentions = Schedule.create({
         id: 'test-schedule',

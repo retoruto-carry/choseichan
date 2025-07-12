@@ -27,12 +27,14 @@ import { UpdateScheduleUseCase } from '../../application/usecases/schedule/Updat
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
 import { CloudflareQueueAdapter } from '../adapters/CloudflareQueueAdapter';
+import { DeadlineReminderQueueAdapter } from '../adapters/DeadlineReminderQueueAdapter';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
 import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import { TestBackgroundExecutorAdapter } from '../adapters/TestBackgroundExecutorAdapter';
 import { WorkersBackgroundExecutorAdapter } from '../adapters/WorkersBackgroundExecutorAdapter';
+import type { DeadlineReminderQueuePort } from '../ports/DeadlineReminderQueuePort';
 import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
@@ -67,6 +69,7 @@ export interface InfrastructureServices {
   repositoryFactory: IRepositoryFactory;
   messageUpdateQueuePort: MessageUpdateQueuePort;
   backgroundExecutor: BackgroundExecutorPort;
+  deadlineReminderQueue?: DeadlineReminderQueuePort;
 }
 
 export interface DomainServices {
@@ -115,10 +118,16 @@ export class DependencyContainer {
       ? new WorkersBackgroundExecutorAdapter(env.ctx)
       : new TestBackgroundExecutorAdapter();
 
+    // DeadlineReminderQueue: 利用可能な場合のみ
+    const deadlineReminderQueue = env.DEADLINE_REMINDER_QUEUE
+      ? new DeadlineReminderQueueAdapter(env.DEADLINE_REMINDER_QUEUE)
+      : undefined;
+
     return {
       repositoryFactory,
       messageUpdateQueuePort,
       backgroundExecutor,
+      deadlineReminderQueue,
     };
   }
 
@@ -190,7 +199,8 @@ export class DependencyContainer {
           processReminderUseCase,
           closeScheduleUseCase,
           notificationService,
-          environmentAdapter
+          environmentAdapter,
+          infrastructure.deadlineReminderQueue
         )
       : null;
 

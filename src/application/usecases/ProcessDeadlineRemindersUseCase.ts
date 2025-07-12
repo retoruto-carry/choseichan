@@ -4,6 +4,7 @@
  * 締切リマインダー処理のユースケース
  */
 
+import type { DeadlineReminderQueuePort } from '../../infrastructure/ports/DeadlineReminderQueuePort';
 // Rate limiting removed - using Cloudflare Queues for scheduling instead
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';
@@ -24,7 +25,8 @@ export class ProcessDeadlineRemindersUseCase {
     private readonly processReminderUseCase: ProcessReminderUseCase,
     private readonly closeScheduleUseCase: CloseScheduleUseCase,
     private readonly notificationService: NotificationService,
-    private readonly env: IEnvironmentPort
+    private readonly env: IEnvironmentPort,
+    private readonly deadlineReminderQueue?: DeadlineReminderQueuePort
   ) {}
 
   async execute(): Promise<void> {
@@ -88,34 +90,51 @@ export class ProcessDeadlineRemindersUseCase {
     _batchSize: number,
     _batchDelay: number
   ): Promise<void> {
-    // Process all reminders concurrently (no artificial delays in Workers)
+    if (!this.deadlineReminderQueue) {
+      // Fallback: 直接処理（テスト環境など）
+      await this.processRemindersDirectly(reminders);
+      return;
+    }
+
+    // Queueにタスクを送信
+    const tasks = reminders.map((reminderInfo) => ({
+      type: 'send_reminder' as const,
+      scheduleId: reminderInfo.scheduleId,
+      guildId: reminderInfo.guildId,
+      customMessage: reminderInfo.message,
+    }));
+
+    await this.deadlineReminderQueue.sendBatch(tasks);
+
+    // リマインダー送信済みフラグの更新
+    await Promise.allSettled(
+      reminders.map((reminderInfo) =>
+        this.processReminderUseCase.markReminderSent({
+          scheduleId: reminderInfo.scheduleId,
+          guildId: reminderInfo.guildId,
+          reminderType: reminderInfo.reminderType,
+        })
+      )
+    );
+
+    this.logger.info(`Queued ${tasks.length} reminder tasks`);
+  }
+
+  private async processRemindersDirectly(reminders: ReminderInfo[]): Promise<void> {
+    // 既存の直接処理ロジック（テスト用）
     const results = await Promise.allSettled(
       reminders.map(async (reminderInfo) => {
         const { scheduleId, guildId, reminderType, message } = reminderInfo;
 
         try {
-          // Get schedule and summary in parallel for better performance
-          const [scheduleResult, _summaryResult] = await Promise.allSettled([
-            this.getScheduleUseCase.execute(scheduleId, guildId),
-            this.getScheduleSummaryUseCase.execute(scheduleId, guildId),
-          ]);
+          const scheduleResult = await this.getScheduleUseCase.execute(scheduleId, guildId);
 
-          // Handle schedule result
-          if (scheduleResult.status === 'rejected') {
-            throw new Error(`Failed to get schedule ${scheduleId}: ${scheduleResult.reason}`);
-          }
-
-          if (!scheduleResult.value?.success || !scheduleResult.value?.schedule) {
+          if (!scheduleResult?.success || !scheduleResult?.schedule) {
             throw new Error(`Failed to get schedule ${scheduleId}`);
           }
 
-          // Send reminder (summary is optional)
-          await this.notificationService.sendDeadlineReminder(
-            scheduleResult.value.schedule,
-            message
-          );
+          await this.notificationService.sendDeadlineReminder(scheduleResult.schedule, message);
 
-          // Update reminder status
           await this.processReminderUseCase.markReminderSent({
             scheduleId,
             guildId,
@@ -145,17 +164,46 @@ export class ProcessDeadlineRemindersUseCase {
   private async processClosures(
     closures: Array<{ scheduleId: string; guildId: string }>
   ): Promise<void> {
-    // Process closures concurrently (no artificial delays in Workers)
+    if (!this.deadlineReminderQueue) {
+      // Fallback: 直接処理（テスト環境など）
+      await this.processClosuresDirectly(closures);
+      return;
+    }
+
+    // Queueにタスクを送信
+    const closeTasks = closures.map(({ scheduleId, guildId }) => ({
+      type: 'close_schedule' as const,
+      scheduleId,
+      guildId,
+    }));
+
+    const summaryTasks = closures.map(({ scheduleId, guildId }) => ({
+      type: 'send_summary' as const,
+      scheduleId,
+      guildId,
+    }));
+
+    // 締切処理とサマリー送信を別々にキューイング
+    await this.deadlineReminderQueue.sendBatch([...closeTasks, ...summaryTasks]);
+
+    this.logger.info(
+      `Queued ${closeTasks.length} closure tasks and ${summaryTasks.length} summary tasks`
+    );
+  }
+
+  private async processClosuresDirectly(
+    closures: Array<{ scheduleId: string; guildId: string }>
+  ): Promise<void> {
+    // 既存の直接処理ロジック（テスト用）
     const results = await Promise.allSettled(
       closures.map(async (closureInfo) => {
         try {
           const { scheduleId, guildId } = closureInfo;
 
-          // Close schedule
           const closeResult = await this.closeScheduleUseCase.execute({
             scheduleId,
             guildId,
-            editorUserId: 'system', // System closure
+            editorUserId: 'system',
           });
 
           if (!closeResult.success) {
@@ -166,7 +214,6 @@ export class ProcessDeadlineRemindersUseCase {
             return { success: false, scheduleId };
           }
 
-          // Get schedule for PR message
           const scheduleResult = await this.getScheduleUseCase.execute(scheduleId, guildId);
           if (!scheduleResult.success || !scheduleResult.schedule) {
             this.logger.error(
@@ -178,7 +225,6 @@ export class ProcessDeadlineRemindersUseCase {
             return { success: false, scheduleId };
           }
 
-          // Send summary and PR message
           await this.notificationService.sendSummaryMessage(scheduleId, guildId);
           this.notificationService.sendPRMessage(scheduleResult.schedule);
 
