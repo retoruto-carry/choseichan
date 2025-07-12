@@ -42,7 +42,7 @@ export class ProcessMessageUpdateUseCase {
       // embedとcomponentsを作成（MessageFormatterを使用）
       const { embed, components } = this.messageFormatter.formatScheduleMessage(
         summaryResult.summary,
-        false
+        true
       );
 
       // メッセージ更新を実行
