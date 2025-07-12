@@ -356,4 +356,102 @@ describe('Schedule Domain Entity', () => {
       expect(schedule.status).toBe(ScheduleStatus.OPEN);
     });
   });
+
+  describe('updateDeadline', () => {
+    it('should reopen closed schedule when deadline is set to future', () => {
+      const testSchedule = Schedule.create({
+        id: 'schedule1',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        title: 'Test Schedule',
+        dates: validDates,
+        createdBy: validUser,
+        authorId: 'user123',
+      });
+
+      const futureDeadline = new Date(Date.now() + 86400000); // 24 hours later
+      const closedSchedule = testSchedule.close();
+
+      const updatedSchedule = closedSchedule.updateDeadline(futureDeadline);
+
+      expect(updatedSchedule.status).toBe(ScheduleStatus.OPEN);
+      expect(updatedSchedule.deadline).toEqual(futureDeadline);
+    });
+
+    it('should reopen closed schedule when deadline is removed', () => {
+      const testSchedule = Schedule.create({
+        id: 'schedule1',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        title: 'Test Schedule',
+        dates: validDates,
+        createdBy: validUser,
+        authorId: 'user123',
+      });
+
+      const closedSchedule = testSchedule.close();
+
+      const updatedSchedule = closedSchedule.updateDeadline(null);
+
+      expect(updatedSchedule.status).toBe(ScheduleStatus.OPEN);
+      expect(updatedSchedule.deadline).toBeUndefined();
+    });
+
+    it('should close open schedule when deadline is set to past', () => {
+      const testSchedule = Schedule.create({
+        id: 'schedule1',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        title: 'Test Schedule',
+        dates: validDates,
+        createdBy: validUser,
+        authorId: 'user123',
+      });
+
+      const pastDeadline = new Date(Date.now() - 86400000); // 24 hours ago
+
+      const updatedSchedule = testSchedule.updateDeadline(pastDeadline);
+
+      expect(updatedSchedule.status).toBe(ScheduleStatus.CLOSED);
+      expect(updatedSchedule.deadline).toEqual(pastDeadline);
+    });
+
+    it('should keep open schedule open when deadline is set to future', () => {
+      const testSchedule = Schedule.create({
+        id: 'schedule1',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        title: 'Test Schedule',
+        dates: validDates,
+        createdBy: validUser,
+        authorId: 'user123',
+      });
+
+      const futureDeadline = new Date(Date.now() + 86400000); // 24 hours later
+
+      const updatedSchedule = testSchedule.updateDeadline(futureDeadline);
+
+      expect(updatedSchedule.status).toBe(ScheduleStatus.OPEN);
+      expect(updatedSchedule.deadline).toEqual(futureDeadline);
+    });
+
+    it('should reset reminders when deadline is updated', () => {
+      const testSchedule = Schedule.create({
+        id: 'schedule1',
+        guildId: 'guild123',
+        channelId: 'channel123',
+        title: 'Test Schedule',
+        dates: validDates,
+        createdBy: validUser,
+        authorId: 'user123',
+      });
+
+      const scheduleWithReminders = testSchedule.updateReminderSettings(['1d', '8h'], ['@here']);
+      const futureDeadline = new Date(Date.now() + 86400000);
+
+      const updatedSchedule = scheduleWithReminders.updateDeadline(futureDeadline);
+
+      expect(updatedSchedule.remindersSent).toEqual([]);
+    });
+  });
 });

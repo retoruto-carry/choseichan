@@ -102,7 +102,7 @@ describe('CloseScheduleUseCase', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toEqual(['この日程調整は締め切られています']);
+      expect(result.errors).toEqual(['このスケジュールは既に締め切られています']);
       expect(mockScheduleRepository.save).not.toHaveBeenCalled();
     });
 

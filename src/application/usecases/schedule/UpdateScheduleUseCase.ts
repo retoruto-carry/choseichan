@@ -56,14 +56,6 @@ export class UpdateScheduleUseCase {
         };
       }
 
-      // 5. 締め切られたスケジュールのチェック
-      if (scheduleEntity.isClosed()) {
-        return {
-          success: false,
-          errors: ['締め切られたスケジュールは編集できません'],
-        };
-      }
-
       // 6. ドメインサービスによる業務ルール検証
       const domainValidation = ScheduleDomainService.validateScheduleForUpdate({
         schedule: scheduleEntity,

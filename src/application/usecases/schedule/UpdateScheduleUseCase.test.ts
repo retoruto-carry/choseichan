@@ -308,9 +308,10 @@ describe('UpdateScheduleUseCase', () => {
       expect(result.errors).toContain('このスケジュールを編集する権限がありません');
     });
 
-    it('should return error when schedule is closed', async () => {
+    it('should allow editing closed schedules (to match old behavior)', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
+      vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
 
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
@@ -321,9 +322,48 @@ describe('UpdateScheduleUseCase', () => {
 
       const result = await useCase.execute(request);
 
-      expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
-      expect(result.errors).toContain('締め切られたスケジュールは編集できません');
+      expect(result.success).toBe(true);
+      expect(result.schedule).toBeDefined();
+      expect(result.schedule?.title).toBe('Updated Title');
+    });
+
+    it('should reopen closed schedule when deadline is set to future', async () => {
+      const closedSchedule = { ...mockSchedule, status: 'closed' as const };
+      vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
+      vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
+
+      const futureDeadline = new Date(Date.now() + 86400000); // 24 hours later
+      const request: UpdateScheduleRequest = {
+        scheduleId: 'schedule-123',
+        guildId: 'guild-123',
+        editorUserId: 'user-123',
+        deadline: futureDeadline.toISOString(),
+      };
+
+      const result = await useCase.execute(request);
+
+      expect(result.success).toBe(true);
+      expect(result.schedule).toBeDefined();
+      expect(result.schedule?.status).toBe('open');
+    });
+
+    it('should reopen closed schedule when deadline is removed', async () => {
+      const closedSchedule = { ...mockSchedule, status: 'closed' as const };
+      vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
+      vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
+
+      const request: UpdateScheduleRequest = {
+        scheduleId: 'schedule-123',
+        guildId: 'guild-123',
+        editorUserId: 'user-123',
+        deadline: null,
+      };
+
+      const result = await useCase.execute(request);
+
+      expect(result.success).toBe(true);
+      expect(result.schedule).toBeDefined();
+      expect(result.schedule?.status).toBe('open');
     });
 
     it('should handle repository errors', async () => {

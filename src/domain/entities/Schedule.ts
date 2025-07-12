@@ -316,6 +316,16 @@ export class Schedule {
   }
 
   updateDeadline(deadline: Date | null | undefined): Schedule {
+    // 締切日時に基づいてステータスを更新（旧実装の動作を再現）
+    let newStatus = this._status;
+    if (!deadline || deadline > new Date()) {
+      // 締切がない、または未来の場合は open にする
+      newStatus = ScheduleStatus.OPEN;
+    } else {
+      // 締切が過去の場合は closed にする
+      newStatus = ScheduleStatus.CLOSED;
+    }
+
     return new Schedule(
       this._id,
       this._guildId,
@@ -324,7 +334,7 @@ export class Schedule {
       this._dates,
       this._createdBy,
       this._authorId,
-      this._status,
+      newStatus,
       this._createdAt,
       new Date(),
       this._messageId,

@@ -235,13 +235,6 @@ export class ScheduleDomainService {
       };
     }
 
-    if (schedule.isClosed()) {
-      return {
-        canEdit: false,
-        reason: 'この日程調整は締め切られています',
-      };
-    }
-
     return { canEdit: true };
   }
 }

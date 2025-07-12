@@ -80,7 +80,7 @@ export const BUSINESS_CONSTANTS = {
   MAX_RESPONSES_PER_SCHEDULE: 200,
 
   // リマインダー設定
-  DEFAULT_REMINDER_TIMINGS: ['1d', '8h'] as const,
+  DEFAULT_REMINDER_TIMINGS: ['3d', '1d', '8h'] as const,
   MAX_REMINDER_TIMINGS: 5,
   MIN_REMINDER_ADVANCE_MINUTES: 10,
   MAX_REMINDER_ADVANCE_DAYS: 30,
@@ -135,6 +135,15 @@ export const VALIDATION_CONSTANTS = {
   MAX_RESPONSES_COUNT: 200,
 } as const;
 
+// 成功メッセージ定数
+export const SUCCESS_MESSAGES = {
+  SCHEDULE_CREATED: '日程調整を作成しました！',
+  SCHEDULE_UPDATED: '日程調整を更新しました！',
+  SCHEDULE_DELETED: '日程調整を削除しました。',
+  RESPONSE_SAVED: '回答を保存しました！',
+  REMINDER_SENT: 'リマインダーを送信しました。',
+} as const;
+
 // エラーメッセージ定数
 export const ERROR_MESSAGES = {
   // バリデーションエラー
@@ -144,12 +153,15 @@ export const ERROR_MESSAGES = {
   INVALID_FORMAT: (field: string) => `${field}の形式が正しくありません`,
 
   // ビジネスロジックエラー
-  SCHEDULE_NOT_FOUND: 'スケジュールが見つかりません',
-  SCHEDULE_ALREADY_CLOSED: 'このスケジュールは既に締め切られています',
-  SCHEDULE_PERMISSION_DENIED: 'この操作を行う権限がありません',
+  SCHEDULE_NOT_FOUND: '日程調整が見つかりません。',
+  SCHEDULE_ALREADY_CLOSED: 'この日程調整は既に締め切られています。',
+  SCHEDULE_PERMISSION_DENIED: '権限がありません。',
   RESPONSE_NOT_FOUND: '回答が見つかりません',
   INVALID_RESPONSE_STATUS: '無効な回答ステータスです',
   INVALID_INPUT: '入力内容に問題があります。',
+  INTERNAL_ERROR: '処理中にエラーが発生しました。',
+  UNKNOWN_BUTTON: '不明なボタンです。',
+  UNKNOWN_MODAL: '不明なモーダルです。',
   UNKNOWN_COMMAND: '不明なコマンドです。',
 
   // システムエラー
