@@ -287,7 +287,7 @@ export class NotificationService {
                 .map((response) => {
                   const status = response.dateStatuses[date.id];
                   if (!status) return null;
-                  const statusEmoji = status === 'ok' ? '○' : status === 'maybe' ? '△' : '×';
+                  const statusEmoji = status === 'ok' ? '✅' : status === 'maybe' ? '❓' : '❌';
                   return `${statusEmoji} ${response.username}`;
                 })
                 .filter(Boolean);
@@ -295,7 +295,7 @@ export class NotificationService {
               return {
                 name: `${isBest ? '⭐ ' : ''}${date.datetime}`,
                 value: [
-                  `集計: ○ ${count.yes}人 △ ${count.maybe}人 × ${count.no}人`,
+                  `集計: ✅ ${count.yes}人 ❓ ${count.maybe}人 ❌ ${count.no}人`,
                   dateResponses.length > 0 ? dateResponses.join(', ') : '回答なし',
                 ].join('\n'),
                 inline: false,
