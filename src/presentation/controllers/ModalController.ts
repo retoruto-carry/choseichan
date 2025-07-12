@@ -9,6 +9,9 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
+import { parseButtonId } from '../../utils/id';
+import { createCreateScheduleController } from './CreateScheduleController';
+import { createEditModalController } from './EditModalController';
 
 export class ModalController {
   private readonly logger = getLogger();
@@ -21,7 +24,6 @@ export class ModalController {
   async handleModalSubmit(interaction: ModalInteraction, env: Env): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
-      const { parseButtonId } = await import('../../utils/id');
       const { action, params } = parseButtonId(customId);
 
       // Handle both 'modal:create_schedule' and 'create_schedule' formats
@@ -69,7 +71,6 @@ export class ModalController {
     interaction: ModalInteraction,
     env: Env
   ): Promise<Response> {
-    const { createCreateScheduleController } = await import('./CreateScheduleController');
     const controller = createCreateScheduleController(env);
     return controller.handleCreateScheduleModal(interaction, env);
   }
@@ -79,7 +80,6 @@ export class ModalController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
     return controller.handleEditInfoModal(interaction, params, env);
   }
@@ -89,7 +89,6 @@ export class ModalController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
     return controller.handleUpdateDatesModal(interaction, params, env);
   }
@@ -99,7 +98,6 @@ export class ModalController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
     return controller.handleAddDatesModal(interaction, params, env);
   }
@@ -109,7 +107,6 @@ export class ModalController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
     return controller.handleEditDeadlineModal(interaction, params, env);
   }
@@ -119,7 +116,6 @@ export class ModalController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createEditModalController } = await import('./EditModalController');
     const controller = createEditModalController(env);
     return controller.handleEditReminderModal(interaction, params, env);
   }

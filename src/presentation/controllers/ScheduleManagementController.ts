@@ -11,6 +11,9 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { ScheduleManagementUIBuilder } from '../builders/ScheduleManagementUIBuilder';
+import { updateScheduleMainMessage } from '../../application/services/ScheduleUpdaterService';
+import { NotificationService } from '../../application/services/NotificationService';
+import { deleteMessage } from '../utils/discord';
 
 export class ScheduleManagementController {
   private readonly logger = getLogger();
@@ -489,10 +492,6 @@ export class ScheduleManagementController {
         scheduleResult.schedule?.messageId &&
         env.DISCORD_APPLICATION_ID
       ) {
-        const { updateScheduleMainMessage } = await import(
-          '../../application/services/ScheduleUpdaterService'
-        );
-
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
           scheduleResult.schedule.messageId,
@@ -514,10 +513,6 @@ export class ScheduleManagementController {
 
       // 通知送信
       if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
-        const { NotificationService } = await import(
-          '../../application/services/NotificationService'
-        );
-
         const notificationService = new NotificationService(
           this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
           this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
@@ -566,10 +561,6 @@ export class ScheduleManagementController {
         scheduleResult.schedule?.messageId &&
         env.DISCORD_APPLICATION_ID
       ) {
-        const { updateScheduleMainMessage } = await import(
-          '../../application/services/ScheduleUpdaterService'
-        );
-
         const updatePromise = updateScheduleMainMessage(
           scheduleId,
           scheduleResult.schedule.messageId,
@@ -616,7 +607,6 @@ export class ScheduleManagementController {
               return;
             }
 
-            const { deleteMessage } = await import('../../presentation/utils/discord');
             await deleteMessage(applicationId, interaction.token, messageId);
           } catch (error) {
             this.logger.error(

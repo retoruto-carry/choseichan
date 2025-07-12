@@ -9,6 +9,11 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
+import { parseButtonId } from '../../utils/id';
+import { createVoteController } from './VoteController';
+import { createScheduleManagementController } from './ScheduleManagementController';
+import { createScheduleEditController } from './ScheduleEditController';
+import { createDisplayController } from './DisplayController';
 
 export class ButtonInteractionController {
   private readonly logger = getLogger();
@@ -21,7 +26,6 @@ export class ButtonInteractionController {
   async handleButtonInteraction(interaction: ButtonInteraction, env: Env): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
-      const { parseButtonId } = await import('../../utils/id');
       const parsed = parseButtonId(customId);
 
       if (!parsed) {
@@ -98,7 +102,6 @@ export class ButtonInteractionController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createVoteController } = await import('./VoteController');
     const controller = createVoteController(env);
     return controller.handleRespondButton(interaction, params, env);
   }
@@ -108,7 +111,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleStatusButton(interaction, params);
   }
@@ -117,7 +119,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleEditButton(interaction, params);
   }
@@ -126,7 +127,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleDetailsButton(interaction, params);
   }
@@ -136,7 +136,6 @@ export class ButtonInteractionController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleCloseButton(interaction, params, env);
   }
@@ -146,7 +145,6 @@ export class ButtonInteractionController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleReopenButton(interaction, params, env);
   }
@@ -156,7 +154,6 @@ export class ButtonInteractionController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleDeleteButton(interaction, params, env);
   }
@@ -165,7 +162,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleRefreshButton(interaction, params);
   }
@@ -174,7 +170,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleHideDetailsButton(interaction, params);
   }
@@ -184,7 +179,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleEditInfoButton(interaction, params);
   }
@@ -193,7 +187,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleUpdateDatesButton(interaction, params);
   }
@@ -202,7 +195,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleAddDatesButton(interaction, params);
   }
@@ -211,7 +203,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleRemoveDatesButton(interaction, params);
   }
@@ -220,7 +211,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleConfirmRemoveDateButton(interaction, params);
   }
@@ -229,7 +219,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleEditDeadlineButton(interaction, params);
   }
@@ -238,7 +227,6 @@ export class ButtonInteractionController {
     interaction: ButtonInteraction,
     params: string[]
   ): Promise<Response> {
-    const { createScheduleEditController } = await import('./ScheduleEditController');
     const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleReminderEditButton(interaction, params);
   }
@@ -249,7 +237,6 @@ export class ButtonInteractionController {
     params: string[],
     env: Env
   ): Promise<Response> {
-    const { createDisplayController } = await import('./DisplayController');
     const controller = createDisplayController(env);
     return controller.handleToggleDetailsButton(interaction, params, env);
   }
