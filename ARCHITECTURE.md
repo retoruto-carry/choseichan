@@ -9,6 +9,7 @@ Discord 調整ちゃんは、Clean Architecture (Onion Architecture) パター�
 - **ランタイム**: Cloudflare Workers (エッジコンピューティング)
 - **言語**: TypeScript (strict mode)
 - **データベース**: Cloudflare D1 (SQLite エッジデータベース)
+- **キュー**: Cloudflare Queues (メッセージ更新の最適化)
 - **テストフレームワーク**: Vitest
 - **コード品質**: Biome (Linting & Formatting)
 - **デプロイ**: Wrangler CLI
@@ -37,6 +38,7 @@ User Interface → Application → Domain ← Infrastructure
 - **Domain Services**: `services/` - 複数エンティティにまたがるビジネスロジック
   - `ScheduleDomainService.ts` - スケジュール関連のドメインサービス
   - `ResponseDomainService.ts` - 回答関連のドメインサービス
+  - `MessageUpdateService.ts` - メッセージ更新のビジネスルール
 
 - **Repository Interfaces**: `repositories/interfaces.ts` - データアクセス抽象化
 
@@ -46,6 +48,10 @@ User Interface → Application → Domain ← Infrastructure
 - **Use Cases**: `usecases/` - ビジネス要件に対応する処理フロー
   - `schedule/` - スケジュール関連ユースケース
   - `response/` - 回答関連ユースケース
+  - `message/` - メッセージ更新関連ユースケース
+
+- **Services**: `services/` - アプリケーションサービス
+  - `MessageUpdateServiceImpl.ts` - メッセージ更新サービス実装
 
 - **DTOs**: `dto/` - レイヤー間データ転送オブジェクト
   - `ScheduleDto.ts`, `ResponseDto.ts`
@@ -62,6 +68,12 @@ User Interface → Application → Domain ← Infrastructure
 
 - **External Services**: `services/` - 外部サービス実装
   - `DiscordApiService.ts` - Discord API通信
+
+- **Adapters**: `adapters/` - 外部システムアダプター
+  - `CloudflareQueueAdapter.ts` - Cloudflare Queues アダプター
+
+- **Ports**: `ports/` - インフラストラクチャポート定義
+  - `MessageUpdateQueuePort.ts` - メッセージ更新キューポート
 
 - **Factories**: `factories/` - 依存関係注入
   - `DependencyContainer.ts` - アプリケーション全体の依存関係管理
@@ -150,21 +162,26 @@ UI構築とコントローラー。ApplicationとInfrastructureに依存。
   - ValidationService による入力検証統一
   - RateLimitService によるレート制限
 - ✅ 日本語コメント化完了
+- ✅ Cloudflare Queues によるメッセージ更新最適化
 
 ### 現在の実装状況（2025年7月時点）
 
 #### ✅ Clean Architecture 完全移行済み
-- **ドメイン層**: 5エンティティ、2ドメインサービス
-- **アプリケーション層**: 13ユースケース実装
+- **ドメイン層**: 5エンティティ、3ドメインサービス
+  - エンティティ: Schedule, Response, ScheduleDate, ResponseStatus, User
+  - ドメインサービス: ScheduleDomainService, ResponseDomainService, MessageUpdateService
+- **アプリケーション層**: 14ユースケース実装
   - Schedule: Create, Update, Delete, Close, Reopen, GetSchedule, GetSummary, FindSchedules
   - Response: Submit, Update, GetResponse
   - System: ProcessDeadlineReminders, DeadlineReminder
+  - Message: ProcessMessageUpdate
 - **インフラストラクチャ層**: 
   - D1リポジトリ実装
   - 構造化ログシステム
   - バリデーションサービス
   - レート制限サービス
   - エラーレスポンスファクトリー
+  - Cloudflare Queues アダプター
 - **プレゼンテーション層**: 11コントローラー、11UIビルダー
 
 #### 🎯 品質指標
@@ -178,6 +195,7 @@ UI構築とコントローラー。ApplicationとInfrastructureに依存。
 2. **回答システム**: ○△× の3段階評価とコメント機能
 3. **自動化**: 締切リマインダーと自動締切処理
 4. **セキュリティ**: Ed25519署名検証とレート制限
+5. **パフォーマンス**: Cloudflare Queuesによる非同期メッセージ更新
 
 ### アーキテクチャ利点
 

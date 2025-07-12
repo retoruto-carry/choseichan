@@ -7,7 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DependencyContainer } from '../../src/infrastructure/factories/DependencyContainer';
 import type { Env } from '../../src/infrastructure/types/discord';
-import { getMessageUpdateDebouncer } from '../../src/infrastructure/utils/message-update-debouncer';
+import { getMessageUpdateStrategy } from '../../src/infrastructure/utils/message-update-strategy';
 import type { D1Database } from '../helpers/d1-database';
 import {
   applyMigrations,
@@ -32,8 +32,8 @@ describe('並行投票の統合テスト', () => {
     env = createTestEnv(db);
     container = new DependencyContainer(env);
 
-    // Clear debouncer state
-    getMessageUpdateDebouncer().clear();
+    // Clear update strategy state
+    getMessageUpdateStrategy().clear();
 
     // Mock fetch for Discord API calls
     global.fetch = vi.fn().mockResolvedValue({
@@ -47,7 +47,7 @@ describe('並行投票の統合テスト', () => {
   afterEach(async () => {
     await closeTestDatabase(db);
     vi.restoreAllMocks();
-    getMessageUpdateDebouncer().clear();
+    getMessageUpdateStrategy().clear();
   });
 
   describe('並行投票シナリオ', () => {
@@ -301,59 +301,47 @@ describe('並行投票の統合テスト', () => {
     });
   });
 
-  describe('メッセージ更新デバウンサー', () => {
-    it('デバウンサーが正常に動作する', async () => {
-      const debouncer = getMessageUpdateDebouncer();
-      let updateCount = 0;
-
-      const mockUpdate = vi.fn(async () => {
-        updateCount++;
-      });
-
-      // 短時間に複数回更新を試行
-      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-
-      // 最初の1回だけ実行されることを確認（デバウンス期間内のため）
-      expect(updateCount).toBe(1);
-
-      // 統計情報を確認
-      const stats = debouncer.getStats();
-      expect(stats.recentUpdateCount).toBe(1);
-
-      // デバウンス時間後に再度更新
-      await new Promise((resolve) => setTimeout(resolve, 2100));
-      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-
-      // 2回目が実行されることを確認
-      expect(updateCount).toBe(2);
+  describe('メッセージ更新戦略', () => {
+    it('レート制限が正常に動作する', async () => {
+      const strategy = getMessageUpdateStrategy();
+      
+      // 最初の更新は許可される
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
+      strategy.recordUpdate('schedule-1', 'message-1');
+      
+      // 短時間内の更新はスキップされる
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
+      
+      // 最小間隔後は更新可能
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
     });
 
     it('異なるスケジュールの更新は独立して処理される', async () => {
-      const debouncer = getMessageUpdateDebouncer();
-      let updateCount1 = 0;
-      let updateCount2 = 0;
-
-      const mockUpdate1 = vi.fn(async () => {
-        updateCount1++;
-      });
-
-      const mockUpdate2 = vi.fn(async () => {
-        updateCount2++;
-      });
-
-      // 異なるスケジュールで更新を実行
-      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate1);
-      await debouncer.scheduleUpdate('schedule-2', 'message-2', 'token', 'guild-1', mockUpdate2);
-
-      // それぞれ1回ずつ実行されることを確認（異なるキーのため）
-      expect(updateCount1).toBe(1);
-      expect(updateCount2).toBe(1);
-
-      // 統計情報を確認
-      const stats = debouncer.getStats();
-      expect(stats.recentUpdateCount).toBe(2); // 両方が最近の更新として記録される
+      const strategy = getMessageUpdateStrategy();
+      
+      // 両方とも最初の更新は許可される
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
+      strategy.recordUpdate('schedule-1', 'message-1');
+      
+      expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(true);
+      strategy.recordUpdate('schedule-2', 'message-2');
+      
+      // それぞれのスケジュールは独立してレート制限される
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
+      expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(false);
+    });
+    
+    it('締切時の強制更新が動作する', async () => {
+      const strategy = getMessageUpdateStrategy();
+      
+      // 通常の更新を記録
+      strategy.recordUpdate('schedule-1', 'message-1');
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
+      
+      // 強制更新後は即座に更新可能
+      strategy.forceUpdate('schedule-1', 'message-1');
+      expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
     });
   });
 });

@@ -1,26 +1,18 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResponseDto, ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
 import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';
-
-// デバウンサーをモック
-const mockDebouncer = {
-  scheduleUpdate: vi.fn().mockResolvedValue(undefined),
-  clear: vi.fn(),
-  getStats: vi.fn(),
-};
-vi.mock('../../infrastructure/utils/message-update-debouncer', () => ({
-  getMessageUpdateDebouncer: () => mockDebouncer,
-}));
 
 describe('VoteController', () => {
   let controller: VoteController;
   let mockContainer: DependencyContainer;
   let mockUIBuilder: VoteUIBuilder;
   let mockEnv: Env;
+  let mockMessageUpdateService: MessageUpdateService;
 
   const mockSchedule: ScheduleResponse = {
     id: 'schedule-123',
@@ -58,7 +50,11 @@ describe('VoteController', () => {
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
-    mockDebouncer.scheduleUpdate.mockClear();
+    
+    // Mock MessageUpdateService
+    mockMessageUpdateService = {
+      scheduleUpdate: vi.fn().mockResolvedValue(undefined),
+    };
     
     // Mock environment
     mockEnv = {
@@ -66,6 +62,9 @@ describe('VoteController', () => {
       DISCORD_APPLICATION_ID: 'test_app',
       DISCORD_TOKEN: 'test_token',
       DB: {} as D1Database,
+      MESSAGE_UPDATE_QUEUE: {
+        send: vi.fn().mockResolvedValue(undefined),
+      } as any,
       ctx: {
         waitUntil: vi.fn(),
       } as any,
@@ -100,6 +99,7 @@ describe('VoteController', () => {
           getResponseRepository: vi.fn(),
         },
       },
+      messageUpdateService: mockMessageUpdateService,
     } as any;
 
     // Mock UIBuilder
@@ -431,15 +431,14 @@ describe('VoteController', () => {
 
       await controller.handleVoteModal(mockModalInteraction, ['schedule-123'], mockEnv);
 
-      // waitUntilとデバウンサーが呼ばれることを確認
-      expect(mockEnv.ctx?.waitUntil).toHaveBeenCalled();
-      expect(mockDebouncer.scheduleUpdate).toHaveBeenCalledWith(
-        'schedule-123',
-        'msg-123',
-        'interaction_token',
-        'guild-123',
-        expect.any(Function)
-      );
+      // MessageUpdateServiceが呼ばれることを確認
+      expect(mockMessageUpdateService.scheduleUpdate).toHaveBeenCalledWith({
+        scheduleId: 'schedule-123',
+        messageId: 'msg-123',
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+        updateType: expect.any(String),
+      });
     });
 
     it('should allow author to vote on closed schedule', async () => {
@@ -548,6 +547,18 @@ describe('VoteController', () => {
         guildId: 'guild-123',
         editorUserId: 'user-123',
       });
+
+      // 締切時の即座更新を確認
+      expect(mockMessageUpdateService.scheduleUpdate).toHaveBeenCalledWith({
+        scheduleId: 'schedule-123',
+        messageId: 'msg-123',
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+        updateType: expect.any(String),
+      });
+
+      // waitUntilが呼ばれたことを確認（通知送信用）
+      expect(mockEnv.ctx?.waitUntil).toHaveBeenCalled();
     });
 
     it('should return error when user is not authorized', async () => {

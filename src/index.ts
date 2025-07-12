@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { sendDeadlineReminders } from './infrastructure/cron/deadline-reminder';
 import { Logger } from './infrastructure/logging/Logger';
 import type { ButtonInteraction, CommandInteraction, Env } from './infrastructure/types/discord';
+import { handleMessageUpdateBatch, type MessageUpdateTask } from './infrastructure/utils/message-update-queue';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
 import { createCommandController } from './presentation/controllers/CommandController';
 import { createModalController } from './presentation/controllers/ModalController';
@@ -117,5 +118,13 @@ app.post('/interactions', async (c) => {
 
   return c.text('Unknown interaction type', 400);
 });
+
+// Cloudflare Queuesコンシューマー
+export async function queue(
+  batch: MessageBatch<MessageUpdateTask>,
+  env: Env
+): Promise<void> {
+  await handleMessageUpdateBatch(batch, env);
+}
 
 export default app;

@@ -8,11 +8,10 @@
 import { InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 import { NotificationService } from '../../application/services/NotificationService';
-// ResponseStatus type - should be moved to a proper type file
+import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
-import { getMessageUpdateDebouncer } from '../../infrastructure/utils/message-update-debouncer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
@@ -228,19 +227,18 @@ export class VoteController {
       // Send response message
       const responseContent = this.createResponseMessage(schedule, responses, username);
 
-      // Update main message in background with debouncing
-      if (env.ctx && schedule.messageId && env.DISCORD_APPLICATION_ID) {
-        const debouncer = getMessageUpdateDebouncer();
-        // Cloudflare Workersでは非同期実行をwaitUntilでラップ
-        env.ctx.waitUntil(
-          debouncer.scheduleUpdate(
+      // Update main message using MessageUpdateService
+      if (schedule.messageId && schedule.channelId) {
+        const messageUpdateService = this.dependencyContainer.messageUpdateService;
+        if (messageUpdateService) {
+          await messageUpdateService.scheduleUpdate({
             scheduleId,
-            schedule.messageId,
-            interaction.token,
+            messageId: schedule.messageId,
+            channelId: schedule.channelId,
             guildId,
-            () => this.updateMainMessage(scheduleId, schedule.messageId!, interaction.token, env, guildId)
-          )
-        );
+            updateType: MessageUpdateType.VOTE_UPDATE,
+          });
+        }
       }
 
       return createEphemeralResponse(responseContent);
@@ -305,6 +303,20 @@ export class VoteController {
 
       // Send notifications in background
       if (env.ctx && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
+        // 締切時は即座に最終更新を実行
+        if (schedule.messageId && schedule.channelId) {
+          const messageUpdateService = this.dependencyContainer.messageUpdateService;
+          if (messageUpdateService) {
+            await messageUpdateService.scheduleUpdate({
+              scheduleId,
+              messageId: schedule.messageId,
+              channelId: schedule.channelId,
+              guildId,
+              updateType: MessageUpdateType.CLOSE_UPDATE,
+            });
+          }
+        }
+        
         env.ctx.waitUntil(this.sendClosureNotifications(scheduleId, guildId, env));
       }
 

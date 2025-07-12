@@ -6,7 +6,9 @@
  */
 
 import { NotificationService } from '../../application/services/NotificationService';
+import { MessageUpdateServiceImpl } from '../../application/services/MessageUpdateServiceImpl';
 import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
+import { ProcessMessageUpdateUseCase } from '../../application/usecases/message/ProcessMessageUpdateUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 import { SubmitResponseUseCase } from '../../application/usecases/response/SubmitResponseUseCase';
 import { UpdateResponseUseCase } from '../../application/usecases/response/UpdateResponseUseCase';
@@ -22,6 +24,9 @@ import { ProcessReminderUseCase } from '../../application/usecases/schedule/Proc
 import { ReopenScheduleUseCase } from '../../application/usecases/schedule/ReopenScheduleUseCase';
 import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
+import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
+import { CloudflareQueueAdapter } from '../adapters/CloudflareQueueAdapter';
+import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 import { DiscordApiService, type IDiscordApiService } from '../services/DiscordApiService';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
@@ -44,15 +49,24 @@ export interface ApplicationServices {
   submitResponseUseCase: SubmitResponseUseCase;
   updateResponseUseCase: UpdateResponseUseCase;
   getResponseUseCase: GetResponseUseCase;
+
+  // Message Update Use Cases
+  processMessageUpdateUseCase: ProcessMessageUpdateUseCase | null;
 }
 
 export interface InfrastructureServices {
   repositoryFactory: IRepositoryFactory;
   discordApiService: IDiscordApiService;
+  messageUpdateQueuePort: MessageUpdateQueuePort;
+}
+
+export interface DomainServices {
+  messageUpdateService: MessageUpdateService;
 }
 
 export class DependencyContainer {
   private readonly _infrastructureServices: InfrastructureServices;
+  private readonly _domainServices: DomainServices;
   private readonly _applicationServices: ApplicationServices;
   private readonly _env: Env;
 
@@ -61,12 +75,22 @@ export class DependencyContainer {
     // Infrastructure Services
     this._infrastructureServices = this.createInfrastructureServices(env);
 
+    // Domain Services
+    this._domainServices = this.createDomainServices(this._infrastructureServices);
+
     // Application Services
-    this._applicationServices = this.createApplicationServices(this._infrastructureServices);
+    this._applicationServices = this.createApplicationServices(
+      this._infrastructureServices,
+      this._domainServices
+    );
   }
 
   get infrastructureServices(): InfrastructureServices {
     return this._infrastructureServices;
+  }
+
+  get domainServices(): DomainServices {
+    return this._domainServices;
   }
 
   get applicationServices(): ApplicationServices {
@@ -76,14 +100,27 @@ export class DependencyContainer {
   private createInfrastructureServices(env: Env): InfrastructureServices {
     const repositoryFactory = createRepositoryFactory(env);
     const discordApiService = new DiscordApiService();
+    const messageUpdateQueuePort = new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE);
 
     return {
       repositoryFactory,
       discordApiService,
+      messageUpdateQueuePort,
     };
   }
 
-  private createApplicationServices(infrastructure: InfrastructureServices): ApplicationServices {
+  private createDomainServices(infrastructure: InfrastructureServices): DomainServices {
+    const messageUpdateService = new MessageUpdateServiceImpl(infrastructure.messageUpdateQueuePort);
+
+    return {
+      messageUpdateService,
+    };
+  }
+
+  private createApplicationServices(
+    infrastructure: InfrastructureServices,
+    domainServices: DomainServices
+  ): ApplicationServices {
     const scheduleRepository = infrastructure.repositoryFactory.getScheduleRepository();
     const responseRepository = infrastructure.repositoryFactory.getResponseRepository();
 
@@ -130,6 +167,15 @@ export class DependencyContainer {
         )
       : null;
 
+    // Create message update use case
+    const processMessageUpdateUseCase = this._env.DISCORD_TOKEN
+      ? new ProcessMessageUpdateUseCase(
+          getScheduleSummaryUseCase,
+          infrastructure.discordApiService,
+          this._env.DISCORD_TOKEN
+        )
+      : null;
+
     return {
       // Schedule Use Cases
       createScheduleUseCase,
@@ -148,6 +194,9 @@ export class DependencyContainer {
       submitResponseUseCase,
       updateResponseUseCase,
       getResponseUseCase,
+
+      // Message Update Use Cases
+      processMessageUpdateUseCase,
     };
   }
 
@@ -195,6 +244,16 @@ export class DependencyContainer {
   }
   get getResponseUseCase() {
     return this._applicationServices.getResponseUseCase;
+  }
+
+  // Message Update Use Cases便利アクセサー
+  get processMessageUpdateUseCase() {
+    return this._applicationServices.processMessageUpdateUseCase;
+  }
+
+  // Domain Services便利アクセサー
+  get messageUpdateService() {
+    return this._domainServices.messageUpdateService;
   }
 
   /**

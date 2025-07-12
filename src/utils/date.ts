@@ -21,6 +21,12 @@ export function formatDateShort(dateString: string): string {
  */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
+  
+  // 無効な日付の場合はそのまま返す
+  if (isNaN(date.getTime())) {
+    return dateString;
+  }
+  
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -208,6 +214,20 @@ export function parseUserInputDate(input: string): Date | null {
       parseInt(day),
       parseInt(hour),
       parseInt(minute)
+    );
+  }
+
+  // YYYY/MM/DD または YYYY-MM-DD (時刻なし)
+  const match6b = cleanedInput.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (match6b) {
+    const [, year, month, day] = match6b;
+    return createJSTDate(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      23,
+      59,
+      59
     );
   }
 

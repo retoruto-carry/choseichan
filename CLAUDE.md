@@ -45,13 +45,10 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 - `src/infrastructure/` - 外部技術（D1リポジトリ・API）
 - `src/presentation/` - UI構築とコントローラー
 
-### ストレージサービス
-- **主流**: Clean Architecture（ドメイン層＋アプリケーション層）
-- `StorageServiceV2` - 後方互換性アダプター（段階的廃止予定）
-
-### 型変換
-- `src/types/schedule.ts` - レガシー型定義
-- `src/types/schedule-v2.ts` - 新しい型定義と変換関数
+### データアクセス
+- **リポジトリパターン**: Clean Architecture に準拠
+- D1データベースへの直接アクセスを抽象化
+- ドメイン層のインターフェースとインフラ層の実装を分離
 
 ## データモデル
 
@@ -81,8 +78,8 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 
 ### テスト
 - `vitest.config.ts` で順次実行設定（テスト分離のため）
-- StorageServiceV2 を使用してテストを書く
-- モックは各テストで独立させる
+- リポジトリパターンを使用したモック
+- 各テストで独立したDependencyContainer
 
 ## よくある問題と解決法
 
@@ -92,21 +89,21 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 - 表示: JST
 
 ### 型エラー
-- schedule-v2.ts の変換関数を使用
-- StorageServiceV2 がアダプターとして機能
+- TypeScript strict mode で厳密な型チェック
+- ドメインエンティティとDTOの明確な分離
 
 ### テストの失敗
-- KV モックの初期化を確認
-- `DATABASE_TYPE: 'kv'` を環境変数に設定
-- StorageService のインスタンス化時に env を渡す
+- DependencyContainerの適切な初期化を確認
+- モックサービスの正しい設定
+- D1データベースのテスト用セットアップ
 
 ## 今後の改善案
 
-1. 残りのテストの修正
-2. エラーハンドリングの統一
-3. ログシステムの実装
-4. 国際化対応
-5. パフォーマンスモニタリング
+1. 残りのハンドラーのプレゼンテーション層への移行
+2. 国際化対応（i18n）
+3. パフォーマンスモニタリング
+4. WebSocket サポート（リアルタイム更新）
+5. 管理者ダッシュボード
 
 ## 重要なファイル
 
@@ -116,10 +113,10 @@ wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema
 - `/src/infrastructure/factories/DependencyContainer.ts` - DI コンテナ
 - `/src/cron/deadline-reminder.ts` - クリーンアーキテクチャ化済み
 
-### Legacy（段階的移行対象）
+### 主要ファイル
 - `/src/index.ts` - エントリーポイント
-- `/src/handlers/` - Discord ハンドラー（11ファイル）
-- `/src/services/storage-v2.ts` - 後方互換性アダプター
+- `/src/infrastructure/utils/message-update-queue.ts` - Queuesハンドラー
+- `/src/handlers/` - Discord ハンドラー（段階的にプレゼンテーション層へ移行中）
 
 ### Database
 - `/migrations/0001_initial_schema.sql` - D1スキーマ

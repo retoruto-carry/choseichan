@@ -12,6 +12,8 @@ export interface Env {
   REMINDER_BATCH_DELAY?: string;
   // D1 Database
   DB: D1Database;
+  // Message Update Queue
+  MESSAGE_UPDATE_QUEUE?: Queue<any>;
 }
 
 export interface DiscordUser {

@@ -22,3 +22,15 @@ migrations_dir = "migrations"
 migrations_table = "d1_migrations"
 
 # All variables are now only D1 database - no more switching needed
+
+# Queues configuration for message update batching
+[[queues.producers]]
+queue = "message-update-queue"
+binding = "MESSAGE_UPDATE_QUEUE"
+
+[[queues.consumers]]
+queue = "message-update-queue"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+dead_letter_queue = "message-update-dlq"
