@@ -1,35 +1,33 @@
 /**
  * Button Interaction Controller
- * 
+ *
  * ボタンインタラクション機能のコントローラー
  * 元: src/handlers/buttons.ts の Clean Architecture版
  */
 
-import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, Env } from '../../infrastructure/types/discord';
+import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { getLogger } from '../../infrastructure/logging/Logger';
+import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 
 export class ButtonInteractionController {
-  constructor(
-    private readonly dependencyContainer: DependencyContainer
-  ) {}
+  private readonly logger = getLogger();
+
+  constructor(private readonly dependencyContainer: DependencyContainer) {}
 
   /**
    * ボタンインタラクション処理
    */
-  async handleButtonInteraction(
-    interaction: ButtonInteraction,
-    env: Env
-  ): Promise<Response> {
+  async handleButtonInteraction(interaction: ButtonInteraction, env: Env): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
       const { parseButtonId } = await import('../../utils/id');
       const parsed = parseButtonId(customId);
-      
+
       if (!parsed) {
         return this.createErrorResponse('ボタンIDの解析に失敗しました');
       }
-      
+
       const { action, params } = parsed;
 
       // Route to appropriate controller based on action
@@ -37,7 +35,7 @@ export class ButtonInteractionController {
         // Vote actions
         case 'respond':
           return this.handleRespondButton(interaction, params, env);
-          
+
         // Schedule management actions
         case 'status':
           return this.handleStatusButton(interaction, params);
@@ -55,8 +53,8 @@ export class ButtonInteractionController {
           return this.handleRefreshButton(interaction, params);
         case 'hide_details':
           return this.handleHideDetailsButton(interaction, params);
-          
-        // Edit actions  
+
+        // Edit actions
         case 'edit_info':
           return this.handleEditInfoButton(interaction, params);
         case 'update_dates':
@@ -71,153 +69,198 @@ export class ButtonInteractionController {
           return this.handleEditDeadlineButton(interaction, params);
         case 'reminder_edit':
           return this.handleReminderEditButton(interaction, params);
-          
-        // Comment actions
-        case 'add_comment':
-          return this.handleAddCommentButton(interaction, params);
-        case 'comment':
-          return this.handleCommentButton(interaction, params);
-          
+
         // Display actions
         case 'toggle_details':
           return this.handleToggleDetailsButton(interaction, params, env);
-          
+
         default:
           return this.createErrorResponse('不明なボタンです。');
       }
-
     } catch (error) {
-      console.error('Error in handleButtonInteraction:', error);
+      this.logger.error('Error in handleButtonInteraction', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handle-button-interaction',
+        useCase: 'ButtonInteractionController',
+        customId: interaction.data.custom_id,
+        guildId: interaction.guild_id,
+      });
       return this.createErrorResponse('ボタンの処理中にエラーが発生しました。');
     }
   }
 
   // Vote handlers
-  private async handleRespondButton(interaction: ButtonInteraction, params: string[], env: Env): Promise<Response> {
+  private async handleRespondButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env
+  ): Promise<Response> {
     const { createVoteController } = await import('./VoteController');
     const controller = createVoteController(env);
     return controller.handleRespondButton(interaction, params, env);
   }
 
   // Schedule management handlers
-  private async handleStatusButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleStatusButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
-    const controller = createScheduleManagementController(this.dependencyContainer['_env']);
+    const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleStatusButton(interaction, params);
   }
 
-  private async handleEditButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleEditButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
-    const controller = createScheduleManagementController(this.dependencyContainer['_env']);
+    const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleEditButton(interaction, params);
   }
 
-  private async handleDetailsButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleDetailsButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
-    const controller = createScheduleManagementController(this.dependencyContainer['_env']);
+    const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleDetailsButton(interaction, params);
   }
 
-  private async handleCloseButton(interaction: ButtonInteraction, params: string[], env: Env): Promise<Response> {
+  private async handleCloseButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleCloseButton(interaction, params, env);
   }
 
-  private async handleReopenButton(interaction: ButtonInteraction, params: string[], env: Env): Promise<Response> {
+  private async handleReopenButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleReopenButton(interaction, params, env);
   }
 
-  private async handleDeleteButton(interaction: ButtonInteraction, params: string[], env: Env): Promise<Response> {
+  private async handleDeleteButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
     const controller = createScheduleManagementController(env);
     return controller.handleDeleteButton(interaction, params, env);
   }
 
-  private async handleRefreshButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleRefreshButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
-    const controller = createScheduleManagementController(this.dependencyContainer['_env']);
+    const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleRefreshButton(interaction, params);
   }
 
-  private async handleHideDetailsButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleHideDetailsButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleManagementController } = await import('./ScheduleManagementController');
-    const controller = createScheduleManagementController(this.dependencyContainer['_env']);
+    const controller = createScheduleManagementController(this.dependencyContainer.env);
     return controller.handleHideDetailsButton(interaction, params);
   }
 
   // Edit handlers
-  private async handleEditInfoButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleEditInfoButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleEditInfoButton(interaction, params);
   }
 
-  private async handleUpdateDatesButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleUpdateDatesButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleUpdateDatesButton(interaction, params);
   }
 
-  private async handleAddDatesButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleAddDatesButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleAddDatesButton(interaction, params);
   }
 
-  private async handleRemoveDatesButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleRemoveDatesButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleRemoveDatesButton(interaction, params);
   }
 
-  private async handleConfirmRemoveDateButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleConfirmRemoveDateButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleConfirmRemoveDateButton(interaction, params);
   }
 
-  private async handleEditDeadlineButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleEditDeadlineButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleEditDeadlineButton(interaction, params);
   }
 
-  private async handleReminderEditButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
+  private async handleReminderEditButton(
+    interaction: ButtonInteraction,
+    params: string[]
+  ): Promise<Response> {
     const { createScheduleEditController } = await import('./ScheduleEditController');
-    const controller = createScheduleEditController(this.dependencyContainer['_env']);
+    const controller = createScheduleEditController(this.dependencyContainer.env);
     return controller.handleReminderEditButton(interaction, params);
   }
 
-  // Comment handlers
-  private async handleAddCommentButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
-    const { createCommentController } = await import('./CommentController');
-    const controller = createCommentController(this.dependencyContainer['_env']);
-    return controller.handleAddCommentButton(interaction, params, this.dependencyContainer['_env']);
-  }
-
-  private async handleCommentButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
-    // Comment functionality has been removed
-    return this.createErrorResponse('コメント機能は廃止されました。');
-  }
-
   // Display handlers
-  private async handleToggleDetailsButton(interaction: ButtonInteraction, params: string[], env: Env): Promise<Response> {
+  private async handleToggleDetailsButton(
+    interaction: ButtonInteraction,
+    params: string[],
+    env: Env
+  ): Promise<Response> {
     const { createDisplayController } = await import('./DisplayController');
     const controller = createDisplayController(env);
     return controller.handleToggleDetailsButton(interaction, params, env);
   }
 
   private createErrorResponse(message: string): Response {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: message,
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(
+      JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: message,
+          flags: InteractionResponseFlags.EPHEMERAL,
+        },
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
 

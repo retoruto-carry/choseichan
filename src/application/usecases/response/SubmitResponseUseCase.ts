@@ -1,20 +1,28 @@
 /**
  * Submit Response Use Case
- * 
+ *
  * レスポンス投稿のユースケース
  * ビジネスルールの検証とレスポンス作成処理を実行
  */
 
-import { Schedule } from '../../../domain/entities/Schedule';
-import { Response } from '../../../domain/entities/Response';
-import { User } from '../../../domain/entities/User';
-import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
+import type { Response } from '../../../domain/entities/Response';
 import { ResponseStatus } from '../../../domain/entities/ResponseStatus';
-import { ResponseDomainService, UserResponseData } from '../../../domain/services/ResponseDomainService';
-import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
-import { SubmitResponseRequest, ResponseSubmissionResult, ResponseDto } from '../../dto/ResponseDto';
-import { DomainSchedule, DomainResponse, DomainResponseStatus } from '../../../domain/types/DomainTypes';
-import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
+import { User } from '../../../domain/entities/User';
+import type {
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
+import {
+  ResponseDomainService,
+  type UserResponseData,
+} from '../../../domain/services/ResponseDomainService';
+import type { DomainResponse, DomainResponseStatus } from '../../../domain/types/DomainTypes';
+import type {
+  ResponseDto,
+  ResponseSubmissionResult,
+  SubmitResponseRequest,
+} from '../../dto/ResponseDto';
+import { ResponseMapper, ScheduleMapper } from '../../mappers/DomainMappers';
 
 export class SubmitResponseUseCase {
   constructor(
@@ -31,22 +39,19 @@ export class SubmitResponseUseCase {
           success: false,
           response: {} as ResponseDto,
           isNewResponse: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
       // 2. スケジュールの取得
-      const schedule = await this.scheduleRepository.findById(
-        request.scheduleId,
-        request.guildId
-      );
+      const schedule = await this.scheduleRepository.findById(request.scheduleId, request.guildId);
 
       if (!schedule) {
         return {
           success: false,
           response: {} as ResponseDto,
           isNewResponse: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -60,21 +65,17 @@ export class SubmitResponseUseCase {
         request.guildId
       );
 
-      const existingResponse = existingResponseData 
+      const existingResponse = existingResponseData
         ? ResponseMapper.toDomain(existingResponseData)
         : undefined;
 
       // 5. ユーザーオブジェクトの作成
-      const user = User.create(
-        request.userId,
-        request.username,
-        request.displayName
-      );
+      const user = User.create(request.userId, request.username, request.displayName);
 
       // 6. レスポンスデータの変換
-      const responseData: UserResponseData[] = request.responses.map(r => ({
+      const responseData: UserResponseData[] = request.responses.map((r) => ({
         dateId: r.dateId,
-        status: ResponseStatus.fromString(r.status)
+        status: ResponseStatus.fromString(r.status),
       }));
 
       // 7. ドメインサービスによる業務ルール検証
@@ -89,7 +90,7 @@ export class SubmitResponseUseCase {
           success: false,
           response: {} as ResponseDto,
           isNewResponse: false,
-          errors: domainValidation.errors
+          errors: domainValidation.errors,
         };
       }
 
@@ -111,7 +112,7 @@ export class SubmitResponseUseCase {
         displayName: primitives.user.displayName,
         dateStatuses: primitives.dateStatuses as Record<string, DomainResponseStatus>,
         comment: primitives.comment,
-        updatedAt: primitives.updatedAt
+        updatedAt: primitives.updatedAt,
       };
       await this.responseRepository.save(domainResponse, request.guildId);
 
@@ -120,7 +121,7 @@ export class SubmitResponseUseCase {
         request.scheduleId,
         request.guildId
       );
-      
+
       const updatedSchedule = scheduleEntity.updateTotalResponses(allResponses.length);
       await this.scheduleRepository.save(updatedSchedule.toPrimitives());
 
@@ -130,20 +131,24 @@ export class SubmitResponseUseCase {
       return {
         success: true,
         response: responseDto,
-        isNewResponse: !existingResponse
+        isNewResponse: !existingResponse,
       };
-
     } catch (error) {
       return {
         success: false,
         response: {} as ResponseDto,
         isNewResponse: false,
-        errors: [`レスポンスの投稿に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `レスポンスの投稿に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  private validateBasicData(request: SubmitResponseRequest): { isValid: boolean; errors: string[] } {
+  private validateBasicData(request: SubmitResponseRequest): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {
@@ -183,13 +188,13 @@ export class SubmitResponseUseCase {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   private buildResponseDto(response: Response): ResponseDto {
     const primitives = response.toPrimitives();
-    
+
     // primitives.dateStatuses はすでに文字列なので、ResponseStatus型に変換
     const dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'> = {};
     Object.entries(primitives.dateStatuses).forEach(([dateId, statusString]) => {
@@ -210,7 +215,7 @@ export class SubmitResponseUseCase {
       displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

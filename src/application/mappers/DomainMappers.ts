@@ -1,17 +1,17 @@
 /**
  * Domain Mappers
- * 
+ *
  * Conversion functions between domain entities and infrastructure types
  */
 
-import { Schedule, ScheduleStatus } from '../../domain/entities/Schedule';
 import { Response } from '../../domain/entities/Response';
-import { User } from '../../domain/entities/User';
-import { ScheduleDate } from '../../domain/entities/ScheduleDate';
 import { ResponseStatus } from '../../domain/entities/ResponseStatus';
-import { DomainSchedule, DomainResponse, DomainResponseStatus } from '../../domain/types/DomainTypes';
-import { ScheduleResponse } from '../dto/ScheduleDto';
-import { ResponseDto } from '../dto/ResponseDto';
+import { Schedule, ScheduleStatus } from '../../domain/entities/Schedule';
+import { ScheduleDate } from '../../domain/entities/ScheduleDate';
+import { User } from '../../domain/entities/User';
+import type { DomainResponse, DomainSchedule } from '../../domain/types/DomainTypes';
+import type { ResponseDto } from '../dto/ResponseDto';
+import type { ScheduleResponse } from '../dto/ScheduleDto';
 
 export class ScheduleMapper {
   /**
@@ -19,8 +19,8 @@ export class ScheduleMapper {
    */
   static toDomain(data: DomainSchedule): Schedule {
     const user = User.create(data.createdBy.id, data.createdBy.username);
-    const dates = data.dates.map(d => ScheduleDate.create(d.id, d.datetime));
-    
+    const dates = data.dates.map((d) => ScheduleDate.create(d.id, d.datetime));
+
     return Schedule.create({
       id: data.id,
       guildId: data.guildId,
@@ -39,10 +39,9 @@ export class ScheduleMapper {
       notificationSent: data.notificationSent,
       totalResponses: data.totalResponses,
       createdAt: data.createdAt,
-      updatedAt: data.updatedAt
+      updatedAt: data.updatedAt,
     });
   }
-
 }
 
 export class ResponseMapper {
@@ -51,23 +50,22 @@ export class ResponseMapper {
    */
   static toDomain(data: DomainResponse): Response {
     const user = User.create(data.userId, data.username, data.displayName);
-    
+
     // Convert string statuses to ResponseStatus objects
     const dateStatuses = new Map<string, ResponseStatus>();
     Object.entries(data.dateStatuses).forEach(([dateId, status]) => {
       dateStatuses.set(dateId, ResponseStatus.fromString(status));
     });
-    
+
     return Response.create({
-      id: data.scheduleId + '-' + data.userId, // Generate ID from scheduleId and userId
+      id: `${data.scheduleId}-${data.userId}`, // Generate ID from scheduleId and userId
       scheduleId: data.scheduleId,
       user,
       dateStatuses,
       comment: data.comment,
-      updatedAt: data.updatedAt
+      updatedAt: data.updatedAt,
     });
   }
-
 }
 
 // Main DomainMappers class for application layer
@@ -77,7 +75,7 @@ export class DomainMappers {
    */
   static scheduleToResponse(schedule: Schedule): ScheduleResponse {
     const primitives = schedule.toPrimitives();
-    
+
     return {
       id: primitives.id,
       guildId: primitives.guildId,
@@ -85,14 +83,14 @@ export class DomainMappers {
       messageId: primitives.messageId,
       title: primitives.title,
       description: primitives.description,
-      dates: primitives.dates.map(date => ({
+      dates: primitives.dates.map((date) => ({
         id: date.id,
-        datetime: date.datetime
+        datetime: date.datetime,
       })),
       createdBy: {
         id: primitives.createdBy.id,
         username: primitives.createdBy.username,
-        displayName: primitives.createdBy.displayName || primitives.createdBy.username
+        displayName: primitives.createdBy.displayName || primitives.createdBy.username,
       },
       authorId: primitives.authorId,
       deadline: primitives.deadline?.toISOString(),
@@ -103,7 +101,7 @@ export class DomainMappers {
       notificationSent: primitives.notificationSent,
       totalResponses: primitives.totalResponses,
       createdAt: primitives.createdAt.toISOString(),
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 
@@ -112,7 +110,7 @@ export class DomainMappers {
    */
   static responseToDto(response: Response): ResponseDto {
     const primitives = response.toPrimitives();
-    
+
     return {
       scheduleId: primitives.scheduleId,
       userId: primitives.user.id,
@@ -120,9 +118,9 @@ export class DomainMappers {
       displayName: primitives.user.displayName,
       dateStatuses: Object.fromEntries(
         Object.entries(primitives.dateStatuses).map(([key, value]) => [key, value as string])
-      ) as Record<string, "ok" | "maybe" | "ng">,
+      ) as Record<string, 'ok' | 'maybe' | 'ng'>,
       comment: primitives.comment,
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

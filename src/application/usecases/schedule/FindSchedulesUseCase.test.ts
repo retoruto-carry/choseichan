@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { FindSchedulesUseCase } from './FindSchedulesUseCase';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('FindSchedulesUseCase', () => {
   let useCase: FindSchedulesUseCase;
@@ -16,7 +16,7 @@ describe('FindSchedulesUseCase', () => {
     description: 'Description 1',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     deadline: new Date('2024-01-19'),
     createdBy: { id: 'user-123', username: 'TestUser' },
@@ -28,7 +28,7 @@ describe('FindSchedulesUseCase', () => {
     notificationSent: false,
     totalResponses: 3,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   const mockSchedule2: DomainSchedule = {
@@ -37,9 +37,7 @@ describe('FindSchedulesUseCase', () => {
     channelId: 'channel-123',
     messageId: 'msg-456',
     title: 'Test Schedule 2',
-    dates: [
-      { id: 'date-3', datetime: '2024/02/01 20:00' }
-    ],
+    dates: [{ id: 'date-3', datetime: '2024/02/01 20:00' }],
     deadline: new Date('2024-01-31'),
     createdBy: { id: 'user-456', username: 'OtherUser' },
     authorId: 'user-456',
@@ -47,7 +45,7 @@ describe('FindSchedulesUseCase', () => {
     notificationSent: true,
     totalResponses: 10,
     createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-15')
+    updatedAt: new Date('2024-01-15'),
   };
 
   const mockSchedule3: DomainSchedule = {
@@ -55,16 +53,14 @@ describe('FindSchedulesUseCase', () => {
     guildId: 'guild-456',
     channelId: 'channel-456',
     title: 'Different Guild Schedule',
-    dates: [
-      { id: 'date-4', datetime: '2024/03/01 18:00' }
-    ],
+    dates: [{ id: 'date-4', datetime: '2024/03/01 18:00' }],
     createdBy: { id: 'user-789', username: 'AnotherUser' },
     authorId: 'user-789',
     status: 'open',
     notificationSent: false,
     totalResponses: 0,
     createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10')
+    updatedAt: new Date('2024-01-10'),
   };
 
   beforeEach(() => {
@@ -76,7 +72,7 @@ describe('FindSchedulesUseCase', () => {
       findUpcomingDeadlines: vi.fn(),
       deleteById: vi.fn(),
       findByDeadlineRange: vi.fn(),
-      findByMessageId: vi.fn()
+      findByMessageId: vi.fn(),
     } as any;
 
     useCase = new FindSchedulesUseCase(mockScheduleRepository);
@@ -86,7 +82,7 @@ describe('FindSchedulesUseCase', () => {
     it('should find schedules by channel successfully', async () => {
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([
         mockSchedule1,
-        mockSchedule2
+        mockSchedule2,
       ]);
 
       const result = await useCase.findByChannel('channel-123', 'guild-123');
@@ -99,13 +95,13 @@ describe('FindSchedulesUseCase', () => {
         channelId: 'channel-123',
         guildId: 'guild-123',
         status: 'open',
-        totalResponses: 3
+        totalResponses: 3,
       });
       expect(result.schedules?.[1]).toMatchObject({
         id: 'schedule-456',
         title: 'Test Schedule 2',
         status: 'closed',
-        totalResponses: 10
+        totalResponses: 10,
       });
 
       expect(mockScheduleRepository.findByChannel).toHaveBeenCalledWith(
@@ -143,18 +139,18 @@ describe('FindSchedulesUseCase', () => {
         {
           channelId: '',
           guildId: 'guild-123',
-          expectedError: 'チャンネルIDとGuild IDが必要です'
+          expectedError: 'チャンネルIDとGuild IDが必要です',
         },
         {
           channelId: 'channel-123',
           guildId: '',
-          expectedError: 'チャンネルIDとGuild IDが必要です'
+          expectedError: 'チャンネルIDとGuild IDが必要です',
         },
         {
           channelId: '  ',
           guildId: 'guild-123',
-          expectedError: 'チャンネルIDとGuild IDが必要です'
-        }
+          expectedError: 'チャンネルIDとGuild IDが必要です',
+        },
       ];
 
       for (const { channelId, guildId, expectedError } of testCases) {
@@ -172,8 +168,8 @@ describe('FindSchedulesUseCase', () => {
       const result = await useCase.findByChannel('channel-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの検索に失敗しました');
-      expect(result.errors![0]).toContain('Database error');
+      expect(result.errors?.[0]).toContain('スケジュールの検索に失敗しました');
+      expect(result.errors?.[0]).toContain('Database error');
     });
 
     it('should format dates correctly', async () => {
@@ -194,7 +190,7 @@ describe('FindSchedulesUseCase', () => {
 
       vi.mocked(mockScheduleRepository.findByDeadlineRange).mockResolvedValueOnce([
         mockSchedule1,
-        mockSchedule2
+        mockSchedule2,
       ]);
 
       const result = await useCase.findByDeadlineRange(startTime, endTime);
@@ -233,23 +229,23 @@ describe('FindSchedulesUseCase', () => {
         {
           startTime: null as any,
           endTime: now,
-          expectedError: '有効な時刻範囲が必要です'
+          expectedError: '有効な時刻範囲が必要です',
         },
         {
           startTime: now,
           endTime: null as any,
-          expectedError: '有効な時刻範囲が必要です'
+          expectedError: '有効な時刻範囲が必要です',
         },
         {
           startTime: now,
           endTime: past,
-          expectedError: '有効な時刻範囲が必要です'
+          expectedError: '有効な時刻範囲が必要です',
         },
         {
           startTime: now,
           endTime: now,
-          expectedError: '有効な時刻範囲が必要です'
-        }
+          expectedError: '有効な時刻範囲が必要です',
+        },
       ];
 
       for (const { startTime, endTime, expectedError } of testCases) {
@@ -261,9 +257,9 @@ describe('FindSchedulesUseCase', () => {
 
     it('should handle schedules without deadline', async () => {
       const scheduleWithoutDeadline = { ...mockSchedule3, deadline: undefined };
-      
+
       vi.mocked(mockScheduleRepository.findByDeadlineRange).mockResolvedValueOnce([
-        scheduleWithoutDeadline
+        scheduleWithoutDeadline,
       ]);
 
       const result = await useCase.findByDeadlineRange(
@@ -286,8 +282,8 @@ describe('FindSchedulesUseCase', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('締切範囲でのスケジュール検索に失敗しました');
-      expect(result.errors![0]).toContain('Database connection lost');
+      expect(result.errors?.[0]).toContain('締切範囲でのスケジュール検索に失敗しました');
+      expect(result.errors?.[0]).toContain('Database connection lost');
     });
   });
 
@@ -301,11 +297,8 @@ describe('FindSchedulesUseCase', () => {
       expect(result.schedule).toBeDefined();
       expect(result.schedule?.id).toBe('schedule-123');
       expect(result.schedule?.messageId).toBe('msg-123');
-      
-      expect(mockScheduleRepository.findByMessageId).toHaveBeenCalledWith(
-        'msg-123',
-        'guild-123'
-      );
+
+      expect(mockScheduleRepository.findByMessageId).toHaveBeenCalledWith('msg-123', 'guild-123');
     });
 
     it('should return error when schedule not found', async () => {
@@ -322,18 +315,18 @@ describe('FindSchedulesUseCase', () => {
         {
           messageId: '',
           guildId: 'guild-123',
-          expectedError: 'メッセージIDとGuild IDが必要です'
+          expectedError: 'メッセージIDとGuild IDが必要です',
         },
         {
           messageId: 'msg-123',
           guildId: '',
-          expectedError: 'メッセージIDとGuild IDが必要です'
+          expectedError: 'メッセージIDとGuild IDが必要です',
         },
         {
           messageId: '  ',
           guildId: '  ',
-          expectedError: 'メッセージIDとGuild IDが必要です'
-        }
+          expectedError: 'メッセージIDとGuild IDが必要です',
+        },
       ];
 
       for (const { messageId, guildId, expectedError } of testCases) {
@@ -351,8 +344,8 @@ describe('FindSchedulesUseCase', () => {
       const result = await useCase.findByMessageId('msg-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('メッセージIDでのスケジュール検索に失敗しました');
-      expect(result.errors![0]).toContain('Query timeout');
+      expect(result.errors?.[0]).toContain('メッセージIDでのスケジュール検索に失敗しました');
+      expect(result.errors?.[0]).toContain('Query timeout');
     });
 
     it('should handle schedules with minimal fields', async () => {
@@ -362,14 +355,19 @@ describe('FindSchedulesUseCase', () => {
         channelId: 'channel-123',
         messageId: 'msg-minimal',
         title: 'Minimal Schedule',
-        dates: [],
+        description: undefined,
+        dates: [{ id: 'date-1', datetime: '2024-12-25 19:00' }], // 最低限一つの日程が必要
         createdBy: { id: 'user-123', username: 'User' },
         authorId: 'user-123',
+        deadline: undefined,
+        reminderTimings: undefined,
+        reminderMentions: undefined,
+        remindersSent: undefined,
         status: 'open',
         notificationSent: false,
         totalResponses: 0,
         createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01')
+        updatedAt: new Date('2024-01-01'),
       };
 
       vi.mocked(mockScheduleRepository.findByMessageId).mockResolvedValueOnce(minimalSchedule);
@@ -391,7 +389,7 @@ describe('FindSchedulesUseCase', () => {
         deadline: new Date('2024-01-19'),
         reminderTimings: ['3d', '1d', '1h'],
         reminderMentions: ['@here', '@everyone'],
-        remindersSent: ['3d', '1d']
+        remindersSent: ['3d', '1d'],
       };
 
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([fullSchedule]);
@@ -403,7 +401,7 @@ describe('FindSchedulesUseCase', () => {
         deadline: '2024-01-19T00:00:00.000Z',
         reminderTimings: ['3d', '1d', '1h'],
         reminderMentions: ['@here', '@everyone'],
-        remindersSent: ['3d', '1d']
+        remindersSent: ['3d', '1d'],
       });
     });
 
@@ -415,7 +413,7 @@ describe('FindSchedulesUseCase', () => {
         deadline: undefined,
         reminderTimings: undefined,
         reminderMentions: undefined,
-        remindersSent: undefined
+        remindersSent: undefined,
       };
 
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([minimalSchedule]);

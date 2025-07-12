@@ -1,19 +1,20 @@
 /**
  * Get Schedule Use Case
- * 
+ *
  * スケジュール取得のユースケース
  */
 
-import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
-import { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
-import { ResponseDto } from '../../dto/ResponseDto';
+import type { Response } from '../../../domain/entities/Response';
+import type { Schedule } from '../../../domain/entities/Schedule';
+import type {
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
-import { Schedule, ScheduleStatus } from '../../../domain/entities/Schedule';
-import { Response } from '../../../domain/entities/Response';
-import { User } from '../../../domain/entities/User';
-import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
-import { ScheduleMapper, ResponseMapper } from '../../mappers/DomainMappers';
+import type { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
+import type { ResponseDto } from '../../dto/ResponseDto';
+import type { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
+import { ResponseMapper, ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface GetScheduleUseCaseResult {
   success: boolean;
@@ -39,14 +40,14 @@ export class GetScheduleUseCase {
       if (!scheduleId?.trim()) {
         return {
           success: false,
-          errors: ['スケジュールIDが必要です']
+          errors: ['スケジュールIDが必要です'],
         };
       }
 
       if (!guildId?.trim()) {
         return {
           success: false,
-          errors: ['Guild IDが必要です']
+          errors: ['Guild IDが必要です'],
         };
       }
 
@@ -56,7 +57,7 @@ export class GetScheduleUseCase {
       if (!schedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -65,31 +66,35 @@ export class GetScheduleUseCase {
 
       return {
         success: true,
-        schedule: response
+        schedule: response,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  async getScheduleSummary(scheduleId: string, guildId: string): Promise<GetScheduleSummaryUseCaseResult> {
+  async getScheduleSummary(
+    scheduleId: string,
+    guildId: string
+  ): Promise<GetScheduleSummaryUseCaseResult> {
     try {
       // 1. データの基本検証
       if (!scheduleId?.trim()) {
         return {
           success: false,
-          errors: ['スケジュールIDが必要です']
+          errors: ['スケジュールIDが必要です'],
         };
       }
 
       if (!guildId?.trim()) {
         return {
           success: false,
-          errors: ['Guild IDが必要です']
+          errors: ['Guild IDが必要です'],
         };
       }
 
@@ -99,7 +104,7 @@ export class GetScheduleUseCase {
       if (!schedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -108,29 +113,26 @@ export class GetScheduleUseCase {
 
       // 4. ドメインエンティティの構築
       const scheduleEntity = this.toDomainSchedule(schedule);
-      const responseEntities = responses.map(r => this.toDomainResponse(r));
-      
+      const responseEntities = responses.map((r) => this.toDomainResponse(r));
+
       // 6. 統計情報の計算
-      const dateIds = scheduleEntity.dates.map(d => d.id);
+      const dateIds = scheduleEntity.dates.map((d) => d.id);
       const statistics = ResponseDomainService.calculateResponseStatistics(
         responseEntities,
         dateIds
       );
 
       // 7. 最適な日程の計算
-      const optimalDates = ResponseDomainService.findOptimalDates(
-        responseEntities,
-        dateIds
-      );
+      const optimalDates = ResponseDomainService.findOptimalDates(responseEntities, dateIds);
 
       // 8. レスポンスカウントの計算
       const responseCounts: Record<string, { yes: number; maybe: number; no: number }> = {};
-      dateIds.forEach(dateId => {
+      dateIds.forEach((dateId) => {
         responseCounts[dateId] = { yes: 0, maybe: 0, no: 0 };
       });
 
-      responseEntities.forEach(response => {
-        dateIds.forEach(dateId => {
+      responseEntities.forEach((response) => {
+        dateIds.forEach((dateId) => {
           const status = response.getStatusForDate(dateId);
           if (status && responseCounts[dateId]) {
             if (status.isYes()) {
@@ -144,28 +146,29 @@ export class GetScheduleUseCase {
         });
       });
 
-      // 9. サマリーレスポンスの構築  
+      // 9. サマリーレスポンスの構築
       const summary: ScheduleSummaryResponse = {
         schedule: this.buildScheduleResponse(schedule),
-        responses: responseEntities.map(r => this.buildResponseDto(r)),
+        responses: responseEntities.map((r) => this.buildResponseDto(r)),
         responseCounts,
         totalResponseUsers: responses.length,
         bestDateId: optimalDates.optimalDateId,
         statistics: {
           overallParticipation: statistics.overallParticipation,
-          optimalDates
-        }
+          optimalDates,
+        },
       };
 
       return {
         success: true,
-        summary
+        summary,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュール詳細情報の取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュール詳細情報の取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -189,7 +192,7 @@ export class GetScheduleUseCase {
       notificationSent: schedule.notificationSent,
       totalResponses: schedule.totalResponses,
       createdAt: schedule.createdAt.toISOString(),
-      updatedAt: schedule.updatedAt.toISOString()
+      updatedAt: schedule.updatedAt.toISOString(),
     };
   }
 
@@ -203,7 +206,7 @@ export class GetScheduleUseCase {
 
   private buildResponseDto(response: Response): ResponseDto {
     const primitives = response.toPrimitives();
-    
+
     // primitives.dateStatuses はすでに文字列なので、直接変換
     const dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'> = {};
     Object.entries(primitives.dateStatuses).forEach(([dateId, statusString]) => {
@@ -223,7 +226,7 @@ export class GetScheduleUseCase {
       displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

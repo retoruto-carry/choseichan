@@ -2,9 +2,9 @@
  * データベースタイプに応じたリポジトリファクトリを作成
  */
 
-import { IRepositoryFactory, DatabaseConfig } from '../../domain/repositories/interfaces';
+import type { DatabaseConfig, IRepositoryFactory } from '../../domain/repositories/interfaces';
 import { D1RepositoryFactory } from '../repositories/d1/factory';
-import { Env } from '../types/discord';
+import type { Env } from '../types/discord';
 
 /**
  * 環境変数からデータベース設定を作成
@@ -14,10 +14,10 @@ export function createDatabaseConfig(env: Env): DatabaseConfig {
   if (!env.DB) {
     throw new Error('D1 database (DB) is required but not configured');
   }
-  
+
   return {
     type: 'd1',
-    d1Database: env.DB
+    d1Database: env.DB,
   };
 }
 

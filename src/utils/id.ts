@@ -9,7 +9,7 @@ export function parseButtonId(customId: string): {
   const parts = customId.split(':');
   return {
     action: parts[0],
-    params: parts.slice(1)
+    params: parts.slice(1),
   };
 }
 

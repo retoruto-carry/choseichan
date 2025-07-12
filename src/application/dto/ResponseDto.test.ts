@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { ResponseDto } from './ResponseDto';
+import { describe, expect, it } from 'vitest';
+import type { ResponseDto } from './ResponseDto';
 
 describe('ResponseDto', () => {
   describe('interface validation', () => {
@@ -12,10 +12,10 @@ describe('ResponseDto', () => {
         dateStatuses: {
           'date-1': 'ok',
           'date-2': 'maybe',
-          'date-3': 'ng'
+          'date-3': 'ng',
         },
         comment: 'This is a test comment',
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(responseDto.scheduleId).toBe('schedule-123');
@@ -35,9 +35,9 @@ describe('ResponseDto', () => {
         userId: 'user-456',
         username: 'TestUser',
         dateStatuses: {
-          'date-1': 'ok'
+          'date-1': 'ok',
         },
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(responseDto.displayName).toBeUndefined();
@@ -48,16 +48,16 @@ describe('ResponseDto', () => {
 
     it('should accept all valid status values', () => {
       const statusValues: Array<'ok' | 'maybe' | 'ng'> = ['ok', 'maybe', 'ng'];
-      
+
       statusValues.forEach((status, index) => {
         const responseDto: ResponseDto = {
           scheduleId: 'schedule-123',
           userId: 'user-456',
           username: 'TestUser',
           dateStatuses: {
-            [`date-${index}`]: status
+            [`date-${index}`]: status,
           },
-          updatedAt: '2024-01-15T10:30:00Z'
+          updatedAt: '2024-01-15T10:30:00Z',
         };
 
         expect(responseDto.dateStatuses[`date-${index}`]).toBe(status);
@@ -74,9 +74,9 @@ describe('ResponseDto', () => {
           'date-2': 'maybe',
           'date-3': 'ng',
           'date-4': 'ok',
-          'date-5': 'maybe'
+          'date-5': 'maybe',
         },
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(Object.keys(responseDto.dateStatuses)).toHaveLength(5);
@@ -93,7 +93,7 @@ describe('ResponseDto', () => {
         userId: 'user-456',
         username: 'TestUser',
         dateStatuses: {},
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(Object.keys(responseDto.dateStatuses)).toHaveLength(0);
@@ -107,7 +107,7 @@ describe('ResponseDto', () => {
         username: 'TestUser',
         dateStatuses: { 'date-1': 'ok' },
         comment: longComment,
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(responseDto.comment).toBe(longComment);
@@ -121,7 +121,7 @@ describe('ResponseDto', () => {
         username: 'Test-User_123!@#',
         displayName: 'テストユーザー 🎉',
         dateStatuses: { 'date-1': 'ok' },
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(responseDto.username).toBe('Test-User_123!@#');
@@ -135,7 +135,7 @@ describe('ResponseDto', () => {
         userId: 'user-456',
         username: 'TestUser',
         dateStatuses: { 'date-1': 'ok' },
-        updatedAt: isoDateString
+        updatedAt: isoDateString,
       };
 
       expect(responseDto.updatedAt).toBe(isoDateString);
@@ -148,13 +148,13 @@ describe('ResponseDto', () => {
     it('should enforce required fields at compile time', () => {
       // This test verifies TypeScript compilation - if any required field is missing,
       // it should cause a compilation error
-      
+
       const validDto: ResponseDto = {
         scheduleId: 'schedule-123',
-        userId: 'user-456', 
+        userId: 'user-456',
         username: 'TestUser',
         dateStatuses: { 'date-1': 'ok' },
-        updatedAt: '2024-01-15T10:30:00Z'
+        updatedAt: '2024-01-15T10:30:00Z',
       };
 
       expect(validDto).toBeDefined();
@@ -163,16 +163,16 @@ describe('ResponseDto', () => {
     it('should enforce status value types', () => {
       // This verifies that only valid status values are accepted
       const validStatuses: Array<'ok' | 'maybe' | 'ng'> = ['ok', 'maybe', 'ng'];
-      
-      validStatuses.forEach(status => {
+
+      validStatuses.forEach((status) => {
         const dto: ResponseDto = {
           scheduleId: 'schedule-123',
           userId: 'user-456',
           username: 'TestUser',
           dateStatuses: { 'date-1': status },
-          updatedAt: '2024-01-15T10:30:00Z'
+          updatedAt: '2024-01-15T10:30:00Z',
         };
-        
+
         expect(['ok', 'maybe', 'ng']).toContain(dto.dateStatuses['date-1']);
       });
     });

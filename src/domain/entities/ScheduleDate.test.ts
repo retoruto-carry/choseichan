@@ -1,17 +1,17 @@
 /**
  * ScheduleDate Domain Entity Unit Tests
- * 
+ *
  * スケジュール日程エンティティのユニットテスト
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ScheduleDate } from './ScheduleDate';
 
 describe('ScheduleDate Domain Entity', () => {
   describe('ScheduleDate Creation', () => {
     it('should create a valid schedule date', () => {
       const scheduleDate = ScheduleDate.create('date1', '2024-12-01 10:00');
-      
+
       expect(scheduleDate.id).toBe('date1');
       expect(scheduleDate.datetime).toBe('2024-12-01 10:00');
     });
@@ -36,10 +36,10 @@ describe('ScheduleDate Domain Entity', () => {
         '12月1日 10:00',
         '2024-12-01T10:00:00Z',
         '明日 10:00',
-        '来週月曜 15:00'
+        '来週月曜 15:00',
       ];
 
-      validFormats.forEach(format => {
+      validFormats.forEach((format) => {
         const scheduleDate = ScheduleDate.create('date1', format);
         expect(scheduleDate.datetime).toBe(format);
       });
@@ -50,7 +50,7 @@ describe('ScheduleDate Domain Entity', () => {
     it('should convert to primitives', () => {
       const scheduleDate = ScheduleDate.create('date1', '2024-12-01 10:00');
       const primitives = scheduleDate.toPrimitives();
-      
+
       expect(primitives.id).toBe('date1');
       expect(primitives.datetime).toBe('2024-12-01 10:00');
     });
@@ -58,11 +58,11 @@ describe('ScheduleDate Domain Entity', () => {
     it('should create schedule date from primitives', () => {
       const primitives = {
         id: 'date1',
-        datetime: '2024-12-01 10:00'
+        datetime: '2024-12-01 10:00',
       };
 
       const scheduleDate = ScheduleDate.fromPrimitives(primitives);
-      
+
       expect(scheduleDate.id).toBe('date1');
       expect(scheduleDate.datetime).toBe('2024-12-01 10:00');
     });
@@ -71,7 +71,7 @@ describe('ScheduleDate Domain Entity', () => {
       const date1 = ScheduleDate.create('date1', '2024-12-01 10:00');
       const date2 = ScheduleDate.create('date1', '2024-12-01 10:00');
       const date3 = ScheduleDate.create('date2', '2024-12-01 10:00');
-      
+
       expect(date1.equals(date2)).toBe(true);
       expect(date1.equals(date3)).toBe(false);
     });
@@ -80,7 +80,7 @@ describe('ScheduleDate Domain Entity', () => {
       const scheduleDate = ScheduleDate.create('date1', '2024-12-01 10:00');
       // ScheduleDate is immutable, so we create a new instance
       const updatedDate = ScheduleDate.create('date1', '2024-12-02 14:00');
-      
+
       expect(updatedDate.datetime).toBe('2024-12-02 14:00');
       expect(updatedDate.id).toBe('date1');
       expect(scheduleDate.datetime).toBe('2024-12-01 10:00'); // Original unchanged
@@ -92,7 +92,7 @@ describe('ScheduleDate Domain Entity', () => {
       const originalDate = ScheduleDate.create('date1', '2024-12-01 10:00');
       // Since ScheduleDate is immutable, we create a new instance
       const newDate = ScheduleDate.create('date1', '2024-12-02 14:00');
-      
+
       expect(originalDate.datetime).toBe('2024-12-01 10:00');
       expect(newDate.datetime).toBe('2024-12-02 14:00');
       expect(originalDate).not.toBe(newDate);

@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  type IScheduleRepository,
+  NotFoundError,
+  RepositoryError,
+} from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { CloseScheduleUseCase } from './CloseScheduleUseCase';
-import { IScheduleRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('CloseScheduleUseCase', () => {
   let useCase: CloseScheduleUseCase;
@@ -12,16 +16,14 @@ describe('CloseScheduleUseCase', () => {
     guildId: 'guild-123',
     channelId: 'channel-123',
     title: 'Test Schedule',
-    dates: [
-      { id: 'date-1', datetime: '2024/01/20 19:00' }
-    ],
+    dates: [{ id: 'date-1', datetime: '2024/01/20 19:00' }],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
     status: 'open',
     notificationSent: false,
     totalResponses: 5,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   beforeEach(() => {
@@ -34,7 +36,7 @@ describe('CloseScheduleUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     useCase = new CloseScheduleUseCase(mockScheduleRepository);
@@ -48,18 +50,18 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
       expect(result.schedule).toBeDefined();
       expect(result.schedule?.status).toBe('closed');
-      
+
       // Verify repository calls
       expect(mockScheduleRepository.findById).toHaveBeenCalledWith('schedule-123', 'guild-123');
       expect(mockScheduleRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: 'closed'
+          status: 'closed',
         })
       );
     });
@@ -70,7 +72,7 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -84,7 +86,7 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'other-user-456' // Different user
+        editorUserId: 'other-user-456', // Different user
       });
 
       expect(result.success).toBe(false);
@@ -99,7 +101,7 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -115,11 +117,11 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
     });
 
     it('should handle repository save errors', async () => {
@@ -131,11 +133,11 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
     });
 
     it('should handle unexpected errors', async () => {
@@ -146,11 +148,11 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの締め切りに失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの締め切りに失敗しました');
     });
 
     it('should preserve totalResponses when closing', async () => {
@@ -161,12 +163,12 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
       expect(result.schedule?.totalResponses).toBe(10);
-      
+
       // Verify saved data preserves totalResponses
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.totalResponses).toBe(10);
@@ -180,11 +182,11 @@ describe('CloseScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
-      
+
       // Verify updatedAt is recent
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());

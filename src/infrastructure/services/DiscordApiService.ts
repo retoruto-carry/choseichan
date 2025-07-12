@@ -1,11 +1,16 @@
 /**
  * Discord API Service
- * 
+ *
  * Discord APIとの通信を担当するインフラストラクチャサービス
  * 外部依存を分離し、テスタビリティを向上
  */
 
-import { APIInteractionResponseChannelMessageWithSource, APIEmbed, APIMessageComponent, APIGuildMember } from 'discord-api-types/v10';
+import type {
+  APIEmbed,
+  APIGuildMember,
+  APIInteractionResponseChannelMessageWithSource,
+  APIMessageComponent,
+} from 'discord-api-types/v10';
 
 export interface DiscordMessage {
   content?: string;
@@ -28,7 +33,12 @@ export interface IDiscordApiService {
   /**
    * Discord メッセージを更新
    */
-  updateMessage(channelId: string, messageId: string, message: DiscordMessage, botToken: string): Promise<Response>;
+  updateMessage(
+    channelId: string,
+    messageId: string,
+    message: DiscordMessage,
+    botToken: string
+  ): Promise<Response>;
 
   /**
    * Discord メッセージを削除
@@ -59,11 +69,16 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async updateMessage(channelId: string, messageId: string, message: DiscordMessage, botToken: string): Promise<Response> {
+  async updateMessage(
+    channelId: string,
+    messageId: string,
+    message: DiscordMessage,
+    botToken: string
+  ): Promise<Response> {
     return fetch(`${this.baseUrl}/channels/${channelId}/messages/${messageId}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bot ${botToken}`,
+        Authorization: `Bot ${botToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(message),
@@ -74,7 +89,7 @@ export class DiscordApiService implements IDiscordApiService {
     return fetch(`${this.baseUrl}/channels/${channelId}/messages/${messageId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bot ${botToken}`,
+        Authorization: `Bot ${botToken}`,
       },
     });
   }
@@ -82,7 +97,7 @@ export class DiscordApiService implements IDiscordApiService {
   async getGuildMember(guildId: string, userId: string, botToken: string): Promise<APIGuildMember> {
     const response = await fetch(`${this.baseUrl}/guilds/${guildId}/members/${userId}`, {
       headers: {
-        'Authorization': `Bot ${botToken}`,
+        Authorization: `Bot ${botToken}`,
       },
     });
 

@@ -1,12 +1,12 @@
 /**
  * Response Domain Entity
- * 
+ *
  * ユーザーの回答のドメインエンティティ
  * スケジュールに対する回答を表現
  */
 
-import { User } from './User';
 import { ResponseStatus } from './ResponseStatus';
+import { User } from './User';
 
 export interface ScheduleId {
   readonly value: string;
@@ -76,7 +76,7 @@ export class Response {
     updatedAt: Date;
   }): Response {
     const user = User.create(data.user.id, data.user.username, data.user.displayName);
-    
+
     const dateStatuses = new Map<string, ResponseStatus>();
     for (const [dateId, status] of Object.entries(data.dateStatuses)) {
       dateStatuses.set(dateId, ResponseStatus.fromString(status));
@@ -89,7 +89,7 @@ export class Response {
       dateStatuses,
       comment: data.comment,
       createdAt: data.createdAt,
-      updatedAt: data.updatedAt
+      updatedAt: data.updatedAt,
     });
   }
 
@@ -150,7 +150,7 @@ export class Response {
     if (comment && comment.length > 1000) {
       throw new Error('コメントは1000文字以内で入力してください');
     }
-    
+
     return new Response(
       this._id,
       this._scheduleId,
@@ -194,7 +194,7 @@ export class Response {
       dateStatuses,
       comment: this.comment,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
     };
   }
 

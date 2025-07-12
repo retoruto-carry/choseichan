@@ -1,14 +1,13 @@
 /**
  * Schedule Domain Service
- * 
+ *
  * スケジュールに関する複雑なビジネスロジックを集約
  * エンティティ単体では表現できないドメインの知識を含む
  */
 
-import { Schedule } from '../entities/Schedule';
-import { Response } from '../entities/Response';
-import { ScheduleDate } from '../entities/ScheduleDate';
-import { ResponseStatus } from '../entities/ResponseStatus';
+import type { Response } from '../entities/Response';
+import type { Schedule } from '../entities/Schedule';
+import type { ScheduleDate } from '../entities/ScheduleDate';
 
 export interface ScheduleSummaryData {
   schedule: Schedule;
@@ -22,19 +21,16 @@ export class ScheduleDomainService {
   /**
    * スケジュールの集計データを生成
    */
-  static calculateScheduleSummary(
-    schedule: Schedule,
-    responses: Response[]
-  ): ScheduleSummaryData {
+  static calculateScheduleSummary(schedule: Schedule, responses: Response[]): ScheduleSummaryData {
     const responseCounts: Record<string, { yes: number; maybe: number; no: number }> = {};
-    
+
     // 各日程の回答数を初期化
-    schedule.dates.forEach(date => {
+    schedule.dates.forEach((date) => {
       responseCounts[date.id] = { yes: 0, maybe: 0, no: 0 };
     });
 
     // 回答を集計
-    responses.forEach(response => {
+    responses.forEach((response) => {
       Object.entries(response.dateStatuses).forEach(([dateId, status]) => {
         if (responseCounts[dateId]) {
           if (status.isYes()) {
@@ -49,14 +45,14 @@ export class ScheduleDomainService {
     });
 
     // 最適な日程を計算（YES回答が最も多い日程）
-    const bestDateId = this.findBestDate(responseCounts);
+    const bestDateId = ScheduleDomainService.findBestDate(responseCounts);
 
     return {
       schedule,
       responses,
       responseCounts,
       totalResponseUsers: responses.length,
-      bestDateId
+      bestDateId,
     };
   }
 
@@ -82,10 +78,7 @@ export class ScheduleDomainService {
   /**
    * スケジュールがリマインダー送信対象かチェック
    */
-  static shouldSendReminder(
-    schedule: Schedule,
-    reminderTiming: string
-  ): boolean {
+  static shouldSendReminder(schedule: Schedule, reminderTiming: string): boolean {
     if (!schedule.isOpen()) {
       return false;
     }
@@ -103,8 +96,8 @@ export class ScheduleDomainService {
     const timeUntilDeadline = deadline.getTime() - now.getTime();
 
     // リマインダータイミングをミリ秒に変換
-    const reminderTimeMs = this.parseReminderTiming(reminderTiming);
-    
+    const reminderTimeMs = ScheduleDomainService.parseReminderTiming(reminderTiming);
+
     if (reminderTimeMs === null) {
       return false;
     }
@@ -163,7 +156,7 @@ export class ScheduleDomainService {
 
     // 重複チェック
     if (data.dates && data.dates.length > 0) {
-      const dateIds = data.dates.map(d => d.id);
+      const dateIds = data.dates.map((d) => d.id);
       const uniqueDateIds = [...new Set(dateIds)];
       if (dateIds.length !== uniqueDateIds.length) {
         errors.push('日程候補に重複があります');
@@ -180,9 +173,9 @@ export class ScheduleDomainService {
       // 締切が最も早い日程候補より後かチェック
       if (data.dates && data.dates.length > 0) {
         const earliestDate = data.dates
-          .map(d => d.getDateTimeAsDate())
+          .map((d) => d.getDateTimeAsDate())
           .sort((a, b) => a.getTime() - b.getTime())[0];
-        
+
         if (earliestDate && data.deadline > earliestDate) {
           errors.push('締切は最も早い日程候補より前に設定してください');
         }
@@ -191,7 +184,7 @@ export class ScheduleDomainService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -229,9 +222,9 @@ export class ScheduleDomainService {
 
       // 締切が最も早い日程候補より後かチェック
       const earliestDate = data.schedule.dates
-        .map(d => d.getDateTimeAsDate())
+        .map((d) => d.getDateTimeAsDate())
         .sort((a, b) => a.getTime() - b.getTime())[0];
-      
+
       if (earliestDate && data.deadline > earliestDate) {
         errors.push('締切は最も早い日程候補より前に設定してください');
       }
@@ -239,7 +232,7 @@ export class ScheduleDomainService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -253,14 +246,14 @@ export class ScheduleDomainService {
     if (!schedule.canBeEditedBy(editorUserId)) {
       return {
         canEdit: false,
-        reason: '編集できるのは作成者のみです'
+        reason: '編集できるのは作成者のみです',
       };
     }
 
     if (schedule.isClosed()) {
       return {
         canEdit: false,
-        reason: 'この日程調整は締め切られています'
+        reason: 'この日程調整は締め切られています',
       };
     }
 

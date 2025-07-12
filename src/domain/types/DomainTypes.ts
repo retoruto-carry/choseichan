@@ -1,6 +1,6 @@
 /**
  * Domain Type Interfaces for Infrastructure Layer
- * 
+ *
  * これらのインターフェースはインフラストラクチャー層での型変換に使用される
  * ドメインエンティティのシンプルなデータ表現
  */

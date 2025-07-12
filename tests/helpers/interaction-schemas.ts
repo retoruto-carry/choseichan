@@ -37,12 +37,12 @@ export interface DiscordEmbed {
 
 function validateEmbed(embed: unknown): embed is DiscordEmbed {
   if (!isObject(embed)) return false;
-  
+
   // Optional fields validation
   if ('title' in embed && typeof embed.title !== 'string') return false;
   if ('description' in embed && typeof embed.description !== 'string') return false;
   if ('color' in embed && typeof embed.color !== 'number') return false;
-  
+
   if ('fields' in embed) {
     if (!isArray(embed.fields)) return false;
     for (const field of embed.fields) {
@@ -51,7 +51,7 @@ function validateEmbed(embed: unknown): embed is DiscordEmbed {
       if ('inline' in field && typeof field.inline !== 'boolean') return false;
     }
   }
-  
+
   return true;
 }
 
@@ -108,37 +108,35 @@ export interface InteractionResponse {
 }
 
 // Validation function with detailed error messages
-export function validateInteractionResponse(
-  value: unknown
-): asserts value is InteractionResponse {
+export function validateInteractionResponse(value: unknown): asserts value is InteractionResponse {
   if (!isObject(value)) {
     throw new Error('Response must be an object');
   }
-  
+
   if (!hasProperty(value, 'type') || typeof value.type !== 'number') {
     throw new Error('Response must have a numeric type property');
   }
-  
+
   if ('data' in value) {
     if (!isObject(value.data)) {
       throw new Error('Response data must be an object');
     }
-    
+
     const data = value.data;
-    
+
     if ('content' in data && typeof data.content !== 'string') {
       throw new Error('Response data.content must be a string');
     }
-    
+
     if ('flags' in data && typeof data.flags !== 'number') {
       throw new Error('Response data.flags must be a number');
     }
-    
+
     if ('embeds' in data) {
       if (!isArray(data.embeds)) {
         throw new Error('Response data.embeds must be an array');
       }
-      
+
       for (let i = 0; i < data.embeds.length; i++) {
         if (!validateEmbed(data.embeds[i])) {
           throw new Error(`Invalid embed at index ${i}`);

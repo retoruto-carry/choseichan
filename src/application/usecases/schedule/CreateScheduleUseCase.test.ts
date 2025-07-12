@@ -1,52 +1,62 @@
 /**
  * CreateScheduleUseCase Unit Tests
- * 
+ *
  * スケジュール作成ユースケースのユニットテスト
  * DIパターンを使用したモック依存関係のテスト
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
+import type { CreateScheduleRequest } from '../../dto/ScheduleDto';
 import { CreateScheduleUseCase } from './CreateScheduleUseCase';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
-import { CreateScheduleRequest } from '../../dto/ScheduleDto';
 
 // Mock Repository Implementation
 class MockScheduleRepository implements IScheduleRepository {
   private schedules: Map<string, DomainSchedule> = new Map();
-  
+
   async save(schedule: DomainSchedule): Promise<void> {
     this.schedules.set(schedule.id, schedule);
   }
 
-  async findById(scheduleId: string, guildId: string): Promise<DomainSchedule | null> {
+  async findById(scheduleId: string, _guildId: string): Promise<DomainSchedule | null> {
     return this.schedules.get(scheduleId) || null;
   }
 
-  async findByChannel(channelId: string, guildId: string, limit?: number): Promise<DomainSchedule[]> {
+  async findByChannel(
+    channelId: string,
+    guildId: string,
+    limit?: number
+  ): Promise<DomainSchedule[]> {
     return Array.from(this.schedules.values())
-      .filter(s => s.channelId === channelId && s.guildId === guildId)
+      .filter((s) => s.channelId === channelId && s.guildId === guildId)
       .slice(0, limit || 100);
   }
 
-  async findByDeadlineRange(startTime: Date, endTime: Date, guildId?: string): Promise<DomainSchedule[]> {
+  async findByDeadlineRange(
+    startTime: Date,
+    endTime: Date,
+    guildId?: string
+  ): Promise<DomainSchedule[]> {
     return Array.from(this.schedules.values())
-      .filter(s => s.deadline && s.deadline >= startTime && s.deadline <= endTime)
-      .filter(s => !guildId || s.guildId === guildId);
+      .filter((s) => s.deadline && s.deadline >= startTime && s.deadline <= endTime)
+      .filter((s) => !guildId || s.guildId === guildId);
   }
 
-  async delete(scheduleId: string, guildId: string): Promise<void> {
+  async delete(scheduleId: string, _guildId: string): Promise<void> {
     this.schedules.delete(scheduleId);
   }
 
   async findByMessageId(messageId: string, guildId: string): Promise<DomainSchedule | null> {
-    return Array.from(this.schedules.values())
-      .find(s => s.messageId === messageId && s.guildId === guildId) || null;
+    return (
+      Array.from(this.schedules.values()).find(
+        (s) => s.messageId === messageId && s.guildId === guildId
+      ) || null
+    );
   }
 
   async countByGuild(guildId: string): Promise<number> {
-    return Array.from(this.schedules.values())
-      .filter(s => s.guildId === guildId).length;
+    return Array.from(this.schedules.values()).filter((s) => s.guildId === guildId).length;
   }
 
   async updateReminders(params: {
@@ -60,7 +70,7 @@ class MockScheduleRepository implements IScheduleRepository {
       // Update reminders (simplified implementation)
       this.schedules.set(params.scheduleId, {
         ...schedule,
-        remindersSent: params.remindersSent
+        remindersSent: params.remindersSent,
       });
     }
   }
@@ -95,25 +105,25 @@ describe('CreateScheduleUseCase', () => {
         description: 'Test description',
         dates: [
           { id: 'date1', datetime: new Date(Date.now() + 172800000).toISOString() }, // 2 days later
-          { id: 'date2', datetime: new Date(Date.now() + 259200000).toISOString() } // 3 days later
+          { id: 'date2', datetime: new Date(Date.now() + 259200000).toISOString() }, // 3 days later
         ],
         deadline: new Date(Date.now() + 86400000).toISOString(), // 24 hours later (before dates)
         reminderTimings: ['1d', '8h', '30m'],
-        reminderMentions: ['@here', '@everyone']
+        reminderMentions: ['@here', '@everyone'],
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule).toBeDefined();
-      expect(result.schedule!.id).toBeDefined();
-      expect(result.schedule!.title).toBe('Test Schedule');
-      expect(result.schedule!.description).toBe('Test description');
-      expect(result.schedule!.dates).toHaveLength(2);
-      expect(result.schedule!.status).toBe('open');
-      expect(result.schedule!.authorId).toBe('user123');
-      expect(result.schedule!.reminderTimings).toEqual(['1d', '8h', '30m']);
-      expect(result.schedule!.reminderMentions).toEqual(['@here', '@everyone']);
+      expect(result.schedule?.id).toBeDefined();
+      expect(result.schedule?.title).toBe('Test Schedule');
+      expect(result.schedule?.description).toBe('Test description');
+      expect(result.schedule?.dates).toHaveLength(2);
+      expect(result.schedule?.status).toBe('open');
+      expect(result.schedule?.authorId).toBe('user123');
+      expect(result.schedule?.reminderTimings).toEqual(['1d', '8h', '30m']);
+      expect(result.schedule?.reminderMentions).toEqual(['@here', '@everyone']);
     });
 
     it('should create schedule without optional fields', async () => {
@@ -123,19 +133,17 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Simple Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule).toBeDefined();
-      expect(result.schedule!.description).toBeUndefined();
-      expect(result.schedule!.deadline).toBeUndefined();
-      expect(result.schedule!.reminderTimings).toBeUndefined();
-      expect(result.schedule!.reminderMentions).toBeUndefined();
+      expect(result.schedule?.description).toBeUndefined();
+      expect(result.schedule?.deadline).toBeUndefined();
+      expect(result.schedule?.reminderTimings).toBeUndefined();
+      expect(result.schedule?.reminderMentions).toBeUndefined();
     });
 
     it('should save schedule to repository', async () => {
@@ -145,15 +153,13 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
-      
+
       // Verify schedule was saved to repository
       const savedSchedules = mockRepository.getAll();
       expect(savedSchedules).toHaveLength(1);
@@ -169,9 +175,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -187,9 +191,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -205,9 +207,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: '',
         authorUsername: '',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -224,9 +224,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: '',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -242,7 +240,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: []
+        dates: [],
       };
 
       const result = await useCase.execute(request);
@@ -258,9 +256,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: 'invalid-date' }
-        ]
+        dates: [{ id: 'date1', datetime: 'invalid-date' }],
       };
 
       const result = await useCase.execute(request);
@@ -276,10 +272,8 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ],
-        deadline: 'invalid-deadline'
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
+        deadline: 'invalid-deadline',
       };
 
       const result = await useCase.execute(request);
@@ -295,7 +289,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: '',
         authorUsername: '',
         title: '',
-        dates: []
+        dates: [],
       };
 
       const result = await useCase.execute(request);
@@ -313,10 +307,8 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ],
-        deadline: new Date(Date.now() - 86400000).toISOString() // 24 hours ago
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
+        deadline: new Date(Date.now() - 86400000).toISOString(), // 24 hours ago
       };
 
       const result = await useCase.execute(request);
@@ -328,7 +320,7 @@ describe('CreateScheduleUseCase', () => {
     it('should reject schedule with too many dates', async () => {
       const manyDates = Array.from({ length: 11 }, (_, i) => ({
         id: `date${i}`,
-        datetime: `2024-12-${(i % 30) + 1} 10:00`
+        datetime: `2024-12-${(i % 30) + 1} 10:00`,
       }));
 
       const request: CreateScheduleRequest = {
@@ -337,7 +329,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: manyDates
+        dates: manyDates,
       };
 
       const result = await useCase.execute(request);
@@ -355,9 +347,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: longTitle,
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -370,7 +360,9 @@ describe('CreateScheduleUseCase', () => {
   describe('Repository Errors', () => {
     it('should handle repository save errors', async () => {
       // Mock repository to throw error
-      const saveSpy = vi.spyOn(mockRepository, 'save').mockRejectedValue(new Error('Database error'));
+      const saveSpy = vi
+        .spyOn(mockRepository, 'save')
+        .mockRejectedValue(new Error('Database error'));
 
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
@@ -378,9 +370,7 @@ describe('CreateScheduleUseCase', () => {
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [
-          { id: 'date1', datetime: '2024-12-01 10:00' }
-        ]
+        dates: [{ id: 'date1', datetime: '2024-12-01 10:00' }],
       };
 
       const result = await useCase.execute(request);
@@ -402,18 +392,18 @@ describe('CreateScheduleUseCase', () => {
         description: 'Test description',
         dates: [
           { id: 'date1', datetime: new Date(Date.now() + 172800000).toISOString() }, // 2 days later
-          { id: 'date2', datetime: new Date(Date.now() + 259200000).toISOString() } // 3 days later
+          { id: 'date2', datetime: new Date(Date.now() + 259200000).toISOString() }, // 3 days later
         ],
         deadline: new Date(Date.now() + 86400000).toISOString(),
         reminderTimings: ['1d', '8h'],
-        reminderMentions: ['@here']
+        reminderMentions: ['@here'],
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule).toBeDefined();
-      
+
       const schedule = result.schedule!;
       expect(schedule.guildId).toBe('guild123');
       expect(schedule.channelId).toBe('channel123');
@@ -436,8 +426,8 @@ describe('CreateScheduleUseCase', () => {
     });
 
     it('should handle ISO date string conversion', async () => {
-      const deadlineString = '2024-12-01T10:00:00.000Z';
-      
+      const _deadlineString = '2024-12-01T10:00:00.000Z';
+
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -445,15 +435,15 @@ describe('CreateScheduleUseCase', () => {
         authorUsername: 'testuser',
         title: 'Test Schedule',
         dates: [
-          { id: 'date1', datetime: new Date(Date.now() + 172800000).toISOString() } // 2 days later
+          { id: 'date1', datetime: new Date(Date.now() + 172800000).toISOString() }, // 2 days later
         ],
-        deadline: new Date(Date.now() + 86400000).toISOString() // 24 hours later (before dates)
+        deadline: new Date(Date.now() + 86400000).toISOString(), // 24 hours later (before dates)
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
-      expect(result.schedule!.deadline).toBeDefined();
+      expect(result.schedule?.deadline).toBeDefined();
     });
   });
 });

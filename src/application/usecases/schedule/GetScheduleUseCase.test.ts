@@ -1,7 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  type IResponseRepository,
+  type IScheduleRepository,
+  NotFoundError,
+  RepositoryError,
+} from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { GetScheduleUseCase } from './GetScheduleUseCase';
-import { IScheduleRepository, IResponseRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('GetScheduleUseCase', () => {
   let useCase: GetScheduleUseCase;
@@ -15,7 +20,7 @@ describe('GetScheduleUseCase', () => {
     title: 'Test Schedule',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
@@ -23,7 +28,7 @@ describe('GetScheduleUseCase', () => {
     notificationSent: false,
     totalResponses: 0,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   beforeEach(() => {
@@ -36,7 +41,7 @@ describe('GetScheduleUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     mockResponseRepository = {
@@ -44,7 +49,7 @@ describe('GetScheduleUseCase', () => {
       findByUser: vi.fn(),
       findByScheduleId: vi.fn(),
       delete: vi.fn(),
-      deleteBySchedule: vi.fn()
+      deleteBySchedule: vi.fn(),
     } as any;
 
     useCase = new GetScheduleUseCase(mockScheduleRepository, mockResponseRepository);
@@ -64,11 +69,11 @@ describe('GetScheduleUseCase', () => {
         title: 'Test Schedule',
         dates: [
           { id: 'date-1', datetime: '2024/01/20 19:00' },
-          { id: 'date-2', datetime: '2024/01/21 19:00' }
+          { id: 'date-2', datetime: '2024/01/21 19:00' },
         ],
         createdBy: {
           id: 'user-123',
-          username: 'TestUser'
+          username: 'TestUser',
         },
         authorId: 'user-123',
         deadline: undefined,
@@ -79,7 +84,7 @@ describe('GetScheduleUseCase', () => {
         notificationSent: false,
         totalResponses: 0,
         createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
+        updatedAt: '2024-01-01T00:00:00.000Z',
       });
       expect(mockScheduleRepository.findById).toHaveBeenCalledWith('schedule-123', 'guild-123');
     });
@@ -102,7 +107,7 @@ describe('GetScheduleUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle general repository errors', async () => {
@@ -113,7 +118,7 @@ describe('GetScheduleUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle unexpected errors', async () => {
@@ -124,7 +129,7 @@ describe('GetScheduleUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの取得に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの取得に失敗しました');
     });
 
     it('should handle schedules with all optional fields', async () => {
@@ -135,7 +140,7 @@ describe('GetScheduleUseCase', () => {
         deadline: new Date('2024-02-01'),
         reminderTimings: ['1h', '30m'],
         reminderMentions: ['@here'],
-        remindersSent: ['1h']
+        remindersSent: ['1h'],
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(fullSchedule);

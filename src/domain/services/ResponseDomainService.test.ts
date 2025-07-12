@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { ResponseDomainService, UserResponseData } from './ResponseDomainService';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Response } from '../entities/Response';
-import { User } from '../entities/User';
+import { ResponseStatus, ResponseStatusValue } from '../entities/ResponseStatus';
 import { Schedule } from '../entities/Schedule';
 import { ScheduleDate } from '../entities/ScheduleDate';
-import { ResponseStatus, ResponseStatusValue } from '../entities/ResponseStatus';
+import { User } from '../entities/User';
+import { ResponseDomainService, type UserResponseData } from './ResponseDomainService';
 
 describe('ResponseDomainService', () => {
   let testSchedule: Schedule;
@@ -24,10 +24,10 @@ describe('ResponseDomainService', () => {
       dates: [
         ScheduleDate.create('date-1', '2024/01/20 19:00'),
         ScheduleDate.create('date-2', '2024/01/21 19:00'),
-        ScheduleDate.create('date-3', '2024/01/22 19:00')
+        ScheduleDate.create('date-3', '2024/01/22 19:00'),
       ],
       createdBy: testUser,
-      authorId: 'user-123'
+      authorId: 'user-123',
     });
 
     // Create test responses
@@ -43,8 +43,8 @@ describe('ResponseDomainService', () => {
         dateStatuses: new Map([
           ['date-1', ResponseStatus.create(ResponseStatusValue.OK)],
           ['date-2', ResponseStatus.create(ResponseStatusValue.OK)],
-          ['date-3', ResponseStatus.create(ResponseStatusValue.MAYBE)]
-        ])
+          ['date-3', ResponseStatus.create(ResponseStatusValue.MAYBE)],
+        ]),
       }),
       Response.create({
         id: 'response-2',
@@ -53,8 +53,8 @@ describe('ResponseDomainService', () => {
         dateStatuses: new Map([
           ['date-1', ResponseStatus.create(ResponseStatusValue.OK)],
           ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)],
-          ['date-3', ResponseStatus.create(ResponseStatusValue.NG)]
-        ])
+          ['date-3', ResponseStatus.create(ResponseStatusValue.NG)],
+        ]),
       }),
       Response.create({
         id: 'response-3',
@@ -63,9 +63,9 @@ describe('ResponseDomainService', () => {
         dateStatuses: new Map([
           ['date-1', ResponseStatus.create(ResponseStatusValue.NG)],
           ['date-2', ResponseStatus.create(ResponseStatusValue.NG)],
-          ['date-3', ResponseStatus.create(ResponseStatusValue.NG)]
-        ])
-      })
+          ['date-3', ResponseStatus.create(ResponseStatusValue.NG)],
+        ]),
+      }),
     ];
   });
 
@@ -73,11 +73,15 @@ describe('ResponseDomainService', () => {
     it('should validate response successfully', () => {
       const responseData: UserResponseData[] = [
         { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
-        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) }
+        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) },
       ];
 
-      const result = ResponseDomainService.validateResponse(testSchedule, responseData, 'テストコメント');
-      
+      const result = ResponseDomainService.validateResponse(
+        testSchedule,
+        responseData,
+        'テストコメント'
+      );
+
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
@@ -85,22 +89,22 @@ describe('ResponseDomainService', () => {
     it('should reject response when schedule is closed', () => {
       const closedSchedule = testSchedule.close();
       const responseData: UserResponseData[] = [
-        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) }
+        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
       ];
 
       const result = ResponseDomainService.validateResponse(closedSchedule, responseData);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('この日程調整は締め切られています');
     });
 
     it('should reject response with invalid date IDs', () => {
       const responseData: UserResponseData[] = [
-        { dateId: 'invalid-date', status: ResponseStatus.create(ResponseStatusValue.OK) }
+        { dateId: 'invalid-date', status: ResponseStatus.create(ResponseStatusValue.OK) },
       ];
 
       const result = ResponseDomainService.validateResponse(testSchedule, responseData);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.errors[0]).toContain('無効な日程候補です');
     });
@@ -108,23 +112,27 @@ describe('ResponseDomainService', () => {
     it('should reject duplicate responses for same date', () => {
       const responseData: UserResponseData[] = [
         { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
-        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.NG) }
+        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.NG) },
       ];
 
       const result = ResponseDomainService.validateResponse(testSchedule, responseData);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('同じ日程に対して複数の回答があります');
     });
 
     it('should reject comment over 500 characters', () => {
       const responseData: UserResponseData[] = [
-        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) }
+        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
       ];
       const longComment = 'あ'.repeat(501);
 
-      const result = ResponseDomainService.validateResponse(testSchedule, responseData, longComment);
-      
+      const result = ResponseDomainService.validateResponse(
+        testSchedule,
+        responseData,
+        longComment
+      );
+
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('コメントは500文字以内で入力してください');
     });
@@ -134,7 +142,7 @@ describe('ResponseDomainService', () => {
     it('should create new response', () => {
       const responseData: UserResponseData[] = [
         { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
-        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) }
+        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) },
       ];
 
       const response = ResponseDomainService.createOrUpdateResponse(
@@ -155,7 +163,7 @@ describe('ResponseDomainService', () => {
       const existingResponse = testResponses[0];
       const responseData: UserResponseData[] = [
         { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.NG) },
-        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.NG) }
+        { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.NG) },
       ];
 
       const updatedResponse = ResponseDomainService.createOrUpdateResponse(
@@ -179,7 +187,7 @@ describe('ResponseDomainService', () => {
       const stats = ResponseDomainService.calculateResponseStatistics(testResponses, dateIds);
 
       expect(stats.totalUsers).toBe(3);
-      
+
       // Check date-1 statistics
       expect(stats.responsesByDate['date-1'].yes).toBe(2);
       expect(stats.responsesByDate['date-1'].maybe).toBe(0);
@@ -215,7 +223,7 @@ describe('ResponseDomainService', () => {
     it('should respect minimum participants option', () => {
       const dateIds = ['date-1', 'date-2', 'date-3'];
       const result = ResponseDomainService.findOptimalDates(testResponses, dateIds, {
-        minimumParticipants: 7 // Set higher than any score
+        minimumParticipants: 7, // Set higher than any score
       });
 
       expect(result.optimalDateId).toBeUndefined(); // No date has score >= 7
@@ -225,10 +233,10 @@ describe('ResponseDomainService', () => {
     it('should handle includeMaybe option', () => {
       const dateIds = ['date-1', 'date-2', 'date-3'];
       const resultWithMaybe = ResponseDomainService.findOptimalDates(testResponses, dateIds, {
-        includeMaybe: true
+        includeMaybe: true,
       });
       const resultWithoutMaybe = ResponseDomainService.findOptimalDates(testResponses, dateIds, {
-        includeMaybe: false
+        includeMaybe: false,
       });
 
       // date-3 has 1 maybe vote, so scores should differ

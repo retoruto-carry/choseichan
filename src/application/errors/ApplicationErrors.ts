@@ -1,6 +1,6 @@
 /**
  * Application Layer Error Types
- * 
+ *
  * アプリケーション層のエラー定義
  * ユースケースの実行で発生するエラーを管理
  */
@@ -9,7 +9,10 @@ export abstract class ApplicationError extends Error {
   abstract readonly code: string;
   abstract readonly statusCode: number;
 
-  constructor(message: string, public readonly details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    public readonly details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -20,7 +23,7 @@ export abstract class ApplicationError extends Error {
       code: this.code,
       message: this.message,
       statusCode: this.statusCode,
-      details: this.details
+      details: this.details,
     };
   }
 }
@@ -49,7 +52,10 @@ export class ConcurrencyError extends ApplicationError {
   readonly statusCode = 409;
 
   constructor(resource: string, operation: string) {
-    super(`Concurrent modification detected for ${resource} during ${operation}`, { resource, operation });
+    super(`Concurrent modification detected for ${resource} during ${operation}`, {
+      resource,
+      operation,
+    });
   }
 }
 
@@ -78,7 +84,11 @@ export class ExternalServiceError extends ApplicationError {
   readonly statusCode = 502;
 
   constructor(service: string, operation: string, cause?: Error) {
-    super(`External service error: ${service} during ${operation}`, { service, operation, cause: cause?.message });
+    super(`External service error: ${service} during ${operation}`, {
+      service,
+      operation,
+      cause: cause?.message,
+    });
   }
 }
 
@@ -97,7 +107,11 @@ export class IntegrationError extends ApplicationError {
   readonly statusCode = 502;
 
   constructor(integration: string, operation: string, cause?: Error) {
-    super(`Integration error with ${integration} during ${operation}`, { integration, operation, cause: cause?.message });
+    super(`Integration error with ${integration} during ${operation}`, {
+      integration,
+      operation,
+      cause: cause?.message,
+    });
   }
 }
 
@@ -169,7 +183,9 @@ export function isApplicationError(error: unknown): error is ApplicationError {
   return error instanceof ApplicationError;
 }
 
-export function isUseCaseError(error: unknown): error is UseCaseValidationError | UseCaseExecutionError {
+export function isUseCaseError(
+  error: unknown
+): error is UseCaseValidationError | UseCaseExecutionError {
   return error instanceof UseCaseValidationError || error instanceof UseCaseExecutionError;
 }
 
@@ -178,15 +194,19 @@ export function isExternalError(error: unknown): error is ExternalServiceError |
 }
 
 export function isTemporaryError(error: unknown): boolean {
-  return error instanceof RateLimitError ||
-         error instanceof TimeoutError ||
-         error instanceof ConcurrencyError ||
-         (error instanceof ExternalServiceError);
+  return (
+    error instanceof RateLimitError ||
+    error instanceof TimeoutError ||
+    error instanceof ConcurrencyError ||
+    error instanceof ExternalServiceError
+  );
 }
 
 export function isRetryableError(error: unknown): boolean {
-  return error instanceof RateLimitError ||
-         error instanceof TimeoutError ||
-         error instanceof ExternalServiceError ||
-         error instanceof IntegrationError;
+  return (
+    error instanceof RateLimitError ||
+    error instanceof TimeoutError ||
+    error instanceof ExternalServiceError ||
+    error instanceof IntegrationError
+  );
 }

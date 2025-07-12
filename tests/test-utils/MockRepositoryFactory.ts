@@ -1,48 +1,66 @@
 /**
  * Mock Repository Factory for Unit Tests
- * 
+ *
  * ユニットテスト用のモックリポジトリファクトリ
  * DIパターンを使用したテストを支援
  */
 
-import { IRepositoryFactory, IScheduleRepository, IResponseRepository } from '../../src/domain/repositories/interfaces';
-import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../../src/domain/types/DomainTypes';
+import type {
+  IRepositoryFactory,
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../src/domain/repositories/interfaces';
+import type {
+  DomainResponse,
+  DomainSchedule,
+  DomainScheduleSummary,
+} from '../../src/domain/types/DomainTypes';
 
 export class MockScheduleRepository implements IScheduleRepository {
   private schedules: Map<string, DomainSchedule> = new Map();
-  
+
   async save(schedule: DomainSchedule): Promise<void> {
     this.schedules.set(schedule.id, schedule);
   }
 
-  async findById(scheduleId: string, guildId: string): Promise<DomainSchedule | null> {
+  async findById(scheduleId: string, _guildId: string): Promise<DomainSchedule | null> {
     return this.schedules.get(scheduleId) || null;
   }
 
-  async findByChannel(channelId: string, guildId: string, limit?: number): Promise<DomainSchedule[]> {
+  async findByChannel(
+    channelId: string,
+    guildId: string,
+    limit?: number
+  ): Promise<DomainSchedule[]> {
     return Array.from(this.schedules.values())
-      .filter(s => s.channelId === channelId && s.guildId === guildId)
+      .filter((s) => s.channelId === channelId && s.guildId === guildId)
       .slice(0, limit || 100);
   }
 
-  async findByDeadlineRange(startTime: Date, endTime: Date, guildId?: string): Promise<DomainSchedule[]> {
+  async findByDeadlineRange(
+    startTime: Date,
+    endTime: Date,
+    guildId?: string
+  ): Promise<DomainSchedule[]> {
     return Array.from(this.schedules.values())
-      .filter(s => s.deadline && s.deadline >= startTime && s.deadline <= endTime)
-      .filter(s => !guildId || s.guildId === guildId);
+      .filter((s) => s.deadline && s.deadline >= startTime && s.deadline <= endTime)
+      .filter((s) => !guildId || s.guildId === guildId);
   }
 
-  async delete(scheduleId: string, guildId: string): Promise<void> {
+  async delete(scheduleId: string, _guildId: string): Promise<void> {
     this.schedules.delete(scheduleId);
   }
 
   async findByMessageId(messageId: string, guildId: string): Promise<DomainSchedule | null> {
-    return Array.from(this.schedules.values())
-      .find(s => s.messageId === messageId && s.guildId === guildId) || null;
+    return (
+      Array.from(this.schedules.values()).find(
+        (s) => s.messageId === messageId && s.guildId === guildId
+      ) || null
+    );
   }
 
   async countByGuild(guildId: string): Promise<number> {
-    return Array.from(this.schedules.values())
-      .filter(s => s.guildId === guildId).length;
+    return Array.from(this.schedules.values()).filter((s) => s.guildId === guildId).length;
   }
 
   async updateReminders(params: {
@@ -55,7 +73,7 @@ export class MockScheduleRepository implements IScheduleRepository {
     if (schedule) {
       this.schedules.set(params.scheduleId, {
         ...schedule,
-        remindersSent: params.remindersSent
+        remindersSent: params.remindersSent,
       });
     }
   }
@@ -76,35 +94,42 @@ export class MockScheduleRepository implements IScheduleRepository {
 
 export class MockResponseRepository implements IResponseRepository {
   private responses: Map<string, DomainResponse> = new Map();
-  
-  async save(response: DomainResponse, guildId: string): Promise<void> {
+
+  async save(response: DomainResponse, _guildId: string): Promise<void> {
     const key = `${response.scheduleId}:${response.userId}`;
     this.responses.set(key, response);
   }
 
-  async findByUser(scheduleId: string, userId: string, guildId: string): Promise<DomainResponse | null> {
+  async findByUser(
+    scheduleId: string,
+    userId: string,
+    _guildId: string
+  ): Promise<DomainResponse | null> {
     const key = `${scheduleId}:${userId}`;
     return this.responses.get(key) || null;
   }
 
-  async findByScheduleId(scheduleId: string, guildId: string): Promise<DomainResponse[]> {
-    return Array.from(this.responses.values())
-      .filter(r => r.scheduleId === scheduleId);
+  async findByScheduleId(scheduleId: string, _guildId: string): Promise<DomainResponse[]> {
+    return Array.from(this.responses.values()).filter((r) => r.scheduleId === scheduleId);
   }
 
-  async delete(scheduleId: string, userId: string, guildId: string): Promise<void> {
+  async delete(scheduleId: string, userId: string, _guildId: string): Promise<void> {
     const key = `${scheduleId}:${userId}`;
     this.responses.delete(key);
   }
 
-  async deleteBySchedule(scheduleId: string, guildId: string): Promise<void> {
-    const keysToDelete = Array.from(this.responses.keys())
-      .filter(key => key.startsWith(`${scheduleId}:`));
-    
-    keysToDelete.forEach(key => this.responses.delete(key));
+  async deleteBySchedule(scheduleId: string, _guildId: string): Promise<void> {
+    const keysToDelete = Array.from(this.responses.keys()).filter((key) =>
+      key.startsWith(`${scheduleId}:`)
+    );
+
+    keysToDelete.forEach((key) => this.responses.delete(key));
   }
 
-  async getScheduleSummary(scheduleId: string, guildId: string): Promise<DomainScheduleSummary | null> {
+  async getScheduleSummary(
+    scheduleId: string,
+    guildId: string
+  ): Promise<DomainScheduleSummary | null> {
     const responses = await this.findByScheduleId(scheduleId, guildId);
     if (responses.length === 0) return null;
 
@@ -116,7 +141,7 @@ export class MockResponseRepository implements IResponseRepository {
       title: 'Mock Schedule',
       dates: [
         { id: 'date1', datetime: '2024-12-01 10:00' },
-        { id: 'date2', datetime: '2024-12-02 14:00' }
+        { id: 'date2', datetime: '2024-12-02 14:00' },
       ],
       createdBy: { id: 'user123', username: 'testuser' },
       authorId: 'user123',
@@ -124,18 +149,21 @@ export class MockResponseRepository implements IResponseRepository {
       notificationSent: false,
       totalResponses: responses.length,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    const responseCounts = responses.reduce((acc, response) => {
-      Object.entries(response.dateStatuses).forEach(([dateId, status]) => {
-        if (!acc[dateId]) {
-          acc[dateId] = { ok: 0, maybe: 0, ng: 0 };
-        }
-        acc[dateId][status]++;
-      });
-      return acc;
-    }, {} as Record<string, Record<string, number>>);
+    const responseCounts = responses.reduce(
+      (acc, response) => {
+        Object.entries(response.dateStatuses).forEach(([dateId, status]) => {
+          if (!acc[dateId]) {
+            acc[dateId] = { ok: 0, maybe: 0, ng: 0 };
+          }
+          acc[dateId][status]++;
+        });
+        return acc;
+      },
+      {} as Record<string, Record<string, number>>
+    );
 
     return {
       schedule: mockSchedule,
@@ -147,14 +175,14 @@ export class MockResponseRepository implements IResponseRepository {
         overallParticipation: {
           fullyAvailable: 0,
           partiallyAvailable: 0,
-          unavailable: 0
+          unavailable: 0,
         },
         optimalDates: {
           optimalDateId: 'date1',
           alternativeDateIds: ['date2'],
-          scores: { date1: 10, date2: 5 }
-        }
-      }
+          scores: { date1: 10, date2: 5 },
+        },
+      },
     };
   }
 
@@ -194,7 +222,7 @@ export class MockRepositoryFactory implements IRepositoryFactory {
     // Mock implementation - no actual transaction needed for tests
     return {
       async commit() {},
-      async rollback() {}
+      async rollback() {},
     };
   }
 
@@ -247,7 +275,7 @@ export function createTestScheduleData(overrides: Partial<DomainSchedule> = {}):
     description: 'Test description',
     dates: [
       { id: 'date1', datetime: '2024-12-01 10:00' },
-      { id: 'date2', datetime: '2024-12-02 14:00' }
+      { id: 'date2', datetime: '2024-12-02 14:00' },
     ],
     createdBy: { id: 'user123', username: 'testuser' },
     authorId: 'user123',
@@ -260,7 +288,7 @@ export function createTestScheduleData(overrides: Partial<DomainSchedule> = {}):
     totalResponses: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -274,11 +302,11 @@ export function createTestResponseData(overrides: Partial<DomainResponse> = {}):
     username: 'testuser',
     displayName: 'Test User',
     dateStatuses: {
-      'date1': 'ok',
-      'date2': 'maybe'
+      date1: 'ok',
+      date2: 'maybe',
     },
     comment: 'Test comment',
     updatedAt: new Date(),
-    ...overrides
+    ...overrides,
   };
 }

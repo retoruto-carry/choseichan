@@ -1,13 +1,13 @@
 /**
  * Response Domain Service
- * 
+ *
  * レスポンス（回答）に関する複雑なビジネスロジックを集約
  */
 
 import { Response } from '../entities/Response';
-import { Schedule } from '../entities/Schedule';
-import { User } from '../entities/User';
-import { ResponseStatus } from '../entities/ResponseStatus';
+import type { ResponseStatus } from '../entities/ResponseStatus';
+import type { Schedule } from '../entities/Schedule';
+import type { User } from '../entities/User';
 
 export interface ResponseValidationResult {
   isValid: boolean;
@@ -40,15 +40,15 @@ export class ResponseDomainService {
     }
 
     // 日程候補の存在チェック
-    const scheduleeDateIds = new Set(schedule.dates.map(d => d.id));
-    responseData.forEach(data => {
+    const scheduleeDateIds = new Set(schedule.dates.map((d) => d.id));
+    responseData.forEach((data) => {
       if (!scheduleeDateIds.has(data.dateId)) {
         errors.push(`無効な日程候補です: ${data.dateId}`);
       }
     });
 
     // 重複チェック
-    const responseDateIds = responseData.map(d => d.dateId);
+    const responseDateIds = responseData.map((d) => d.dateId);
     const uniqueDateIds = [...new Set(responseDateIds)];
     if (responseDateIds.length !== uniqueDateIds.length) {
       errors.push('同じ日程に対して複数の回答があります');
@@ -61,7 +61,7 @@ export class ResponseDomainService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -77,7 +77,7 @@ export class ResponseDomainService {
   ): Response {
     // 日程ステータスのマップを作成
     const dateStatuses: Record<string, ResponseStatus> = {};
-    responseData.forEach(data => {
+    responseData.forEach((data) => {
       dateStatuses[data.dateId] = data.status;
     });
 
@@ -85,10 +85,10 @@ export class ResponseDomainService {
       // 既存のレスポンスを更新
       // 新しいステータスマップを作成
       const newDateStatuses = new Map<string, ResponseStatus>();
-      responseData.forEach(data => {
+      responseData.forEach((data) => {
         newDateStatuses.set(data.dateId, data.status);
       });
-      
+
       let updatedResponse = existingResponse.updateStatuses(newDateStatuses);
 
       // コメントを更新
@@ -103,13 +103,13 @@ export class ResponseDomainService {
       Object.entries(dateStatuses).forEach(([dateId, status]) => {
         dateStatusesMap.set(dateId, status);
       });
-      
+
       return Response.create({
         id: `${scheduleId}-${user.id}`,
         scheduleId,
         user,
         dateStatuses: dateStatusesMap,
-        comment
+        comment,
       });
     }
   }
@@ -122,28 +122,34 @@ export class ResponseDomainService {
     dateIds: string[]
   ): {
     totalUsers: number;
-    responsesByDate: Record<string, {
-      yes: number;
-      maybe: number;
-      no: number;
-      total: number;
-    }>;
+    responsesByDate: Record<
+      string,
+      {
+        yes: number;
+        maybe: number;
+        no: number;
+        total: number;
+      }
+    >;
     overallParticipation: {
-      fullyAvailable: number;    // 全日程参加可能
+      fullyAvailable: number; // 全日程参加可能
       partiallyAvailable: number; // 一部日程参加可能
-      unavailable: number;       // 全日程不参加
+      unavailable: number; // 全日程不参加
     };
   } {
-    const responsesByDate: Record<string, { yes: number; maybe: number; no: number; total: number }> = {};
-    
+    const responsesByDate: Record<
+      string,
+      { yes: number; maybe: number; no: number; total: number }
+    > = {};
+
     // 各日程の統計を初期化
-    dateIds.forEach(dateId => {
+    dateIds.forEach((dateId) => {
       responsesByDate[dateId] = { yes: 0, maybe: 0, no: 0, total: 0 };
     });
 
     // 回答を集計
-    responses.forEach(response => {
-      dateIds.forEach(dateId => {
+    responses.forEach((response) => {
+      dateIds.forEach((dateId) => {
         const status = response.getStatusForDate(dateId);
         if (status) {
           responsesByDate[dateId].total++;
@@ -163,13 +169,13 @@ export class ResponseDomainService {
     let partiallyAvailable = 0;
     let unavailable = 0;
 
-    responses.forEach(response => {
-      const yesCount = dateIds.filter(dateId => {
+    responses.forEach((response) => {
+      const yesCount = dateIds.filter((dateId) => {
         const status = response.getStatusForDate(dateId);
         return status?.isYes();
       }).length;
 
-      const maybeCount = dateIds.filter(dateId => {
+      const maybeCount = dateIds.filter((dateId) => {
         const status = response.getStatusForDate(dateId);
         return status?.isMaybe();
       }).length;
@@ -189,8 +195,8 @@ export class ResponseDomainService {
       overallParticipation: {
         fullyAvailable,
         partiallyAvailable,
-        unavailable
-      }
+        unavailable,
+      },
     };
   }
 
@@ -201,8 +207,8 @@ export class ResponseDomainService {
     responses: Response[],
     dateIds: string[],
     options: {
-      preferYes?: boolean;      // YES回答を重視するか
-      includeMaybe?: boolean;   // MAYBE回答も考慮するか
+      preferYes?: boolean; // YES回答を重視するか
+      includeMaybe?: boolean; // MAYBE回答も考慮するか
       minimumParticipants?: number; // 最低参加者数
     } = {}
   ): {
@@ -211,13 +217,13 @@ export class ResponseDomainService {
     scores: Record<string, number>;
   } {
     const { preferYes = true, includeMaybe = true, minimumParticipants = 1 } = options;
-    
+
     const scores: Record<string, number> = {};
-    
-    dateIds.forEach(dateId => {
+
+    dateIds.forEach((dateId) => {
       let score = 0;
-      
-      responses.forEach(response => {
+
+      responses.forEach((response) => {
         const status = response.getStatusForDate(dateId);
         if (status?.isYes()) {
           score += preferYes ? 3 : 1;
@@ -225,39 +231,33 @@ export class ResponseDomainService {
           score += 1;
         }
       });
-      
+
       scores[dateId] = score;
     });
 
     // スコア順にソート
     const sortedDates = dateIds
-      .filter(dateId => scores[dateId] >= minimumParticipants)
+      .filter((dateId) => scores[dateId] >= minimumParticipants)
       .sort((a, b) => scores[b] - scores[a]);
 
     return {
       optimalDateId: sortedDates[0],
       alternativeDateIds: sortedDates.slice(1),
-      scores
+      scores,
     };
   }
 
   /**
    * ユーザーが既に回答しているかチェック
    */
-  static hasUserResponded(
-    responses: Response[],
-    userId: string
-  ): boolean {
-    return responses.some(response => response.user.id === userId);
+  static hasUserResponded(responses: Response[], userId: string): boolean {
+    return responses.some((response) => response.user.id === userId);
   }
 
   /**
    * 特定ユーザーの回答を取得
    */
-  static getUserResponse(
-    responses: Response[],
-    userId: string
-  ): Response | undefined {
-    return responses.find(response => response.user.id === userId);
+  static getUserResponse(responses: Response[], userId: string): Response | undefined {
+    return responses.find((response) => response.user.id === userId);
   }
 }

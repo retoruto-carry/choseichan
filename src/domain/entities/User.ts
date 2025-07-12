@@ -1,6 +1,6 @@
 /**
  * User Domain Entity
- * 
+ *
  * ユーザーのドメインエンティティ
  * 不変なユーザー情報を表現
  */
@@ -31,18 +31,10 @@ export class User {
       throw new Error('ユーザー名は100文字以内で入力してください');
     }
 
-    return new User(
-      { value: id },
-      { value: username },
-      displayName
-    );
+    return new User({ value: id }, { value: username }, displayName);
   }
 
-  static fromPrimitives(data: {
-    id: string;
-    username: string;
-    displayName?: string;
-  }): User {
+  static fromPrimitives(data: { id: string; username: string; displayName?: string }): User {
     return User.create(data.id, data.username, data.displayName);
   }
 
@@ -66,7 +58,7 @@ export class User {
     return {
       id: this.id,
       username: this.username,
-      displayName: this.displayName
+      displayName: this.displayName,
     };
   }
 

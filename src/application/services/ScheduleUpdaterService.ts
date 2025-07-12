@@ -1,7 +1,10 @@
-import { Env } from '../../infrastructure/types/discord';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import type { Env } from '../../infrastructure/types/discord';
 import { updateOriginalMessage } from '../../presentation/utils/discord';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../presentation/utils/embeds';
+import {
+  createScheduleEmbedWithTable,
+  createSimpleScheduleComponents,
+} from '../../presentation/utils/embeds';
 
 /**
  * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版
@@ -61,7 +64,7 @@ export async function updateScheduleMainMessage(
       interactionToken,
       {
         embeds: [embed],
-        components
+        components,
       },
       targetMessageId
     );
@@ -98,7 +101,7 @@ export async function saveScheduleMessageId(
       scheduleId,
       guildId,
       editorUserId: 'system', // System update
-      messageId
+      messageId,
     });
   }
 }

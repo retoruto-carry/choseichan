@@ -1,13 +1,13 @@
 /**
  * Schedule Domain Entity
- * 
+ *
  * スケジュールのドメインエンティティ
  * 日程調整の情報を表現
  */
 
-import { User } from './User';
+import type { DomainSchedule } from '../types/DomainTypes';
 import { ScheduleDate } from './ScheduleDate';
-import { DomainSchedule } from '../types/DomainTypes';
+import { User } from './User';
 
 export interface ScheduleId {
   readonly value: string;
@@ -35,7 +35,7 @@ export interface Description {
 
 export enum ScheduleStatus {
   OPEN = 'open',
-  CLOSED = 'closed'
+  CLOSED = 'closed',
 }
 
 export class Schedule {
@@ -121,10 +121,8 @@ export class Schedule {
   }
 
   static fromPrimitives(data: DomainSchedule): Schedule {
-    const dates = data.dates.map((d) => 
-      ScheduleDate.fromPrimitives(d)
-    );
-    
+    const dates = data.dates.map((d) => ScheduleDate.fromPrimitives(d));
+
     const createdBy = User.fromPrimitives(data.createdBy);
 
     return Schedule.create({
@@ -145,7 +143,7 @@ export class Schedule {
       notificationSent: data.notificationSent,
       totalResponses: data.totalResponses,
       createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt)
+      updatedAt: new Date(data.updatedAt),
     });
   }
 
@@ -369,7 +367,7 @@ export class Schedule {
 
   addDate(date: ScheduleDate): Schedule {
     // 重複チェック
-    if (this._dates.some(d => d.equals(date))) {
+    if (this._dates.some((d) => d.equals(date))) {
       throw new Error('Date already exists in schedule');
     }
 
@@ -445,7 +443,7 @@ export class Schedule {
     if (dates.length === 0) {
       throw new Error('Schedule must have at least one date');
     }
-    
+
     return new Schedule(
       this._id,
       this._guildId,
@@ -522,7 +520,7 @@ export class Schedule {
       messageId: this.messageId,
       title: this.title,
       description: this.description,
-      dates: this.dates.map(d => d.toPrimitives()),
+      dates: this.dates.map((d) => d.toPrimitives()),
       createdBy: this.createdBy.toPrimitives(),
       authorId: this.authorId,
       deadline: this.deadline,
@@ -533,7 +531,7 @@ export class Schedule {
       notificationSent: this.notificationSent,
       totalResponses: this.totalResponses,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
     };
   }
 

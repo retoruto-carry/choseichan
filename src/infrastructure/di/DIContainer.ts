@@ -1,6 +1,6 @@
 /**
  * Enhanced Dependency Injection Container
- * 
+ *
  * 高度なDIコンテナ実装:
  * - Lazy loading
  * - Singleton lifecycle management
@@ -37,7 +37,7 @@ export class DIContainer implements IDIContainer {
   private readonly parent?: DIContainer;
   private readonly scopedServices = new Set<string | symbol>();
   private resolving = new Set<string | symbol>(); // For circular dependency detection
-  
+
   constructor(parent?: DIContainer) {
     this.parent = parent;
   }
@@ -51,7 +51,7 @@ export class DIContainer implements IDIContainer {
     this.register({
       token,
       factory,
-      lifetime: 'singleton'
+      lifetime: 'singleton',
     });
   }
 
@@ -59,7 +59,7 @@ export class DIContainer implements IDIContainer {
     this.register({
       token,
       factory,
-      lifetime: 'transient'
+      lifetime: 'transient',
     });
   }
 
@@ -67,7 +67,7 @@ export class DIContainer implements IDIContainer {
     this.register({
       token,
       factory,
-      lifetime: 'scoped'
+      lifetime: 'scoped',
     });
   }
 
@@ -100,7 +100,7 @@ export class DIContainer implements IDIContainer {
 
     try {
       const instance = this.createInstance(descriptor);
-      
+
       // Store instance based on lifetime
       switch (descriptor.lifetime) {
         case 'singleton':
@@ -129,9 +129,11 @@ export class DIContainer implements IDIContainer {
   }
 
   isRegistered(token: string | symbol): boolean {
-    return this.services.has(token) || 
-           this.instances.has(token) || 
-           (this.parent?.isRegistered(token) ?? false);
+    return (
+      this.services.has(token) ||
+      this.instances.has(token) ||
+      (this.parent?.isRegistered(token) ?? false)
+    );
   }
 
   createScope(): IDIContainer {
@@ -186,10 +188,10 @@ export const SERVICE_TOKENS = {
   DISCORD_API_SERVICE: Symbol('DiscordApiService'),
   SCHEDULE_REPOSITORY: Symbol('ScheduleRepository'),
   RESPONSE_REPOSITORY: Symbol('ResponseRepository'),
-  
+
   // Application Services
   NOTIFICATION_SERVICE: Symbol('NotificationService'),
-  
+
   // Use Cases - Schedule
   CREATE_SCHEDULE_USE_CASE: Symbol('CreateScheduleUseCase'),
   UPDATE_SCHEDULE_USE_CASE: Symbol('UpdateScheduleUseCase'),
@@ -202,14 +204,14 @@ export const SERVICE_TOKENS = {
   DEADLINE_REMINDER_USE_CASE: Symbol('DeadlineReminderUseCase'),
   PROCESS_REMINDER_USE_CASE: Symbol('ProcessReminderUseCase'),
   PROCESS_DEADLINE_REMINDERS_USE_CASE: Symbol('ProcessDeadlineRemindersUseCase'),
-  
+
   // Use Cases - Response
   SUBMIT_RESPONSE_USE_CASE: Symbol('SubmitResponseUseCase'),
   UPDATE_RESPONSE_USE_CASE: Symbol('UpdateResponseUseCase'),
   GET_RESPONSE_USE_CASE: Symbol('GetResponseUseCase'),
-  
+
   // Environment
-  ENV: Symbol('Env')
+  ENV: Symbol('Env'),
 } as const;
 
 // Type-safe service accessor methods

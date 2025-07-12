@@ -38,6 +38,23 @@ export interface DiscordEmbedImage {
   width?: number;
 }
 
+export interface DiscordMessage {
+  content?: string;
+  embeds?: DiscordEmbed[];
+  components?: DiscordComponent[];
+  message_reference?: {
+    message_id: string;
+    channel_id?: string;
+    guild_id?: string;
+  };
+  allowed_mentions?: {
+    parse?: string[];
+    users?: string[];
+    roles?: string[];
+    replied_user?: boolean;
+  };
+}
+
 export interface DiscordComponent {
   type: number;
   components?: DiscordComponent[];
@@ -117,7 +134,7 @@ export const BUTTON_STYLES = {
   SECONDARY: 2,
   SUCCESS: 3,
   DANGER: 4,
-  LINK: 5
+  LINK: 5,
 } as const;
 
 /**
@@ -127,7 +144,7 @@ export const COMPONENT_TYPES = {
   ACTION_ROW: 1,
   BUTTON: 2,
   SELECT_MENU: 3,
-  TEXT_INPUT: 4
+  TEXT_INPUT: 4,
 } as const;
 
 /**
@@ -135,7 +152,7 @@ export const COMPONENT_TYPES = {
  */
 export const TEXT_INPUT_STYLES = {
   SHORT: 1,
-  PARAGRAPH: 2
+  PARAGRAPH: 2,
 } as const;
 
 /**
@@ -146,7 +163,9 @@ export function isDiscordEmbed(obj: unknown): obj is DiscordEmbed {
 }
 
 export function isDiscordComponent(obj: unknown): obj is DiscordComponent {
-  return typeof obj === 'object' && obj !== null && typeof (obj as DiscordComponent).type === 'number';
+  return (
+    typeof obj === 'object' && obj !== null && typeof (obj as DiscordComponent).type === 'number'
+  );
 }
 
 export function isDiscordMessageData(obj: unknown): obj is DiscordMessageData {
@@ -173,7 +192,7 @@ export class DiscordComponentBuilder {
       label,
       style,
       emoji,
-      disabled
+      disabled,
     };
   }
 
@@ -193,7 +212,7 @@ export class DiscordComponentBuilder {
       placeholder,
       options,
       min_values: minValues,
-      max_values: maxValues
+      max_values: maxValues,
     };
   }
 
@@ -219,7 +238,7 @@ export class DiscordComponentBuilder {
       required,
       min_length: minLength,
       max_length: maxLength,
-      value
+      value,
     };
   }
 
@@ -229,7 +248,7 @@ export class DiscordComponentBuilder {
   static createActionRow(...components: DiscordComponent[]): DiscordComponent {
     return {
       type: COMPONENT_TYPES.ACTION_ROW,
-      components
+      components,
     };
   }
 }
@@ -239,8 +258,6 @@ export class DiscordComponentBuilder {
  */
 export class DiscordEmbedBuilder {
   private embed: DiscordEmbed = {};
-
-  constructor() {}
 
   setTitle(title: string): this {
     this.embed.title = title;

@@ -1,6 +1,6 @@
 /**
  * Discord API Interfaces
- * 
+ *
  * Discord APIと連携するためのインターフェース定義
  */
 
@@ -221,7 +221,12 @@ export interface DiscordEnvironment {
 // API Service Interface
 export interface DiscordApiService {
   sendWebhookMessage(webhookUrl: string, message: DiscordMessage): Promise<Response>;
-  updateMessage(channelId: string, messageId: string, message: DiscordMessage, botToken: string): Promise<Response>;
+  updateMessage(
+    channelId: string,
+    messageId: string,
+    message: DiscordMessage,
+    botToken: string
+  ): Promise<Response>;
   deleteMessage(channelId: string, messageId: string, botToken: string): Promise<Response>;
   getGuildMember(guildId: string, userId: string, botToken: string): Promise<DiscordMember>;
   createInteractionResponse(response: DiscordInteractionResponse): DiscordInteractionResponse;

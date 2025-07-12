@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { generateId, createButtonId, parseButtonId } from './id';
+import { describe, expect, it } from 'vitest';
+import { createButtonId, generateId, parseButtonId } from './id';
 
 describe('ID Utilities', () => {
   describe('generateId', () => {
@@ -87,12 +87,12 @@ describe('ID Utilities', () => {
     it('should round-trip correctly', () => {
       const original = {
         action: 'vote',
-        params: ['schedule123', 'date456', 'yes']
+        params: ['schedule123', 'date456', 'yes'],
       };
-      
+
       const id = createButtonId(original.action, ...original.params);
       const parsed = parseButtonId(id);
-      
+
       expect(parsed.action).toBe(original.action);
       expect(parsed.params).toEqual(original.params);
     });
@@ -102,14 +102,14 @@ describe('ID Utilities', () => {
         { action: 'simple', params: [] },
         { action: 'with-dash', params: ['param1'] },
         { action: 'multiple', params: ['p1', 'p2', 'p3'] },
-        { action: 'empty', params: ['', 'notEmpty', ''] }
+        { action: 'empty', params: ['', 'notEmpty', ''] },
       ];
 
       for (const testCase of testCases) {
         const id = createButtonId(testCase.action, ...testCase.params);
         const parsed = parseButtonId(id);
         expect(parsed.action).toBe(testCase.action);
-        expect(parsed.params).toEqual(testCase.params.map(p => p || ''));
+        expect(parsed.params).toEqual(testCase.params.map((p) => p || ''));
       }
     });
   });

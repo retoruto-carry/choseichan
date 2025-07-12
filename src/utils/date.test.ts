@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { formatDate, parseUserInputDate } from './date';
 
 describe('Date Utilities', () => {
@@ -21,7 +21,7 @@ describe('Date Utilities', () => {
 
   describe('parseUserInputDate', () => {
     const now = new Date();
-    const currentYear = now.getFullYear();
+    const _currentYear = now.getFullYear();
 
     it('should parse Japanese format with time (MM月DD日 HH:mm)', () => {
       const result = parseUserInputDate('12月25日 19:00');
@@ -99,9 +99,9 @@ describe('Date Utilities', () => {
       expect(result?.getUTCHours()).toBe(14); // 23:59 JST = 14:59 UTC
       expect(result?.getUTCMinutes()).toBe(59);
       expect(result?.getUTCSeconds()).toBe(59);
-      
+
       // Test that it formats back to JST correctly
-      const formatted = formatDate(result!.toISOString());
+      const formatted = formatDate(result?.toISOString() || '');
       expect(formatted).toContain('1/4');
       expect(formatted).toContain('23:59');
     });
@@ -125,7 +125,7 @@ describe('Date Utilities', () => {
       expect(parseUserInputDate('')).toBeNull();
       expect(parseUserInputDate('  ')).toBeNull();
     });
-    
+
     it('should parse single number with slash as month/day (e.g. 7/11)', () => {
       const currentYear = new Date().getFullYear();
       const result = parseUserInputDate('7/11');
@@ -149,13 +149,13 @@ describe('Date Utilities', () => {
       expect(result?.getUTCHours()).toBe(14); // 23:59 JST = 14:59 UTC
       expect(result?.getUTCMinutes()).toBe(59);
       expect(result?.getUTCSeconds()).toBe(59);
-      
+
       // Test that it formats back to JST correctly
-      const formatted = formatDate(result!.toISOString());
+      const formatted = formatDate(result?.toISOString() || '');
       expect(formatted).toContain('4/23');
       expect(formatted).toContain('23:59');
     });
-    
+
     it('should validate month and day ranges', () => {
       expect(parseUserInputDate('13/1')).toBeNull(); // Invalid month
       expect(parseUserInputDate('12/32')).toBeNull(); // Invalid day
@@ -166,7 +166,7 @@ describe('Date Utilities', () => {
     it('should handle various time separators', () => {
       const result1 = parseUserInputDate('12/25 19:00');
       const result2 = parseUserInputDate('12/25 19 00');
-      
+
       expect(result1?.getUTCHours()).toBe(10); // 19:00 JST = 10:00 UTC
       expect(result2?.getUTCHours()).toBe(10); // 19:00 JST = 10:00 UTC
     });

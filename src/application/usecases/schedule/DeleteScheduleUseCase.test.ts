@@ -1,7 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  type IResponseRepository,
+  type IScheduleRepository,
+  NotFoundError,
+  RepositoryError,
+} from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { DeleteScheduleUseCase } from './DeleteScheduleUseCase';
-import { IScheduleRepository, IResponseRepository, NotFoundError, RepositoryError } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('DeleteScheduleUseCase', () => {
   let useCase: DeleteScheduleUseCase;
@@ -13,16 +18,14 @@ describe('DeleteScheduleUseCase', () => {
     guildId: 'guild-123',
     channelId: 'channel-123',
     title: 'Test Schedule',
-    dates: [
-      { id: 'date-1', datetime: '2024/01/20 19:00' }
-    ],
+    dates: [{ id: 'date-1', datetime: '2024/01/20 19:00' }],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
     status: 'open',
     notificationSent: false,
     totalResponses: 5,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   beforeEach(() => {
@@ -35,7 +38,7 @@ describe('DeleteScheduleUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     mockResponseRepository = {
@@ -44,7 +47,7 @@ describe('DeleteScheduleUseCase', () => {
       findByScheduleId: vi.fn(),
       delete: vi.fn(),
       deleteBySchedule: vi.fn(),
-      getScheduleSummary: vi.fn()
+      getScheduleSummary: vi.fn(),
     };
 
     useCase = new DeleteScheduleUseCase(mockScheduleRepository, mockResponseRepository);
@@ -59,7 +62,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
@@ -67,9 +70,9 @@ describe('DeleteScheduleUseCase', () => {
         id: 'schedule-123',
         title: 'Test Schedule',
         channelId: 'channel-123',
-        responseCount: 5
+        responseCount: 5,
       });
-      
+
       expect(mockScheduleRepository.findById).toHaveBeenCalledWith('schedule-123', 'guild-123');
       expect(mockScheduleRepository.delete).toHaveBeenCalledWith('schedule-123', 'guild-123');
     });
@@ -80,7 +83,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -94,7 +97,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'other-user-456' // Different user
+        deletedByUserId: 'other-user-456', // Different user
       });
 
       expect(result.success).toBe(false);
@@ -106,16 +109,16 @@ describe('DeleteScheduleUseCase', () => {
       const testCases = [
         {
           request: { scheduleId: '', guildId: 'guild-123', deletedByUserId: 'user-123' },
-          expectedError: 'スケジュールIDが必要です'
+          expectedError: 'スケジュールIDが必要です',
         },
         {
           request: { scheduleId: 'schedule-123', guildId: '', deletedByUserId: 'user-123' },
-          expectedError: 'Guild IDが必要です'
+          expectedError: 'Guild IDが必要です',
         },
         {
           request: { scheduleId: 'schedule-123', guildId: 'guild-123', deletedByUserId: '' },
-          expectedError: '削除者IDが必要です'
-        }
+          expectedError: '削除者IDが必要です',
+        },
       ];
 
       for (const { request, expectedError } of testCases) {
@@ -133,11 +136,11 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの削除に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの削除に失敗しました');
     });
 
     it('should handle repository delete errors', async () => {
@@ -149,11 +152,11 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの削除に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの削除に失敗しました');
     });
 
     it('should handle unexpected errors', async () => {
@@ -164,11 +167,11 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの削除に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの削除に失敗しました');
     });
 
     it('should delete schedule with all optional fields', async () => {
@@ -179,7 +182,7 @@ describe('DeleteScheduleUseCase', () => {
         deadline: new Date('2024-02-01'),
         reminderTimings: ['1h', '30m'],
         reminderMentions: ['@here'],
-        remindersSent: ['1h']
+        remindersSent: ['1h'],
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(fullSchedule);
@@ -189,7 +192,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
@@ -197,13 +200,13 @@ describe('DeleteScheduleUseCase', () => {
         id: 'schedule-123',
         title: 'Test Schedule',
         channelId: 'channel-123',
-        responseCount: 5
+        responseCount: 5,
       });
     });
 
     it('should delete closed schedule', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
       vi.mocked(mockResponseRepository.deleteBySchedule).mockResolvedValueOnce(undefined);
       vi.mocked(mockScheduleRepository.delete).mockResolvedValueOnce(undefined);
@@ -211,7 +214,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
@@ -220,7 +223,7 @@ describe('DeleteScheduleUseCase', () => {
 
     it('should handle schedule with no responses', async () => {
       const scheduleNoResponses = { ...mockSchedule, totalResponses: 0 };
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleNoResponses);
       vi.mocked(mockResponseRepository.deleteBySchedule).mockResolvedValueOnce(undefined);
       vi.mocked(mockScheduleRepository.delete).mockResolvedValueOnce(undefined);
@@ -228,7 +231,7 @@ describe('DeleteScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        deletedByUserId: 'user-123'
+        deletedByUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);

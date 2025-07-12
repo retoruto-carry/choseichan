@@ -1,20 +1,28 @@
 /**
  * Schedule Controller
- * 
+ *
  * スケジュール関連のプレゼンテーション層コントローラー
  * Use Casesの実行とUI構築を調整
  */
 
-import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
-import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
-import { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
-import { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
-import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
-import { CreateScheduleRequest, UpdateScheduleRequest, CloseScheduleRequest } from '../../application/dto/ScheduleDto';
-import { ResponseStatistics } from '../../application/dto/ResponseDto';
-import { ScheduleUIBuilder, ScheduleDisplayOptions } from '../builders/ScheduleUIBuilder';
+import type { ResponseStatistics } from '../../application/dto/ResponseDto';
+import type {
+  CloseScheduleRequest,
+  CreateScheduleRequest,
+  UpdateScheduleRequest,
+} from '../../application/dto/ScheduleDto';
+import { getLogger } from '../../infrastructure/logging/Logger';
+import type { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
+import type { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
+import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
+import type { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
+import type { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
+import type {
+  DiscordMessage,
+  IDiscordApiService,
+} from '../../infrastructure/services/DiscordApiService';
 import { ResponseUIBuilder } from '../builders/ResponseUIBuilder';
-import { IDiscordApiService, DiscordMessage } from '../../infrastructure/services/DiscordApiService';
+import { type ScheduleDisplayOptions, ScheduleUIBuilder } from '../builders/ScheduleUIBuilder';
 
 export interface ScheduleControllerResult {
   success: boolean;
@@ -23,6 +31,8 @@ export interface ScheduleControllerResult {
 }
 
 export class ScheduleController {
+  private readonly logger = getLogger();
+
   constructor(
     private readonly createScheduleUseCase: CreateScheduleUseCase,
     private readonly updateScheduleUseCase: UpdateScheduleUseCase,
@@ -42,10 +52,15 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('スケジュール作成エラー', result.errors || ['不明なエラー'])],
-          ephemeral: true
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              'スケジュール作成エラー',
+              result.errors || ['不明なエラー']
+            ),
+          ],
+          ephemeral: true,
         },
-        errors: result.errors
+        errors: result.errors,
       };
     }
 
@@ -55,7 +70,7 @@ export class ScheduleController {
       showEditButtons: true,
       showCloseButton: true,
       showDeleteButton: true,
-      isOwnerView: true
+      isOwnerView: true,
     };
 
     const embed = ScheduleUIBuilder.buildScheduleEmbed(result.schedule, undefined, displayOptions);
@@ -65,8 +80,8 @@ export class ScheduleController {
       success: true,
       message: {
         embeds: [embed],
-        components
-      }
+        components,
+      },
     };
   }
 
@@ -85,10 +100,15 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('スケジュール取得エラー', summaryResult.errors || ['スケジュールが見つかりません'])],
-          ephemeral: true
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              'スケジュール取得エラー',
+              summaryResult.errors || ['スケジュールが見つかりません']
+            ),
+          ],
+          ephemeral: true,
         },
-        errors: summaryResult.errors
+        errors: summaryResult.errors,
       };
     }
 
@@ -103,8 +123,8 @@ export class ScheduleController {
       success: true,
       message: {
         embeds: [embed],
-        components
-      }
+        components,
+      },
     };
   }
 
@@ -118,10 +138,15 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('更新エラー', result.errors || ['更新に失敗しました'])],
-          ephemeral: true
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              '更新エラー',
+              result.errors || ['更新に失敗しました']
+            ),
+          ],
+          ephemeral: true,
         },
-        errors: result.errors
+        errors: result.errors,
       };
     }
 
@@ -130,7 +155,7 @@ export class ScheduleController {
       showVoteButtons: true,
       showEditButtons: true,
       showCloseButton: true,
-      isOwnerView: true
+      isOwnerView: true,
     });
   }
 
@@ -144,10 +169,15 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('締切エラー', result.errors || ['締切に失敗しました'])],
-          ephemeral: true
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              '締切エラー',
+              result.errors || ['締切に失敗しました']
+            ),
+          ],
+          ephemeral: true,
         },
-        errors: result.errors
+        errors: result.errors,
       };
     }
 
@@ -161,8 +191,8 @@ export class ScheduleController {
       success: true,
       message: {
         embeds: [successEmbed],
-        ephemeral: true
-      }
+        ephemeral: true,
+      },
     };
   }
 
@@ -172,7 +202,7 @@ export class ScheduleController {
   async buildVoteInterface(
     scheduleId: string,
     guildId: string,
-    userId?: string
+    _userId?: string
   ): Promise<ScheduleControllerResult> {
     // スケジュール情報取得
     const scheduleResult = await this.getScheduleUseCase.execute(scheduleId, guildId);
@@ -180,9 +210,14 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('エラー', scheduleResult.errors || ['スケジュールが見つかりません'])],
-          ephemeral: true
-        }
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              'エラー',
+              scheduleResult.errors || ['スケジュールが見つかりません']
+            ),
+          ],
+          ephemeral: true,
+        },
       };
     }
 
@@ -193,9 +228,13 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('投票不可', ['このスケジュールは既に締め切られています'])],
-          ephemeral: true
-        }
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed('投票不可', [
+              'このスケジュールは既に締め切られています',
+            ]),
+          ],
+          ephemeral: true,
+        },
       };
     }
 
@@ -207,8 +246,8 @@ export class ScheduleController {
           success: false,
           message: {
             embeds: [ResponseUIBuilder.buildErrorEmbed('投票不可', ['回答期限が過ぎています'])],
-            ephemeral: true
-          }
+            ephemeral: true,
+          },
         };
       }
     }
@@ -225,12 +264,12 @@ export class ScheduleController {
         components: [
           {
             type: 1, // ACTION_ROW
-            components: [selectMenu]
+            components: [selectMenu],
           },
-          ...actionButtons
+          ...actionButtons,
         ],
-        ephemeral: true
-      }
+        ephemeral: true,
+      },
     };
   }
 
@@ -244,24 +283,35 @@ export class ScheduleController {
       return {
         success: false,
         message: {
-          embeds: [ResponseUIBuilder.buildErrorEmbed('エラー', summaryResult.errors || ['スケジュールが見つかりません'])],
-          ephemeral: true
-        }
+          embeds: [
+            ResponseUIBuilder.buildErrorEmbed(
+              'エラー',
+              summaryResult.errors || ['スケジュールが見つかりません']
+            ),
+          ],
+          ephemeral: true,
+        },
       };
     }
 
     const { summary } = summaryResult;
 
     // 回答一覧Embedを構築
-    const responseListEmbed = ScheduleUIBuilder.buildResponseListEmbed(summary.schedule, summary.responses);
-    
+    const responseListEmbed = ScheduleUIBuilder.buildResponseListEmbed(
+      summary.schedule,
+      summary.responses
+    );
+
     // 統計Embedを構築（回答がある場合）
     const embeds = [responseListEmbed];
     if (summary.responses.length > 0) {
       // ResponseStatistics形式に変換して統計Embedを構築
       const responseStatistics = await this.buildResponseStatistics(scheduleId, guildId);
       if (responseStatistics) {
-        const statisticsEmbed = ResponseUIBuilder.buildVoteStatisticsEmbed(summary.schedule, responseStatistics);
+        const statisticsEmbed = ResponseUIBuilder.buildVoteStatisticsEmbed(
+          summary.schedule,
+          responseStatistics
+        );
         embeds.push(statisticsEmbed);
       }
     }
@@ -270,19 +320,22 @@ export class ScheduleController {
       success: true,
       message: {
         embeds,
-        ephemeral: true
-      }
+        ephemeral: true,
+      },
     };
   }
 
   /**
    * ResponseStatistics形式の統計情報を取得（プライベートヘルパー）
    */
-  private async buildResponseStatistics(scheduleId: string, guildId: string): Promise<ResponseStatistics | null> {
+  private async buildResponseStatistics(
+    scheduleId: string,
+    guildId: string
+  ): Promise<ResponseStatistics | null> {
     try {
       const responsesResult = await this.getResponseUseCase.getAllResponses({
         scheduleId,
-        guildId
+        guildId,
       });
 
       if (!responsesResult.success || !responsesResult.statistics) {
@@ -291,7 +344,12 @@ export class ScheduleController {
 
       return responsesResult.statistics;
     } catch (error) {
-      console.error('Failed to build response statistics:', error);
+      this.logger.error('Failed to build response statistics', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'build-response-statistics',
+        useCase: 'ScheduleController',
+        scheduleId,
+        guildId,
+      });
       return null;
     }
   }

@@ -1,13 +1,7 @@
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Env } from '../../infrastructure/types/discord';
+import type { ScheduleResponse } from '../dto/ScheduleDto';
 import { ProcessDeadlineRemindersUseCase } from './ProcessDeadlineRemindersUseCase';
-import { DeadlineReminderUseCase } from './schedule/DeadlineReminderUseCase';
-import { GetScheduleUseCase } from './schedule/GetScheduleUseCase';
-import { GetScheduleSummaryUseCase } from './schedule/GetScheduleSummaryUseCase';
-import { ProcessReminderUseCase } from './schedule/ProcessReminderUseCase';
-import { CloseScheduleUseCase } from './schedule/CloseScheduleUseCase';
-import { NotificationService } from '../services/NotificationService';
-import { Env } from '../../infrastructure/types/discord';
-import { ScheduleResponse } from '../dto/ScheduleDto';
 
 describe('ProcessDeadlineRemindersUseCase', () => {
   let useCase: ProcessDeadlineRemindersUseCase;
@@ -27,7 +21,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     title: 'Test Schedule',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     deadline: '2024-01-19T00:00:00.000Z',
     createdBy: { id: 'user-123', username: 'TestUser' },
@@ -36,7 +30,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     notificationSent: false,
     totalResponses: 5,
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
   const mockSummary = {
@@ -47,15 +41,15 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         yes: 3,
         maybe: 1,
         no: 1,
-        total: 5
+        total: 5,
       },
       'date-2': {
         yes: 2,
         maybe: 2,
         no: 1,
-        total: 5
-      }
-    }
+        total: 5,
+      },
+    },
   };
 
   beforeEach(() => {
@@ -67,34 +61,34 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       DB: {} as D1Database,
       REMINDER_BATCH_SIZE: '10',
       REMINDER_BATCH_DELAY: '50',
-      ctx: { waitUntil: vi.fn() } as any
+      ctx: { waitUntil: vi.fn() } as any,
     };
 
     // Setup mock use cases
     mockDeadlineReminderUseCase = {
-      checkDeadlines: vi.fn()
+      checkDeadlines: vi.fn(),
     } as any;
 
     mockGetScheduleUseCase = {
-      execute: vi.fn()
+      execute: vi.fn(),
     } as any;
 
     mockGetScheduleSummaryUseCase = {
-      execute: vi.fn()
+      execute: vi.fn(),
     } as any;
 
     mockProcessReminderUseCase = {
-      markReminderSent: vi.fn()
+      markReminderSent: vi.fn(),
     } as any;
 
     mockCloseScheduleUseCase = {
-      execute: vi.fn()
+      execute: vi.fn(),
     } as any;
 
     mockNotificationService = {
       sendDeadlineReminder: vi.fn(),
       sendSummaryMessage: vi.fn(),
-      sendPRMessage: vi.fn()
+      sendPRMessage: vi.fn(),
     } as any;
 
     useCase = new ProcessDeadlineRemindersUseCase(
@@ -119,37 +113,35 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日'
+              message: '締切まで1日',
             },
             {
               scheduleId: 'schedule-456',
               guildId: 'guild-123',
               reminderType: '8h',
-              message: '締切まで8時間'
-            }
+              message: '締切まで8時間',
+            },
           ],
-          justClosed: [
-            { scheduleId: 'schedule-789', guildId: 'guild-123' }
-          ]
-        }
+          justClosed: [{ scheduleId: 'schedule-789', guildId: 'guild-123' }],
+        },
       });
 
       vi.mocked(mockGetScheduleUseCase.execute).mockResolvedValue({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockGetScheduleSummaryUseCase.execute).mockResolvedValue({
         success: true,
-        summary: mockSummary
+        summary: mockSummary,
       });
 
       vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       vi.mocked(mockCloseScheduleUseCase.execute).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       // Execute
@@ -170,14 +162,14 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       expect(mockProcessReminderUseCase.markReminderSent).toHaveBeenCalledWith({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        reminderType: '1d'
+        reminderType: '1d',
       });
 
       // Verify closure processing
       expect(mockCloseScheduleUseCase.execute).toHaveBeenCalledWith({
         scheduleId: 'schedule-789',
         guildId: 'guild-123',
-        editorUserId: 'system'
+        editorUserId: 'system',
       });
 
       // Verify closure notifications
@@ -191,7 +183,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     it('should skip processing when missing Discord credentials', async () => {
       // Remove Discord credentials
       const envWithoutCreds = { ...mockEnv, DISCORD_TOKEN: undefined };
-      
+
       const useCaseWithoutCreds = new ProcessDeadlineRemindersUseCase(
         mockDeadlineReminderUseCase as any,
         mockGetScheduleUseCase as any,
@@ -214,8 +206,8 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         success: true,
         result: {
           upcomingReminders: [],
-          justClosed: []
-        }
+          justClosed: [],
+        },
       });
 
       await useCase.execute();
@@ -229,7 +221,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     it('should handle deadline check failure', async () => {
       vi.mocked(mockDeadlineReminderUseCase.checkDeadlines).mockResolvedValueOnce({
         success: false,
-        errors: ['Database error']
+        errors: ['Database error'],
       });
 
       await useCase.execute();
@@ -248,33 +240,33 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日'
+              message: '締切まで1日',
             },
             {
               scheduleId: 'schedule-456',
               guildId: 'guild-123',
               reminderType: '8h',
-              message: '締切まで8時間'
-            }
+              message: '締切まで8時間',
+            },
           ],
-          justClosed: []
-        }
+          justClosed: [],
+        },
       });
 
       // First schedule fails, second succeeds
       vi.mocked(mockGetScheduleUseCase.execute)
         .mockResolvedValueOnce({
           success: false,
-          errors: ['Schedule not found']
+          errors: ['Schedule not found'],
         })
         .mockResolvedValueOnce({
           success: true,
-          schedule: mockSchedule
+          schedule: mockSchedule,
         });
 
       vi.mocked(mockGetScheduleSummaryUseCase.execute).mockResolvedValue({
         success: true,
-        summary: mockSummary
+        summary: mockSummary,
       });
 
       await useCase.execute();
@@ -296,21 +288,21 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日'
-            }
+              message: '締切まで1日',
+            },
           ],
-          justClosed: []
-        }
+          justClosed: [],
+        },
       });
 
       vi.mocked(mockGetScheduleUseCase.execute).mockResolvedValue({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockGetScheduleSummaryUseCase.execute).mockResolvedValue({
         success: false,
-        errors: ['Summary not found']
+        errors: ['Summary not found'],
       });
 
       await useCase.execute();
@@ -331,25 +323,25 @@ describe('ProcessDeadlineRemindersUseCase', () => {
               scheduleId: 'schedule-123',
               guildId: 'guild-123',
               reminderType: '1d',
-              message: '締切まで1日'
-            }
+              message: '締切まで1日',
+            },
           ],
-          justClosed: []
-        }
+          justClosed: [],
+        },
       });
 
       vi.mocked(mockGetScheduleUseCase.execute).mockResolvedValue({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockGetScheduleSummaryUseCase.execute).mockResolvedValue({
         success: true,
-        summary: mockSummary
+        summary: mockSummary,
       });
 
       vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       vi.mocked(mockNotificationService.sendDeadlineReminder).mockRejectedValueOnce(
@@ -364,7 +356,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       const customEnv = {
         ...mockEnv,
         REMINDER_BATCH_SIZE: '5',
-        REMINDER_BATCH_DELAY: '200'
+        REMINDER_BATCH_DELAY: '200',
       };
 
       const customUseCase = new ProcessDeadlineRemindersUseCase(
@@ -382,29 +374,29 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         scheduleId: `schedule-${i}`,
         guildId: 'guild-123',
         reminderType: '1d',
-        message: '締切まで1日'
+        message: '締切まで1日',
       }));
 
       vi.mocked(mockDeadlineReminderUseCase.checkDeadlines).mockResolvedValueOnce({
         success: true,
         result: {
           upcomingReminders: manyReminders,
-          justClosed: []
-        }
+          justClosed: [],
+        },
       });
 
       vi.mocked(mockGetScheduleUseCase.execute).mockResolvedValue({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockGetScheduleSummaryUseCase.execute).mockResolvedValue({
         success: true,
-        summary: mockSummary
+        summary: mockSummary,
       });
 
       vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       await customUseCase.execute();
@@ -418,15 +410,13 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         success: true,
         result: {
           upcomingReminders: [],
-          justClosed: [
-            { scheduleId: 'schedule-789', guildId: 'guild-123' }
-          ]
-        }
+          justClosed: [{ scheduleId: 'schedule-789', guildId: 'guild-123' }],
+        },
       });
 
       vi.mocked(mockCloseScheduleUseCase.execute).mockResolvedValueOnce({
         success: false,
-        errors: ['Cannot close schedule']
+        errors: ['Cannot close schedule'],
       });
 
       await useCase.execute();
@@ -441,19 +431,17 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         success: true,
         result: {
           upcomingReminders: [],
-          justClosed: [
-            { scheduleId: 'schedule-789', guildId: 'guild-123' }
-          ]
-        }
+          justClosed: [{ scheduleId: 'schedule-789', guildId: 'guild-123' }],
+        },
       });
 
       vi.mocked(mockCloseScheduleUseCase.execute).mockResolvedValueOnce({
-        success: true
+        success: true,
       });
 
       vi.mocked(mockGetScheduleUseCase.execute).mockResolvedValueOnce({
         success: false,
-        errors: ['Schedule not found']
+        errors: ['Schedule not found'],
       });
 
       await useCase.execute();

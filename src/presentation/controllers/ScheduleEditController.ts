@@ -1,16 +1,19 @@
 /**
  * Schedule Edit Controller
- * 
+ *
  * スケジュール編集機能のコントローラー
  * 元: src/handlers/edit-handlers.ts の Clean Architecture版
  */
 
-import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, Env } from '../../infrastructure/types/discord';
+import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { getLogger } from '../../infrastructure/logging/Logger';
+import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { ScheduleEditUIBuilder } from '../builders/ScheduleEditUIBuilder';
 
 export class ScheduleEditController {
+  private readonly logger = getLogger();
+
   constructor(
     private readonly dependencyContainer: DependencyContainer,
     private readonly uiBuilder: ScheduleEditUIBuilder
@@ -19,17 +22,16 @@ export class ScheduleEditController {
   /**
    * 基本情報編集ボタン処理
    */
-  async handleEditInfoButton(
-    interaction: ButtonInteraction,
-    params: string[]
-  ): Promise<Response> {
+  async handleEditInfoButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
     try {
       const [scheduleId, originalMessageId] = params;
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール取得
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -41,13 +43,20 @@ export class ScheduleEditController {
         originalMessageId || interaction.message?.id || ''
       );
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleEditInfoButton:', error);
+      this.logger.error('Error in handleEditInfoButton', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handle-edit-info-button',
+        useCase: 'ScheduleEditController',
+        scheduleId: params[0],
+        guildId: interaction.guild_id,
+      });
       return this.createErrorResponse('基本情報編集の表示中にエラーが発生しました。');
     }
   }
@@ -64,8 +73,10 @@ export class ScheduleEditController {
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール取得
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -77,13 +88,15 @@ export class ScheduleEditController {
         originalMessageId || interaction.message?.id || ''
       );
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleUpdateDatesButton:', error);
+      this.logger.error('Error in handleUpdateDatesButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('日程更新の表示中にエラーが発生しました。');
     }
   }
@@ -91,17 +104,16 @@ export class ScheduleEditController {
   /**
    * 日程追加ボタン処理
    */
-  async handleAddDatesButton(
-    interaction: ButtonInteraction,
-    params: string[]
-  ): Promise<Response> {
+  async handleAddDatesButton(interaction: ButtonInteraction, params: string[]): Promise<Response> {
     try {
       const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール存在確認
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -110,13 +122,15 @@ export class ScheduleEditController {
       // モーダル構築
       const modal = this.uiBuilder.createAddDatesModal(scheduleId);
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleAddDatesButton:', error);
+      this.logger.error('Error in handleAddDatesButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('日程追加の表示中にエラーが発生しました。');
     }
   }
@@ -133,8 +147,10 @@ export class ScheduleEditController {
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール取得
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -143,17 +159,19 @@ export class ScheduleEditController {
       // 削除選択UI構築
       const components = this.uiBuilder.createRemoveDatesComponents(scheduleResult.schedule);
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: '削除する日程を選択してください：',
-          components: components.slice(0, 5), // Max 5 rows
-          flags: InteractionResponseFlags.EPHEMERAL
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: '削除する日程を選択してください：',
+            components: components.slice(0, 5), // Max 5 rows
+            flags: InteractionResponseFlags.EPHEMERAL,
+          },
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleRemoveDatesButton:', error);
+      this.logger.error('Error in handleRemoveDatesButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('日程削除の表示中にエラーが発生しました。');
     }
   }
@@ -175,8 +193,10 @@ export class ScheduleEditController {
       }
 
       // まずスケジュール取得して権限確認
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -188,21 +208,21 @@ export class ScheduleEditController {
       }
 
       // 削除する日程を特定
-      const targetDate = scheduleResult.schedule.dates.find(d => d.id === dateId);
+      const targetDate = scheduleResult.schedule.dates.find((d) => d.id === dateId);
       if (!targetDate) {
         return this.createErrorResponse('削除対象の日程が見つかりません。');
       }
 
       // 日程削除処理
       const remainingDates = scheduleResult.schedule.dates
-        .filter(d => d.id !== dateId)
-        .map(d => ({ id: d.id, datetime: d.datetime }));
-      
+        .filter((d) => d.id !== dateId)
+        .map((d) => ({ id: d.id, datetime: d.datetime }));
+
       const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
         scheduleId,
         guildId,
         editorUserId: userId,
-        dates: remainingDates
+        dates: remainingDates,
       });
 
       if (!updateResult.success) {
@@ -211,15 +231,17 @@ export class ScheduleEditController {
 
       // Note: Response data with removed date IDs will be handled by the repository layer
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.UPDATE_MESSAGE,
-        data: {
-          content: `✅ 日程「${targetDate.datetime}」を削除しました。`
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.UPDATE_MESSAGE,
+          data: {
+            content: `✅ 日程「${targetDate.datetime}」を削除しました。`,
+          },
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleConfirmRemoveDateButton:', error);
+      this.logger.error('Error in handleConfirmRemoveDateButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('日程削除中にエラーが発生しました。');
     }
   }
@@ -236,8 +258,10 @@ export class ScheduleEditController {
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール取得
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -249,13 +273,15 @@ export class ScheduleEditController {
         originalMessageId || interaction.message?.id || ''
       );
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleEditDeadlineButton:', error);
+      this.logger.error('Error in handleEditDeadlineButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('締切編集の表示中にエラーが発生しました。');
     }
   }
@@ -272,8 +298,10 @@ export class ScheduleEditController {
       const guildId = interaction.guild_id || 'default';
 
       // スケジュール取得
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase
-        .execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
 
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return this.createErrorResponse('日程調整が見つかりません。');
@@ -282,25 +310,30 @@ export class ScheduleEditController {
       // モーダル構築
       const modal = this.uiBuilder.createEditReminderModal(scheduleResult.schedule);
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error in handleReminderEditButton:', error);
+      this.logger.error('Error in handleReminderEditButton:', error instanceof Error ? error : new Error(String(error)));
       return this.createErrorResponse('リマインダー編集の表示中にエラーが発生しました。');
     }
   }
 
   private createErrorResponse(message: string): Response {
-    return new Response(JSON.stringify({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: message,
-        flags: InteractionResponseFlags.EPHEMERAL
-      }
-    }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(
+      JSON.stringify({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: message,
+          flags: InteractionResponseFlags.EPHEMERAL,
+        },
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
 
@@ -310,6 +343,6 @@ export class ScheduleEditController {
 export function createScheduleEditController(env: Env): ScheduleEditController {
   const container = new DependencyContainer(env);
   const uiBuilder = new ScheduleEditUIBuilder();
-  
+
   return new ScheduleEditController(container, uiBuilder);
 }

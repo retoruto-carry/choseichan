@@ -1,15 +1,15 @@
 /**
  * Update Schedule Use Case
- * 
+ *
  * スケジュール更新のユースケース
  * 認可チェックとビジネスルールの検証を実行
  */
 
-import { Schedule } from '../../../domain/entities/Schedule';
+import type { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { UpdateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
+import type { ScheduleResponse, UpdateScheduleRequest } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface UpdateScheduleUseCaseResult {
@@ -19,9 +19,7 @@ export interface UpdateScheduleUseCaseResult {
 }
 
 export class UpdateScheduleUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   async execute(request: UpdateScheduleRequest): Promise<UpdateScheduleUseCaseResult> {
     try {
@@ -30,7 +28,7 @@ export class UpdateScheduleUseCase {
       if (!basicValidation.isValid) {
         return {
           success: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
@@ -43,7 +41,7 @@ export class UpdateScheduleUseCase {
       if (!existingSchedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -54,7 +52,7 @@ export class UpdateScheduleUseCase {
       if (!scheduleEntity.canBeEditedBy(request.editorUserId)) {
         return {
           success: false,
-          errors: ['このスケジュールを編集する権限がありません']
+          errors: ['このスケジュールを編集する権限がありません'],
         };
       }
 
@@ -62,7 +60,7 @@ export class UpdateScheduleUseCase {
       if (scheduleEntity.isClosed()) {
         return {
           success: false,
-          errors: ['締め切られたスケジュールは編集できません']
+          errors: ['締め切られたスケジュールは編集できません'],
         };
       }
 
@@ -71,27 +69,27 @@ export class UpdateScheduleUseCase {
         schedule: scheduleEntity,
         title: request.title,
         description: request.description,
-        deadline: request.deadline ? new Date(request.deadline) : undefined
+        deadline: request.deadline ? new Date(request.deadline) : undefined,
       });
 
       if (!domainValidation.isValid) {
         return {
           success: false,
-          errors: domainValidation.errors
+          errors: domainValidation.errors,
         };
       }
 
       // 7. スケジュールの更新
       let updatedSchedule = scheduleEntity;
-      
+
       if (request.title !== undefined) {
         updatedSchedule = updatedSchedule.updateTitle(request.title);
       }
-      
+
       if (request.description !== undefined) {
         updatedSchedule = updatedSchedule.updateDescription(request.description);
       }
-      
+
       if (request.deadline !== undefined) {
         const deadline = request.deadline === null ? null : new Date(request.deadline);
         updatedSchedule = updatedSchedule.updateDeadline(deadline);
@@ -102,7 +100,7 @@ export class UpdateScheduleUseCase {
       }
 
       if (request.dates !== undefined) {
-        const scheduleDates = request.dates.map(d => ScheduleDate.create(d.id, d.datetime));
+        const scheduleDates = request.dates.map((d) => ScheduleDate.create(d.id, d.datetime));
         updatedSchedule = updatedSchedule.updateDates(scheduleDates);
       }
 
@@ -125,18 +123,22 @@ export class UpdateScheduleUseCase {
 
       return {
         success: true,
-        schedule: response
+        schedule: response,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの更新に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの更新に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  private validateBasicData(request: UpdateScheduleRequest): { isValid: boolean; errors: string[] } {
+  private validateBasicData(request: UpdateScheduleRequest): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {
@@ -159,20 +161,20 @@ export class UpdateScheduleUseCase {
     // 締切日時の検証
     if (request.deadline !== undefined && request.deadline !== null) {
       const deadline = new Date(request.deadline);
-      if (isNaN(deadline.getTime())) {
+      if (Number.isNaN(deadline.getTime())) {
         errors.push('締切日時の形式が正しくありません');
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   private buildResponse(schedule: Schedule): ScheduleResponse {
     const primitives = schedule.toPrimitives();
-    
+
     return {
       id: primitives.id,
       guildId: primitives.guildId,
@@ -191,7 +193,7 @@ export class UpdateScheduleUseCase {
       notificationSent: primitives.notificationSent,
       totalResponses: primitives.totalResponses,
       createdAt: primitives.createdAt.toISOString(),
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

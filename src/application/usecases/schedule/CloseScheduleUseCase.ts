@@ -1,14 +1,14 @@
 /**
  * Close Schedule Use Case
- * 
+ *
  * スケジュール締め切りのユースケース
  * 認可チェックとビジネスルールの検証を実行
  */
 
-import { Schedule } from '../../../domain/entities/Schedule';
+import type { Schedule } from '../../../domain/entities/Schedule';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { CloseScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
+import type { CloseScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface CloseScheduleUseCaseResult {
@@ -18,9 +18,7 @@ export interface CloseScheduleUseCaseResult {
 }
 
 export class CloseScheduleUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   async execute(request: CloseScheduleRequest): Promise<CloseScheduleUseCaseResult> {
     try {
@@ -29,7 +27,7 @@ export class CloseScheduleUseCase {
       if (!basicValidation.isValid) {
         return {
           success: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
@@ -42,7 +40,7 @@ export class CloseScheduleUseCase {
       if (!existingSchedule) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -59,7 +57,7 @@ export class CloseScheduleUseCase {
         if (!editPermission.canEdit) {
           return {
             success: false,
-            errors: [editPermission.reason || 'このスケジュールを編集する権限がありません']
+            errors: [editPermission.reason || 'このスケジュールを編集する権限がありません'],
           };
         }
       }
@@ -68,7 +66,7 @@ export class CloseScheduleUseCase {
       if (scheduleEntity.isClosed()) {
         return {
           success: false,
-          errors: ['このスケジュールは既に締め切られています']
+          errors: ['このスケジュールは既に締め切られています'],
         };
       }
 
@@ -83,13 +81,14 @@ export class CloseScheduleUseCase {
 
       return {
         success: true,
-        schedule: response
+        schedule: response,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの締め切りに失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの締め切りに失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -111,13 +110,13 @@ export class CloseScheduleUseCase {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   private buildResponse(schedule: Schedule): ScheduleResponse {
     const primitives = schedule.toPrimitives();
-    
+
     return {
       id: primitives.id,
       guildId: primitives.guildId,
@@ -136,7 +135,7 @@ export class CloseScheduleUseCase {
       notificationSent: primitives.notificationSent,
       totalResponses: primitives.totalResponses,
       createdAt: primitives.createdAt.toISOString(),
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

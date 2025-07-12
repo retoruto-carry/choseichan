@@ -1,11 +1,13 @@
 /**
  * Delete Schedule Use Case
- * 
+ *
  * スケジュールの削除ユースケース
  */
 
-import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
-import { Schedule } from '../../../domain/entities/Schedule';
+import type {
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface DeleteScheduleRequest {
@@ -38,17 +40,20 @@ export class DeleteScheduleUseCase {
       if (!validation.isValid) {
         return {
           success: false,
-          errors: validation.errors
+          errors: validation.errors,
         };
       }
 
       // 2. スケジュールの取得
-      const scheduleData = await this.scheduleRepository.findById(request.scheduleId, request.guildId);
-      
+      const scheduleData = await this.scheduleRepository.findById(
+        request.scheduleId,
+        request.guildId
+      );
+
       if (!scheduleData) {
         return {
           success: false,
-          errors: ['スケジュールが見つかりません']
+          errors: ['スケジュールが見つかりません'],
         };
       }
 
@@ -59,7 +64,7 @@ export class DeleteScheduleUseCase {
       if (!schedule.canBeEditedBy(request.deletedByUserId)) {
         return {
           success: false,
-          errors: ['このスケジュールを削除する権限がありません']
+          errors: ['このスケジュールを削除する権限がありません'],
         };
       }
 
@@ -68,7 +73,7 @@ export class DeleteScheduleUseCase {
         id: schedule.id,
         title: schedule.title,
         channelId: schedule.channelId,
-        responseCount: schedule.totalResponses
+        responseCount: schedule.totalResponses,
       };
 
       // 6. 関連する回答データの削除
@@ -79,13 +84,14 @@ export class DeleteScheduleUseCase {
 
       return {
         success: true,
-        deletedSchedule
+        deletedSchedule,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの削除に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの削除に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -107,7 +113,7 @@ export class DeleteScheduleUseCase {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

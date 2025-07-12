@@ -1,103 +1,127 @@
-# Discord 調整ちゃん
+# Discord 調整ちゃん 🗾
 
-Discordサーバーで簡単に日程調整ができるBot。外部サイト不要で、Discord内で完結します。
+Discord サーバー内で簡単に日程調整ができるボットです。調整さんライクな機能を Discord 内で完結させることができます。
 
-## 機能
+## ✨ 特徴
 
-- 📅 簡単な日程作成
-- 🗳️ ボタンで簡単回答（○△×）
-- 📊 リアルタイム集計
-- ⏰ 締切設定と自動通知
-- 🌍 マルチテナント対応（複数サーバーで利用可能）
+- 📝 **シンプルな日程調整作成** - モーダルフォームで直感的に作成
+- 🗳️ **○△× の 3 段階評価** - わかりやすい回答システム
+- 📊 **リアルタイム集計** - 回答状況を即座に反映
+- ⏰ **自動リマインダー** - 締切前に自動でお知らせ
+- 🔒 **プライバシー重視** - 回答者の情報は最小限に
+- 🚀 **高速レスポンス** - Cloudflare Workers で世界中から高速アクセス
 
 ## セットアップ
 
-### 1. ボットの追加
+### 🤖 ボットの追加
 
 [こちらのリンク](https://discord.com/api/oauth2/authorize?client_id=1392384546560802947&permissions=2147485696&scope=bot%20applications.commands)からDiscordサーバーにボットを追加してください。
 
-### 2. 使い方
+### 📋 使い方
 
-1. `/choseichan create` - 新しい日程調整を作成
-2. `/choseichan list` - 現在のチャンネルの日程調整一覧を表示
-3. `/choseichan help` - ヘルプを表示
+#### コマンド一覧
 
-## 開発者向け
+- `/choseichan create` - 新しい日程調整を作成
+- `/choseichan list` - このチャンネルの日程調整一覧を表示
+- `/choseichan help` - ヘルプを表示
 
-### 必要な環境
+#### 日程調整の流れ
 
-- Node.js 18+
-- Cloudflare Workers アカウント
-- Discord Developer アカウント
+1. `/choseichan create` コマンドを実行
+2. フォームに以下を入力:
+   - タイトル（必須）
+   - 説明（任意）
+   - 日程候補（改行区切り）
+   - 締切日時（任意）
+3. 作成されたメッセージの「回答する」ボタンから投票
+4. 「状況を見る」ボタンで集計結果を確認
 
-### インストール
+## 🚀 デプロイ方法
 
+### 必要なもの
+
+- [Node.js](https://nodejs.org/) (v18 以上)
+- [Cloudflare アカウント](https://dash.cloudflare.com/sign-up)
+- [Discord アプリケーション](https://discord.com/developers/applications)
+
+### セットアップ手順
+
+1. リポジトリをクローン
+```bash
+git clone https://github.com/retca/discord-choseisan.git
+cd discord-choseisan
+```
+
+2. 依存関係をインストール
 ```bash
 npm install
 ```
 
-### 環境変数
-
-`.env.example` をコピーして `.env` を作成し、必要な値を設定してください。
-
+3. 環境変数を設定
 ```bash
-cp .env.example .env
+cp wrangler.toml.example wrangler.toml
+# wrangler.toml を編集して必要な値を設定
 ```
 
-### 開発
-
+4. D1 データベースを作成
 ```bash
-npm run dev
+wrangler d1 create discord-choseisan-db
 ```
 
-### テスト
-
+5. マイグレーションを実行
 ```bash
-npm test
+wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema.sql
 ```
 
-### デプロイ
-
+6. デプロイ
 ```bash
 npm run deploy
 ```
 
-### Cloudflare Pages（ランディングページ）
-
+7. Discord コマンドを登録
 ```bash
-# pages/ ディレクトリをCloudflare Pagesにデプロイ
+npm run register-commands
 ```
 
-## アーキテクチャ
+詳細なセットアップガイドは [docs/DEPLOY.md](docs/DEPLOY.md) を参照してください。
 
-- **Runtime**: Cloudflare Workers
-- **Storage**: Cloudflare D1 (SQLite) / KV (移行中)
-- **Framework**: Hono
-- **Language**: TypeScript
+## 🛠️ 技術スタック
 
-詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を参照してください。
+- **ランタイム**: Cloudflare Workers (エッジコンピューティング)
+- **言語**: TypeScript (strict mode)
+- **アーキテクチャ**: Clean Architecture (Onion Architecture)
+- **データベース**: Cloudflare D1 (SQLite)
+- **テスト**: Vitest (470+ テスト)
+- **コード品質**: Biome
 
-## スケーラビリティ
+詳細なアーキテクチャについては [ARCHITECTURE.md](ARCHITECTURE.md) を参照してください。
 
-### Cloudflare 無料プラン
-- **アクティブユーザー**: 200-300人/日
-- **新規スケジュール**: 100-150個/日  
-- **投票操作**: 300-500回/日
-- **制限要因**: KV書き込み (1,000回/日)
+## 📖 ドキュメント
 
-### Cloudflare 有料プラン ($5/月)
-- **アクティブユーザー**: 10,000-15,000人/日
-- **新規スケジュール**: 5,000-8,000個/日
-- **投票操作**: 20,000-50,000回/日
-- **制限要因**: Discord API制限（自動削除機能によりストレージ容量問題は解決済み）
+- [アーキテクチャ](ARCHITECTURE.md) - システム設計の詳細
+- [デプロイガイド](docs/DEPLOY.md) - 詳細なセットアップ手順
+- [開発者向けガイド](CLAUDE.md) - AI アシスタント向けの開発ガイド
+- [貢献ガイド](docs/CONTRIBUTING.md) - コントリビューション方法
+- [スケーラビリティ](docs/SCALABILITY.md) - パフォーマンスとスケールの詳細
 
-### 主なボトルネック
-1. **無料プラン**: KV書き込み制限 (1,000回/日)
-2. **有料プラン**: Discord Webhook制限 (30リクエスト/分)
-3. **長期運用**: 自動削除（TTL）機能により容量問題は解決済み
+## 🤝 貢献
 
-詳細な分析は [docs/SCALABILITY.md](docs/SCALABILITY.md) を参照してください。
+プルリクエストや Issue の作成を歓迎します！詳しくは [CONTRIBUTING.md](docs/CONTRIBUTING.md) をご覧ください。
 
-## ライセンス
+## 📝 ライセンス
 
-非OSSライセンス（詳細は[LICENSE](LICENSE)を参照）
+MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照してください。
+
+## 🙏 謝辞
+
+このプロジェクトは以下の素晴らしいツール・サービスを使用しています：
+
+- [Cloudflare Workers](https://workers.cloudflare.com/)
+- [Discord.js](https://discord.js.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Vitest](https://vitest.dev/)
+- [Biome](https://biomejs.dev/)
+
+---
+
+Made with ❤️ by the Discord 調整ちゃん team

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import { ReopenScheduleUseCase } from './ReopenScheduleUseCase';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
 
 describe('ReopenScheduleUseCase', () => {
   let useCase: ReopenScheduleUseCase;
@@ -16,7 +16,7 @@ describe('ReopenScheduleUseCase', () => {
     description: 'Test description',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     deadline: new Date('2024-01-19'),
     createdBy: { id: 'user-123', username: 'TestUser' },
@@ -28,7 +28,7 @@ describe('ReopenScheduleUseCase', () => {
     notificationSent: true,
     totalResponses: 5,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-15')
+    updatedAt: new Date('2024-01-15'),
   };
 
   beforeEach(() => {
@@ -41,7 +41,7 @@ describe('ReopenScheduleUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     useCase = new ReopenScheduleUseCase(mockScheduleRepository);
@@ -55,7 +55,7 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123' // Author
+        editorUserId: 'user-123', // Author
       });
 
       expect(result.success).toBe(true);
@@ -63,7 +63,7 @@ describe('ReopenScheduleUseCase', () => {
       expect(result.schedule?.status).toBe('open');
       expect(result.schedule?.id).toBe('schedule-123');
       expect(result.schedule?.title).toBe('Test Schedule');
-      
+
       // Verify that save was called with reopened schedule
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.status).toBe('open');
@@ -77,7 +77,7 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.schedule).toMatchObject({
@@ -89,7 +89,7 @@ describe('ReopenScheduleUseCase', () => {
         description: 'Test description',
         dates: [
           { id: 'date-1', datetime: '2024/01/20 19:00' },
-          { id: 'date-2', datetime: '2024/01/21 19:00' }
+          { id: 'date-2', datetime: '2024/01/21 19:00' },
         ],
         deadline: '2024-01-19T00:00:00.000Z',
         status: 'open',
@@ -99,10 +99,10 @@ describe('ReopenScheduleUseCase', () => {
         notificationSent: true,
         createdBy: {
           id: 'user-123',
-          username: 'TestUser'
+          username: 'TestUser',
         },
         authorId: 'user-123',
-        totalResponses: 5
+        totalResponses: 5,
       });
     });
 
@@ -112,7 +112,7 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -126,7 +126,7 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'other-user-456' // Not the author
+        editorUserId: 'other-user-456', // Not the author
       });
 
       expect(result.success).toBe(false);
@@ -138,20 +138,20 @@ describe('ReopenScheduleUseCase', () => {
       const testCases = [
         {
           request: { scheduleId: '', guildId: 'guild-123', editorUserId: 'user-123' },
-          expectedError: '必須パラメータが不足しています'
+          expectedError: '必須パラメータが不足しています',
         },
         {
           request: { scheduleId: 'schedule-123', guildId: '', editorUserId: 'user-123' },
-          expectedError: '必須パラメータが不足しています'
+          expectedError: '必須パラメータが不足しています',
         },
         {
           request: { scheduleId: 'schedule-123', guildId: 'guild-123', editorUserId: '' },
-          expectedError: '必須パラメータが不足しています'
+          expectedError: '必須パラメータが不足しています',
         },
         {
           request: { scheduleId: '  ', guildId: 'guild-123', editorUserId: 'user-123' },
-          expectedError: '必須パラメータが不足しています'
-        }
+          expectedError: '必須パラメータが不足しています',
+        },
       ];
 
       for (const { request, expectedError } of testCases) {
@@ -163,17 +163,17 @@ describe('ReopenScheduleUseCase', () => {
 
     it('should return error when trying to reopen already open schedule', async () => {
       const openSchedule = { ...mockSchedule, status: 'open' as const };
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(openSchedule);
 
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('Schedule is not closed');
+      expect(result.errors?.[0]).toContain('Schedule is not closed');
       expect(mockScheduleRepository.save).not.toHaveBeenCalled();
     });
 
@@ -185,7 +185,7 @@ describe('ReopenScheduleUseCase', () => {
         deadline: undefined,
         reminderTimings: undefined,
         reminderMentions: undefined,
-        remindersSent: undefined
+        remindersSent: undefined,
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(minimalSchedule);
@@ -194,7 +194,7 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
@@ -205,14 +205,12 @@ describe('ReopenScheduleUseCase', () => {
 
     it('should handle repository save errors', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockScheduleRepository.save).mockRejectedValueOnce(
-        new Error('Database error')
-      );
+      vi.mocked(mockScheduleRepository.save).mockRejectedValueOnce(new Error('Database error'));
 
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -220,14 +218,12 @@ describe('ReopenScheduleUseCase', () => {
     });
 
     it('should handle unexpected errors', async () => {
-      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(
-        'Unexpected error'
-      );
+      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce('Unexpected error');
 
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(false);
@@ -236,21 +232,23 @@ describe('ReopenScheduleUseCase', () => {
 
     it('should update the updatedAt timestamp', async () => {
       const beforeTime = new Date();
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
-      
+
       // Check that updatedAt was updated
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
-      expect(new Date(savedSchedule.updatedAt).getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(new Date(savedSchedule.updatedAt).getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime()
+      );
     });
 
     it('should preserve notification and reminder state', async () => {
@@ -260,11 +258,11 @@ describe('ReopenScheduleUseCase', () => {
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
 
       expect(result.success).toBe(true);
-      
+
       // These should be preserved when reopening
       expect(result.schedule?.notificationSent).toBe(true);
       expect(result.schedule?.remindersSent).toEqual(['1h']);

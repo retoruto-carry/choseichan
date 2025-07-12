@@ -1,10 +1,11 @@
 /**
  * Deadline Reminder Use Case
- * 
+ *
  * 締切リマインダーのユースケース
  */
 
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import { getLogger } from '../../../infrastructure/logging/Logger';
 
 export interface ReminderInfo {
   scheduleId: string;
@@ -15,7 +16,7 @@ export interface ReminderInfo {
 
 export interface DeadlineCheckResult {
   upcomingReminders: ReminderInfo[];
-  justClosed: Array<{scheduleId: string; guildId: string}>;
+  justClosed: Array<{ scheduleId: string; guildId: string }>;
 }
 
 export interface DeadlineReminderUseCaseResult {
@@ -25,15 +26,15 @@ export interface DeadlineReminderUseCaseResult {
 }
 
 export class DeadlineReminderUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  private readonly logger = getLogger();
+
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   // デフォルトのリマインダータイミング定義
   private readonly DEFAULT_REMINDER_TIMINGS = [
     { type: '3d', hours: 72, message: '締切まで3日' },
     { type: '1d', hours: 24, message: '締切まで1日' },
-    { type: '8h', hours: 8, message: '締切まで8時間' }
+    { type: '8h', hours: 8, message: '締切まで8時間' },
   ];
 
   async checkDeadlines(guildId?: string): Promise<DeadlineReminderUseCaseResult> {
@@ -41,68 +42,75 @@ export class DeadlineReminderUseCase {
       const now = new Date();
       const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
+
       const result: DeadlineCheckResult = {
         upcomingReminders: [],
-        justClosed: []
+        justClosed: [],
       };
 
-      const schedules = await this.scheduleRepository.findByDeadlineRange(oneWeekAgo, threeDaysFromNow, guildId);
+      const schedules = await this.scheduleRepository.findByDeadlineRange(
+        oneWeekAgo,
+        threeDaysFromNow,
+        guildId
+      );
 
       for (const schedule of schedules) {
-        if (schedule && schedule.deadline) {
+        if (schedule?.deadline) {
           const deadlineTime = schedule.deadline.getTime();
-          
+
           // Check which reminders need to be sent
           if (schedule.status === 'open' && deadlineTime > now.getTime()) {
             const remindersSent = schedule.remindersSent || [];
-            
+
             // Use custom timings if available, otherwise use defaults
             const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
             const timings = isCustom
-              ? schedule.reminderTimings!.map((t: string) => ({
-                  type: t,
-                  hours: this.parseTimingToHours(t) || 0,
-                  message: this.getTimingMessage(t),
-                  isCustom: true
-                })).filter((t) => t.hours > 0)
-              : this.DEFAULT_REMINDER_TIMINGS.map(t => ({ ...t, isCustom: false }));
-            
-            for (const timing of timings) {
-              const reminderTime = deadlineTime - (timing.hours * 60 * 60 * 1000);
-              
+              ? schedule.reminderTimings
+                  ?.map((t: string) => ({
+                    type: t,
+                    hours: this.parseTimingToHours(t) || 0,
+                    message: this.getTimingMessage(t),
+                    isCustom: true,
+                  }))
+                  .filter((t) => t.hours > 0)
+              : this.DEFAULT_REMINDER_TIMINGS.map((t) => ({ ...t, isCustom: false }));
+
+            for (const timing of timings || []) {
+              const reminderTime = deadlineTime - timing.hours * 60 * 60 * 1000;
+
               // Check if this reminder should be sent now
               if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
                 // Skip if reminder is too old based on its type
                 const timeSinceReminder = now.getTime() - reminderTime;
-                const threshold = 'isCustom' in timing && timing.isCustom 
-                  ? this.getOldReminderThreshold(timing.type)
-                  : 8 * 60 * 60 * 1000;
-                  
+                const threshold =
+                  'isCustom' in timing && timing.isCustom
+                    ? this.getOldReminderThreshold(timing.type)
+                    : 8 * 60 * 60 * 1000;
+
                 if (timeSinceReminder > threshold) {
-                  console.log(`Skipping old reminder for ${schedule.id} (${timing.type})`);
+                  this.logger.info(`Skipping old reminder for ${schedule.id} (${timing.type})`);
                   continue;
                 }
-                
+
                 result.upcomingReminders.push({
                   scheduleId: schedule.id,
                   guildId: schedule.guildId,
                   reminderType: timing.type,
-                  message: timing.message
+                  message: timing.message,
                 });
               }
             }
           }
-          
+
           // Check if it's past deadline but still open
           if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
             const timeSinceDeadline = now.getTime() - deadlineTime;
             const CLOSURE_THRESHOLD_MS = 8 * 60 * 60 * 1000;
-            
+
             if (timeSinceDeadline <= CLOSURE_THRESHOLD_MS) {
               result.justClosed.push({
                 scheduleId: schedule.id,
-                guildId: schedule.guildId
+                guildId: schedule.guildId,
               });
             }
           }
@@ -111,13 +119,14 @@ export class DeadlineReminderUseCase {
 
       return {
         success: true,
-        result
+        result,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`締切チェックに失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `締切チェックに失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -125,10 +134,10 @@ export class DeadlineReminderUseCase {
   private getOldReminderThreshold(timing: string): number {
     const match = timing.match(/^(\d+)([dhm])$/);
     if (!match) return 8 * 60 * 60 * 1000;
-    
+
     const value = parseInt(match[1]);
     const unit = match[2];
-    
+
     switch (unit) {
       case 'd':
         return 8 * 60 * 60 * 1000;
@@ -144,30 +153,38 @@ export class DeadlineReminderUseCase {
   private parseTimingToHours(timing: string): number | null {
     const match = timing.match(/^(\d+)([dhm])$/);
     if (!match) return null;
-    
+
     const value = parseInt(match[1]);
     const unit = match[2];
-    
+
     switch (unit) {
-      case 'd': return value * 24;
-      case 'h': return value;
-      case 'm': return value / 60;
-      default: return null;
+      case 'd':
+        return value * 24;
+      case 'h':
+        return value;
+      case 'm':
+        return value / 60;
+      default:
+        return null;
     }
   }
 
   private getTimingMessage(timing: string): string {
     const match = timing.match(/^(\d+)([dhm])$/);
     if (!match) return `締切まで${timing}`;
-    
+
     const value = parseInt(match[1]);
     const unit = match[2];
-    
+
     switch (unit) {
-      case 'd': return `締切まで${value}日`;
-      case 'h': return `締切まで${value}時間`;
-      case 'm': return `締切まで${value}分`;
-      default: return `締切まで${timing}`;
+      case 'd':
+        return `締切まで${value}日`;
+      case 'h':
+        return `締切まで${value}時間`;
+      case 'm':
+        return `締切まで${value}分`;
+      default:
+        return `締切まで${timing}`;
     }
   }
 }

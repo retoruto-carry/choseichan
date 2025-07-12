@@ -36,22 +36,24 @@ export class ButtonIdUtils {
    */
   static createButtonId(params: ButtonIdParams): string {
     const parts = [params.action, params.scheduleId];
-    
+
     if (params.additionalParams && params.additionalParams.length > 0) {
       parts.push(...params.additionalParams);
     }
-    
+
     // セパレータを含む値の検証
     for (const part of parts) {
-      if (part.includes(this.SEPARATOR)) {
-        throw new Error(`Button ID part cannot contain separator "${this.SEPARATOR}": ${part}`);
+      if (part.includes(ButtonIdUtils.SEPARATOR)) {
+        throw new Error(
+          `Button ID part cannot contain separator "${ButtonIdUtils.SEPARATOR}": ${part}`
+        );
       }
       if (!part.trim()) {
         throw new Error('Button ID part cannot be empty');
       }
     }
-    
-    return parts.join(this.SEPARATOR);
+
+    return parts.join(ButtonIdUtils.SEPARATOR);
   }
 
   /**
@@ -62,12 +64,12 @@ export class ButtonIdUtils {
       throw new ButtonIdParseError(buttonId, 'Button ID is empty');
     }
 
-    const parts = buttonId.split(this.SEPARATOR);
-    
-    if (parts.length < this.MIN_PARTS) {
+    const parts = buttonId.split(ButtonIdUtils.SEPARATOR);
+
+    if (parts.length < ButtonIdUtils.MIN_PARTS) {
       throw new ButtonIdParseError(
-        buttonId, 
-        `Expected at least ${this.MIN_PARTS} parts, got ${parts.length}`
+        buttonId,
+        `Expected at least ${ButtonIdUtils.MIN_PARTS} parts, got ${parts.length}`
       );
     }
 
@@ -84,7 +86,7 @@ export class ButtonIdUtils {
     return {
       action: action.trim(),
       scheduleId: scheduleId.trim(),
-      additionalParams: additionalParams.map(p => p.trim())
+      additionalParams: additionalParams.map((p) => p.trim()),
     };
   }
 
@@ -93,7 +95,7 @@ export class ButtonIdUtils {
    */
   static isActionType(buttonId: string, expectedAction: string): boolean {
     try {
-      const parsed = this.parseButtonId(buttonId);
+      const parsed = ButtonIdUtils.parseButtonId(buttonId);
       return parsed.action === expectedAction;
     } catch {
       return false;
@@ -105,7 +107,7 @@ export class ButtonIdUtils {
    */
   static extractScheduleId(buttonId: string): string | null {
     try {
-      const parsed = this.parseButtonId(buttonId);
+      const parsed = ButtonIdUtils.parseButtonId(buttonId);
       return parsed.scheduleId;
     } catch {
       return null;
@@ -120,56 +122,56 @@ export class CommonButtonIds {
   static respond(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'respond',
-      scheduleId
+      scheduleId,
     });
   }
 
   static edit(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'edit',
-      scheduleId
+      scheduleId,
     });
   }
 
   static close(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'close',
-      scheduleId
+      scheduleId,
     });
   }
 
   static reopen(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'reopen',
-      scheduleId
+      scheduleId,
     });
   }
 
   static details(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'details',
-      scheduleId
+      scheduleId,
     });
   }
 
   static delete(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'delete',
-      scheduleId
+      scheduleId,
     });
   }
 
   static confirmDelete(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'confirm_delete',
-      scheduleId
+      scheduleId,
     });
   }
 
   static cancelDelete(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'cancel_delete',
-      scheduleId
+      scheduleId,
     });
   }
 
@@ -177,14 +179,14 @@ export class CommonButtonIds {
     return ButtonIdUtils.createButtonId({
       action: 'vote',
       scheduleId,
-      additionalParams: [dateId, status]
+      additionalParams: [dateId, status],
     });
   }
 
   static editReminder(scheduleId: string): string {
     return ButtonIdUtils.createButtonId({
       action: 'edit_reminder',
-      scheduleId
+      scheduleId,
     });
   }
 }
@@ -192,17 +194,25 @@ export class CommonButtonIds {
 /**
  * レガシーボタンIDサポート（既存のcreateButtonId関数との互換性）
  */
-export function createButtonId(action: string, scheduleId: string, ...additionalParams: string[]): string {
+export function createButtonId(
+  action: string,
+  scheduleId: string,
+  ...additionalParams: string[]
+): string {
   return ButtonIdUtils.createButtonId({
     action,
     scheduleId,
-    additionalParams: additionalParams.length > 0 ? additionalParams : undefined
+    additionalParams: additionalParams.length > 0 ? additionalParams : undefined,
   });
 }
 
 /**
  * レガシーボタンIDパーサー（既存のparseButtonId関数との互換性）
  */
-export function parseButtonId(buttonId: string): { action: string; scheduleId: string; additionalParams: string[] } {
+export function parseButtonId(buttonId: string): {
+  action: string;
+  scheduleId: string;
+  additionalParams: string[];
+} {
   return ButtonIdUtils.parseButtonId(buttonId);
 }

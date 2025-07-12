@@ -1,31 +1,30 @@
 /**
  * Dependency Injection Container
- * 
+ *
  * アプリケーション全体の依存関係を管理
  * Clean Architectureの依存性の注入を実現
  */
 
-import { IRepositoryFactory } from '../../domain/repositories/interfaces';
-import { IDiscordApiService, DiscordApiService } from '../services/DiscordApiService';
-import { createRepositoryFactory } from './factory';
-import { Env } from '../types/discord';
-
-// Application Layer Use Cases
-import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
-import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
-import { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
-import { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
+import { NotificationService } from '../../application/services/NotificationService';
+import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
+import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 import { SubmitResponseUseCase } from '../../application/usecases/response/SubmitResponseUseCase';
 import { UpdateResponseUseCase } from '../../application/usecases/response/UpdateResponseUseCase';
-import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
+import { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
+// Application Layer Use Cases
+import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
+import { DeadlineReminderUseCase } from '../../application/usecases/schedule/DeadlineReminderUseCase';
+import { DeleteScheduleUseCase } from '../../application/usecases/schedule/DeleteScheduleUseCase';
 import { FindSchedulesUseCase } from '../../application/usecases/schedule/FindSchedulesUseCase';
 import { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
-import { DeadlineReminderUseCase } from '../../application/usecases/schedule/DeadlineReminderUseCase';
+import { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
 import { ProcessReminderUseCase } from '../../application/usecases/schedule/ProcessReminderUseCase';
-import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
-import { NotificationService } from '../../application/services/NotificationService';
 import { ReopenScheduleUseCase } from '../../application/usecases/schedule/ReopenScheduleUseCase';
-import { DeleteScheduleUseCase } from '../../application/usecases/schedule/DeleteScheduleUseCase';
+import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
+import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
+import { DiscordApiService, type IDiscordApiService } from '../services/DiscordApiService';
+import type { Env } from '../types/discord';
+import { createRepositoryFactory } from './factory';
 
 export interface ApplicationServices {
   // Schedule Use Cases
@@ -96,7 +95,10 @@ export class DependencyContainer {
     const deleteScheduleUseCase = new DeleteScheduleUseCase(scheduleRepository, responseRepository);
     const getScheduleUseCase = new GetScheduleUseCase(scheduleRepository, responseRepository);
     const findSchedulesUseCase = new FindSchedulesUseCase(scheduleRepository);
-    const getScheduleSummaryUseCase = new GetScheduleSummaryUseCase(scheduleRepository, responseRepository);
+    const getScheduleSummaryUseCase = new GetScheduleSummaryUseCase(
+      scheduleRepository,
+      responseRepository
+    );
     const deadlineReminderUseCase = new DeadlineReminderUseCase(scheduleRepository);
     const processReminderUseCase = new ProcessReminderUseCase(scheduleRepository);
     const submitResponseUseCase = new SubmitResponseUseCase(scheduleRepository, responseRepository);
@@ -150,22 +152,50 @@ export class DependencyContainer {
   }
 
   // Schedule Use Cases便利アクセサー
-  get createScheduleUseCase() { return this._applicationServices.createScheduleUseCase; }
-  get updateScheduleUseCase() { return this._applicationServices.updateScheduleUseCase; }
-  get closeScheduleUseCase() { return this._applicationServices.closeScheduleUseCase; }
-  get reopenScheduleUseCase() { return this._applicationServices.reopenScheduleUseCase; }
-  get deleteScheduleUseCase() { return this._applicationServices.deleteScheduleUseCase; }
-  get getScheduleUseCase() { return this._applicationServices.getScheduleUseCase; }
-  get findSchedulesUseCase() { return this._applicationServices.findSchedulesUseCase; }
-  get getScheduleSummaryUseCase() { return this._applicationServices.getScheduleSummaryUseCase; }
-  get deadlineReminderUseCase() { return this._applicationServices.deadlineReminderUseCase; }
-  get processReminderUseCase() { return this._applicationServices.processReminderUseCase; }
-  get processDeadlineRemindersUseCase() { return this._applicationServices.processDeadlineRemindersUseCase; }
+  get createScheduleUseCase() {
+    return this._applicationServices.createScheduleUseCase;
+  }
+  get updateScheduleUseCase() {
+    return this._applicationServices.updateScheduleUseCase;
+  }
+  get closeScheduleUseCase() {
+    return this._applicationServices.closeScheduleUseCase;
+  }
+  get reopenScheduleUseCase() {
+    return this._applicationServices.reopenScheduleUseCase;
+  }
+  get deleteScheduleUseCase() {
+    return this._applicationServices.deleteScheduleUseCase;
+  }
+  get getScheduleUseCase() {
+    return this._applicationServices.getScheduleUseCase;
+  }
+  get findSchedulesUseCase() {
+    return this._applicationServices.findSchedulesUseCase;
+  }
+  get getScheduleSummaryUseCase() {
+    return this._applicationServices.getScheduleSummaryUseCase;
+  }
+  get deadlineReminderUseCase() {
+    return this._applicationServices.deadlineReminderUseCase;
+  }
+  get processReminderUseCase() {
+    return this._applicationServices.processReminderUseCase;
+  }
+  get processDeadlineRemindersUseCase() {
+    return this._applicationServices.processDeadlineRemindersUseCase;
+  }
 
   // Response Use Cases便利アクセサー
-  get submitResponseUseCase() { return this._applicationServices.submitResponseUseCase; }
-  get updateResponseUseCase() { return this._applicationServices.updateResponseUseCase; }
-  get getResponseUseCase() { return this._applicationServices.getResponseUseCase; }
+  get submitResponseUseCase() {
+    return this._applicationServices.submitResponseUseCase;
+  }
+  get updateResponseUseCase() {
+    return this._applicationServices.updateResponseUseCase;
+  }
+  get getResponseUseCase() {
+    return this._applicationServices.getResponseUseCase;
+  }
 
   /**
    * テスト用にサービスをモックで置き換え
@@ -174,7 +204,8 @@ export class DependencyContainer {
     serviceName: K,
     mockService: ApplicationServices[K]
   ): void {
-    (this._applicationServices as Record<keyof ApplicationServices, unknown>)[serviceName] = mockService;
+    (this._applicationServices as Record<keyof ApplicationServices, unknown>)[serviceName] =
+      mockService;
   }
 
   /**
@@ -184,6 +215,12 @@ export class DependencyContainer {
     serviceName: K,
     mockService: InfrastructureServices[K]
   ): void {
-    (this._infrastructureServices as Record<keyof InfrastructureServices, unknown>)[serviceName] = mockService;
+    (this._infrastructureServices as Record<keyof InfrastructureServices, unknown>)[serviceName] =
+      mockService;
+  }
+
+  // 環境変数アクセサー
+  get env(): Env {
+    return this._env;
   }
 }

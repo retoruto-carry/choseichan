@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ResponseStatus, ResponseStatusValue } from './ResponseStatus';
 
 describe('ResponseStatus', () => {
@@ -19,8 +19,7 @@ describe('ResponseStatus', () => {
     });
 
     it('should throw error for invalid value', () => {
-      expect(() => ResponseStatus.create('invalid' as any))
-        .toThrow('無効な回答ステータスです');
+      expect(() => ResponseStatus.create('invalid' as any)).toThrow('無効な回答ステータスです');
     });
   });
 
@@ -37,13 +36,13 @@ describe('ResponseStatus', () => {
     });
 
     it('should throw error for invalid string', () => {
-      expect(() => ResponseStatus.fromString('invalid'))
-        .toThrow('無効な回答ステータス文字列です: invalid');
+      expect(() => ResponseStatus.fromString('invalid')).toThrow(
+        '無効な回答ステータス文字列です: invalid'
+      );
     });
 
     it('should throw error for empty string', () => {
-      expect(() => ResponseStatus.fromString(''))
-        .toThrow('無効な回答ステータス文字列です: ');
+      expect(() => ResponseStatus.fromString('')).toThrow('無効な回答ステータス文字列です: ');
     });
   });
 

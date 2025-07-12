@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { DomainMappers } from './DomainMappers';
+import { describe, expect, it } from 'vitest';
+import { Response } from '../../domain/entities/Response';
+import { ResponseStatus } from '../../domain/entities/ResponseStatus';
 import { Schedule, ScheduleStatus } from '../../domain/entities/Schedule';
 import { ScheduleDate } from '../../domain/entities/ScheduleDate';
 import { User } from '../../domain/entities/User';
-import { Response } from '../../domain/entities/Response';
-import { ResponseStatus } from '../../domain/entities/ResponseStatus';
+import { DomainMappers } from './DomainMappers';
 
 describe('DomainMappers', () => {
   describe('scheduleToResponse', () => {
@@ -18,7 +18,7 @@ describe('DomainMappers', () => {
         description: 'Test Description',
         dates: [
           ScheduleDate.create('date-1', '2024-12-25 19:00'),
-          ScheduleDate.create('date-2', '2024-12-26 20:00')
+          ScheduleDate.create('date-2', '2024-12-26 20:00'),
         ],
         createdBy: User.create('user-123', 'TestUser', 'Test Display'),
         authorId: 'user-123',
@@ -30,7 +30,7 @@ describe('DomainMappers', () => {
         notificationSent: false,
         totalResponses: 5,
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.scheduleToResponse(schedule);
@@ -44,12 +44,12 @@ describe('DomainMappers', () => {
         description: 'Test Description',
         dates: [
           { id: 'date-1', datetime: '2024-12-25 19:00' },
-          { id: 'date-2', datetime: '2024-12-26 20:00' }
+          { id: 'date-2', datetime: '2024-12-26 20:00' },
         ],
         createdBy: {
           id: 'user-123',
           username: 'TestUser',
-          displayName: 'Test Display'
+          displayName: 'Test Display',
         },
         authorId: 'user-123',
         deadline: '2024-12-20T23:59:59.000Z',
@@ -60,7 +60,7 @@ describe('DomainMappers', () => {
         notificationSent: false,
         totalResponses: 5,
         createdAt: '2024-01-01T10:00:00.000Z',
-        updatedAt: '2024-01-02T15:30:00.000Z'
+        updatedAt: '2024-01-02T15:30:00.000Z',
       });
     });
 
@@ -72,7 +72,7 @@ describe('DomainMappers', () => {
         title: 'Minimal Schedule',
         dates: [ScheduleDate.create('date-1', '2024-12-25 19:00')],
         createdBy: User.create('user-123', 'TestUser'),
-        authorId: 'user-123'
+        authorId: 'user-123',
       });
 
       const result = DomainMappers.scheduleToResponse(schedule);
@@ -95,7 +95,7 @@ describe('DomainMappers', () => {
         dates: [ScheduleDate.create('date-1', '2024-12-25 19:00')],
         createdBy: User.create('user-123', 'TestUser'),
         authorId: 'user-123',
-        status: ScheduleStatus.CLOSED
+        status: ScheduleStatus.CLOSED,
       });
 
       const result = DomainMappers.scheduleToResponse(schedule);
@@ -118,7 +118,7 @@ describe('DomainMappers', () => {
         dateStatuses,
         comment: 'Looking forward to it!',
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.responseToDto(response);
@@ -131,10 +131,10 @@ describe('DomainMappers', () => {
         dateStatuses: {
           'date-1': 'ok',
           'date-2': 'maybe',
-          'date-3': 'ng'
+          'date-3': 'ng',
         },
         comment: 'Looking forward to it!',
-        updatedAt: '2024-01-02T15:30:00.000Z'
+        updatedAt: '2024-01-02T15:30:00.000Z',
       });
     });
 
@@ -148,7 +148,7 @@ describe('DomainMappers', () => {
         user: User.create('user-789', 'RespondentUser'),
         dateStatuses,
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.responseToDto(response);
@@ -168,7 +168,7 @@ describe('DomainMappers', () => {
         user: User.create('user-789', 'RespondentUser'),
         dateStatuses,
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.responseToDto(response);
@@ -190,7 +190,7 @@ describe('DomainMappers', () => {
         user: User.create('user-789', 'RespondentUser'),
         dateStatuses,
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.responseToDto(response);
@@ -200,7 +200,7 @@ describe('DomainMappers', () => {
         'date-2': 'ok',
         'date-3': 'maybe',
         'date-4': 'maybe',
-        'date-5': 'ng'
+        'date-5': 'ng',
       });
     });
   });
@@ -218,7 +218,7 @@ describe('DomainMappers', () => {
         description: longDescription,
         dates: [ScheduleDate.create('date-1', '2024-12-25 19:00')],
         createdBy: User.create('user-123', 'TestUser'),
-        authorId: 'user-123'
+        authorId: 'user-123',
       });
 
       const result = DomainMappers.scheduleToResponse(schedule);
@@ -238,7 +238,7 @@ describe('DomainMappers', () => {
         dateStatuses,
         comment: 'コメント with emoji 🚀 and special chars !@#$%',
         createdAt: new Date('2024-01-01T10:00:00Z'),
-        updatedAt: new Date('2024-01-02T15:30:00Z')
+        updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
       const result = DomainMappers.responseToDto(response);
@@ -249,7 +249,7 @@ describe('DomainMappers', () => {
     });
 
     it('should handle many dates in schedule', () => {
-      const dates = Array.from({ length: 20 }, (_, i) => 
+      const dates = Array.from({ length: 20 }, (_, i) =>
         ScheduleDate.create(`date-${i}`, `2024-12-${(i % 30) + 1} 19:00`)
       );
 
@@ -260,7 +260,7 @@ describe('DomainMappers', () => {
         title: 'Schedule with Many Dates',
         dates,
         createdBy: User.create('user-123', 'TestUser'),
-        authorId: 'user-123'
+        authorId: 'user-123',
       });
 
       const result = DomainMappers.scheduleToResponse(schedule);

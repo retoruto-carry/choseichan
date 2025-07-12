@@ -1,30 +1,30 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { D1ResponseRepository } from './response-repository';
-import { IScheduleRepository, RepositoryError } from '../../../domain/repositories/interfaces';
-import { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
-import { Schedule, ScheduleStatus } from '../../../domain/entities/Schedule';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { User } from '../../../domain/entities/User';
+import { type IScheduleRepository, RepositoryError } from '../../../domain/repositories/interfaces';
+import type { DomainResponse } from '../../../domain/types/DomainTypes';
+import { D1ResponseRepository } from './response-repository';
 
 // Mock D1Database
 const createMockD1Database = () => {
   const mockResults = {
     results: [],
-    meta: {}
+    meta: {},
   };
-  
+
   const mockStatement = {
     bind: vi.fn().mockReturnThis(),
     all: vi.fn().mockResolvedValue(mockResults),
     first: vi.fn().mockResolvedValue(null),
-    run: vi.fn().mockResolvedValue({ success: true })
+    run: vi.fn().mockResolvedValue({ success: true }),
   };
-  
+
   return {
     prepare: vi.fn().mockReturnValue(mockStatement),
     batch: vi.fn().mockResolvedValue([]),
     _mockStatement: mockStatement,
-    _mockResults: mockResults
+    _mockResults: mockResults,
   };
 };
 
@@ -37,7 +37,7 @@ const createMockScheduleRepository = (): IScheduleRepository => ({
   delete: vi.fn(),
   findByMessageId: vi.fn(),
   countByGuild: vi.fn(),
-  updateReminders: vi.fn()
+  updateReminders: vi.fn(),
 });
 
 describe('D1ResponseRepository', () => {
@@ -52,21 +52,18 @@ describe('D1ResponseRepository', () => {
     title: 'Test Schedule',
     dates: [
       ScheduleDate.create('date-1', '2024-12-25 19:00'),
-      ScheduleDate.create('date-2', '2024-12-26 19:00')
+      ScheduleDate.create('date-2', '2024-12-26 19:00'),
     ],
     createdBy: User.create('user-123', 'TestUser'),
     authorId: 'user-123',
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   });
 
   beforeEach(() => {
     mockDb = createMockD1Database();
     mockScheduleRepository = createMockScheduleRepository();
-    repository = new D1ResponseRepository(
-      mockDb as unknown as D1Database,
-      mockScheduleRepository
-    );
+    repository = new D1ResponseRepository(mockDb as unknown as D1Database, mockScheduleRepository);
   });
 
   describe('save', () => {
@@ -77,7 +74,7 @@ describe('D1ResponseRepository', () => {
         username: 'RespondentUser',
         dateStatuses: { 'date-1': 'ok', 'date-2': 'maybe' },
         comment: 'Looking forward to it!',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
@@ -95,7 +92,7 @@ describe('D1ResponseRepository', () => {
         null, // displayName
         'Looking forward to it!',
         expect.any(Number), // updatedAt
-        expect.any(Number)  // expiresAt
+        expect.any(Number) // expiresAt
       );
 
       // Verify date status inserts
@@ -108,7 +105,7 @@ describe('D1ResponseRepository', () => {
         userId: 'user-456',
         username: 'User',
         dateStatuses: { 'date-1': 'ok' },
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(null);
@@ -123,7 +120,7 @@ describe('D1ResponseRepository', () => {
         userId: 'user-456',
         username: 'User',
         dateStatuses: { 'date-1': 'ok' },
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
@@ -142,16 +139,16 @@ describe('D1ResponseRepository', () => {
         username: 'RespondentUser',
         display_name: null,
         comment: 'Test comment',
-        updated_at: Math.floor(Date.now() / 1000)
+        updated_at: Math.floor(Date.now() / 1000),
       };
 
       const mockStatusRows = [
         { date_id: 'date-1', status: 'ok' },
-        { date_id: 'date-2', status: 'maybe' }
+        { date_id: 'date-2', status: 'maybe' },
       ];
 
       mockDb._mockStatement.first.mockResolvedValueOnce(mockResponseRow);
-      mockDb._mockResults.results = mockStatusRows;
+      mockDb._mockResults.results = mockStatusRows as any;
 
       const result = await repository.findByUser('schedule-123', 'user-456', 'guild-123');
 
@@ -180,7 +177,7 @@ describe('D1ResponseRepository', () => {
           username: 'User1',
           display_name: null,
           comment: null,
-          updated_at: Math.floor(Date.now() / 1000)
+          updated_at: Math.floor(Date.now() / 1000),
         },
         {
           id: 2,
@@ -189,14 +186,14 @@ describe('D1ResponseRepository', () => {
           username: 'User2',
           display_name: 'Display User 2',
           comment: 'Cannot make it',
-          updated_at: Math.floor(Date.now() / 1000)
-        }
+          updated_at: Math.floor(Date.now() / 1000),
+        },
       ];
 
-      mockDb._mockResults.results = mockResponseRows;
-
-      // Mock status results for each response
+      // 最初の呼び出しでレスポンス一覧を返す
       mockDb._mockStatement.all
+        .mockResolvedValueOnce({ results: mockResponseRows })
+        // 各レスポンスのステータス照会
         .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'ok' }] })
         .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'ng' }] });
 
@@ -220,17 +217,20 @@ describe('D1ResponseRepository', () => {
     it('should delete a response', async () => {
       await repository.delete('schedule-123', 'user-456', 'guild-123');
 
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM responses')
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM responses'));
+      expect(mockDb._mockStatement.bind).toHaveBeenCalledWith(
+        'schedule-123',
+        'user-456',
+        'guild-123'
       );
-      expect(mockDb._mockStatement.bind).toHaveBeenCalledWith('schedule-123', 'user-456', 'guild-123');
     });
 
     it('should handle delete errors', async () => {
       mockDb._mockStatement.run.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.delete('schedule-123', 'user-456', 'guild-123'))
-        .rejects.toThrow(RepositoryError);
+      await expect(repository.delete('schedule-123', 'user-456', 'guild-123')).rejects.toThrow(
+        RepositoryError
+      );
     });
   });
 
@@ -238,9 +238,7 @@ describe('D1ResponseRepository', () => {
     it('should delete all responses for a schedule', async () => {
       await repository.deleteBySchedule('schedule-123', 'guild-123');
 
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM responses')
-      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM responses'));
       expect(mockDb._mockStatement.bind).toHaveBeenCalledWith('schedule-123', 'guild-123');
     });
   });
@@ -256,7 +254,7 @@ describe('D1ResponseRepository', () => {
         { date_id: 'date-1', status: 'ng', count: 1 },
         { date_id: 'date-2', status: 'ok', count: 2 },
         { date_id: 'date-2', status: 'maybe', count: 2 },
-        { date_id: 'date-2', status: 'ng', count: 1 }
+        { date_id: 'date-2', status: 'ng', count: 1 },
       ];
 
       // Mock user responses
@@ -264,7 +262,7 @@ describe('D1ResponseRepository', () => {
         { user_id: 'user-1', date_id: 'date-1', status: 'ok' },
         { user_id: 'user-1', date_id: 'date-2', status: 'ok' },
         { user_id: 'user-2', date_id: 'date-1', status: 'maybe' },
-        { user_id: 'user-2', date_id: 'date-2', status: 'ng' }
+        { user_id: 'user-2', date_id: 'date-2', status: 'ng' },
       ];
 
       // Mock responses
@@ -276,7 +274,7 @@ describe('D1ResponseRepository', () => {
           username: 'User1',
           display_name: null,
           comment: null,
-          updated_at: Math.floor(Date.now() / 1000)
+          updated_at: Math.floor(Date.now() / 1000),
         },
         {
           id: 2,
@@ -285,16 +283,26 @@ describe('D1ResponseRepository', () => {
           username: 'User2',
           display_name: null,
           comment: null,
-          updated_at: Math.floor(Date.now() / 1000)
-        }
+          updated_at: Math.floor(Date.now() / 1000),
+        },
       ];
 
       mockDb._mockStatement.all
         .mockResolvedValueOnce({ results: mockCountRows }) // counts
         .mockResolvedValueOnce({ results: mockUserResponseRows }) // user responses
         .mockResolvedValueOnce({ results: mockResponseRows }) // responses
-        .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'ok' }, { date_id: 'date-2', status: 'ok' }] }) // user-1 statuses
-        .mockResolvedValueOnce({ results: [{ date_id: 'date-1', status: 'maybe' }, { date_id: 'date-2', status: 'ng' }] }); // user-2 statuses
+        .mockResolvedValueOnce({
+          results: [
+            { date_id: 'date-1', status: 'ok' },
+            { date_id: 'date-2', status: 'ok' },
+          ],
+        }) // user-1 statuses
+        .mockResolvedValueOnce({
+          results: [
+            { date_id: 'date-1', status: 'maybe' },
+            { date_id: 'date-2', status: 'ng' },
+          ],
+        }); // user-2 statuses
 
       mockDb._mockStatement.first.mockResolvedValueOnce({ total: 2 }); // total responses
 
@@ -320,8 +328,9 @@ describe('D1ResponseRepository', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       mockDb._mockStatement.all.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.getScheduleSummary('schedule-123', 'guild-123'))
-        .rejects.toThrow(RepositoryError);
+      await expect(repository.getScheduleSummary('schedule-123', 'guild-123')).rejects.toThrow(
+        RepositoryError
+      );
     });
   });
 });

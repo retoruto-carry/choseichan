@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { updateOriginalMessage, getOriginalMessage } from './discord';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getOriginalMessage, updateOriginalMessage } from './discord';
 
 // Mock global fetch
 global.fetch = vi.fn();
@@ -17,7 +17,7 @@ describe('Discord Utilities', () => {
     it('should make PATCH request to correct URL', async () => {
       const mockResponse = {
         ok: true,
-        status: 200
+        status: 200,
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
@@ -33,9 +33,9 @@ describe('Discord Utilities', () => {
         {
           method: 'PATCH',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
         }
       );
     });
@@ -44,40 +44,44 @@ describe('Discord Utilities', () => {
       const mockResponse = {
         ok: false,
         status: 404,
-        text: vi.fn().mockResolvedValueOnce('Not Found')
+        text: vi.fn().mockResolvedValueOnce('Not Found'),
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      await expect(
-        updateOriginalMessage('app123', 'token456', {}, 'msg789')
-      ).rejects.toThrow('Failed to update message: 404 - Not Found');
+      await expect(updateOriginalMessage('app123', 'token456', {}, 'msg789')).rejects.toThrow(
+        'Failed to update message: 404 - Not Found'
+      );
     });
 
     it('should handle complex data structures', async () => {
       const mockResponse = {
         ok: true,
-        status: 200
+        status: 200,
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
       const complexData = {
         content: 'Test',
-        embeds: [{
-          title: 'Test Embed',
-          description: 'Test Description',
-          fields: [
-            { name: 'Field 1', value: 'Value 1', inline: true }
-          ]
-        }],
-        components: [{
-          type: 1,
-          components: [{
-            type: 2,
-            style: 1,
-            label: 'Button',
-            custom_id: 'test_button'
-          }]
-        }]
+        embeds: [
+          {
+            title: 'Test Embed',
+            description: 'Test Description',
+            fields: [{ name: 'Field 1', value: 'Value 1', inline: true }],
+          },
+        ],
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 1,
+                label: 'Button',
+                custom_id: 'test_button',
+              },
+            ],
+          },
+        ],
       };
 
       await updateOriginalMessage('app123', 'token456', complexData, 'msg789');
@@ -93,7 +97,7 @@ describe('Discord Utilities', () => {
       const mockResponse = {
         ok: true,
         status: 200,
-        json: vi.fn().mockResolvedValueOnce(mockData)
+        json: vi.fn().mockResolvedValueOnce(mockData),
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
@@ -107,8 +111,8 @@ describe('Discord Utilities', () => {
         {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         }
       );
       expect(result).toEqual(mockData);
@@ -117,34 +121,36 @@ describe('Discord Utilities', () => {
     it('should throw error on non-ok response', async () => {
       const mockResponse = {
         ok: false,
-        status: 403
+        status: 403,
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      await expect(
-        getOriginalMessage('app123', 'token456')
-      ).rejects.toThrow('Failed to get message: 403');
+      await expect(getOriginalMessage('app123', 'token456')).rejects.toThrow(
+        'Failed to get message: 403'
+      );
     });
 
     it('should return parsed JSON data', async () => {
       const expectedData = {
         id: 'msg123',
         content: 'Test content',
-        embeds: [{
-          title: 'Test Embed',
-          description: 'Test Description'
-        }],
+        embeds: [
+          {
+            title: 'Test Embed',
+            description: 'Test Description',
+          },
+        ],
         components: [],
         author: {
           id: 'user123',
-          username: 'TestUser'
-        }
+          username: 'TestUser',
+        },
       };
 
       const mockResponse = {
         ok: true,
         status: 200,
-        json: vi.fn().mockResolvedValueOnce(expectedData)
+        json: vi.fn().mockResolvedValueOnce(expectedData),
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 

@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
+import type { Env } from '../types/discord';
 import { DependencyContainer } from './DependencyContainer';
-import { Env } from '../types/discord';
-import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
-import { IScheduleRepository, IResponseRepository } from '../../domain/repositories/interfaces';
 
 // Mock the factory module
 vi.mock('./factory', () => ({
@@ -15,7 +14,7 @@ vi.mock('./factory', () => ({
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     })),
     getResponseRepository: vi.fn(() => ({
       save: vi.fn(),
@@ -23,9 +22,9 @@ vi.mock('./factory', () => ({
       findByScheduleId: vi.fn(),
       delete: vi.fn(),
       deleteBySchedule: vi.fn(),
-      getScheduleSummary: vi.fn()
-    }))
-  }))
+      getScheduleSummary: vi.fn(),
+    })),
+  })),
 }));
 
 describe('DependencyContainer', () => {
@@ -34,7 +33,7 @@ describe('DependencyContainer', () => {
     DISCORD_TOKEN: 'test-token',
     DISCORD_PUBLIC_KEY: 'test-public-key',
     DISCORD_APPLICATION_ID: 'test-app-id',
-    DB: {} as D1Database
+    DB: {} as D1Database,
   };
 
   beforeEach(() => {
@@ -68,37 +67,59 @@ describe('DependencyContainer', () => {
       const envWithCredentials: Env = {
         ...mockEnv,
         DISCORD_TOKEN: 'test-token',
-        DISCORD_APPLICATION_ID: 'test-app-id'
+        DISCORD_APPLICATION_ID: 'test-app-id',
       };
 
       const containerWithNotification = new DependencyContainer(envWithCredentials);
-      expect(containerWithNotification.applicationServices.processDeadlineRemindersUseCase).toBeDefined();
+      expect(
+        containerWithNotification.applicationServices.processDeadlineRemindersUseCase
+      ).toBeDefined();
     });
 
     it('should not create NotificationService when Discord credentials are missing', () => {
       const envWithoutCredentials: Env = {
         ...mockEnv,
         DISCORD_TOKEN: '',
-        DISCORD_APPLICATION_ID: ''
+        DISCORD_APPLICATION_ID: '',
       };
 
       const containerWithoutNotification = new DependencyContainer(envWithoutCredentials);
-      expect(containerWithoutNotification.applicationServices.processDeadlineRemindersUseCase).toBeDefined();
+      expect(
+        containerWithoutNotification.applicationServices.processDeadlineRemindersUseCase
+      ).toBeDefined();
     });
   });
 
   describe('convenience accessors', () => {
     it('should provide direct access to use cases', () => {
-      expect(container.createScheduleUseCase).toBe(container.applicationServices.createScheduleUseCase);
-      expect(container.updateScheduleUseCase).toBe(container.applicationServices.updateScheduleUseCase);
-      expect(container.closeScheduleUseCase).toBe(container.applicationServices.closeScheduleUseCase);
-      expect(container.reopenScheduleUseCase).toBe(container.applicationServices.reopenScheduleUseCase);
-      expect(container.deleteScheduleUseCase).toBe(container.applicationServices.deleteScheduleUseCase);
+      expect(container.createScheduleUseCase).toBe(
+        container.applicationServices.createScheduleUseCase
+      );
+      expect(container.updateScheduleUseCase).toBe(
+        container.applicationServices.updateScheduleUseCase
+      );
+      expect(container.closeScheduleUseCase).toBe(
+        container.applicationServices.closeScheduleUseCase
+      );
+      expect(container.reopenScheduleUseCase).toBe(
+        container.applicationServices.reopenScheduleUseCase
+      );
+      expect(container.deleteScheduleUseCase).toBe(
+        container.applicationServices.deleteScheduleUseCase
+      );
       expect(container.getScheduleUseCase).toBe(container.applicationServices.getScheduleUseCase);
-      expect(container.findSchedulesUseCase).toBe(container.applicationServices.findSchedulesUseCase);
-      expect(container.getScheduleSummaryUseCase).toBe(container.applicationServices.getScheduleSummaryUseCase);
-      expect(container.submitResponseUseCase).toBe(container.applicationServices.submitResponseUseCase);
-      expect(container.updateResponseUseCase).toBe(container.applicationServices.updateResponseUseCase);
+      expect(container.findSchedulesUseCase).toBe(
+        container.applicationServices.findSchedulesUseCase
+      );
+      expect(container.getScheduleSummaryUseCase).toBe(
+        container.applicationServices.getScheduleSummaryUseCase
+      );
+      expect(container.submitResponseUseCase).toBe(
+        container.applicationServices.submitResponseUseCase
+      );
+      expect(container.updateResponseUseCase).toBe(
+        container.applicationServices.updateResponseUseCase
+      );
       expect(container.getResponseUseCase).toBe(container.applicationServices.getResponseUseCase);
     });
   });
@@ -106,7 +127,7 @@ describe('DependencyContainer', () => {
   describe('replaceService', () => {
     it('should replace application service with mock', () => {
       const mockCreateScheduleUseCase = {
-        execute: vi.fn()
+        execute: vi.fn(),
       } as unknown as CreateScheduleUseCase;
 
       container.replaceService('createScheduleUseCase', mockCreateScheduleUseCase);
@@ -122,7 +143,7 @@ describe('DependencyContainer', () => {
         getResponseRepository: vi.fn(),
         beginTransaction: vi.fn(),
         initialize: vi.fn(),
-        cleanupExpiredData: vi.fn()
+        cleanupExpiredData: vi.fn(),
       };
 
       container.replaceInfrastructureService('repositoryFactory', mockRepositoryFactory);
@@ -134,8 +155,10 @@ describe('DependencyContainer', () => {
   describe('dependency injection', () => {
     it('should inject correct dependencies into use cases', () => {
       // Verify that use cases are created with proper dependencies
-      const scheduleRepo = container.infrastructureServices.repositoryFactory.getScheduleRepository();
-      const responseRepo = container.infrastructureServices.repositoryFactory.getResponseRepository();
+      const _scheduleRepo =
+        container.infrastructureServices.repositoryFactory.getScheduleRepository();
+      const _responseRepo =
+        container.infrastructureServices.repositoryFactory.getResponseRepository();
 
       // Test by checking that use cases can be executed (they would fail if dependencies were missing)
       expect(() => container.createScheduleUseCase).not.toThrow();

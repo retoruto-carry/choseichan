@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Response } from './Response';
 import { ResponseStatus, ResponseStatusValue } from './ResponseStatus';
 import { User } from './User';
@@ -14,7 +14,7 @@ describe('Response', () => {
     it('should create a valid response', () => {
       const dateStatuses = new Map([
         ['date-1', ResponseStatus.create(ResponseStatusValue.OK)],
-        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)]
+        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)],
       ]);
 
       const response = Response.create({
@@ -22,7 +22,7 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Test comment'
+        comment: 'Test comment',
       });
 
       expect(response.id).toBe('response-123');
@@ -39,38 +39,44 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       expect(response.comment).toBeUndefined();
     });
 
     it('should validate required fields', () => {
-      expect(() => Response.create({
-        id: '',
-        scheduleId: 'schedule-123',
-        user: testUser,
-        dateStatuses: new Map()
-      })).toThrow('回答IDは必須です');
+      expect(() =>
+        Response.create({
+          id: '',
+          scheduleId: 'schedule-123',
+          user: testUser,
+          dateStatuses: new Map(),
+        })
+      ).toThrow('回答IDは必須です');
 
-      expect(() => Response.create({
-        id: 'response-123',
-        scheduleId: '',
-        user: testUser,
-        dateStatuses: new Map()
-      })).toThrow('スケジュールIDは必須です');
+      expect(() =>
+        Response.create({
+          id: 'response-123',
+          scheduleId: '',
+          user: testUser,
+          dateStatuses: new Map(),
+        })
+      ).toThrow('スケジュールIDは必須です');
     });
 
     it('should handle long comments', () => {
       const longComment = 'a'.repeat(1001);
-      
-      expect(() => Response.create({
-        id: 'response-123',
-        scheduleId: 'schedule-123',
-        user: testUser,
-        dateStatuses: new Map(),
-        comment: longComment
-      })).toThrow('コメントは1000文字以内で入力してください');
+
+      expect(() =>
+        Response.create({
+          id: 'response-123',
+          scheduleId: 'schedule-123',
+          user: testUser,
+          dateStatuses: new Map(),
+          comment: longComment,
+        })
+      ).toThrow('コメントは1000文字以内で入力してください');
     });
 
     it('should use provided timestamps', () => {
@@ -83,7 +89,7 @@ describe('Response', () => {
         user: testUser,
         dateStatuses: new Map(),
         createdAt,
-        updatedAt
+        updatedAt,
       });
 
       expect(response.createdAt).toEqual(createdAt);
@@ -97,7 +103,7 @@ describe('Response', () => {
     beforeEach(() => {
       const dateStatuses = new Map([
         ['date-1', ResponseStatus.create(ResponseStatusValue.OK)],
-        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)]
+        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)],
       ]);
 
       response = Response.create({
@@ -105,16 +111,16 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Original comment'
+        comment: 'Original comment',
       });
     });
 
     it('should update existing statuses', async () => {
       // Wait a bit to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       const newStatuses = new Map([
         ['date-1', ResponseStatus.create(ResponseStatusValue.NG)],
-        ['date-3', ResponseStatus.create(ResponseStatusValue.OK)]
+        ['date-3', ResponseStatus.create(ResponseStatusValue.OK)],
       ]);
 
       const updated = response.updateStatuses(newStatuses);
@@ -129,7 +135,7 @@ describe('Response', () => {
 
     it('should clear all statuses when empty map provided', () => {
       const updated = response.updateStatuses(new Map());
-      
+
       expect(updated.dateStatuses.size).toBe(0);
       expect(updated.getStatusForDate('date-1')).toBeUndefined();
     });
@@ -143,16 +149,14 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map([
-          ['date-1', ResponseStatus.create(ResponseStatusValue.OK)]
-        ]),
-        comment: 'Original comment'
+        dateStatuses: new Map([['date-1', ResponseStatus.create(ResponseStatusValue.OK)]]),
+        comment: 'Original comment',
       });
     });
 
     it('should update comment', async () => {
       // Wait a bit to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       const updated = response.updateComment('New comment');
 
       expect(updated.comment).toBe('New comment');
@@ -162,15 +166,16 @@ describe('Response', () => {
 
     it('should remove comment when undefined provided', () => {
       const updated = response.updateComment(undefined);
-      
+
       expect(updated.comment).toBeUndefined();
     });
 
     it('should validate comment length', () => {
       const longComment = 'a'.repeat(1001);
-      
-      expect(() => response.updateComment(longComment))
-        .toThrow('コメントは1000文字以内で入力してください');
+
+      expect(() => response.updateComment(longComment)).toThrow(
+        'コメントは1000文字以内で入力してください'
+      );
     });
   });
 
@@ -180,9 +185,7 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map([
-          ['date-1', ResponseStatus.create(ResponseStatusValue.OK)]
-        ])
+        dateStatuses: new Map([['date-1', ResponseStatus.create(ResponseStatusValue.OK)]]),
       });
 
       expect(response.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.OK);
@@ -193,7 +196,7 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       expect(response.getStatusForDate('date-1')).toBeUndefined();
@@ -206,9 +209,7 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map([
-          ['date-1', ResponseStatus.create(ResponseStatusValue.OK)]
-        ])
+        dateStatuses: new Map([['date-1', ResponseStatus.create(ResponseStatusValue.OK)]]),
       });
 
       expect(response.hasResponded()).toBe(true);
@@ -219,7 +220,7 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       expect(response.hasResponded()).toBe(false);
@@ -230,7 +231,7 @@ describe('Response', () => {
     it('should convert to primitives correctly', () => {
       const dateStatuses = new Map([
         ['date-1', ResponseStatus.create(ResponseStatusValue.OK)],
-        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)]
+        ['date-2', ResponseStatus.create(ResponseStatusValue.MAYBE)],
       ]);
 
       const response = Response.create({
@@ -238,7 +239,7 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Test comment'
+        comment: 'Test comment',
       });
 
       const primitives = response.toPrimitives();
@@ -249,11 +250,11 @@ describe('Response', () => {
         user: testUser.toPrimitives(),
         dateStatuses: {
           'date-1': 'ok',
-          'date-2': 'maybe'
+          'date-2': 'maybe',
         },
         comment: 'Test comment',
         createdAt: response.createdAt,
-        updatedAt: response.updatedAt
+        updatedAt: response.updatedAt,
       });
     });
 
@@ -262,11 +263,11 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       const primitives = response.toPrimitives();
-      
+
       expect(primitives.comment).toBeUndefined();
     });
   });
@@ -278,15 +279,15 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: {
           id: 'user-123',
-          username: 'TestUser'
+          username: 'TestUser',
         },
         dateStatuses: {
           'date-1': 'ok' as const,
-          'date-2': 'maybe' as const
+          'date-2': 'maybe' as const,
         },
         comment: 'Test comment',
         createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-02')
+        updatedAt: new Date('2024-01-02'),
       };
 
       const response = Response.fromPrimitives(primitives);
@@ -308,15 +309,15 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: {
           id: 'user-123',
-          username: 'TestUser'
+          username: 'TestUser',
         },
         dateStatuses: {},
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       const response = Response.fromPrimitives(primitives);
-      
+
       expect(response.dateStatuses.size).toBe(0);
     });
   });
@@ -327,14 +328,14 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       const response2 = Response.create({
         id: 'response-123',
         scheduleId: 'schedule-456',
         user: User.create('user-456', 'OtherUser'),
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       expect(response1.equals(response2)).toBe(true);
@@ -345,14 +346,14 @@ describe('Response', () => {
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       const response2 = Response.create({
         id: 'response-456',
         scheduleId: 'schedule-123',
         user: testUser,
-        dateStatuses: new Map()
+        dateStatuses: new Map(),
       });
 
       expect(response1.equals(response2)).toBe(false);

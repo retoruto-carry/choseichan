@@ -1,6 +1,6 @@
 /**
  * Core Interfaces
- * 
+ *
  * アプリケーション全体で使用される基本インターフェース
  */
 
@@ -119,14 +119,14 @@ export const Result = {
   success<T>(data: T): SuccessResult<T> {
     return { success: true, data };
   },
-  
+
   failure<E = Error>(error: E): FailureResult<E> {
     return { success: false, error };
   },
-  
+
   failures<E = Error>(errors: E[]): FailureResult<E> {
     return { success: false, errors };
-  }
+  },
 } as const;
 
 // Common Error Types

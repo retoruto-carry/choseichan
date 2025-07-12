@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { DomainSchedule } from '../../../domain/types/DomainTypes';
+import type { UpdateScheduleRequest } from '../../dto/ScheduleDto';
 import { UpdateScheduleUseCase } from './UpdateScheduleUseCase';
-import { IScheduleRepository, NotFoundError } from '../../../domain/repositories/interfaces';
-import { DomainSchedule } from '../../../domain/types/DomainTypes';
-import { UpdateScheduleRequest } from '../../dto/ScheduleDto';
 
 describe('UpdateScheduleUseCase', () => {
   let useCase: UpdateScheduleUseCase;
@@ -12,7 +12,7 @@ describe('UpdateScheduleUseCase', () => {
   const futureDate1 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
   const futureDate2 = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000); // 8 days from now
   const futureDeadline = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000); // 6 days from now (before schedule dates)
-  
+
   const mockSchedule: DomainSchedule = {
     id: 'schedule-123',
     guildId: 'guild-123',
@@ -20,8 +20,14 @@ describe('UpdateScheduleUseCase', () => {
     title: 'Original Title',
     description: 'Original Description',
     dates: [
-      { id: 'date-1', datetime: `${futureDate1.getFullYear()}/${(futureDate1.getMonth() + 1).toString().padStart(2, '0')}/${futureDate1.getDate().toString().padStart(2, '0')} 19:00` },
-      { id: 'date-2', datetime: `${futureDate2.getFullYear()}/${(futureDate2.getMonth() + 1).toString().padStart(2, '0')}/${futureDate2.getDate().toString().padStart(2, '0')} 19:00` }
+      {
+        id: 'date-1',
+        datetime: `${futureDate1.getFullYear()}/${(futureDate1.getMonth() + 1).toString().padStart(2, '0')}/${futureDate1.getDate().toString().padStart(2, '0')} 19:00`,
+      },
+      {
+        id: 'date-2',
+        datetime: `${futureDate2.getFullYear()}/${(futureDate2.getMonth() + 1).toString().padStart(2, '0')}/${futureDate2.getDate().toString().padStart(2, '0')} 19:00`,
+      },
     ],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
@@ -29,7 +35,7 @@ describe('UpdateScheduleUseCase', () => {
     notificationSent: false,
     totalResponses: 0,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   beforeEach(() => {
@@ -42,7 +48,7 @@ describe('UpdateScheduleUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     useCase = new UpdateScheduleUseCase(mockScheduleRepository);
@@ -57,14 +63,14 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        title: 'Updated Title'
+        title: 'Updated Title',
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule?.title).toBe('Updated Title');
-      
+
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.title).toBe('Updated Title');
     });
@@ -77,7 +83,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        description: 'Updated Description'
+        description: 'Updated Description',
       };
 
       const result = await useCase.execute(request);
@@ -95,14 +101,14 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        deadline
+        deadline,
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule?.deadline).toBe(deadline);
-      
+
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.deadline).toEqual(new Date(deadline));
     });
@@ -110,7 +116,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should remove deadline when null is provided', async () => {
       const scheduleWithDeadline = {
         ...mockSchedule,
-        deadline: futureDeadline
+        deadline: futureDeadline,
       };
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleWithDeadline);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
@@ -119,14 +125,14 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        deadline: null
+        deadline: null,
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
       expect(result.schedule?.deadline).toBeUndefined();
-      
+
       const savedSchedule = vi.mocked(mockScheduleRepository.save).mock.calls[0][0];
       expect(savedSchedule.deadline).toBeUndefined();
     });
@@ -139,7 +145,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        messageId: 'msg-456'
+        messageId: 'msg-456',
       };
 
       const result = await useCase.execute(request);
@@ -157,7 +163,7 @@ describe('UpdateScheduleUseCase', () => {
         guildId: 'guild-123',
         editorUserId: 'user-123',
         reminderTimings: ['1h', '30m'],
-        reminderMentions: ['@everyone']
+        reminderMentions: ['@everyone'],
       };
 
       const result = await useCase.execute(request);
@@ -170,7 +176,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should reset reminder states when specified', async () => {
       const scheduleWithReminders = {
         ...mockSchedule,
-        remindersSent: ['1h']
+        remindersSent: ['1h'],
       };
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleWithReminders);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
@@ -179,7 +185,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        reminderStates: {}
+        reminderStates: {},
       };
 
       const result = await useCase.execute(request);
@@ -194,17 +200,23 @@ describe('UpdateScheduleUseCase', () => {
 
       const futureDate3 = new Date(Date.now() + 9 * 24 * 60 * 60 * 1000); // 9 days from now
       const futureDate4 = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 10 days from now
-      
+
       const newDates = [
-        { id: 'date-3', datetime: `${futureDate3.getFullYear()}/${(futureDate3.getMonth() + 1).toString().padStart(2, '0')}/${futureDate3.getDate().toString().padStart(2, '0')} 19:00` },
-        { id: 'date-4', datetime: `${futureDate4.getFullYear()}/${(futureDate4.getMonth() + 1).toString().padStart(2, '0')}/${futureDate4.getDate().toString().padStart(2, '0')} 19:00` }
+        {
+          id: 'date-3',
+          datetime: `${futureDate3.getFullYear()}/${(futureDate3.getMonth() + 1).toString().padStart(2, '0')}/${futureDate3.getDate().toString().padStart(2, '0')} 19:00`,
+        },
+        {
+          id: 'date-4',
+          datetime: `${futureDate4.getFullYear()}/${(futureDate4.getMonth() + 1).toString().padStart(2, '0')}/${futureDate4.getDate().toString().padStart(2, '0')} 19:00`,
+        },
       ];
 
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        dates: newDates
+        dates: newDates,
       };
 
       const result = await useCase.execute(request);
@@ -217,7 +229,7 @@ describe('UpdateScheduleUseCase', () => {
       const request = {
         scheduleId: '',
         guildId: '',
-        editorUserId: ''
+        editorUserId: '',
       } as UpdateScheduleRequest;
 
       const result = await useCase.execute(request);
@@ -230,12 +242,12 @@ describe('UpdateScheduleUseCase', () => {
 
     it('should validate empty title', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      
+
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        title: '   '
+        title: '   ',
       };
 
       const result = await useCase.execute(request);
@@ -246,18 +258,18 @@ describe('UpdateScheduleUseCase', () => {
 
     it('should validate empty dates', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      
+
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        dates: []
+        dates: [],
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('Schedule must have at least one date');
+      expect(result.errors?.[0]).toContain('Schedule must have at least one date');
     });
 
     it('should return error when schedule not found', async () => {
@@ -267,7 +279,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        title: 'Updated Title'
+        title: 'Updated Title',
       };
 
       const result = await useCase.execute(request);
@@ -283,7 +295,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'other-user-456', // Different user
-        title: 'Updated Title'
+        title: 'Updated Title',
       };
 
       const result = await useCase.execute(request);
@@ -300,7 +312,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        title: 'Updated Title'
+        title: 'Updated Title',
       };
 
       const result = await useCase.execute(request);
@@ -310,21 +322,19 @@ describe('UpdateScheduleUseCase', () => {
     });
 
     it('should handle repository errors', async () => {
-      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(
-        new Error('Database error')
-      );
+      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(new Error('Database error'));
 
       const request: UpdateScheduleRequest = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
-        title: 'Updated Title'
+        title: 'Updated Title',
       };
 
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュールの更新に失敗しました');
+      expect(result.errors?.[0]).toContain('スケジュールの更新に失敗しました');
     });
 
     it('should update multiple fields at once', async () => {
@@ -338,7 +348,7 @@ describe('UpdateScheduleUseCase', () => {
         title: 'New Title',
         description: 'New Description',
         deadline: futureDeadline.toISOString(),
-        messageId: 'msg-789'
+        messageId: 'msg-789',
       };
 
       const result = await useCase.execute(request);

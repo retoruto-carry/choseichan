@@ -1,6 +1,6 @@
 /**
  * Domain Layer Error Types
- * 
+ *
  * ドメイン層のエラー定義
  * Clean Architectureでは、ドメイン層が最も重要な層なので、
  * ドメインエラーは他の層に影響を与えない独立したエラーとして定義
@@ -10,7 +10,10 @@ export abstract class DomainError extends Error {
   abstract readonly code: string;
   abstract readonly statusCode: number;
 
-  constructor(message: string, public readonly details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    public readonly details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -21,7 +24,7 @@ export abstract class DomainError extends Error {
       code: this.code,
       message: this.message,
       statusCode: this.statusCode,
-      details: this.details
+      details: this.details,
     };
   }
 }
@@ -69,7 +72,10 @@ export class ResponseNotFoundError extends DomainError {
   readonly statusCode = 404;
 
   constructor(scheduleId: string, userId: string) {
-    super(`Response not found for schedule ${scheduleId} by user ${userId}`, { scheduleId, userId });
+    super(`Response not found for schedule ${scheduleId} by user ${userId}`, {
+      scheduleId,
+      userId,
+    });
   }
 }
 
@@ -124,10 +130,6 @@ export class DomainRuleViolationError extends DomainError {
 export class BusinessLogicError extends DomainError {
   readonly code = 'BUSINESS_LOGIC_ERROR';
   readonly statusCode = 422;
-
-  constructor(message: string, details?: Record<string, unknown>) {
-    super(message, details);
-  }
 }
 
 // Error Factory
@@ -168,7 +170,10 @@ export class DomainErrorFactory {
     return new DateValidationError(message, datetime);
   }
 
-  static domainRuleViolation(rule: string, details?: Record<string, unknown>): DomainRuleViolationError {
+  static domainRuleViolation(
+    rule: string,
+    details?: Record<string, unknown>
+  ): DomainRuleViolationError {
     return new DomainRuleViolationError(rule, details);
   }
 
@@ -182,22 +187,42 @@ export function isDomainError(error: unknown): error is DomainError {
   return error instanceof DomainError;
 }
 
-export function isScheduleError(error: unknown): error is ScheduleNotFoundError | ScheduleValidationError | ScheduleAlreadyClosedError | SchedulePermissionError {
-  return error instanceof ScheduleNotFoundError ||
-         error instanceof ScheduleValidationError ||
-         error instanceof ScheduleAlreadyClosedError ||
-         error instanceof SchedulePermissionError;
+export function isScheduleError(
+  error: unknown
+): error is
+  | ScheduleNotFoundError
+  | ScheduleValidationError
+  | ScheduleAlreadyClosedError
+  | SchedulePermissionError {
+  return (
+    error instanceof ScheduleNotFoundError ||
+    error instanceof ScheduleValidationError ||
+    error instanceof ScheduleAlreadyClosedError ||
+    error instanceof SchedulePermissionError
+  );
 }
 
-export function isResponseError(error: unknown): error is ResponseNotFoundError | ResponseValidationError | InvalidResponseStatusError {
-  return error instanceof ResponseNotFoundError ||
-         error instanceof ResponseValidationError ||
-         error instanceof InvalidResponseStatusError;
+export function isResponseError(
+  error: unknown
+): error is ResponseNotFoundError | ResponseValidationError | InvalidResponseStatusError {
+  return (
+    error instanceof ResponseNotFoundError ||
+    error instanceof ResponseValidationError ||
+    error instanceof InvalidResponseStatusError
+  );
 }
 
-export function isValidationError(error: unknown): error is ScheduleValidationError | ResponseValidationError | UserValidationError | DateValidationError {
-  return error instanceof ScheduleValidationError ||
-         error instanceof ResponseValidationError ||
-         error instanceof UserValidationError ||
-         error instanceof DateValidationError;
+export function isValidationError(
+  error: unknown
+): error is
+  | ScheduleValidationError
+  | ResponseValidationError
+  | UserValidationError
+  | DateValidationError {
+  return (
+    error instanceof ScheduleValidationError ||
+    error instanceof ResponseValidationError ||
+    error instanceof UserValidationError ||
+    error instanceof DateValidationError
+  );
 }

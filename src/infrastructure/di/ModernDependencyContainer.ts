@@ -1,13 +1,17 @@
 /**
  * Modern Dependency Container
- * 
+ *
  * 新しいDIシステムを使用した改良版依存関係コンテナ
  * 従来のDependencyContainerとの後方互換性を保持
  */
 
-import { Env } from '../types/discord';
-import { DIContainer, ServiceAccessor, SERVICE_TOKENS } from './DIContainer';
-import { registerServices, ServiceConfiguration, registerServicesWithConfig } from './ServiceRegistration';
+import type { Env } from '../types/discord';
+import { DIContainer, SERVICE_TOKENS, ServiceAccessor } from './DIContainer';
+import {
+  registerServices,
+  registerServicesWithConfig,
+  type ServiceConfiguration,
+} from './ServiceRegistration';
 
 // Legacy interfaces for backward compatibility
 export interface ApplicationServices {
@@ -90,7 +94,9 @@ export class ModernDependencyContainer {
         getScheduleSummaryUseCase: this.accessor.getGetScheduleSummaryUseCase(),
         deadlineReminderUseCase: this.accessor.getDeadlineReminderUseCase(),
         processReminderUseCase: this.accessor.getProcessReminderUseCase(),
-        processDeadlineRemindersUseCase: this.container.isRegistered(SERVICE_TOKENS.PROCESS_DEADLINE_REMINDERS_USE_CASE)
+        processDeadlineRemindersUseCase: this.container.isRegistered(
+          SERVICE_TOKENS.PROCESS_DEADLINE_REMINDERS_USE_CASE
+        )
           ? this.accessor.getProcessDeadlineRemindersUseCase()
           : null,
         submitResponseUseCase: this.accessor.getSubmitResponseUseCase(),
@@ -235,7 +241,7 @@ export class ModernDependencyContainer {
 
     return {
       healthy: issues.length === 0,
-      issues
+      issues,
     };
   }
 
@@ -245,7 +251,7 @@ export class ModernDependencyContainer {
       environment: 'testing',
       enableNotifications: false,
       enableDebugLogging: true,
-      useMockServices: true
+      useMockServices: true,
     });
   }
 
@@ -254,7 +260,7 @@ export class ModernDependencyContainer {
       environment: 'production',
       enableNotifications: true,
       enableDebugLogging: false,
-      useMockServices: false
+      useMockServices: false,
     });
   }
 
@@ -263,7 +269,7 @@ export class ModernDependencyContainer {
       environment: 'development',
       enableNotifications: true,
       enableDebugLogging: true,
-      useMockServices: false
+      useMockServices: false,
     });
   }
 }

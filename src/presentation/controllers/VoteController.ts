@@ -1,23 +1,25 @@
 /**
  * Vote Controller
- * 
+ *
  * 投票機能のコントローラー
  * 元: src/handlers/vote-handlers.ts の Clean Architecture版
  */
 
-import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, ModalInteraction, Env } from '../../infrastructure/types/discord';
+import { InteractionResponseType } from 'discord-interactions';
+import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { NotificationService } from '../../application/services/NotificationService';
 // ResponseStatus type - should be moved to a proper type file
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { getLogger } from '../../infrastructure/logging/Logger';
+import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
-import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
-import { sendFollowupMessage } from '../utils/discord-webhook';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
-import { NotificationService } from '../../application/services/NotificationService';
-import { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
 
 export class VoteController {
+  private readonly logger = getLogger();
+
   constructor(
     private readonly dependencyContainer: DependencyContainer,
     private readonly uiBuilder: VoteUIBuilder
@@ -29,7 +31,7 @@ export class VoteController {
   async handleRespondButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env
+    _env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -37,7 +39,10 @@ export class VoteController {
       const userId = interaction.member?.user.id || interaction.user?.id || '';
 
       // Get schedule using Clean Architecture
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return createErrorResponse('日程調整が見つかりません。');
       }
@@ -53,7 +58,7 @@ export class VoteController {
           scheduleId,
           guildId,
           editorUserId: userId,
-          messageId: interaction.message.id
+          messageId: interaction.message.id,
         });
       }
 
@@ -61,7 +66,7 @@ export class VoteController {
       const responseResult = await this.dependencyContainer.getResponseUseCase.execute({
         scheduleId,
         userId,
-        guildId
+        guildId,
       });
 
       // ResponseDto の dateStatuses を使用
@@ -75,13 +80,20 @@ export class VoteController {
       // Create vote modal
       const modal = this.uiBuilder.createVoteModal(schedule, currentResponses);
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.MODAL,
-        data: modal
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.MODAL,
+          data: modal,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error handling respond button:', error);
+      this.logger.error('Error handling respond button', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handle-respond-button',
+        useCase: 'VoteController',
+        scheduleId: params[0],
+        guildId: interaction.guild_id,
+      });
       return createErrorResponse('エラーが発生しました。');
     }
   }
@@ -92,7 +104,7 @@ export class VoteController {
   async handleToggleDetailsButton(
     interaction: ButtonInteraction,
     params: string[],
-    env: Env
+    _env: Env
   ): Promise<Response> {
     try {
       const [scheduleId, currentState] = params;
@@ -100,12 +112,18 @@ export class VoteController {
       const showDetails = currentState !== 'true';
 
       // Get schedule and summary using Clean Architecture
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return createErrorResponse('日程調整が見つかりません。');
       }
 
-      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!summaryResult.success || !summaryResult.summary) {
         return createErrorResponse('サマリー情報の取得に失敗しました。');
       }
@@ -114,16 +132,23 @@ export class VoteController {
       const embed = createScheduleEmbedWithTable(summaryResult.summary, showDetails);
       const components = createSimpleScheduleComponents(scheduleResult.schedule, showDetails);
 
-      return new Response(JSON.stringify({
-        type: InteractionResponseType.UPDATE_MESSAGE,
-        data: {
-          embeds: [embed],
-          components
-        }
-      }), { headers: { 'Content-Type': 'application/json' } });
-
+      return new Response(
+        JSON.stringify({
+          type: InteractionResponseType.UPDATE_MESSAGE,
+          data: {
+            embeds: [embed],
+            components,
+          },
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     } catch (error) {
-      console.error('Error toggling details:', error);
+      this.logger.error('Error toggling details', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'toggle-details',
+        useCase: 'VoteController',
+        scheduleId: params[0],
+        guildId: interaction.guild_id,
+      });
       return createErrorResponse('表示の切り替えに失敗しました。');
     }
   }
@@ -143,7 +168,10 @@ export class VoteController {
       const username = interaction.member?.user.username || interaction.user?.username || 'Unknown';
 
       // Get schedule using Clean Architecture
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return createErrorResponse('日程調整が見つかりません。');
       }
@@ -181,7 +209,7 @@ export class VoteController {
         username,
         responses,
         comment,
-        guildId
+        guildId,
       });
 
       if (!submitResult.success) {
@@ -199,9 +227,14 @@ export class VoteController {
       }
 
       return createEphemeralResponse(responseContent);
-
     } catch (error) {
-      console.error('Error handling vote modal:', error);
+      this.logger.error('Error handling vote modal', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'handle-vote-modal',
+        useCase: 'VoteController',
+        scheduleId: params[0],
+        guildId: interaction.guild_id,
+        userId: interaction.member?.user.id || interaction.user?.id,
+      });
       return createErrorResponse('回答の処理中にエラーが発生しました。');
     }
   }
@@ -220,7 +253,10 @@ export class VoteController {
       const userId = interaction.member?.user.id || interaction.user?.id || '';
 
       // Get schedule using Clean Architecture
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return createErrorResponse('日程調整が見つかりません。');
       }
@@ -239,7 +275,7 @@ export class VoteController {
       const closeResult = await this.dependencyContainer.closeScheduleUseCase.execute({
         scheduleId,
         guildId,
-        editorUserId: userId
+        editorUserId: userId,
       });
 
       if (!closeResult.success) {
@@ -248,15 +284,20 @@ export class VoteController {
 
       // Send notifications in background
       if (env.ctx && env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
-        env.ctx.waitUntil(
-          this.sendClosureNotifications(scheduleId, guildId, env)
-        );
+        env.ctx.waitUntil(this.sendClosureNotifications(scheduleId, guildId, env));
       }
 
-      return createEphemeralResponse('✅ 日程調整を締め切りました。\n📊 集計結果と個人宛通知を送信しています...');
-
+      return createEphemeralResponse(
+        '✅ 日程調整を締め切りました。\n📊 集計結果と個人宛通知を送信しています...'
+      );
     } catch (error) {
-      console.error('Error closing schedule:', error);
+      this.logger.error('Error closing schedule', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'close-schedule',
+        useCase: 'VoteController',
+        scheduleId: params[0],
+        guildId: interaction.guild_id,
+        userId: interaction.member?.user.id || interaction.user?.id,
+      });
       return createErrorResponse('締切処理中にエラーが発生しました。');
     }
   }
@@ -283,12 +324,20 @@ export class VoteController {
       await notificationService.sendSummaryMessage(scheduleId, guildId);
 
       // Get schedule for PR message
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (scheduleResult.success && scheduleResult.schedule) {
         await notificationService.sendPRMessage(scheduleResult.schedule);
       }
     } catch (error) {
-      console.error('Error sending closure notifications:', error);
+      this.logger.error('Error sending closure notifications', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'send-closure-notifications',
+        useCase: 'VoteController',
+        scheduleId,
+        guildId,
+      });
     }
   }
 
@@ -308,12 +357,18 @@ export class VoteController {
       }
 
       // Get latest schedule and summary
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(scheduleId, guildId);
+      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!scheduleResult.success || !scheduleResult.schedule) {
         return;
       }
 
-      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      const summaryResult = await this.dependencyContainer.getScheduleSummaryUseCase.execute(
+        scheduleId,
+        guildId
+      );
       if (!summaryResult.success || !summaryResult.summary) {
         return;
       }
@@ -327,12 +382,18 @@ export class VoteController {
         interactionToken,
         {
           embeds: [embed],
-          components
+          components,
         },
         messageId
       );
     } catch (error) {
-      console.error('Error updating main message:', error);
+      this.logger.error('Error updating main message', error instanceof Error ? error : new Error(String(error)), {
+        operation: 'update-main-message',
+        useCase: 'VoteController',
+        scheduleId,
+        messageId,
+        guildId,
+      });
     }
   }
 
@@ -345,13 +406,13 @@ export class VoteController {
     username: string
   ): string {
     const lines = [`✅ ${username} さんの回答を受け付けました！\n`];
-    
+
     // Add response summary
     for (const response of responses) {
       const date = schedule.dates.find((d) => d.id === response.dateId);
       if (date) {
-        const statusEmoji = response.status === 'ok' ? '○' : 
-                           response.status === 'maybe' ? '△' : '×';
+        const statusEmoji =
+          response.status === 'ok' ? '○' : response.status === 'maybe' ? '△' : '×';
         lines.push(`${statusEmoji} ${date.datetime}`);
       }
     }

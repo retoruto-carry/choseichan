@@ -2,16 +2,16 @@
  * D1実装のリポジトリファクトリ
  */
 
-import { 
-  IRepositoryFactory, 
-  IScheduleRepository, 
-  IResponseRepository, 
-  ITransaction,
-  DatabaseConfig,
-  TransactionError 
+import {
+  type DatabaseConfig,
+  type IRepositoryFactory,
+  type IResponseRepository,
+  type IScheduleRepository,
+  type ITransaction,
+  TransactionError,
 } from '../../../domain/repositories/interfaces';
-import { D1ScheduleRepository } from './schedule-repository';
 import { D1ResponseRepository } from './response-repository';
+import { D1ScheduleRepository } from './schedule-repository';
 
 /**
  * D1トランザクション実装
@@ -39,7 +39,7 @@ class D1Transaction implements ITransaction {
       // D1 doesn't support true transactions across multiple statements,
       // but we can use batch for atomic operations
       if (this.operations.length > 0) {
-        await Promise.all(this.operations.map(op => op()));
+        await Promise.all(this.operations.map((op) => op()));
       }
       this.committed = true;
     } catch (error) {
@@ -52,7 +52,7 @@ class D1Transaction implements ITransaction {
     if (this.committed || this.rolledBack) {
       throw new TransactionError('Transaction already completed');
     }
-    
+
     // In D1, we can't truly rollback, but we can prevent further operations
     this.rolledBack = true;
     this.operations = [];
@@ -105,17 +105,23 @@ export class D1RepositoryFactory implements IRepositoryFactory {
   async cleanupExpiredData(): Promise<void> {
     try {
       const now = Math.floor(Date.now() / 1000);
-      
+
       // Delete expired schedules (cascade will handle related tables)
-      await this.db.prepare(`
+      await this.db
+        .prepare(`
         DELETE FROM schedules WHERE expires_at < ?
-      `).bind(now).run();
-      
+      `)
+        .bind(now)
+        .run();
+
       // Delete orphaned expired responses
-      await this.db.prepare(`
+      await this.db
+        .prepare(`
         DELETE FROM responses WHERE expires_at < ?
-      `).bind(now).run();
-      
+      `)
+        .bind(now)
+        .run();
+
       console.log('Expired data cleanup completed');
     } catch (error) {
       console.error('Failed to cleanup expired data:', error);

@@ -1,13 +1,13 @@
 /**
  * Find Schedules Use Case
- * 
+ *
  * スケジュール検索のユースケース
  */
 
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { ScheduleResponse } from '../../dto/ScheduleDto';
+import type { Schedule } from '../../../domain/entities/Schedule';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { ScheduleResponse } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
-import { Schedule } from '../../../domain/entities/Schedule';
 
 export interface FindSchedulesByChannelUseCaseResult {
   success: boolean;
@@ -28,66 +28,85 @@ export interface FindScheduleByMessageIdUseCaseResult {
 }
 
 export class FindSchedulesUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
-  async findByChannel(channelId: string, guildId: string, limit?: number): Promise<FindSchedulesByChannelUseCaseResult> {
+  async findByChannel(
+    channelId: string,
+    guildId: string,
+    limit?: number
+  ): Promise<FindSchedulesByChannelUseCaseResult> {
     try {
       if (!channelId?.trim() || !guildId?.trim()) {
         return {
           success: false,
-          errors: ['チャンネルIDとGuild IDが必要です']
+          errors: ['チャンネルIDとGuild IDが必要です'],
         };
       }
 
       const schedules = await this.scheduleRepository.findByChannel(channelId, guildId, limit);
-      const scheduleResponses = schedules.map(schedule => this.buildScheduleResponse(ScheduleMapper.toDomain(schedule)));
+      const scheduleResponses = schedules.map((schedule) =>
+        this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
+      );
 
       return {
         success: true,
-        schedules: scheduleResponses
+        schedules: scheduleResponses,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  async findByDeadlineRange(startTime: Date, endTime: Date, guildId?: string): Promise<FindSchedulesByDeadlineRangeUseCaseResult> {
+  async findByDeadlineRange(
+    startTime: Date,
+    endTime: Date,
+    guildId?: string
+  ): Promise<FindSchedulesByDeadlineRangeUseCaseResult> {
     try {
       if (!startTime || !endTime || startTime >= endTime) {
         return {
           success: false,
-          errors: ['有効な時刻範囲が必要です']
+          errors: ['有効な時刻範囲が必要です'],
         };
       }
 
-      const schedules = await this.scheduleRepository.findByDeadlineRange(startTime, endTime, guildId);
-      const scheduleResponses = schedules.map(schedule => this.buildScheduleResponse(ScheduleMapper.toDomain(schedule)));
+      const schedules = await this.scheduleRepository.findByDeadlineRange(
+        startTime,
+        endTime,
+        guildId
+      );
+      const scheduleResponses = schedules.map((schedule) =>
+        this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
+      );
 
       return {
         success: true,
-        schedules: scheduleResponses
+        schedules: scheduleResponses,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`締切範囲でのスケジュール検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `締切範囲でのスケジュール検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  async findByMessageId(messageId: string, guildId: string): Promise<FindScheduleByMessageIdUseCaseResult> {
+  async findByMessageId(
+    messageId: string,
+    guildId: string
+  ): Promise<FindScheduleByMessageIdUseCaseResult> {
     try {
       if (!messageId?.trim() || !guildId?.trim()) {
         return {
           success: false,
-          errors: ['メッセージIDとGuild IDが必要です']
+          errors: ['メッセージIDとGuild IDが必要です'],
         };
       }
 
@@ -96,19 +115,20 @@ export class FindSchedulesUseCase {
       if (!schedule) {
         return {
           success: false,
-          errors: ['指定されたメッセージに対応するスケジュールが見つかりません']
+          errors: ['指定されたメッセージに対応するスケジュールが見つかりません'],
         };
       }
 
       return {
         success: true,
-        schedule: this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
+        schedule: this.buildScheduleResponse(ScheduleMapper.toDomain(schedule)),
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`メッセージIDでのスケジュール検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `メッセージIDでのスケジュール検索に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -132,7 +152,7 @@ export class FindSchedulesUseCase {
       notificationSent: schedule.notificationSent,
       totalResponses: schedule.totalResponses,
       createdAt: schedule.createdAt.toISOString(),
-      updatedAt: schedule.updatedAt.toISOString()
+      updatedAt: schedule.updatedAt.toISOString(),
     };
   }
 }

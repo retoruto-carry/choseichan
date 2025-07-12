@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type DatabaseConfig, TransactionError } from '../../../domain/repositories/interfaces';
 import { D1RepositoryFactory } from './factory';
-import { DatabaseConfig, TransactionError } from '../../../domain/repositories/interfaces';
-import { D1ScheduleRepository } from './schedule-repository';
 import { D1ResponseRepository } from './response-repository';
+import { D1ScheduleRepository } from './schedule-repository';
 
 // Mock D1Database
 const createMockD1Database = () => {
   const mockStatement = {
     bind: vi.fn().mockReturnThis(),
-    run: vi.fn().mockResolvedValue({ success: true })
+    run: vi.fn().mockResolvedValue({ success: true }),
   };
-  
+
   return {
     prepare: vi.fn().mockReturnValue(mockStatement),
     batch: vi.fn().mockResolvedValue([]),
-    _mockStatement: mockStatement
+    _mockStatement: mockStatement,
   };
 };
 
@@ -27,7 +27,7 @@ describe('D1RepositoryFactory', () => {
     mockDb = createMockD1Database();
     config = {
       type: 'd1',
-      d1Database: mockDb as unknown as D1Database
+      d1Database: mockDb as unknown as D1Database,
     };
     factory = new D1RepositoryFactory(config);
   });
@@ -41,10 +41,13 @@ describe('D1RepositoryFactory', () => {
 
     it('should throw error with invalid config', () => {
       const invalidConfig: DatabaseConfig = {
-        type: 'kv' as any
+        type: 'kv' as any,
+        d1Database: null as any,
       };
 
-      expect(() => new D1RepositoryFactory(invalidConfig)).toThrow('Invalid configuration for D1 repository factory');
+      expect(() => new D1RepositoryFactory(invalidConfig)).toThrow(
+        'Invalid configuration for D1 repository factory'
+      );
     });
   });
 
@@ -71,7 +74,7 @@ describe('D1RepositoryFactory', () => {
       const transaction = await factory.beginTransaction();
 
       expect(transaction).toBeDefined();
-      expect(transaction.isActive()).toBe(true);
+      expect((transaction as any).isActive()).toBe(true);
     });
   });
 
@@ -82,7 +85,7 @@ describe('D1RepositoryFactory', () => {
       await factory.initialize();
 
       expect(consoleSpy).toHaveBeenCalledWith('D1 database initialized');
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -94,11 +97,15 @@ describe('D1RepositoryFactory', () => {
       await factory.cleanupExpiredData();
 
       // Verify cleanup queries were executed
-      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM schedules WHERE expires_at < ?'));
-      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM responses WHERE expires_at < ?'));
-      
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM schedules WHERE expires_at < ?')
+      );
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM responses WHERE expires_at < ?')
+      );
+
       expect(consoleSpy).toHaveBeenCalledWith('Expired data cleanup completed');
-      
+
       consoleSpy.mockRestore();
     });
 
@@ -107,9 +114,12 @@ describe('D1RepositoryFactory', () => {
       mockDb._mockStatement.run.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(factory.cleanupExpiredData()).rejects.toThrow(TransactionError);
-      
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to cleanup expired data:', expect.any(Error));
-      
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to cleanup expired data:',
+        expect.any(Error)
+      );
+
       consoleErrorSpy.mockRestore();
     });
   });
@@ -124,7 +134,7 @@ describe('D1Transaction', () => {
     mockDb = createMockD1Database();
     config = {
       type: 'd1',
-      d1Database: mockDb as unknown as D1Database
+      d1Database: mockDb as unknown as D1Database,
     };
     factory = new D1RepositoryFactory(config);
   });
@@ -134,9 +144,9 @@ describe('D1Transaction', () => {
       const transaction = await factory.beginTransaction();
       const operation = vi.fn().mockResolvedValue('result');
 
-      await transaction.addOperation(operation);
+      await (transaction as any).addOperation(operation);
 
-      expect(transaction.isActive()).toBe(true);
+      expect((transaction as any).isActive()).toBe(true);
     });
 
     it('should throw error if transaction already completed', async () => {
@@ -144,7 +154,9 @@ describe('D1Transaction', () => {
       await transaction.commit();
 
       const operation = vi.fn();
-      await expect(transaction.addOperation(operation)).rejects.toThrow('Transaction already completed');
+      await expect((transaction as any).addOperation(operation)).rejects.toThrow(
+        'Transaction already completed'
+      );
     });
   });
 
@@ -154,13 +166,13 @@ describe('D1Transaction', () => {
       const operation1 = vi.fn().mockResolvedValue('result1');
       const operation2 = vi.fn().mockResolvedValue('result2');
 
-      await transaction.addOperation(operation1);
-      await transaction.addOperation(operation2);
+      await (transaction as any).addOperation(operation1);
+      await (transaction as any).addOperation(operation2);
       await transaction.commit();
 
       expect(operation1).toHaveBeenCalled();
       expect(operation2).toHaveBeenCalled();
-      expect(transaction.isActive()).toBe(false);
+      expect((transaction as any).isActive()).toBe(false);
     });
 
     it('should rollback on operation failure', async () => {
@@ -168,11 +180,11 @@ describe('D1Transaction', () => {
       const operation1 = vi.fn().mockResolvedValue('result1');
       const operation2 = vi.fn().mockRejectedValue(new Error('Operation failed'));
 
-      await transaction.addOperation(operation1);
-      await transaction.addOperation(operation2);
+      await (transaction as any).addOperation(operation1);
+      await (transaction as any).addOperation(operation2);
 
       await expect(transaction.commit()).rejects.toThrow('Transaction commit failed');
-      expect(transaction.isActive()).toBe(false);
+      expect((transaction as any).isActive()).toBe(false);
     });
 
     it('should throw error if already committed', async () => {
@@ -188,10 +200,10 @@ describe('D1Transaction', () => {
       const transaction = await factory.beginTransaction();
       const operation = vi.fn();
 
-      await transaction.addOperation(operation);
+      await (transaction as any).addOperation(operation);
       await transaction.rollback();
 
-      expect(transaction.isActive()).toBe(false);
+      expect((transaction as any).isActive()).toBe(false);
     });
 
     it('should throw error if already completed', async () => {
@@ -206,21 +218,21 @@ describe('D1Transaction', () => {
     it('should return true for new transaction', async () => {
       const transaction = await factory.beginTransaction();
 
-      expect(transaction.isActive()).toBe(true);
+      expect((transaction as any).isActive()).toBe(true);
     });
 
     it('should return false after commit', async () => {
       const transaction = await factory.beginTransaction();
       await transaction.commit();
 
-      expect(transaction.isActive()).toBe(false);
+      expect((transaction as any).isActive()).toBe(false);
     });
 
     it('should return false after rollback', async () => {
       const transaction = await factory.beginTransaction();
       await transaction.rollback();
 
-      expect(transaction.isActive()).toBe(false);
+      expect((transaction as any).isActive()).toBe(false);
     });
   });
 });

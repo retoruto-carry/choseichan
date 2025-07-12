@@ -1,6 +1,6 @@
 /**
  * Schedule Data Transfer Objects
- * 
+ *
  * アプリケーション層とプレゼンテーション層間のデータ転送用オブジェクト
  */
 

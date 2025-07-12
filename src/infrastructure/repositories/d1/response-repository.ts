@@ -2,9 +2,18 @@
  * D1実装のレスポンスリポジトリ
  */
 
-import { IScheduleRepository, IResponseRepository, RepositoryError, ConflictError } from '../../../domain/repositories/interfaces';
-import { DomainResponse, DomainScheduleSummary, DomainResponseStatus, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
+import {
+  type IResponseRepository,
+  type IScheduleRepository,
+  RepositoryError,
+} from '../../../domain/repositories/interfaces';
+import type {
+  DomainResponse,
+  DomainResponseStatus,
+  DomainScheduleDate,
+  DomainScheduleSummary,
+} from '../../../domain/types/DomainTypes';
 
 export class D1ResponseRepository implements IResponseRepository {
   constructor(
@@ -18,13 +27,16 @@ export class D1ResponseRepository implements IResponseRepository {
     if (!schedule) {
       throw new RepositoryError('Schedule not found', 'NOT_FOUND');
     }
-    
+
     const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
-    const expiresAt = Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) + TIME_CONSTANTS.SIX_MONTHS_SECONDS;
-    
+    const expiresAt =
+      Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) +
+      TIME_CONSTANTS.SIX_MONTHS_SECONDS;
+
     try {
       // First, insert or update the response
-      const responseResult = await this.db.prepare(`
+      const responseResult = await this.db
+        .prepare(`
         INSERT INTO responses (
           schedule_id, guild_id, user_id, username, display_name, 
           comment, updated_at, expires_at
@@ -36,37 +48,44 @@ export class D1ResponseRepository implements IResponseRepository {
           updated_at = excluded.updated_at,
           expires_at = excluded.expires_at
         RETURNING id
-      `).bind(
-        response.scheduleId,
-        guildId,
-        response.userId,
-        response.username,
-        response.displayName || null,
-        response.comment || null,
-        Math.floor(response.updatedAt.getTime() / 1000),
-        expiresAt
-      ).first<{ id: number }>();
+      `)
+        .bind(
+          response.scheduleId,
+          guildId,
+          response.userId,
+          response.username,
+          response.displayName || null,
+          response.comment || null,
+          Math.floor(response.updatedAt.getTime() / 1000),
+          expiresAt
+        )
+        .first<{ id: number }>();
 
       if (!responseResult) {
         throw new Error('Failed to insert/update response');
       }
-      
+
       const responseId = responseResult.id;
-      
+
       // Delete existing date statuses
-      await this.db.prepare(`
+      await this.db
+        .prepare(`
         DELETE FROM response_date_status 
         WHERE response_id = ?
-      `).bind(responseId).run();
-      
+      `)
+        .bind(responseId)
+        .run();
+
       // Insert new date statuses
-      const statusInserts = Object.entries(response.dateStatuses).map(([dateId, status]) => 
-        this.db.prepare(`
+      const statusInserts = Object.entries(response.dateStatuses).map(([dateId, status]) =>
+        this.db
+          .prepare(`
           INSERT INTO response_date_status (response_id, date_id, status)
           VALUES (?, ?, ?)
-        `).bind(responseId, dateId, status)
+        `)
+          .bind(responseId, dateId, status)
       );
-      
+
       if (statusInserts.length > 0) {
         await this.db.batch(statusInserts);
       }
@@ -76,49 +95,64 @@ export class D1ResponseRepository implements IResponseRepository {
   }
 
   async findByUser(
-    scheduleId: string, 
-    userId: string, 
+    scheduleId: string,
+    userId: string,
     guildId: string = 'default'
   ): Promise<DomainResponse | null> {
     try {
-      const responseRow = await this.db.prepare(`
+      const responseRow = await this.db
+        .prepare(`
         SELECT * FROM responses 
         WHERE schedule_id = ? AND user_id = ? AND guild_id = ?
-      `).bind(scheduleId, userId, guildId).first();
-      
+      `)
+        .bind(scheduleId, userId, guildId)
+        .first();
+
       if (!responseRow) return null;
-      
+
       // Get date statuses
-      const statusResult = await this.db.prepare(`
+      const statusResult = await this.db
+        .prepare(`
         SELECT date_id, status FROM response_date_status 
         WHERE response_id = ?
-      `).bind(responseRow.id).all();
-      
+      `)
+        .bind(responseRow.id)
+        .all();
+
       return this.mapRowToResponse(responseRow, statusResult.results);
     } catch (error) {
       throw new RepositoryError('Failed to find response', 'FIND_ERROR', error as Error);
     }
   }
 
-  async findByScheduleId(scheduleId: string, guildId: string = 'default'): Promise<DomainResponse[]> {
+  async findByScheduleId(
+    scheduleId: string,
+    guildId: string = 'default'
+  ): Promise<DomainResponse[]> {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(`
         SELECT * FROM responses 
         WHERE schedule_id = ? AND guild_id = ?
         ORDER BY updated_at DESC
-      `).bind(scheduleId, guildId).all();
-      
+      `)
+        .bind(scheduleId, guildId)
+        .all();
+
       const responses: DomainResponse[] = [];
       for (const row of result.results) {
-        const statusResult = await this.db.prepare(`
+        const statusResult = await this.db
+          .prepare(`
           SELECT date_id, status FROM response_date_status 
           WHERE response_id = ?
-        `).bind(row.id).all();
-        
+        `)
+          .bind(row.id)
+          .all();
+
         const response = this.mapRowToResponse(row, statusResult.results);
         if (response) responses.push(response);
       }
-      
+
       return responses;
     } catch (error) {
       throw new RepositoryError('Failed to find responses', 'FIND_ERROR', error as Error);
@@ -127,10 +161,13 @@ export class D1ResponseRepository implements IResponseRepository {
 
   async delete(scheduleId: string, userId: string, guildId: string = 'default'): Promise<void> {
     try {
-      await this.db.prepare(`
+      await this.db
+        .prepare(`
         DELETE FROM responses 
         WHERE schedule_id = ? AND user_id = ? AND guild_id = ?
-      `).bind(scheduleId, userId, guildId).run();
+      `)
+        .bind(scheduleId, userId, guildId)
+        .run();
     } catch (error) {
       throw new RepositoryError('Failed to delete response', 'DELETE_ERROR', error as Error);
     }
@@ -138,50 +175,60 @@ export class D1ResponseRepository implements IResponseRepository {
 
   async deleteBySchedule(scheduleId: string, guildId: string = 'default'): Promise<void> {
     try {
-      await this.db.prepare(`
+      await this.db
+        .prepare(`
         DELETE FROM responses 
         WHERE schedule_id = ? AND guild_id = ?
-      `).bind(scheduleId, guildId).run();
+      `)
+        .bind(scheduleId, guildId)
+        .run();
     } catch (error) {
       throw new RepositoryError('Failed to delete responses', 'DELETE_ERROR', error as Error);
     }
   }
 
-  async getScheduleSummary(scheduleId: string, guildId: string = 'default'): Promise<DomainScheduleSummary | null> {
+  async getScheduleSummary(
+    scheduleId: string,
+    guildId: string = 'default'
+  ): Promise<DomainScheduleSummary | null> {
     const schedule = await this.scheduleRepository.findById(scheduleId, guildId);
     if (!schedule) return null;
-    
+
     try {
       // Get response counts using the view
-      const countResult = await this.db.prepare(`
+      const countResult = await this.db
+        .prepare(`
         SELECT date_id, status, count 
         FROM date_response_counts 
         WHERE schedule_id = ?
-      `).bind(scheduleId).all();
-      
+      `)
+        .bind(scheduleId)
+        .all();
+
       // Initialize response counts
       const responseCounts: Record<string, Record<DomainResponseStatus, number>> = {};
       for (const date of schedule.dates) {
         responseCounts[date.id] = {
           ok: 0,
           maybe: 0,
-          ng: 0
+          ng: 0,
         };
       }
-      
+
       // Fill in actual counts
       for (const row of countResult.results) {
         const dateId = row.date_id as string;
         const status = row.status as DomainResponseStatus;
         const count = Number(row.count);
-        
+
         if (responseCounts[dateId]) {
           responseCounts[dateId][status] = count;
         }
       }
-      
+
       // Get user responses
-      const userResponsesResult = await this.db.prepare(`
+      const userResponsesResult = await this.db
+        .prepare(`
         SELECT 
           r.user_id,
           rds.date_id,
@@ -189,40 +236,45 @@ export class D1ResponseRepository implements IResponseRepository {
         FROM responses r
         JOIN response_date_status rds ON r.id = rds.response_id
         WHERE r.schedule_id = ? AND r.guild_id = ?
-      `).bind(scheduleId, guildId).all();
-      
+      `)
+        .bind(scheduleId, guildId)
+        .all();
+
       const userResponses: Record<string, Record<string, DomainResponseStatus>> = {};
       for (const row of userResponsesResult.results) {
         const userId = row.user_id as string;
         const dateId = row.date_id as string;
         const status = row.status as DomainResponseStatus;
-        
+
         if (!userResponses[userId]) {
           userResponses[userId] = {};
         }
         userResponses[userId][dateId] = status;
       }
-      
+
       // Get total response count
-      const totalResult = await this.db.prepare(`
+      const totalResult = await this.db
+        .prepare(`
         SELECT COUNT(DISTINCT user_id) as total 
         FROM responses 
         WHERE schedule_id = ? AND guild_id = ?
-      `).bind(scheduleId, guildId).first();
-      
+      `)
+        .bind(scheduleId, guildId)
+        .first();
+
       // Get all responses for the summary
       const responses = await this.findByScheduleId(scheduleId, guildId);
-      
+
       // Calculate statistics
       const statistics = this.calculateStatistics(responses, responseCounts, schedule.dates);
-      
+
       return {
         schedule,
         responses,
         responseCounts,
         totalResponseUsers: Number(totalResult?.total) || 0,
         bestDateId: statistics.optimalDates.optimalDateId,
-        statistics
+        statistics,
       };
     } catch (error) {
       throw new RepositoryError('Failed to get schedule summary', 'SUMMARY_ERROR', error as Error);
@@ -234,9 +286,9 @@ export class D1ResponseRepository implements IResponseRepository {
    */
   private mapRowToResponse(row: unknown, statusRows: unknown[]): DomainResponse | null {
     if (!row || typeof row !== 'object') return null;
-    
+
     const r = row as Record<string, unknown>;
-    
+
     const dateStatuses: Record<string, DomainResponseStatus> = {};
     for (const statusRow of statusRows) {
       if (typeof statusRow === 'object' && statusRow !== null) {
@@ -246,7 +298,7 @@ export class D1ResponseRepository implements IResponseRepository {
         }
       }
     }
-    
+
     return {
       scheduleId: r.schedule_id as string,
       userId: r.user_id as string,
@@ -254,7 +306,7 @@ export class D1ResponseRepository implements IResponseRepository {
       displayName: (r.display_name as string) || undefined,
       dateStatuses,
       comment: (r.comment as string) || undefined,
-      updatedAt: new Date((r.updated_at as number) * 1000)
+      updatedAt: new Date((r.updated_at as number) * 1000),
     };
   }
 
@@ -273,9 +325,9 @@ export class D1ResponseRepository implements IResponseRepository {
 
     for (const response of responses) {
       const statuses = Object.values(response.dateStatuses);
-      if (statuses.every(s => s === 'ok')) {
+      if (statuses.every((s) => s === 'ok')) {
         fullyAvailable++;
-      } else if (statuses.some(s => s === 'ok' || s === 'maybe')) {
+      } else if (statuses.some((s) => s === 'ok' || s === 'maybe')) {
         partiallyAvailable++;
       } else {
         unavailable++;
@@ -297,13 +349,13 @@ export class D1ResponseRepository implements IResponseRepository {
       overallParticipation: {
         fullyAvailable,
         partiallyAvailable,
-        unavailable
+        unavailable,
       },
       optimalDates: {
         optimalDateId: sortedDates[0],
         alternativeDateIds: sortedDates.slice(1, 3),
-        scores
-      }
+        scores,
+      },
     };
   }
 }

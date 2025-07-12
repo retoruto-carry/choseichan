@@ -5,6 +5,7 @@
 - Cloudflare アカウント
 - Discord Developer アカウント
 - Node.js 18+
+- GitHub アカウント（Cron Jobs用）
 
 ## 手順
 
@@ -57,34 +58,47 @@ DISCORD_TOKEN=<Bot Token>
 # Cloudflare にログイン
 wrangler login
 
-# KV Namespace の作成
-wrangler kv:namespace create "SCHEDULES"
-wrangler kv:namespace create "RESPONSES"
+# D1 Database の作成
+wrangler d1 create discord-choseisan-db
 ```
 
 出力例:
 
 ```
-✅ Successfully created KV namespace "SCHEDULES"
-id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+✅ Successfully created DB 'discord-choseisan-db'!
 
-✅ Successfully created KV namespace "RESPONSES"
-id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+[[d1_databases]]
+binding = "DB"
+database_name = "discord-choseisan-db"
+database_id = "f9c793aa-2850-4646-8d5d-271550fdc3ac"
 ```
 
-`wrangler.toml` を編集して、作成された ID を設定:
+`wrangler.toml` を編集して、作成された database_id を設定:
 
 ```toml
-[[kv_namespaces]]
-binding = "SCHEDULES"
-id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # 実際のIDに置き換え
-
-[[kv_namespaces]]
-binding = "RESPONSES"
-id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyy"  # 実際のIDに置き換え
+[[d1_databases]]
+binding = "DB"
+database_name = "discord-choseisan-db"
+database_id = "xxxxx-xxxxx-xxxxx-xxxxx"  # 実際のIDに置き換え
 ```
 
-### 6. シークレットの設定
+### 6. データベースマイグレーション
+
+```bash
+# 初期スキーマの適用
+wrangler d1 execute discord-choseisan-db --file=./migrations/0001_20240115_initial_schema.sql
+
+# 期限切れデータクリーンアップスクリプト（必要に応じて）
+wrangler d1 execute discord-choseisan-db --file=./migrations/0002_20240116_cleanup_expired_data.sql
+
+# 外部キー最適化（必要に応じて）
+wrangler d1 execute discord-choseisan-db --file=./migrations/0003_20240117_foreign_key_optimization.sql
+
+# ローカル開発環境でテスト
+wrangler d1 execute discord-choseisan-db --local --file=./migrations/0001_20240115_initial_schema.sql
+```
+
+### 7. シークレットの設定
 
 ```bash
 # Discord の認証情報を Cloudflare Workers に設定
@@ -96,9 +110,16 @@ wrangler secret put DISCORD_APPLICATION_ID
 
 wrangler secret put DISCORD_TOKEN
 # プロンプトが表示されたら Bot Token を入力
+
+# Cron Jobs用のシークレット生成と設定
+openssl rand -hex 32
+# 生成された文字列をコピー
+
+wrangler secret put CRON_SECRET
+# プロンプトが表示されたら生成した文字列を入力
 ```
 
-### 7. デプロイ
+### 8. デプロイ
 
 ```bash
 # 本番環境にデプロイ
@@ -111,7 +132,7 @@ npm run deploy
 https://discord-choseisan.<your-subdomain>.workers.dev
 ```
 
-### 8. Discord Interaction Endpoint の設定
+### 9. Discord Interaction Endpoint の設定
 
 1. Discord Developer Portal に戻る
 2. アプリケーションの "General Information" タブ
@@ -121,13 +142,22 @@ https://discord-choseisan.<your-subdomain>.workers.dev
    ```
 4. "Save Changes" をクリック
 
-### 9. スラッシュコマンドの登録
+### 10. スラッシュコマンドの登録
 
 ```bash
 node scripts/register-commands.js
 ```
 
-### 10. 動作確認
+### 11. GitHub Actions（Cron Jobs）の設定
+
+1. GitHubリポジトリの Settings → Secrets and variables → Actions
+2. 以下のシークレットを追加:
+   - `DISCORD_TOKEN`: Bot Token
+   - `DISCORD_APPLICATION_ID`: Application ID
+   - `CRON_SECRET`: 手順7で生成した文字列
+   - `WORKER_URL`: デプロイしたWorkerのURL（例: `https://discord-choseisan.example.workers.dev`）
+
+### 12. 動作確認
 
 Discord サーバーで以下を実行:
 
@@ -150,10 +180,17 @@ Discord サーバーで以下を実行:
 - `register-commands.js` が正常に実行されたか確認
 - Discord クライアントを再起動
 
-### KV エラー
+### D1 エラー
 
-- wrangler.toml の KV binding ID が正しいか確認
-- KV namespace が作成されているか確認
+- wrangler.toml の database_id が正しいか確認
+- マイグレーションが正常に実行されたか確認
+- `wrangler d1 execute discord-choseisan-db --command "SELECT name FROM sqlite_master WHERE type='table';"` でテーブルを確認
+
+### Cron Jobsが動作しない
+
+- GitHub Secretsが正しく設定されているか確認
+- CRON_SECRETがWorkerとGitHub Actionsで一致しているか確認
+- GitHub ActionsのActionsタブで実行ログを確認
 
 ## 運用
 
@@ -163,14 +200,26 @@ Discord サーバーで以下を実行:
 wrangler tail
 ```
 
-### KV データの確認
+### D1 データベースの確認
 
 ```bash
-# 全ての key を表示
-wrangler kv:key list --binding=SCHEDULES
+# テーブル一覧
+wrangler d1 execute discord-choseisan-db --command "SELECT name FROM sqlite_master WHERE type='table';"
 
-# 特定の値を取得
-wrangler kv:key get --binding=SCHEDULES "schedule:xxxxx"
+# スケジュール一覧
+wrangler d1 execute discord-choseisan-db --command "SELECT id, title, status FROM schedules LIMIT 10;"
+
+# 特定のスケジュール詳細
+wrangler d1 execute discord-choseisan-db --command "SELECT * FROM schedules WHERE id = 'schedule-id';"
+```
+
+### 期限切れデータのクリーンアップ
+
+```bash
+# 手動実行
+wrangler d1 execute discord-choseisan-db --file=./migrations/0002_20240116_cleanup_expired_data.sql
+
+# または、Cron Jobで自動実行（要追加実装）
 ```
 
 ### 更新のデプロイ
@@ -178,3 +227,22 @@ wrangler kv:key get --binding=SCHEDULES "schedule:xxxxx"
 ```bash
 npm run deploy
 ```
+
+## 本番環境の推奨設定
+
+### レート制限
+
+- Discord API: 30リクエスト/分
+- 適切なバッチ処理とディレイを実装済み
+
+### パフォーマンス
+
+- D1 データベースインデックスが適切に設定済み
+- View を使用した集計クエリの最適化
+- Cloudflare Workers の実行時間制限（3秒）に注意
+
+### セキュリティ
+
+- すべての認証情報はシークレットとして管理
+- CRON_SECRETによるCron Job実行の保護
+- 最小権限の原則に従ったBot権限設定

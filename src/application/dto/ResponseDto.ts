@@ -1,6 +1,6 @@
 /**
  * Response Data Transfer Objects
- * 
+ *
  * 回答関連のデータ転送用オブジェクト
  */
 
@@ -53,17 +53,20 @@ export interface ResponseDto {
 
 export interface ResponseStatistics {
   totalUsers: number;
-  responsesByDate: Record<string, {
-    yes: number;
-    maybe: number;
-    no: number;
-    total: number;
-    percentage: {
+  responsesByDate: Record<
+    string,
+    {
       yes: number;
       maybe: number;
       no: number;
-    };
-  }>;
+      total: number;
+      percentage: {
+        yes: number;
+        maybe: number;
+        no: number;
+      };
+    }
+  >;
   overallParticipation: {
     fullyAvailable: number;
     partiallyAvailable: number;

@@ -1,17 +1,17 @@
 /**
  * User Domain Entity Unit Tests
- * 
+ *
  * ユーザーエンティティのユニットテスト
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { User } from './User';
 
 describe('User Domain Entity', () => {
   describe('User Creation', () => {
     it('should create a valid user with required fields', () => {
       const user = User.create('user123', 'testuser');
-      
+
       expect(user.id).toBe('user123');
       expect(user.username).toBe('testuser');
     });
@@ -30,7 +30,7 @@ describe('User Domain Entity', () => {
 
     it('should throw error for too long username', () => {
       const longUsername = 'a'.repeat(101); // Over 100 characters
-      
+
       expect(() => {
         User.create('user123', longUsername);
       }).toThrow('ユーザー名は100文字以内で入力してください');
@@ -39,7 +39,7 @@ describe('User Domain Entity', () => {
     it('should handle unicode characters in username', () => {
       const unicodeUsername = '日本語ユーザー';
       const user = User.create('user123', unicodeUsername);
-      
+
       expect(user.username).toBe(unicodeUsername);
     });
   });
@@ -48,7 +48,7 @@ describe('User Domain Entity', () => {
     it('should convert to primitives', () => {
       const user = User.create('user123', 'testuser');
       const primitives = user.toPrimitives();
-      
+
       expect(primitives.id).toBe('user123');
       expect(primitives.username).toBe('testuser');
     });
@@ -56,11 +56,11 @@ describe('User Domain Entity', () => {
     it('should create user from primitives', () => {
       const primitives = {
         id: 'user123',
-        username: 'testuser'
+        username: 'testuser',
       };
 
       const user = User.fromPrimitives(primitives);
-      
+
       expect(user.id).toBe('user123');
       expect(user.username).toBe('testuser');
     });
@@ -69,7 +69,7 @@ describe('User Domain Entity', () => {
       const user1 = User.create('user123', 'testuser');
       const user2 = User.create('user123', 'testuser');
       const user3 = User.create('user456', 'testuser');
-      
+
       expect(user1.equals(user2)).toBe(true);
       expect(user1.equals(user3)).toBe(false);
     });
@@ -78,7 +78,7 @@ describe('User Domain Entity', () => {
       const user = User.create('user123', 'oldname');
       // User is immutable, so we create a new instance
       const newUser = User.create('user123', 'newname');
-      
+
       expect(newUser.username).toBe('newname');
       expect(newUser.id).toBe('user123');
       expect(user.username).toBe('oldname'); // Original unchanged
@@ -90,7 +90,7 @@ describe('User Domain Entity', () => {
       const originalUser = User.create('user123', 'original');
       // Since User is immutable, we create a new instance
       const newUser = User.create('user123', 'updated');
-      
+
       expect(originalUser.username).toBe('original');
       expect(newUser.username).toBe('updated');
       expect(originalUser).not.toBe(newUser);

@@ -1,17 +1,17 @@
 /**
  * Create Schedule Use Case
- * 
+ *
  * スケジュール作成のユースケース
  * ビジネスルールの検証とスケジュール作成処理を実行
  */
 
 import { Schedule } from '../../../domain/entities/Schedule';
-import { User } from '../../../domain/entities/User';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
+import { User } from '../../../domain/entities/User';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { CreateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
 import { generateId } from '../../../utils/id';
+import type { CreateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
 
 export interface CreateScheduleUseCaseResult {
   success: boolean;
@@ -20,9 +20,7 @@ export interface CreateScheduleUseCaseResult {
 }
 
 export class CreateScheduleUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   async execute(request: CreateScheduleRequest): Promise<CreateScheduleUseCaseResult> {
     try {
@@ -31,14 +29,14 @@ export class CreateScheduleUseCase {
       if (!basicValidation.isValid) {
         return {
           success: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
       // 2. ドメインオブジェクトの構築
       const user = User.create(request.authorId, request.authorUsername);
-      
-      const dates = request.dates.map(dateData => 
+
+      const dates = request.dates.map((dateData) =>
         ScheduleDate.create(dateData.id, dateData.datetime)
       );
 
@@ -48,13 +46,13 @@ export class CreateScheduleUseCase {
       const domainValidation = ScheduleDomainService.validateScheduleForCreation({
         title: request.title,
         dates,
-        deadline
+        deadline,
       });
 
       if (!domainValidation.isValid) {
         return {
           success: false,
-          errors: domainValidation.errors
+          errors: domainValidation.errors,
         };
       }
 
@@ -70,7 +68,7 @@ export class CreateScheduleUseCase {
         authorId: request.authorId,
         deadline,
         reminderTimings: request.reminderTimings,
-        reminderMentions: request.reminderMentions
+        reminderMentions: request.reminderMentions,
       });
 
       // 5. リポジトリへの保存
@@ -81,18 +79,22 @@ export class CreateScheduleUseCase {
 
       return {
         success: true,
-        schedule: response
+        schedule: response,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`スケジュールの作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `スケジュールの作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
 
-  private validateBasicData(request: CreateScheduleRequest): { isValid: boolean; errors: string[] } {
+  private validateBasicData(request: CreateScheduleRequest): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.guildId?.trim()) {
@@ -128,7 +130,7 @@ export class CreateScheduleUseCase {
         } else {
           // 日時の形式チェック
           const dateTime = new Date(date.datetime);
-          if (isNaN(dateTime.getTime())) {
+          if (Number.isNaN(dateTime.getTime())) {
             errors.push(`日程候補${index + 1}: 日時の形式が正しくありません`);
           }
         }
@@ -138,20 +140,20 @@ export class CreateScheduleUseCase {
     // 締切日時の検証
     if (request.deadline) {
       const deadline = new Date(request.deadline);
-      if (isNaN(deadline.getTime())) {
+      if (Number.isNaN(deadline.getTime())) {
         errors.push('締切日時の形式が正しくありません');
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
   private buildResponse(schedule: Schedule): ScheduleResponse {
     const primitives = schedule.toPrimitives();
-    
+
     return {
       id: primitives.id,
       guildId: primitives.guildId,
@@ -170,7 +172,7 @@ export class CreateScheduleUseCase {
       notificationSent: primitives.notificationSent,
       totalResponses: primitives.totalResponses,
       createdAt: primitives.createdAt.toISOString(),
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Reminder Type Definitions
- * 
+ *
  * リマインダー関連の型定義
  */
 
@@ -13,5 +13,5 @@ export interface ReminderInfo {
 
 export interface DeadlineCheckResult {
   upcomingReminders: ReminderInfo[];
-  justClosed: Array<{scheduleId: string; guildId: string}>;
+  justClosed: Array<{ scheduleId: string; guildId: string }>;
 }

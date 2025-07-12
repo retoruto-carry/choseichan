@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ResponseDto, ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
+import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
-import { VoteUIBuilder } from '../builders/VoteUIBuilder';
-import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { ButtonInteraction, ModalInteraction, Env } from '../../infrastructure/types/discord';
-import { ScheduleResponse, ResponseDto } from '../../application/dto/ScheduleDto';
 
 describe('VoteController', () => {
   let controller: VoteController;
@@ -20,18 +20,18 @@ describe('VoteController', () => {
     title: 'Test Schedule',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     createdBy: {
       id: 'user-123',
-      username: 'TestUser'
+      username: 'TestUser',
     },
     authorId: 'user-123',
     status: 'open',
     notificationSent: false,
     totalResponses: 0,
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
   };
 
   const mockResponse: ResponseDto = {
@@ -40,9 +40,9 @@ describe('VoteController', () => {
     username: 'Responder',
     dateStatuses: {
       'date-1': 'ok',
-      'date-2': 'maybe'
+      'date-2': 'maybe',
     },
-    updatedAt: '2024-01-02T00:00:00Z'
+    updatedAt: '2024-01-02T00:00:00Z',
   };
 
   beforeEach(() => {
@@ -53,44 +53,44 @@ describe('VoteController', () => {
       DISCORD_TOKEN: 'test_token',
       DB: {} as D1Database,
       ctx: {
-        waitUntil: vi.fn()
-      } as any
+        waitUntil: vi.fn(),
+      } as any,
     };
 
     // Mock DependencyContainer
     mockContainer = {
       getScheduleUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       updateScheduleUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: true })
+        execute: vi.fn().mockResolvedValue({ success: true }),
       },
       getResponseUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       submitResponseUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       closeScheduleUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       reopenScheduleUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       getScheduleSummaryUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false })
+        execute: vi.fn().mockResolvedValue({ success: false }),
       },
       infrastructureServices: {
         repositoryFactory: {
           getScheduleRepository: vi.fn(),
-          getResponseRepository: vi.fn()
-        }
-      }
+          getResponseRepository: vi.fn(),
+        },
+      },
     } as any;
 
     // Mock UIBuilder
     mockUIBuilder = {
-      createVoteModal: vi.fn()
+      createVoteModal: vi.fn(),
     } as any;
 
     controller = new VoteController(mockContainer, mockUIBuilder);
@@ -102,40 +102,40 @@ describe('VoteController', () => {
       type: 3 as any,
       data: {
         custom_id: 'respond:schedule-123',
-        component_type: 2
+        component_type: 2,
       },
       guild_id: 'guild-123',
       member: {
         user: {
           id: 'user-456',
           username: 'Responder',
-          discriminator: '0000'
+          discriminator: '0000',
         },
-        roles: []
+        roles: [],
       },
       token: 'interaction_token',
       message: {
         id: 'msg-123',
-        embeds: []
-      }
+        embeds: [],
+      },
     };
 
     it('should show vote modal for valid schedule', async () => {
       // Setup mocks
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockContainer.getResponseUseCase.execute).mockResolvedValueOnce({
         success: true,
-        response: mockResponse
+        response: mockResponse,
       });
 
       const mockModal = {
         custom_id: 'vote:schedule-123',
         title: 'Vote Modal',
-        components: []
+        components: [],
       };
       vi.mocked(mockUIBuilder.createVoteModal).mockReturnValueOnce(mockModal);
 
@@ -148,45 +148,48 @@ describe('VoteController', () => {
 
       // Verify
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
       expect(data.data).toEqual(mockModal);
 
-      expect(mockContainer.getScheduleUseCase.execute).toHaveBeenCalledWith('schedule-123', 'guild-123');
+      expect(mockContainer.getScheduleUseCase.execute).toHaveBeenCalledWith(
+        'schedule-123',
+        'guild-123'
+      );
       expect(mockContainer.getResponseUseCase.execute).toHaveBeenCalledWith({
         scheduleId: 'schedule-123',
         userId: 'user-456',
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
       expect(mockUIBuilder.createVoteModal).toHaveBeenCalledWith(
         mockSchedule,
         expect.arrayContaining([
           { dateId: 'date-1', status: 'ok' },
-          { dateId: 'date-2', status: 'maybe' }
+          { dateId: 'date-2', status: 'maybe' },
         ])
       );
     });
 
     it('should save message ID if not already saved', async () => {
       const scheduleWithoutMessageId = { ...mockSchedule, messageId: undefined };
-      
+
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: scheduleWithoutMessageId
+        schedule: scheduleWithoutMessageId,
       });
 
       vi.mocked(mockContainer.updateScheduleUseCase.execute).mockResolvedValueOnce({
-        success: true
+        success: true,
       });
 
       vi.mocked(mockContainer.getResponseUseCase.execute).mockResolvedValueOnce({
-        success: false
+        success: false,
       });
 
       vi.mocked(mockUIBuilder.createVoteModal).mockReturnValueOnce({
         custom_id: 'vote:schedule-123',
         title: 'Vote Modal',
-        components: []
+        components: [],
       });
 
       await controller.handleRespondButton(mockInteraction, ['schedule-123'], mockEnv);
@@ -195,13 +198,13 @@ describe('VoteController', () => {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-456',
-        messageId: 'msg-123'
+        messageId: 'msg-123',
       });
     });
 
     it('should return error when schedule not found', async () => {
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
-        success: false
+        success: false,
       });
 
       const response = await controller.handleRespondButton(
@@ -210,7 +213,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('日程調整が見つかりません');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
@@ -218,10 +221,10 @@ describe('VoteController', () => {
 
     it('should return error when schedule is closed', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      
+
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: closedSchedule
+        schedule: closedSchedule,
       });
 
       const response = await controller.handleRespondButton(
@@ -230,7 +233,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('この日程調整は締め切られています');
     });
 
@@ -245,7 +248,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('エラーが発生しました');
     });
   });
@@ -259,52 +262,58 @@ describe('VoteController', () => {
         components: [
           {
             type: 1,
-            components: [{
-              type: 4,
-              custom_id: 'vote_date-1',
-              value: 'o'
-            }]
+            components: [
+              {
+                type: 4,
+                custom_id: 'vote_date-1',
+                value: 'o',
+              },
+            ],
           },
           {
             type: 1,
-            components: [{
-              type: 4,
-              custom_id: 'vote_date-2',
-              value: '△'
-            }]
+            components: [
+              {
+                type: 4,
+                custom_id: 'vote_date-2',
+                value: '△',
+              },
+            ],
           },
           {
             type: 1,
-            components: [{
-              type: 4,
-              custom_id: 'comment',
-              value: 'Test comment'
-            }]
-          }
-        ]
+            components: [
+              {
+                type: 4,
+                custom_id: 'comment',
+                value: 'Test comment',
+              },
+            ],
+          },
+        ],
       },
       guild_id: 'guild-123',
       member: {
         user: {
           id: 'user-456',
           username: 'Responder',
-          discriminator: '0000'
+          discriminator: '0000',
         },
-        roles: []
+        roles: [],
       },
-      token: 'interaction_token'
+      token: 'interaction_token',
     };
 
     it('should submit vote successfully', async () => {
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
         success: true,
         response: mockResponse,
-        isNewResponse: true
+        isNewResponse: true,
       });
 
       const response = await controller.handleVoteModal(
@@ -313,7 +322,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('✅ Responder さんの回答を受け付けました');
       expect(data.data.content).toContain('○ 2024/01/20 19:00');
@@ -326,10 +335,10 @@ describe('VoteController', () => {
         username: 'Responder',
         responses: [
           { dateId: 'date-1', status: 'ok' },
-          { dateId: 'date-2', status: 'maybe' }
+          { dateId: 'date-2', status: 'maybe' },
         ],
         comment: 'Test comment',
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
     });
 
@@ -343,7 +352,7 @@ describe('VoteController', () => {
         { input: '▲', expected: 'maybe' },
         { input: 'x', expected: 'ng' },
         { input: '', expected: 'ng' },
-        { input: 'invalid', expected: 'ng' }
+        { input: 'invalid', expected: 'ng' },
       ];
 
       for (const testCase of testCases) {
@@ -354,33 +363,37 @@ describe('VoteController', () => {
             components: [
               {
                 type: 1,
-                components: [{
-                  type: 4,
-                  custom_id: 'vote_date-1',
-                  value: testCase.input
-                }]
+                components: [
+                  {
+                    type: 4,
+                    custom_id: 'vote_date-1',
+                    value: testCase.input,
+                  },
+                ],
               },
               {
                 type: 1,
-                components: [{
-                  type: 4,
-                  custom_id: 'comment',
-                  value: ''
-                }]
-              }
-            ]
-          }
+                components: [
+                  {
+                    type: 4,
+                    custom_id: 'comment',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
         };
 
         vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
           success: true,
-          schedule: { ...mockSchedule, dates: [mockSchedule.dates[0]] }
+          schedule: { ...mockSchedule, dates: [mockSchedule.dates[0]] },
         });
 
         vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
           success: true,
           response: mockResponse,
-          isNewResponse: false
+          isNewResponse: false,
         });
 
         await controller.handleVoteModal(interaction, ['schedule-123'], mockEnv);
@@ -393,13 +406,13 @@ describe('VoteController', () => {
     it('should update main message in background', async () => {
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
         success: true,
         response: mockResponse,
-        isNewResponse: false
+        isNewResponse: false,
       });
 
       await controller.handleVoteModal(mockModalInteraction, ['schedule-123'], mockEnv);
@@ -415,21 +428,21 @@ describe('VoteController', () => {
           user: {
             id: 'user-123', // Author ID
             username: 'TestUser',
-            discriminator: '0000'
+            discriminator: '0000',
           },
-          roles: []
-        }
+          roles: [],
+        },
       };
 
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: closedSchedule
+        schedule: closedSchedule,
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
         success: true,
         response: mockResponse,
-        isNewResponse: false
+        isNewResponse: false,
       });
 
       const response = await controller.handleVoteModal(
@@ -438,21 +451,21 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('✅ TestUser さんの回答を受け付けました');
     });
 
     it('should return error when submit fails', async () => {
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockContainer.submitResponseUseCase.execute).mockResolvedValueOnce({
         success: false,
         response: {} as ResponseDto,
         isNewResponse: false,
-        errors: ['投票の処理中にエラーが発生しました']
+        errors: ['投票の処理中にエラーが発生しました'],
       });
 
       const response = await controller.handleVoteModal(
@@ -461,7 +474,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('回答の保存に失敗しました');
     });
   });
@@ -472,29 +485,29 @@ describe('VoteController', () => {
       type: 3 as any,
       data: {
         custom_id: 'close:schedule-123',
-        component_type: 2
+        component_type: 2,
       },
       guild_id: 'guild-123',
       member: {
         user: {
           id: 'user-123',
           username: 'TestUser',
-          discriminator: '0000'
+          discriminator: '0000',
         },
-        roles: []
+        roles: [],
       },
-      token: 'interaction_token'
+      token: 'interaction_token',
     };
 
     it('should close schedule successfully', async () => {
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       vi.mocked(mockContainer.closeScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: { ...mockSchedule, status: 'closed' }
+        schedule: { ...mockSchedule, status: 'closed' },
       });
 
       const response = await controller.handleCloseButton(
@@ -503,7 +516,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('✅ 日程調整を締め切りました');
       expect(data.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
@@ -511,7 +524,7 @@ describe('VoteController', () => {
       expect(mockContainer.closeScheduleUseCase.execute).toHaveBeenCalledWith({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
-        editorUserId: 'user-123'
+        editorUserId: 'user-123',
       });
     });
 
@@ -522,15 +535,15 @@ describe('VoteController', () => {
           user: {
             id: 'user-456', // Not the author
             username: 'OtherUser',
-            discriminator: '0000'
+            discriminator: '0000',
           },
-          roles: []
-        }
+          roles: [],
+        },
       };
 
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: mockSchedule
+        schedule: mockSchedule,
       });
 
       const response = await controller.handleCloseButton(
@@ -539,16 +552,16 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('この日程調整を締め切る権限がありません');
     });
 
     it('should return error when schedule is already closed', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      
+
       vi.mocked(mockContainer.getScheduleUseCase.execute).mockResolvedValueOnce({
         success: true,
-        schedule: closedSchedule
+        schedule: closedSchedule,
       });
 
       const response = await controller.handleCloseButton(
@@ -557,7 +570,7 @@ describe('VoteController', () => {
         mockEnv
       );
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.data.content).toContain('この日程調整は既に締め切られています');
     });
   });

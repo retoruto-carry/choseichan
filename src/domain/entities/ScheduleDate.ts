@@ -1,6 +1,6 @@
 /**
  * ScheduleDate Domain Entity
- * 
+ *
  * スケジュールの候補日のドメインエンティティ
  * 日程候補を表現
  */
@@ -27,16 +27,10 @@ export class ScheduleDate {
       throw new Error('日程時刻は必須です');
     }
 
-    return new ScheduleDate(
-      { value: id },
-      { value: datetime }
-    );
+    return new ScheduleDate({ value: id }, { value: datetime });
   }
 
-  static fromPrimitives(data: {
-    id: string;
-    datetime: string;
-  }): ScheduleDate {
+  static fromPrimitives(data: { id: string; datetime: string }): ScheduleDate {
     return ScheduleDate.create(data.id, data.datetime);
   }
 
@@ -54,7 +48,7 @@ export class ScheduleDate {
   } {
     return {
       id: this.id,
-      datetime: this.datetime
+      datetime: this.datetime,
     };
   }
 

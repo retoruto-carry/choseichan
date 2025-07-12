@@ -3,7 +3,7 @@
  * KVとD1の実装を切り替え可能にするための抽象層
  */
 
-import { DomainSchedule, DomainResponse, DomainScheduleSummary } from '../types/DomainTypes';
+import type { DomainResponse, DomainSchedule, DomainScheduleSummary } from '../types/DomainTypes';
 
 /**
  * スケジュールリポジトリのインターフェース
@@ -27,11 +27,7 @@ export interface IScheduleRepository {
   /**
    * 締切が指定期間内のスケジュールを取得
    */
-  findByDeadlineRange(
-    startTime: Date, 
-    endTime: Date, 
-    guildId?: string
-  ): Promise<DomainSchedule[]>;
+  findByDeadlineRange(startTime: Date, endTime: Date, guildId?: string): Promise<DomainSchedule[]>;
 
   /**
    * スケジュールを削除
@@ -71,11 +67,7 @@ export interface IResponseRepository {
   /**
    * 特定のユーザーのレスポンスを取得
    */
-  findByUser(
-    scheduleId: string, 
-    userId: string, 
-    guildId: string
-  ): Promise<DomainResponse | null>;
+  findByUser(scheduleId: string, userId: string, guildId: string): Promise<DomainResponse | null>;
 
   /**
    * スケジュールの全レスポンスを取得
@@ -165,7 +157,7 @@ export interface BatchOperationResult {
  */
 export class RepositoryError extends Error {
   constructor(
-    message: string, 
+    message: string,
     public readonly code: string,
     public readonly originalError?: Error
   ) {

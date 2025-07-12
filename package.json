@@ -23,7 +23,7 @@
     "hono": "^4.8.4"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.52",
+    "@biomejs/biome": "^2.1.1",
     "@cloudflare/workers-types": "^4.20250708.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.12",

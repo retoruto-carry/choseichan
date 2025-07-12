@@ -1,6 +1,6 @@
 /**
  * Structured Logging System
- * 
+ *
  * Clean Architectureに適したログシステム
  * Cloudflare Workersでの実行を想定した軽量なロガー
  */
@@ -10,7 +10,7 @@ export enum LogLevel {
   INFO = 1,
   WARN = 2,
   ERROR = 3,
-  FATAL = 4
+  FATAL = 4,
 }
 
 export interface LogContext {
@@ -49,10 +49,7 @@ export class Logger implements ILogger {
   private readonly minLevel: LogLevel;
   private readonly serviceName: string;
 
-  constructor(
-    serviceName: string = 'discord-choseisan',
-    minLevel: LogLevel = LogLevel.INFO
-  ) {
+  constructor(serviceName: string = 'discord-choseisan', minLevel: LogLevel = LogLevel.INFO) {
     this.serviceName = serviceName;
     this.minLevel = minLevel;
   }
@@ -88,8 +85,8 @@ export class Logger implements ILogger {
       message,
       context: {
         service: this.serviceName,
-        ...context
-      }
+        ...context,
+      },
     };
 
     if (error) {
@@ -97,13 +94,13 @@ export class Logger implements ILogger {
         name: error.name,
         message: error.message,
         stack: error.stack,
-        code: (error as any).code
+        code: 'code' in error && typeof error.code === 'string' ? error.code : undefined,
       };
     }
 
     // Cloudflare Workersではconsole.logを使用
     const output = JSON.stringify(entry);
-    
+
     switch (level) {
       case LogLevel.DEBUG:
       case LogLevel.INFO:
@@ -126,7 +123,8 @@ let loggerInstance: Logger | null = null;
 export function getLogger(): Logger {
   if (!loggerInstance) {
     const level = process.env.LOG_LEVEL?.toUpperCase();
-    const logLevel = level && level in LogLevel ? LogLevel[level as keyof typeof LogLevel] : LogLevel.INFO;
+    const logLevel =
+      level && level in LogLevel ? LogLevel[level as keyof typeof LogLevel] : LogLevel.INFO;
     loggerInstance = new Logger('discord-choseisan', logLevel);
   }
   return loggerInstance;
@@ -139,41 +137,49 @@ export function resetLogger(): void {
 
 // Decorator for automatic logging
 export function LogExecution(operation?: string) {
-  return function(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return <T extends Record<string, (...args: unknown[]) => Promise<unknown>>>(
+    target: T,
+    propertyName: string,
+    descriptor: PropertyDescriptor
+  ) => {
     const method = descriptor.value;
-    
-    descriptor.value = async function(...args: any[]) {
+
+    descriptor.value = async function <TArgs extends unknown[]>(...args: TArgs) {
       const logger = getLogger();
       const startTime = Date.now();
       const operationName = operation || `${target.constructor.name}.${propertyName}`;
-      
+
       logger.info(`Starting operation: ${operationName}`, {
         operation: operationName,
-        useCase: target.constructor.name
+        useCase: target.constructor.name,
       });
-      
+
       try {
         const result = await method.apply(this, args);
         const duration = Date.now() - startTime;
-        
+
         logger.info(`Operation completed: ${operationName}`, {
           operation: operationName,
           useCase: target.constructor.name,
           duration,
-          success: true
+          success: true,
         });
-        
+
         return result;
       } catch (error) {
         const duration = Date.now() - startTime;
-        
-        logger.error(`Operation failed: ${operationName}`, error instanceof Error ? error : new Error(String(error)), {
-          operation: operationName,
-          useCase: target.constructor.name,
-          duration,
-          success: false
-        });
-        
+
+        logger.error(
+          `Operation failed: ${operationName}`,
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            operation: operationName,
+            useCase: target.constructor.name,
+            duration,
+            success: false,
+          }
+        );
+
         throw error;
       }
     };
@@ -185,32 +191,32 @@ export class PerformanceLogger {
   private static measurements = new Map<string, number>();
 
   static start(operation: string): void {
-    this.measurements.set(operation, Date.now());
+    PerformanceLogger.measurements.set(operation, Date.now());
   }
 
   static end(operation: string, context?: LogContext): void {
-    const startTime = this.measurements.get(operation);
+    const startTime = PerformanceLogger.measurements.get(operation);
     if (startTime) {
       const duration = Date.now() - startTime;
-      this.measurements.delete(operation);
-      
+      PerformanceLogger.measurements.delete(operation);
+
       getLogger().info(`Performance: ${operation}`, {
         operation,
         duration,
-        ...context
+        ...context,
       });
     }
   }
 
   static measure<T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): Promise<T> {
     return new Promise(async (resolve, reject) => {
-      this.start(operation);
+      PerformanceLogger.start(operation);
       try {
         const result = await fn();
-        this.end(operation, context);
+        PerformanceLogger.end(operation, context);
         resolve(result);
       } catch (error) {
-        this.end(operation, { ...context, error: true });
+        PerformanceLogger.end(operation, { ...context, error: true });
         reject(error);
       }
     });
@@ -222,83 +228,93 @@ export class AuditLogger {
   private static logger = getLogger();
 
   static scheduleCreated(scheduleId: string, userId: string, guildId: string): void {
-    this.logger.info('Schedule created', {
+    AuditLogger.logger.info('Schedule created', {
       event: 'schedule_created',
       scheduleId,
       userId,
       guildId,
-      audit: true
+      audit: true,
     });
   }
 
-  static scheduleUpdated(scheduleId: string, userId: string, guildId: string, changes: Record<string, unknown>): void {
-    this.logger.info('Schedule updated', {
+  static scheduleUpdated(
+    scheduleId: string,
+    userId: string,
+    guildId: string,
+    changes: Record<string, unknown>
+  ): void {
+    AuditLogger.logger.info('Schedule updated', {
       event: 'schedule_updated',
       scheduleId,
       userId,
       guildId,
       changes,
-      audit: true
+      audit: true,
     });
   }
 
   static scheduleClosed(scheduleId: string, userId: string, guildId: string): void {
-    this.logger.info('Schedule closed', {
+    AuditLogger.logger.info('Schedule closed', {
       event: 'schedule_closed',
       scheduleId,
       userId,
       guildId,
-      audit: true
+      audit: true,
     });
   }
 
   static scheduleDeleted(scheduleId: string, userId: string, guildId: string): void {
-    this.logger.warn('Schedule deleted', {
+    AuditLogger.logger.warn('Schedule deleted', {
       event: 'schedule_deleted',
       scheduleId,
       userId,
       guildId,
-      audit: true
+      audit: true,
     });
   }
 
   static responseSubmitted(scheduleId: string, userId: string, guildId: string): void {
-    this.logger.info('Response submitted', {
+    AuditLogger.logger.info('Response submitted', {
       event: 'response_submitted',
       scheduleId,
       userId,
       guildId,
-      audit: true
+      audit: true,
     });
   }
 
   static reminderSent(scheduleId: string, guildId: string, reminderType: string): void {
-    this.logger.info('Reminder sent', {
+    AuditLogger.logger.info('Reminder sent', {
       event: 'reminder_sent',
       scheduleId,
       guildId,
       reminderType,
-      audit: true
+      audit: true,
     });
   }
 
-  static unauthorizedAccess(resource: string, userId: string, guildId?: string, action?: string): void {
-    this.logger.warn('Unauthorized access attempt', {
+  static unauthorizedAccess(
+    resource: string,
+    userId: string,
+    guildId?: string,
+    action?: string
+  ): void {
+    AuditLogger.logger.warn('Unauthorized access attempt', {
       event: 'unauthorized_access',
       resource,
       userId,
       guildId,
       action,
       audit: true,
-      security: true
+      security: true,
     });
   }
 
   static systemError(error: Error, context?: LogContext): void {
-    this.logger.error('System error occurred', error, {
+    AuditLogger.logger.error('System error occurred', error, {
       event: 'system_error',
       audit: true,
-      ...context
+      ...context,
     });
   }
 }

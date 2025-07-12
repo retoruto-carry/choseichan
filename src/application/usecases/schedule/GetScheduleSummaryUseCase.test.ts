@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
+import type { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
 import { GetScheduleSummaryUseCase } from './GetScheduleSummaryUseCase';
-import { IScheduleRepository, IResponseRepository } from '../../../domain/repositories/interfaces';
-import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
 
 describe('GetScheduleSummaryUseCase', () => {
   let useCase: GetScheduleSummaryUseCase;
@@ -18,7 +21,7 @@ describe('GetScheduleSummaryUseCase', () => {
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
       { id: 'date-2', datetime: '2024/01/21 19:00' },
-      { id: 'date-3', datetime: '2024/01/22 19:00' }
+      { id: 'date-3', datetime: '2024/01/22 19:00' },
     ],
     deadline: new Date('2024-01-19'),
     createdBy: { id: 'user-123', username: 'TestUser' },
@@ -30,7 +33,7 @@ describe('GetScheduleSummaryUseCase', () => {
     notificationSent: false,
     totalResponses: 3,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   const mockResponses: DomainResponse[] = [
@@ -41,10 +44,10 @@ describe('GetScheduleSummaryUseCase', () => {
       dateStatuses: {
         'date-1': 'ok',
         'date-2': 'ok',
-        'date-3': 'maybe'
+        'date-3': 'maybe',
       },
       comment: 'I can attend the first two days',
-      updatedAt: new Date('2024-01-02')
+      updatedAt: new Date('2024-01-02'),
     },
     {
       scheduleId: 'schedule-123',
@@ -53,9 +56,9 @@ describe('GetScheduleSummaryUseCase', () => {
       dateStatuses: {
         'date-1': 'ok',
         'date-2': 'maybe',
-        'date-3': 'ng'
+        'date-3': 'ng',
       },
-      updatedAt: new Date('2024-01-03')
+      updatedAt: new Date('2024-01-03'),
     },
     {
       scheduleId: 'schedule-123',
@@ -64,11 +67,11 @@ describe('GetScheduleSummaryUseCase', () => {
       dateStatuses: {
         'date-1': 'ng',
         'date-2': 'ok',
-        'date-3': 'ok'
+        'date-3': 'ok',
       },
       comment: 'Prefer the later dates',
-      updatedAt: new Date('2024-01-04')
-    }
+      updatedAt: new Date('2024-01-04'),
+    },
   ];
 
   beforeEach(() => {
@@ -81,7 +84,7 @@ describe('GetScheduleSummaryUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     mockResponseRepository = {
@@ -90,13 +93,10 @@ describe('GetScheduleSummaryUseCase', () => {
       findByScheduleId: vi.fn(),
       delete: vi.fn(),
       deleteBySchedule: vi.fn(),
-      getScheduleSummary: vi.fn()
+      getScheduleSummary: vi.fn(),
     };
 
-    useCase = new GetScheduleSummaryUseCase(
-      mockScheduleRepository,
-      mockResponseRepository
-    );
+    useCase = new GetScheduleSummaryUseCase(mockScheduleRepository, mockResponseRepository);
   });
 
   describe('execute', () => {
@@ -108,14 +108,14 @@ describe('GetScheduleSummaryUseCase', () => {
 
       expect(result.success).toBe(true);
       expect(result.summary).toBeDefined();
-      
+
       // Verify schedule data
       expect(result.summary?.schedule).toMatchObject({
         id: 'schedule-123',
         title: 'Test Schedule',
         description: 'Test description',
         status: 'open',
-        totalResponses: 3
+        totalResponses: 3,
       });
 
       // Verify responses
@@ -123,28 +123,31 @@ describe('GetScheduleSummaryUseCase', () => {
       expect(result.summary?.responses[0]).toMatchObject({
         userId: 'user-456',
         username: 'User1',
-        comment: 'I can attend the first two days'
+        comment: 'I can attend the first two days',
       });
 
       // Verify response counts
       expect(result.summary?.responseCounts).toEqual({
         'date-1': { yes: 2, maybe: 0, no: 1 },
         'date-2': { yes: 2, maybe: 1, no: 0 },
-        'date-3': { yes: 1, maybe: 1, no: 1 }
+        'date-3': { yes: 1, maybe: 1, no: 1 },
       });
 
       // Verify statistics
       expect(result.summary?.totalResponseUsers).toBe(3);
       expect(result.summary?.bestDateId).toBe('date-2'); // Has most "yes" votes (tied with date-1)
-      
+
       expect(result.summary?.statistics?.overallParticipation).toEqual({
         fullyAvailable: 0, // No one is available for all dates
         partiallyAvailable: 3, // All users are partially available
-        unavailable: 0
+        unavailable: 0,
       });
 
       expect(mockScheduleRepository.findById).toHaveBeenCalledWith('schedule-123', 'guild-123');
-      expect(mockResponseRepository.findByScheduleId).toHaveBeenCalledWith('schedule-123', 'guild-123');
+      expect(mockResponseRepository.findByScheduleId).toHaveBeenCalledWith(
+        'schedule-123',
+        'guild-123'
+      );
     });
 
     it('should return error when schedule not found', async () => {
@@ -162,18 +165,18 @@ describe('GetScheduleSummaryUseCase', () => {
         {
           scheduleId: '',
           guildId: 'guild-123',
-          expectedError: 'スケジュールIDとGuild IDが必要です'
+          expectedError: 'スケジュールIDとGuild IDが必要です',
         },
         {
           scheduleId: 'schedule-123',
           guildId: '',
-          expectedError: 'スケジュールIDとGuild IDが必要です'
+          expectedError: 'スケジュールIDとGuild IDが必要です',
         },
         {
           scheduleId: '  ',
           guildId: '  ',
-          expectedError: 'スケジュールIDとGuild IDが必要です'
-        }
+          expectedError: 'スケジュールIDとGuild IDが必要です',
+        },
       ];
 
       for (const { scheduleId, guildId, expectedError } of testCases) {
@@ -192,18 +195,18 @@ describe('GetScheduleSummaryUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.summary?.responses).toHaveLength(0);
       expect(result.summary?.totalResponseUsers).toBe(0);
-      
+
       // All counts should be zero
       expect(result.summary?.responseCounts).toEqual({
         'date-1': { yes: 0, maybe: 0, no: 0 },
         'date-2': { yes: 0, maybe: 0, no: 0 },
-        'date-3': { yes: 0, maybe: 0, no: 0 }
+        'date-3': { yes: 0, maybe: 0, no: 0 },
       });
 
       expect(result.summary?.statistics?.overallParticipation).toEqual({
         fullyAvailable: 0,
         partiallyAvailable: 0,
-        unavailable: 0
+        unavailable: 0,
       });
     });
 
@@ -216,10 +219,10 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ok',
             'date-2': 'maybe',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
-        }
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
@@ -228,12 +231,12 @@ describe('GetScheduleSummaryUseCase', () => {
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(true);
-      
+
       // Should convert legacy formats
       expect(result.summary?.responses[0].dateStatuses).toEqual({
         'date-1': 'ok',
         'date-2': 'maybe',
-        'date-3': 'ng'
+        'date-3': 'ng',
       });
     });
 
@@ -246,9 +249,9 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ok',
             'date-2': 'ng',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
+          updatedAt: new Date('2024-01-02'),
         },
         {
           scheduleId: 'schedule-123',
@@ -257,9 +260,9 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ok',
             'date-2': 'ok',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
+          updatedAt: new Date('2024-01-02'),
         },
         {
           scheduleId: 'schedule-123',
@@ -268,14 +271,16 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'maybe',
             'date-2': 'ok',
-            'date-3': 'ok'
+            'date-3': 'ok',
           },
-          updatedAt: new Date('2024-01-02')
-        }
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(responsesForBestDate);
+      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(
+        responsesForBestDate
+      );
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
@@ -283,7 +288,7 @@ describe('GetScheduleSummaryUseCase', () => {
       // date-2: 2 ok = 2*2 = 4 points
       // date-3: 1 ok = 1*2 = 2 points
       expect(result.summary?.bestDateId).toBe('date-1');
-      
+
       // date-2 should be an alternative (4/5 = 80%)
       expect(result.summary?.statistics?.optimalDates.alternativeDateIds).toContain('date-2');
       expect(result.summary?.statistics?.optimalDates.alternativeDateIds).not.toContain('date-3');
@@ -298,9 +303,9 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ok',
             'date-2': 'ok',
-            'date-3': 'ok'
+            'date-3': 'ok',
           },
-          updatedAt: new Date('2024-01-02')
+          updatedAt: new Date('2024-01-02'),
         },
         {
           scheduleId: 'schedule-123',
@@ -309,21 +314,23 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ok',
             'date-2': 'maybe',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
-        }
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(fullyAvailableResponses);
+      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(
+        fullyAvailableResponses
+      );
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.summary?.statistics?.overallParticipation).toEqual({
         fullyAvailable: 1,
         partiallyAvailable: 1,
-        unavailable: 0
+        unavailable: 0,
       });
     });
 
@@ -336,9 +343,9 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'ng',
             'date-2': 'ng',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
+          updatedAt: new Date('2024-01-02'),
         },
         {
           scheduleId: 'schedule-123',
@@ -347,47 +354,45 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'maybe',
             'date-2': 'maybe',
-            'date-3': 'ng'
+            'date-3': 'ng',
           },
-          updatedAt: new Date('2024-01-02')
-        }
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(unavailableResponses);
+      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(
+        unavailableResponses
+      );
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.summary?.statistics?.overallParticipation).toEqual({
         fullyAvailable: 0,
         partiallyAvailable: 0,
-        unavailable: 2
+        unavailable: 2,
       });
     });
 
     it('should handle repository errors', async () => {
-      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(
-        new Error('Database error')
-      );
+      vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(new Error('Database error'));
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュール概要の取得に失敗しました');
-      expect(result.errors![0]).toContain('Database error');
+      expect(result.errors?.[0]).toContain('スケジュール概要の取得に失敗しました');
+      expect(result.errors?.[0]).toContain('Database error');
     });
 
     it('should handle unexpected errors', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByScheduleId).mockRejectedValueOnce(
-        'Unexpected error'
-      );
+      vi.mocked(mockResponseRepository.findByScheduleId).mockRejectedValueOnce('Unexpected error');
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('スケジュール概要の取得に失敗しました');
-      expect(result.errors![0]).toContain('Unknown error');
+      expect(result.errors?.[0]).toContain('スケジュール概要の取得に失敗しました');
+      expect(result.errors?.[0]).toContain('Unknown error');
     });
 
     it('should handle schedule without optional fields', async () => {
@@ -398,7 +403,7 @@ describe('GetScheduleSummaryUseCase', () => {
         deadline: undefined,
         reminderTimings: undefined,
         reminderMentions: undefined,
-        remindersSent: undefined
+        remindersSent: undefined,
       };
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(minimalSchedule);
@@ -421,7 +426,7 @@ describe('GetScheduleSummaryUseCase', () => {
       expect(result.summary?.schedule.deadline).toBe('2024-01-19T00:00:00.000Z');
       expect(result.summary?.schedule.createdAt).toBe('2024-01-01T00:00:00.000Z');
       expect(result.summary?.schedule.updatedAt).toBe('2024-01-01T00:00:00.000Z');
-      
+
       expect(result.summary?.responses[0].updatedAt).toBe('2024-01-02T00:00:00.000Z');
     });
 
@@ -434,24 +439,26 @@ describe('GetScheduleSummaryUseCase', () => {
           dateStatuses: {
             'date-1': 'unknown' as any,
             'date-2': 'invalid' as any,
-            'date-3': '' as any
+            'date-3': '' as any,
           },
-          updatedAt: new Date('2024-01-02')
-        }
+          updatedAt: new Date('2024-01-02'),
+        },
       ];
 
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(responsesWithUnknownStatus);
+      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(
+        responsesWithUnknownStatus
+      );
 
       const result = await useCase.execute('schedule-123', 'guild-123');
 
       expect(result.success).toBe(true);
-      
+
       // Unknown statuses should default to 'ng'
       expect(result.summary?.responses[0].dateStatuses).toEqual({
         'date-1': 'ng',
         'date-2': 'ng',
-        'date-3': 'ng'
+        'date-3': 'ng',
       });
     });
   });

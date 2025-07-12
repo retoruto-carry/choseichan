@@ -1,5 +1,5 @@
-import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { DiscordEmbed, DiscordComponent } from './discord-api';
+import type { InteractionResponseType, InteractionType } from 'discord-interactions';
+import type { DiscordComponent, DiscordEmbed } from './discord-api';
 
 export interface Env {
   DISCORD_PUBLIC_KEY: string;

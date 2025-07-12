@@ -1,13 +1,18 @@
 /**
  * Response UI Builder
- * 
+ *
  * レスポンス表示用のDiscord UIを構築
  * 投票UI、回答確認UI、統計表示UIなど
  */
 
-import { APIEmbed, APIActionRowComponent, APIButtonComponent, APISelectMenuComponent, APIModalInteractionResponseCallbackData } from 'discord-api-types/v10';
-import { ResponseDto, ResponseStatistics } from '../../application/dto/ResponseDto';
-import { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type {
+  APIActionRowComponent,
+  APIButtonComponent,
+  APIEmbed,
+  APIModalInteractionResponseCallbackData,
+} from 'discord-api-types/v10';
+import type { ResponseDto, ResponseStatistics } from '../../application/dto/ResponseDto';
+import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 
 export class ResponseUIBuilder {
   /**
@@ -24,22 +29,22 @@ export class ResponseUIBuilder {
       let currentVote = '';
       schedule.dates.forEach((date, index) => {
         const status = userResponse.dateStatuses[date.id];
-        const statusEmoji = this.getStatusEmoji(status);
+        const statusEmoji = ResponseUIBuilder.getStatusEmoji(status);
         const dateTime = new Date(date.datetime);
-        currentVote += `${index + 1}. ${this.formatDateTime(dateTime)} ${statusEmoji}\n`;
+        currentVote += `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)} ${statusEmoji}\n`;
       });
 
       fields.push({
         name: '📋 現在の回答',
         value: currentVote,
-        inline: false
+        inline: false,
       });
 
       if (userResponse.comment) {
         fields.push({
           name: '💬 コメント',
           value: userResponse.comment,
-          inline: false
+          inline: false,
         });
       }
     }
@@ -48,7 +53,7 @@ export class ResponseUIBuilder {
     fields.push({
       name: '📝 投票方法',
       value: '下記のメニューから参加可能な日程を選択してください。\n複数選択可能です。',
-      inline: false
+      inline: false,
     });
 
     return {
@@ -56,8 +61,8 @@ export class ResponseUIBuilder {
       color: 0x00ff00,
       fields,
       footer: {
-        text: '投票は何度でも変更できます'
-      }
+        text: '投票は何度でも変更できます',
+      },
     };
   }
 
@@ -75,22 +80,24 @@ export class ResponseUIBuilder {
     let responseText = '';
     schedule.dates.forEach((date, index) => {
       const status = submittedResponse.dateStatuses[date.id];
-      const statusEmoji = this.getStatusEmoji(status);
+      const statusEmoji = ResponseUIBuilder.getStatusEmoji(status);
       const dateTime = new Date(date.datetime);
-      responseText += `${index + 1}. ${this.formatDateTime(dateTime)} ${statusEmoji}\n`;
+      responseText += `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)} ${statusEmoji}\n`;
     });
 
-    const fields: APIEmbed['fields'] = [{
-      name: '📋 投票内容',
-      value: responseText,
-      inline: false
-    }];
+    const fields: APIEmbed['fields'] = [
+      {
+        name: '📋 投票内容',
+        value: responseText,
+        inline: false,
+      },
+    ];
 
     if (submittedResponse.comment) {
       fields.push({
         name: '💬 コメント',
         value: submittedResponse.comment,
-        inline: false
+        inline: false,
       });
     }
 
@@ -99,7 +106,7 @@ export class ResponseUIBuilder {
       description: `**${userName}** さんの投票を受け付けました`,
       color: 0x00ff00,
       fields,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -118,7 +125,7 @@ export class ResponseUIBuilder {
       if (stats) {
         const dateTime = new Date(date.datetime);
         const total = stats.total;
-        
+
         let statText = '';
         if (total > 0) {
           statText += `✅ ${stats.yes} 票 (${stats.percentage.yes}%)\n`;
@@ -130,9 +137,9 @@ export class ResponseUIBuilder {
         }
 
         fields.push({
-          name: `${index + 1}. ${this.formatDateTime(dateTime)}`,
+          name: `${index + 1}. ${ResponseUIBuilder.formatDateTime(dateTime)}`,
           value: statText,
-          inline: true
+          inline: true,
         });
       }
     });
@@ -149,18 +156,20 @@ export class ResponseUIBuilder {
     fields.push({
       name: '📈 全体の参加状況',
       value: overallText,
-      inline: false
+      inline: false,
     });
 
     // 最適な日程
     if (statistics.optimalDates.optimalDateId) {
-      const optimalDate = schedule.dates.find(d => d.id === statistics.optimalDates.optimalDateId);
+      const optimalDate = schedule.dates.find(
+        (d) => d.id === statistics.optimalDates.optimalDateId
+      );
       if (optimalDate) {
         const optimalScore = statistics.optimalDates.scores[statistics.optimalDates.optimalDateId];
         fields.push({
           name: '🏆 最適な日程',
-          value: `${this.formatDateTime(new Date(optimalDate.datetime))}\nスコア: ${optimalScore} ポイント`,
-          inline: false
+          value: `${ResponseUIBuilder.formatDateTime(new Date(optimalDate.datetime))}\nスコア: ${optimalScore} ポイント`,
+          inline: false,
         });
       }
     }
@@ -169,7 +178,7 @@ export class ResponseUIBuilder {
       title: `📊 ${schedule.title} - 投票統計`,
       color: 0x0099ff,
       fields,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -177,38 +186,43 @@ export class ResponseUIBuilder {
    * 投票用アクションボタン構築
    */
   static buildVoteActionButtons(scheduleId: string): APIActionRowComponent<APIButtonComponent>[] {
-    return [{
-      type: 1, // ACTION_ROW
-      components: [
-        {
-          type: 2, // BUTTON
-          style: 3, // SUCCESS
-          label: '投票を確定',
-          custom_id: `vote_submit:${scheduleId}`,
-          emoji: { name: '✅' }
-        },
-        {
-          type: 2, // BUTTON
-          style: 2, // SECONDARY
-          label: 'コメント追加',
-          custom_id: `vote_comment:${scheduleId}`,
-          emoji: { name: '💬' }
-        },
-        {
-          type: 2, // BUTTON
-          style: 4, // DANGER
-          label: 'キャンセル',
-          custom_id: `vote_cancel:${scheduleId}`,
-          emoji: { name: '❌' }
-        }
-      ]
-    }];
+    return [
+      {
+        type: 1, // ACTION_ROW
+        components: [
+          {
+            type: 2, // BUTTON
+            style: 3, // SUCCESS
+            label: '投票を確定',
+            custom_id: `vote_submit:${scheduleId}`,
+            emoji: { name: '✅' },
+          },
+          {
+            type: 2, // BUTTON
+            style: 2, // SECONDARY
+            label: 'コメント追加',
+            custom_id: `vote_comment:${scheduleId}`,
+            emoji: { name: '💬' },
+          },
+          {
+            type: 2, // BUTTON
+            style: 4, // DANGER
+            label: 'キャンセル',
+            custom_id: `vote_cancel:${scheduleId}`,
+            emoji: { name: '❌' },
+          },
+        ],
+      },
+    ];
   }
 
   /**
    * コメント入力モーダル構築
    */
-  static buildCommentModal(scheduleId: string, currentComment?: string): APIModalInteractionResponseCallbackData {
+  static buildCommentModal(
+    scheduleId: string,
+    currentComment?: string
+  ): APIModalInteractionResponseCallbackData {
     return {
       title: 'コメント入力',
       custom_id: `comment_modal:${scheduleId}`,
@@ -224,42 +238,35 @@ export class ResponseUIBuilder {
               required: false,
               max_length: 500,
               placeholder: '自由にコメントを入力してください...',
-              value: currentComment
-            }
-          ]
-        }
-      ]
+              value: currentComment,
+            },
+          ],
+        },
+      ],
     };
   }
 
   /**
    * エラーEmbed構築
    */
-  static buildErrorEmbed(
-    title: string,
-    errors: string[],
-    isEphemeral: boolean = true
-  ): APIEmbed {
+  static buildErrorEmbed(title: string, errors: string[], _isEphemeral: boolean = true): APIEmbed {
     return {
       title: `❌ ${title}`,
       description: errors.join('\n'),
       color: 0xff0000,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   /**
    * 成功Embed構築
    */
-  static buildSuccessEmbed(
-    title: string,
-    description: string
-  ): APIEmbed {
+  static buildSuccessEmbed(title: string, description: string): APIEmbed {
     return {
       title: `✅ ${title}`,
       description,
       color: 0x00ff00,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -275,10 +282,14 @@ export class ResponseUIBuilder {
    */
   private static getStatusEmoji(status: 'ok' | 'maybe' | 'ng' | undefined): string {
     switch (status) {
-      case 'ok': return '✅';
-      case 'maybe': return '❔';
-      case 'ng': return '❌';
-      default: return '➖';
+      case 'ok':
+        return '✅';
+      case 'maybe':
+        return '❔';
+      case 'ng':
+        return '❌';
+      default:
+        return '➖';
     }
   }
 }

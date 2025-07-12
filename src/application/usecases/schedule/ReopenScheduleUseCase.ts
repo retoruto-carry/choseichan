@@ -1,12 +1,12 @@
 /**
  * Reopen Schedule Use Case
- * 
+ *
  * スケジュールの再開ユースケース
  */
 
-import { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { Schedule } from '../../../domain/entities/Schedule';
-import { ScheduleResponse } from '../../dto/ScheduleDto';
+import type { Schedule } from '../../../domain/entities/Schedule';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type { ScheduleResponse } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface ReopenScheduleRequest {
@@ -22,27 +22,32 @@ export interface ReopenScheduleUseCaseResult {
 }
 
 export class ReopenScheduleUseCase {
-  constructor(
-    private readonly scheduleRepository: IScheduleRepository
-  ) {}
+  constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   async execute(request: ReopenScheduleRequest): Promise<ReopenScheduleUseCaseResult> {
     try {
       // 1. 入力検証
-      if (!request.scheduleId?.trim() || !request.guildId?.trim() || !request.editorUserId?.trim()) {
+      if (
+        !request.scheduleId?.trim() ||
+        !request.guildId?.trim() ||
+        !request.editorUserId?.trim()
+      ) {
         return {
           success: false,
-          errors: ['必須パラメータが不足しています']
+          errors: ['必須パラメータが不足しています'],
         };
       }
 
       // 2. スケジュールの取得
-      const scheduleData = await this.scheduleRepository.findById(request.scheduleId, request.guildId);
-      
+      const scheduleData = await this.scheduleRepository.findById(
+        request.scheduleId,
+        request.guildId
+      );
+
       if (!scheduleData) {
         return {
           success: false,
-          errors: ['指定されたスケジュールが見つかりません']
+          errors: ['指定されたスケジュールが見つかりません'],
         };
       }
 
@@ -53,7 +58,7 @@ export class ReopenScheduleUseCase {
       if (!schedule.canBeEditedBy(request.editorUserId)) {
         return {
           success: false,
-          errors: ['このスケジュールを再開する権限がありません']
+          errors: ['このスケジュールを再開する権限がありません'],
         };
       }
 
@@ -68,13 +73,12 @@ export class ReopenScheduleUseCase {
 
       return {
         success: true,
-        schedule: response
+        schedule: response,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [error instanceof Error ? error.message : 'スケジュールの再開に失敗しました']
+        errors: [error instanceof Error ? error.message : 'スケジュールの再開に失敗しました'],
       };
     }
   }
@@ -87,9 +91,9 @@ export class ReopenScheduleUseCase {
       messageId: schedule.messageId,
       title: schedule.title,
       description: schedule.description,
-      dates: schedule.dates.map(date => ({
+      dates: schedule.dates.map((date) => ({
         id: date.id,
-        datetime: date.datetime
+        datetime: date.datetime,
       })),
       deadline: schedule.deadline?.toISOString(),
       status: schedule.status,
@@ -99,12 +103,12 @@ export class ReopenScheduleUseCase {
       notificationSent: schedule.notificationSent,
       createdBy: {
         id: schedule.createdBy.id,
-        username: schedule.createdBy.username
+        username: schedule.createdBy.username,
       },
       authorId: schedule.authorId,
       totalResponses: schedule.totalResponses,
       createdAt: schedule.createdAt.toISOString(),
-      updatedAt: schedule.updatedAt.toISOString()
+      updatedAt: schedule.updatedAt.toISOString(),
     };
   }
 }

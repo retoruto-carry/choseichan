@@ -1,14 +1,14 @@
 /**
  * ResponseStatus Value Object
- * 
+ *
  * 回答ステータスの値オブジェクト
  * 回答の状態を表現（参加可能、条件付き、不参加）
  */
 
 export enum ResponseStatusValue {
-  OK = 'ok',       // 参加可能
+  OK = 'ok', // 参加可能
   MAYBE = 'maybe', // 条件付き参加
-  NG = 'ng'        // 不参加
+  NG = 'ng', // 不参加
 }
 
 export class ResponseStatus {

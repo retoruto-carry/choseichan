@@ -1,14 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  IResponseRepository,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
+import type { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
+import type { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
 import { UpdateResponseUseCase } from './UpdateResponseUseCase';
-import { IScheduleRepository, IResponseRepository, NotFoundError } from '../../../domain/repositories/interfaces';
-import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { DomainSchedule, DomainResponse } from '../../../domain/types/DomainTypes';
 
 describe('UpdateResponseUseCase', () => {
   let useCase: UpdateResponseUseCase;
   let mockScheduleRepository: IScheduleRepository;
   let mockResponseRepository: IResponseRepository;
-  let mockResponseDomainService: ResponseDomainService;
+  let _mockResponseDomainService: ResponseDomainService;
 
   const mockSchedule: DomainSchedule = {
     id: 'schedule-123',
@@ -17,7 +20,7 @@ describe('UpdateResponseUseCase', () => {
     title: 'Test Schedule',
     dates: [
       { id: 'date-1', datetime: '2024/01/20 19:00' },
-      { id: 'date-2', datetime: '2024/01/21 19:00' }
+      { id: 'date-2', datetime: '2024/01/21 19:00' },
     ],
     createdBy: { id: 'user-123', username: 'TestUser' },
     authorId: 'user-123',
@@ -25,7 +28,7 @@ describe('UpdateResponseUseCase', () => {
     notificationSent: false,
     totalResponses: 1,
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
+    updatedAt: new Date('2024-01-01'),
   };
 
   const mockResponse: DomainResponse = {
@@ -34,10 +37,10 @@ describe('UpdateResponseUseCase', () => {
     username: 'Responder',
     dateStatuses: {
       'date-1': 'ok',
-      'date-2': 'maybe'
+      'date-2': 'maybe',
     },
     comment: 'Original comment',
-    updatedAt: new Date('2024-01-02')
+    updatedAt: new Date('2024-01-02'),
   };
 
   beforeEach(() => {
@@ -50,7 +53,7 @@ describe('UpdateResponseUseCase', () => {
       delete: vi.fn(),
       findByMessageId: vi.fn(),
       countByGuild: vi.fn(),
-      updateReminders: vi.fn()
+      updateReminders: vi.fn(),
     } as any;
 
     mockResponseRepository = {
@@ -58,13 +61,10 @@ describe('UpdateResponseUseCase', () => {
       findByUser: vi.fn(),
       findByScheduleId: vi.fn(),
       delete: vi.fn(),
-      deleteBySchedule: vi.fn()
+      deleteBySchedule: vi.fn(),
     } as any;
 
-    useCase = new UpdateResponseUseCase(
-      mockScheduleRepository,
-      mockResponseRepository
-    );
+    useCase = new UpdateResponseUseCase(mockScheduleRepository, mockResponseRepository);
   });
 
   describe('execute', () => {
@@ -78,24 +78,24 @@ describe('UpdateResponseUseCase', () => {
         userId: 'user-456',
         responses: [
           { dateId: 'date-1', status: 'ng' }, // Changed
-          { dateId: 'date-2', status: 'ok' }  // Changed
+          { dateId: 'date-2', status: 'ok' }, // Changed
         ],
         comment: 'Updated comment',
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(true);
       expect(result.response).toBeDefined();
       expect(result.response?.dateStatuses).toEqual({
         'date-1': 'ng',
-        'date-2': 'ok'
+        'date-2': 'ok',
       });
       expect(result.response?.comment).toBe('Updated comment');
-      
+
       const savedResponse = vi.mocked(mockResponseRepository.save).mock.calls[0][0];
       expect(savedResponse.dateStatuses).toEqual({
         'date-1': 'ng',
-        'date-2': 'ok'
+        'date-2': 'ok',
       });
     });
 
@@ -106,7 +106,7 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
@@ -121,7 +121,7 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
@@ -130,7 +130,7 @@ describe('UpdateResponseUseCase', () => {
 
     it('should return error when schedule is closed for non-author', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
       vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce(mockResponse);
 
@@ -138,7 +138,7 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456', // Not the author
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
@@ -148,7 +148,7 @@ describe('UpdateResponseUseCase', () => {
     it('should not allow even author to update response on closed schedule', async () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
       const authorResponse = { ...mockResponse, userId: 'user-123' };
-      
+
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
       vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce(authorResponse);
 
@@ -156,7 +156,7 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-123', // Author
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
@@ -172,11 +172,11 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         comment: 'Just updating comment',
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(true);
-      
+
       const savedResponse = vi.mocked(mockResponseRepository.save).mock.calls[0][0];
       expect(savedResponse.dateStatuses).toEqual(mockResponse.dateStatuses); // Preserved from existing response
       expect(savedResponse.comment).toBe('Just updating comment');
@@ -185,17 +185,32 @@ describe('UpdateResponseUseCase', () => {
     it('should validate required fields', async () => {
       const testCases = [
         {
-          request: { scheduleId: '', userId: 'user-456', responses: [{ dateId: 'date-1', status: 'ok' }], guildId: 'guild-123' },
-          expectedError: 'スケジュールIDが必要です'
+          request: {
+            scheduleId: '',
+            userId: 'user-456',
+            responses: [{ dateId: 'date-1', status: 'ok' }],
+            guildId: 'guild-123',
+          },
+          expectedError: 'スケジュールIDが必要です',
         },
         {
-          request: { scheduleId: 'schedule-123', userId: '', responses: [{ dateId: 'date-1', status: 'ok' }], guildId: 'guild-123' },
-          expectedError: 'ユーザーIDが必要です'
+          request: {
+            scheduleId: 'schedule-123',
+            userId: '',
+            responses: [{ dateId: 'date-1', status: 'ok' }],
+            guildId: 'guild-123',
+          },
+          expectedError: 'ユーザーIDが必要です',
         },
         {
-          request: { scheduleId: 'schedule-123', userId: 'user-456', responses: [{ dateId: 'date-1', status: 'ok' }], guildId: '' },
-          expectedError: 'Guild IDが必要です'
-        }
+          request: {
+            scheduleId: 'schedule-123',
+            userId: 'user-456',
+            responses: [{ dateId: 'date-1', status: 'ok' }],
+            guildId: '',
+          },
+          expectedError: 'Guild IDが必要です',
+        },
       ];
 
       for (const { request, expectedError } of testCases) {
@@ -214,9 +229,9 @@ describe('UpdateResponseUseCase', () => {
         userId: 'user-456',
         responses: [
           { dateId: 'date-1', status: 'ok' },
-          { dateId: 'invalid-date', status: 'ok' } // Invalid date ID
+          { dateId: 'invalid-date', status: 'ok' }, // Invalid date ID
         ],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
@@ -226,19 +241,17 @@ describe('UpdateResponseUseCase', () => {
     it('should handle repository save errors', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce(mockResponse);
-      vi.mocked(mockResponseRepository.save).mockRejectedValueOnce(
-        new Error('Save failed')
-      );
+      vi.mocked(mockResponseRepository.save).mockRejectedValueOnce(new Error('Save failed'));
 
       const result = await useCase.execute({
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('レスポンスの更新に失敗しました');
+      expect(result.errors?.[0]).toContain('レスポンスの更新に失敗しました');
     });
 
     it('should handle unexpected errors', async () => {
@@ -250,18 +263,18 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors![0]).toContain('レスポンスの更新に失敗しました');
+      expect(result.errors?.[0]).toContain('レスポンスの更新に失敗しました');
     });
 
     it('should preserve display name if provided', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce({
         ...mockResponse,
-        displayName: 'Display Name'
+        displayName: 'Display Name',
       });
       vi.mocked(mockResponseRepository.save).mockResolvedValueOnce(undefined);
 
@@ -269,7 +282,7 @@ describe('UpdateResponseUseCase', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         responses: [{ dateId: 'date-1', status: 'ok' }],
-        guildId: 'guild-123'
+        guildId: 'guild-123',
       });
 
       expect(result.success).toBe(true);

@@ -1,14 +1,14 @@
 /**
  * Get Response Use Case
- * 
+ *
  * レスポンス取得のユースケース
  */
 
-import { Response } from '../../../domain/entities/Response';
-import { IResponseRepository } from '../../../domain/repositories/interfaces';
-import { GetResponseRequest, ResponseDto, ResponseStatistics } from '../../dto/ResponseDto';
+import type { Response } from '../../../domain/entities/Response';
+import type { IResponseRepository } from '../../../domain/repositories/interfaces';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
-import { DomainResponse } from '../../../domain/types/DomainTypes';
+import type { DomainResponse } from '../../../domain/types/DomainTypes';
+import type { GetResponseRequest, ResponseDto, ResponseStatistics } from '../../dto/ResponseDto';
 import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetResponseUseCaseResult {
@@ -25,9 +25,7 @@ export interface GetAllResponsesUseCaseResult {
 }
 
 export class GetResponseUseCase {
-  constructor(
-    private readonly responseRepository: IResponseRepository
-  ) {}
+  constructor(private readonly responseRepository: IResponseRepository) {}
 
   /**
    * 特定ユーザーのレスポンスを取得
@@ -39,14 +37,14 @@ export class GetResponseUseCase {
       if (!basicValidation.isValid) {
         return {
           success: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
       if (!request.userId) {
         return {
           success: false,
-          errors: ['ユーザーIDが必要です']
+          errors: ['ユーザーIDが必要です'],
         };
       }
 
@@ -60,7 +58,7 @@ export class GetResponseUseCase {
       if (!responseData) {
         return {
           success: false,
-          errors: ['レスポンスが見つかりません']
+          errors: ['レスポンスが見つかりません'],
         };
       }
 
@@ -70,13 +68,14 @@ export class GetResponseUseCase {
 
       return {
         success: true,
-        response: responseDto
+        response: responseDto,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`レスポンスの取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `レスポンスの取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -91,7 +90,7 @@ export class GetResponseUseCase {
       if (!basicValidation.isValid) {
         return {
           success: false,
-          errors: basicValidation.errors
+          errors: basicValidation.errors,
         };
       }
 
@@ -102,22 +101,22 @@ export class GetResponseUseCase {
       );
 
       // 3. レスポンスDTOの構築
-      const responseEntities = responsesData.map(r => this.toDomainResponse(r));
+      const responseEntities = responsesData.map((r) => this.toDomainResponse(r));
       const responses = responseEntities.map((r: Response) => this.buildResponseDto(r));
 
       // 4. 統計情報の計算
       let statistics: ResponseStatistics | undefined;
-      
+
       if (responses.length > 0) {
         // 日程IDの抽出（最初のレスポンスから）
         const dateIds = Object.keys(responses[0].dateStatuses);
-        
+
         // No date IDs means no statistics to calculate
         if (dateIds.length === 0) {
           statistics = undefined;
         } else {
           // レスポンスエンティティはすでに上で構築済み
-          
+
           // 統計情報の計算
           const responseStats = ResponseDomainService.calculateResponseStatistics(
             responseEntities,
@@ -125,23 +124,23 @@ export class GetResponseUseCase {
           );
 
           // 最適な日程の計算
-          const optimalDates = ResponseDomainService.findOptimalDates(
-            responseEntities,
-            dateIds
-          );
+          const optimalDates = ResponseDomainService.findOptimalDates(responseEntities, dateIds);
 
           // 日程別の詳細な統計
-          const responsesByDate: Record<string, {
-            yes: number;
-            maybe: number;
-            no: number;
-            total: number;
-            percentage: {
+          const responsesByDate: Record<
+            string,
+            {
               yes: number;
               maybe: number;
               no: number;
-            };
-          }> = {};
+              total: number;
+              percentage: {
+                yes: number;
+                maybe: number;
+                no: number;
+              };
+            }
+          > = {};
 
           Object.entries(responseStats.responsesByDate).forEach(([dateId, counts]) => {
             const total = counts.total || 1; // ゼロ除算を避ける
@@ -153,8 +152,8 @@ export class GetResponseUseCase {
               percentage: {
                 yes: Math.round((counts.yes / total) * 100),
                 maybe: Math.round((counts.maybe / total) * 100),
-                no: Math.round((counts.no / total) * 100)
-              }
+                no: Math.round((counts.no / total) * 100),
+              },
             };
           });
 
@@ -162,7 +161,7 @@ export class GetResponseUseCase {
             totalUsers: responseStats.totalUsers,
             responsesByDate,
             overallParticipation: responseStats.overallParticipation,
-            optimalDates
+            optimalDates,
           };
         }
       }
@@ -170,13 +169,14 @@ export class GetResponseUseCase {
       return {
         success: true,
         responses,
-        statistics
+        statistics,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [`レスポンス一覧の取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [
+          `レスポンス一覧の取得に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ],
       };
     }
   }
@@ -194,7 +194,7 @@ export class GetResponseUseCase {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -204,7 +204,7 @@ export class GetResponseUseCase {
 
   private buildResponseDto(response: Response): ResponseDto {
     const primitives = response.toPrimitives();
-    
+
     // primitives.dateStatuses はすでに文字列なので、直接変換
     const dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'> = {};
     Object.entries(primitives.dateStatuses).forEach(([dateId, statusString]) => {
@@ -224,7 +224,7 @@ export class GetResponseUseCase {
       displayName: primitives.user.displayName,
       dateStatuses,
       comment: primitives.comment,
-      updatedAt: primitives.updatedAt.toISOString()
+      updatedAt: primitives.updatedAt.toISOString(),
     };
   }
 }

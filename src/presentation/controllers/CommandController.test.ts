@@ -1,21 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { InteractionType, InteractionResponseType } from 'discord-interactions';
-import { createCommandController } from './CommandController';
-import { CommandInteraction, Env } from '../../infrastructure/types/discord';
-import { createTestD1Database, closeTestDatabase, applyMigrations, createTestEnv } from '../../../tests/helpers/d1-database';
+import { InteractionResponseType, InteractionType } from 'discord-interactions';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { D1Database } from '../../../tests/helpers/d1-database';
+import {
+  applyMigrations,
+  closeTestDatabase,
+  createTestD1Database,
+  createTestEnv,
+} from '../../../tests/helpers/d1-database';
 import { expectInteractionResponse } from '../../../tests/helpers/interaction-schemas';
+import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
+import { createCommandController } from './CommandController';
 
 describe('Choseichan Commands', () => {
   let db: D1Database;
   let env: Env;
-  
+
   beforeEach(async () => {
     db = createTestD1Database();
     await applyMigrations(db);
     env = createTestEnv(db);
   });
-  
+
   afterEach(() => {
     closeTestDatabase(db);
   });
@@ -27,11 +32,13 @@ describe('Choseichan Commands', () => {
       data: {
         id: 'cmd_id',
         name: 'choseichan',
-        options: [{
-          name: 'create',
-          type: 1,
-          value: ''
-        }]
+        options: [
+          {
+            name: 'create',
+            type: 1,
+            value: '',
+          },
+        ],
       },
       channel_id: 'test_channel',
       guild_id: 'test-guild',
@@ -39,23 +46,22 @@ describe('Choseichan Commands', () => {
         user: {
           id: 'user123',
           username: 'TestUser',
-          discriminator: '0001'
+          discriminator: '0001',
         },
-        roles: []
+        roles: [],
       },
-      token: 'test_token'
+      token: 'test_token',
     };
 
     const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
-    
+
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.MODAL);
     expect(data.data?.title).toBe('日程調整を作成');
     expect(data.data?.components).toHaveLength(4);
     expect(data.data?.custom_id).toBe('modal:create_schedule');
   });
-
 
   it('should list schedules in channel', async () => {
     const interaction: CommandInteraction = {
@@ -64,11 +70,13 @@ describe('Choseichan Commands', () => {
       data: {
         id: 'cmd_id',
         name: 'choseichan',
-        options: [{
-          name: 'list',
-        value: '',
-          type: 1
-        }]
+        options: [
+          {
+            name: 'list',
+            value: '',
+            type: 1,
+          },
+        ],
       },
       channel_id: 'test_channel',
       guild_id: 'test-guild',
@@ -76,16 +84,16 @@ describe('Choseichan Commands', () => {
         user: {
           id: 'user123',
           username: 'TestUser',
-          discriminator: '0001'
+          discriminator: '0001',
         },
-        roles: []
+        roles: [],
       },
-      token: 'test_token'
+      token: 'test_token',
     };
 
     const response = await createCommandController(env).handleChoseichanCommand(interaction, env);
     const data = expectInteractionResponse(await response.json());
-    
+
     expect(response.status).toBe(200);
     expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(data.data?.flags).toBe(64);

@@ -1,6 +1,6 @@
 /**
  * Infrastructure Layer Error Types
- * 
+ *
  * インフラストラクチャ層のエラー定義
  * 外部依存関係（データベース、API、ファイルシステムなど）のエラーを管理
  */
@@ -9,7 +9,10 @@ export abstract class InfrastructureError extends Error {
   abstract readonly code: string;
   abstract readonly statusCode: number;
 
-  constructor(message: string, public readonly details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    public readonly details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -20,7 +23,7 @@ export abstract class InfrastructureError extends Error {
       code: this.code,
       message: this.message,
       statusCode: this.statusCode,
-      details: this.details
+      details: this.details,
     };
   }
 }
@@ -68,7 +71,11 @@ export class HttpRequestError extends InfrastructureError {
   readonly statusCode: number;
 
   constructor(url: string, status: number, statusText?: string) {
-    super(`HTTP request failed: ${status} ${statusText || ''} for ${url}`, { url, status, statusText });
+    super(`HTTP request failed: ${status} ${statusText || ''} for ${url}`, {
+      url,
+      status,
+      statusText,
+    });
     this.statusCode = status;
   }
 }
@@ -163,7 +170,11 @@ export class DiscordApiError extends InfrastructureError {
   readonly statusCode: number;
 
   constructor(endpoint: string, status: number, message?: string) {
-    super(`Discord API error: ${status} on ${endpoint}`, { endpoint, status, discordMessage: message });
+    super(`Discord API error: ${status} on ${endpoint}`, {
+      endpoint,
+      status,
+      discordMessage: message,
+    });
     this.statusCode = status >= 400 && status < 500 ? status : 502;
   }
 }
@@ -261,27 +272,41 @@ export function isInfrastructureError(error: unknown): error is InfrastructureEr
   return error instanceof InfrastructureError;
 }
 
-export function isDatabaseError(error: unknown): error is DatabaseConnectionError | DatabaseQueryError | DatabaseTransactionError | DatabaseConstraintError {
-  return error instanceof DatabaseConnectionError ||
-         error instanceof DatabaseQueryError ||
-         error instanceof DatabaseTransactionError ||
-         error instanceof DatabaseConstraintError;
+export function isDatabaseError(
+  error: unknown
+): error is
+  | DatabaseConnectionError
+  | DatabaseQueryError
+  | DatabaseTransactionError
+  | DatabaseConstraintError {
+  return (
+    error instanceof DatabaseConnectionError ||
+    error instanceof DatabaseQueryError ||
+    error instanceof DatabaseTransactionError ||
+    error instanceof DatabaseConstraintError
+  );
 }
 
 export function isHttpError(error: unknown): error is HttpRequestError | ApiResponseError {
   return error instanceof HttpRequestError || error instanceof ApiResponseError;
 }
 
-export function isDiscordError(error: unknown): error is DiscordApiError | DiscordRateLimitError | DiscordWebhookError {
-  return error instanceof DiscordApiError ||
-         error instanceof DiscordRateLimitError ||
-         error instanceof DiscordWebhookError;
+export function isDiscordError(
+  error: unknown
+): error is DiscordApiError | DiscordRateLimitError | DiscordWebhookError {
+  return (
+    error instanceof DiscordApiError ||
+    error instanceof DiscordRateLimitError ||
+    error instanceof DiscordWebhookError
+  );
 }
 
 export function isRetryableInfrastructureError(error: unknown): boolean {
-  return error instanceof NetworkError ||
-         error instanceof ConnectivityError ||
-         error instanceof ServiceUnavailableError ||
-         error instanceof DiscordRateLimitError ||
-         (error instanceof HttpRequestError && error.statusCode >= 500);
+  return (
+    error instanceof NetworkError ||
+    error instanceof ConnectivityError ||
+    error instanceof ServiceUnavailableError ||
+    error instanceof DiscordRateLimitError ||
+    (error instanceof HttpRequestError && error.statusCode >= 500)
+  );
 }

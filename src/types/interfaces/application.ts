@@ -1,10 +1,10 @@
 /**
  * Application Layer Interfaces
- * 
+ *
  * アプリケーション層で使用されるインターフェース
  */
 
-import { User, Schedule, Response, Result } from './core';
+import type { Response, Result, Schedule, User } from './core';
 
 // DTOs (Data Transfer Objects)
 export interface ScheduleDto {
@@ -161,7 +161,10 @@ export interface ResponseService {
   submitResponse(request: SubmitResponseRequest): Promise<Result<ResponseSubmissionResponse>>;
   updateResponse(request: SubmitResponseRequest): Promise<Result<ResponseSubmissionResponse>>;
   getResponse(scheduleId: string, userId: string, guildId: string): Promise<Result<ResponseDto>>;
-  getScheduleResponses(scheduleId: string, guildId: string): Promise<Result<readonly ResponseDto[]>>;
+  getScheduleResponses(
+    scheduleId: string,
+    guildId: string
+  ): Promise<Result<readonly ResponseDto[]>>;
 }
 
 // Reminder Types

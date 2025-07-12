@@ -1,7 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import Database from 'better-sqlite3';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { Env } from '../../src/infrastructure/types/discord';
+import type { Env } from '../../src/infrastructure/types/discord';
 
 // D1Database互換のインターフェース
 export interface D1Database {
@@ -43,13 +43,13 @@ export interface D1ExecResult {
 // better-sqlite3をD1互換のAPIでラップ
 class D1DatabaseWrapper implements D1Database {
   private _isClosed = false;
-  
+
   constructor(private db: Database.Database) {}
-  
+
   get isClosed() {
     return this._isClosed;
   }
-  
+
   close() {
     this._isClosed = true;
     this.db.close();
@@ -75,7 +75,7 @@ class D1DatabaseWrapper implements D1Database {
           const boundStmt = boundValues.length > 0 ? stmt.bind(...boundValues) : stmt;
           const results = boundStmt.all() as T[];
           const duration = (Date.now() - start) / 1000;
-          
+
           return {
             results,
             success: true,
@@ -84,8 +84,8 @@ class D1DatabaseWrapper implements D1Database {
               changes: (db as any).changes,
               last_row_id: (db as any).lastInsertRowid as number | null,
               rows_read: results.length,
-              rows_written: 0
-            }
+              rows_written: 0,
+            },
           };
         } catch (error) {
           return {
@@ -97,8 +97,8 @@ class D1DatabaseWrapper implements D1Database {
               changes: 0,
               last_row_id: null,
               rows_read: 0,
-              rows_written: 0
-            }
+              rows_written: 0,
+            },
           };
         }
       },
@@ -108,8 +108,8 @@ class D1DatabaseWrapper implements D1Database {
           const start = Date.now();
           const boundStmt = boundValues.length > 0 ? stmt.bind(...boundValues) : stmt;
           const row = boundStmt.get() as T;
-          const duration = (Date.now() - start) / 1000;
-          
+          const _duration = (Date.now() - start) / 1000;
+
           if (row && colName) {
             return (row as any)[colName];
           }
@@ -125,7 +125,7 @@ class D1DatabaseWrapper implements D1Database {
           const boundStmt = boundValues.length > 0 ? stmt.bind(...boundValues) : stmt;
           const info = boundStmt.run();
           const duration = (Date.now() - start) / 1000;
-          
+
           return {
             results: [] as T[],
             success: true,
@@ -134,8 +134,8 @@ class D1DatabaseWrapper implements D1Database {
               changes: info.changes,
               last_row_id: info.lastInsertRowid as number | null,
               rows_read: 0,
-              rows_written: info.changes
-            }
+              rows_written: info.changes,
+            },
           };
         } catch (error) {
           return {
@@ -147,8 +147,8 @@ class D1DatabaseWrapper implements D1Database {
               changes: 0,
               last_row_id: null,
               rows_read: 0,
-              rows_written: 0
-            }
+              rows_written: 0,
+            },
           };
         }
       },
@@ -156,7 +156,7 @@ class D1DatabaseWrapper implements D1Database {
       async raw<T = any>(): Promise<T[]> {
         const result = await preparedStatement.all<T>();
         return result.results || [];
-      }
+      },
     };
 
     return preparedStatement;
@@ -164,22 +164,22 @@ class D1DatabaseWrapper implements D1Database {
 
   async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
     const results: D1Result<T>[] = [];
-    
+
     // Check if we're already in a transaction
     const inTransaction = this.db.inTransaction;
-    
+
     // Only start a transaction if we're not already in one
     if (!inTransaction) {
       this.db.exec('BEGIN');
     }
-    
+
     try {
       for (const stmt of statements) {
         // run()メソッドを使用してINSERT/UPDATE/DELETE文を実行
         const result = await stmt.run<T>();
         results.push(result);
       }
-      
+
       // Only commit if we started the transaction
       if (!inTransaction) {
         this.db.exec('COMMIT');
@@ -191,7 +191,7 @@ class D1DatabaseWrapper implements D1Database {
       }
       throw error;
     }
-    
+
     return results;
   }
 
@@ -200,10 +200,10 @@ class D1DatabaseWrapper implements D1Database {
       const start = Date.now();
       this.db.exec(query);
       const duration = (Date.now() - start) / 1000;
-      
+
       return {
         count: (this.db as any).changes,
-        duration
+        duration,
       };
     } catch (error) {
       throw new Error(`D1 exec error: ${(error as Error).message}`);
@@ -214,7 +214,7 @@ class D1DatabaseWrapper implements D1Database {
     const buffer = this.db.serialize();
     return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
   }
-  
+
   async withSession<T>(callback: (tx: D1Database) => Promise<T>): Promise<T> {
     // In tests, we just pass through the same database instance
     return callback(this);
@@ -227,13 +227,13 @@ const testDatabases = new Map<D1Database, Database.Database>();
 export function createTestD1Database(): D1Database {
   // テスト用のインメモリデータベースを作成
   const db = new Database(':memory:');
-  
+
   // 外部キー制約を有効化
   db.pragma('foreign_keys = ON');
-  
+
   const wrapper = new D1DatabaseWrapper(db);
   testDatabases.set(wrapper, db);
-  
+
   return wrapper;
 }
 
@@ -257,30 +257,30 @@ export async function applyMigrations(db: D1Database): Promise<void> {
   const migrationsPath = join(process.cwd(), 'migrations');
   const migrationFiles = [
     '0001_20240115_initial_schema.sql',
-    '0003_20240117_foreign_key_optimization.sql'
+    '0003_20240117_foreign_key_optimization.sql',
   ];
-  
+
   for (const file of migrationFiles) {
     const migrationPath = join(migrationsPath, file);
     try {
       const migrationSQL = readFileSync(migrationPath, 'utf-8');
-      
+
       // SQLを個別のステートメントに分割（CREATE TRIGGERを考慮）
       const statements: string[] = [];
       let currentStatement = '';
       let inTrigger = false;
-      
+
       const lines = migrationSQL.split('\n');
       for (const line of lines) {
         const trimmedLine = line.trim();
-        
+
         // CREATE TRIGGER開始を検出
         if (trimmedLine.toUpperCase().startsWith('CREATE TRIGGER')) {
           inTrigger = true;
         }
-        
-        currentStatement += line + '\n';
-        
+
+        currentStatement += `${line}\n`;
+
         // END;でトリガー終了
         if (inTrigger && trimmedLine.toUpperCase() === 'END;') {
           statements.push(currentStatement.trim());
@@ -288,19 +288,19 @@ export async function applyMigrations(db: D1Database): Promise<void> {
           inTrigger = false;
           continue;
         }
-        
+
         // トリガー外でセミコロンで終わる行
         if (!inTrigger && trimmedLine.endsWith(';')) {
           statements.push(currentStatement.trim());
           currentStatement = '';
         }
       }
-      
+
       // 最後の文が残っている場合
       if (currentStatement.trim().length > 0) {
         statements.push(currentStatement.trim());
       }
-      
+
       for (const statement of statements) {
         // 空白やコメントのみの文を除外
         const cleanStatement = statement.replace(/--.*$/gm, '').trim();
@@ -323,6 +323,6 @@ export function createTestEnv(db: D1Database): Env {
     DISCORD_TOKEN: 'test-token',
     DB: db,
   } as any as Env;
-  
+
   return env;
 }
