@@ -67,12 +67,12 @@ export class VoteUIBuilder {
    */
   createVoteModal(
     schedule: ScheduleResponse,
-    currentResponses: Array<{ dateId: string; status: string; comment?: string }>
+    currentResponses: Array<{ dateId: string; status: string }>
   ): DiscordModalData {
     const components = [];
 
     // Create input for each date (up to Discord's limit)
-    const maxDates = Math.min(schedule.dates.length, DISCORD_CONSTANTS.MAX_ACTION_ROWS - 1);
+    const maxDates = Math.min(schedule.dates.length, DISCORD_CONSTANTS.MAX_ACTION_ROWS);
 
     for (let i = 0; i < maxDates; i++) {
       const date = schedule.dates[i];
@@ -102,25 +102,6 @@ export class VoteUIBuilder {
         ],
       });
     }
-
-    // Add comment field
-    const existingComment = (currentResponses.length > 0 && currentResponses[0].comment) || '';
-    components.push({
-      type: 1,
-      components: [
-        {
-          type: 4,
-          custom_id: 'comment',
-          label: 'コメント（任意）',
-          style: 2,
-          min_length: 0,
-          max_length: 200,
-          placeholder: '何かコメントがあれば入力してください',
-          value: existingComment,
-          required: false,
-        },
-      ],
-    });
 
     return {
       title: schedule.title,

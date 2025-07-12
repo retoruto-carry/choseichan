@@ -192,10 +192,9 @@ export class VoteController {
       // Parse responses from modal
       const components = interaction.data.components;
       const responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }> = [];
-      const comment = components[components.length - 1]?.components[0]?.value || '';
 
       // Parse each date response
-      for (let i = 0; i < schedule.dates.length && i < components.length - 1; i++) {
+      for (let i = 0; i < schedule.dates.length && i < components.length; i++) {
         const dateId = schedule.dates[i].id;
         const value = components[i]?.components[0]?.value || '';
         const trimmedValue = value.trim().toLowerCase();
@@ -216,7 +215,6 @@ export class VoteController {
         userId,
         username,
         responses,
-        comment,
         guildId,
       });
 

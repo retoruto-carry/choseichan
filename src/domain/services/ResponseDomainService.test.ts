@@ -120,21 +120,6 @@ describe('ResponseDomainService', () => {
       expect(result.errors).toContain('同じ日程に対して複数の回答があります');
     });
 
-    it('should reject comment over 500 characters', () => {
-      const responseData: UserResponseData[] = [
-        { dateId: 'date-1', status: ResponseStatus.create(ResponseStatusValue.OK) },
-      ];
-      const longComment = 'あ'.repeat(501);
-
-      const result = ResponseDomainService.validateResponse(
-        testSchedule,
-        responseData,
-        longComment
-      );
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('コメントは500文字以内で入力してください');
-    });
   });
 
   describe('createOrUpdateResponse', () => {
