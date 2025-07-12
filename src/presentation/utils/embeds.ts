@@ -36,7 +36,6 @@ export function createScheduleEmbed(
     descriptionParts.push('');
   }
 
-  // 回答者数を表示（過去のバージョンとの互換性のため）
   if (totalResponses !== undefined) {
     descriptionParts.push(`**回答者：** ${totalResponses}人`);
     descriptionParts.push('');
