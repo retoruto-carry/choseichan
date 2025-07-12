@@ -261,8 +261,8 @@ export class NotificationService {
       mentionText = `${resolvedMentions.join(' ')} `;
     }
 
-    const message = {
-      content: `${mentionText}**📅 日程調整「${schedule.title}」が締め切られました！**`,
+    const message: any = {
+      content: `${mentionText}✅❓❌ 日程調整「${schedule.title}」が締め切られました！`,
       embeds: [
         {
           title: '📊 集計結果',
@@ -307,6 +307,7 @@ export class NotificationService {
           },
         },
       ],
+      message_reference: schedule.messageId ? { message_id: schedule.messageId } : undefined,
     };
 
     await this.sendChannelMessage(schedule.channelId, message);
