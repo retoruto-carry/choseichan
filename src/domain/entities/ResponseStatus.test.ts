@@ -30,15 +30,12 @@ describe('ResponseStatus', () => {
       expect(ResponseStatus.fromString('ng').value).toBe(ResponseStatusValue.NG);
     });
 
-
-    it('should throw error for invalid string', () => {
-      expect(() => ResponseStatus.fromString('invalid')).toThrow(
-        '無効な回答ステータス文字列です: invalid'
-      );
+    it('should return ng for invalid string', () => {
+      expect(ResponseStatus.fromString('invalid').value).toBe(ResponseStatusValue.NG);
     });
 
-    it('should throw error for empty string', () => {
-      expect(() => ResponseStatus.fromString('')).toThrow('無効な回答ステータス文字列です: ');
+    it('should return ng for empty string', () => {
+      expect(ResponseStatus.fromString('').value).toBe(ResponseStatusValue.NG);
     });
   });
 

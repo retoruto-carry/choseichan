@@ -157,13 +157,6 @@ export class ScheduleUIBuilder {
             custom_id: `vote:${schedule.id}`,
             emoji: { name: '🗳️' },
           },
-          {
-            type: 2, // BUTTON
-            style: 2, // SECONDARY (灰)
-            label: 'コメント',
-            custom_id: `comment:${schedule.id}`,
-            emoji: { name: '💬' },
-          },
         ],
       });
     }

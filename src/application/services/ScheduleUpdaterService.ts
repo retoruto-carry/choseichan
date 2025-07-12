@@ -1,6 +1,6 @@
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { Env } from '../../infrastructure/types/discord';
-import type { IMessageFormatter, IDiscordMessageUpdater } from '../ports/MessageFormatterPort';
+import type { IDiscordMessageUpdater, IMessageFormatter } from '../ports/MessageFormatterPort';
 
 /**
  * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版

@@ -16,7 +16,6 @@ export interface DateResponses {
   readonly value: Record<string, ResponseStatus>;
 }
 
-
 export class Response {
   private constructor(
     private readonly _id: string,
@@ -97,7 +96,6 @@ export class Response {
   get dateStatuses(): Map<string, ResponseStatus> {
     return this._dateStatuses;
   }
-
 
   get createdAt(): Date {
     return this._createdAt;

@@ -144,7 +144,6 @@ describe('GetResponseUseCase', () => {
       expect(result.response?.displayName).toBe('Display Name');
     });
 
-
     it('should handle repository errors', async () => {
       vi.mocked(mockResponseRepository.findByUser).mockRejectedValueOnce(
         new Error('Database error')
@@ -296,7 +295,6 @@ describe('GetResponseUseCase', () => {
       expect(result.statistics).toBeDefined();
       expect(result.statistics?.totalUsers).toBe(1);
     });
-
 
     it('should handle repository errors', async () => {
       vi.mocked(mockResponseRepository.findByScheduleId).mockRejectedValueOnce(

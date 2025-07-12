@@ -109,7 +109,6 @@ describe('ModalController', () => {
       expect(result).toBeInstanceOf(Response);
     });
 
-
     it('should handle edit modal', async () => {
       const mockInteraction = {
         id: 'interaction-123',

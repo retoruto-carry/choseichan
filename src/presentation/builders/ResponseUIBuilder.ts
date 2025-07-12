@@ -199,13 +199,6 @@ export class ResponseUIBuilder {
           },
           {
             type: 2, // BUTTON
-            style: 2, // SECONDARY
-            label: 'コメント追加',
-            custom_id: `vote_comment:${scheduleId}`,
-            emoji: { name: '💬' },
-          },
-          {
-            type: 2, // BUTTON
             style: 4, // DANGER
             label: 'キャンセル',
             custom_id: `vote_cancel:${scheduleId}`,

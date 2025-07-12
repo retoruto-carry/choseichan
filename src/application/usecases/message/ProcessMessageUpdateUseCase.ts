@@ -2,18 +2,17 @@
  * メッセージ更新処理ユースケース
  */
 
-import { getLogger } from '../../../infrastructure/logging/Logger';
-import type { MessageUpdateTask } from '../../../infrastructure/ports/MessageUpdateQueuePort';
-import type { IDiscordApiService } from '../../../infrastructure/services/DiscordApiService';
-import type { GetScheduleSummaryUseCase } from '../schedule/GetScheduleSummaryUseCase';
+import type { IDiscordApiPort } from '../../ports/DiscordApiPort';
+import type { ILogger } from '../../ports/LoggerPort';
 import type { IMessageFormatter } from '../../ports/MessageFormatterPort';
+import type { MessageUpdateTask } from '../../types/MessageUpdateTypes';
+import type { GetScheduleSummaryUseCase } from '../schedule/GetScheduleSummaryUseCase';
 
 export class ProcessMessageUpdateUseCase {
-  private readonly logger = getLogger();
-
   constructor(
+    private readonly logger: ILogger,
     private readonly getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
-    private readonly discordApiService: IDiscordApiService,
+    private readonly discordApiService: IDiscordApiPort,
     private readonly messageFormatter: IMessageFormatter,
     private readonly discordToken: string
   ) {}
@@ -35,7 +34,10 @@ export class ProcessMessageUpdateUseCase {
 
       // embedとcomponentsを作成（MessageFormatterを使用）
       const embed = this.messageFormatter.createScheduleEmbed(summaryResult.summary, false);
-      const components = this.messageFormatter.createScheduleComponents(summaryResult.summary, false);
+      const components = this.messageFormatter.createScheduleComponents(
+        summaryResult.summary,
+        false
+      );
 
       // メッセージ更新を実行
       await this.discordApiService.updateMessage(
@@ -80,10 +82,8 @@ export class ProcessMessageUpdateUseCase {
       const key = `${task.scheduleId}:${task.messageId}`;
       const existing = latestUpdates.get(key);
 
-      // より新しいタイムスタンプの更新で上書き
-      if (!existing || task.timestamp > existing.timestamp) {
-        latestUpdates.set(key, task);
-      }
+      // 最新の更新で上書き
+      latestUpdates.set(key, task);
     }
 
     // 最新の更新のみを並行実行

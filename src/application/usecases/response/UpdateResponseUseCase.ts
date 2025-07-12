@@ -113,7 +113,6 @@ export class UpdateResponseUseCase {
         updatedResponse = updatedResponse.updateStatuses(newStatuses);
       }
 
-
       // 9. リポジトリへの保存
       const primitives = updatedResponse.toPrimitives();
       const domainResponse: DomainResponse = {
@@ -193,28 +192,6 @@ export class UpdateResponseUseCase {
   }
 
   private buildResponseDto(response: Response): ResponseDto {
-    const primitives = response.toPrimitives();
-
-    // primitives.dateStatuses はすでに文字列なので、直接変換
-    const dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'> = {};
-    Object.entries(primitives.dateStatuses).forEach(([dateId, statusString]) => {
-      if (statusString === 'ok') {
-        dateStatuses[dateId] = 'ok';
-      } else if (statusString === 'maybe') {
-        dateStatuses[dateId] = 'maybe';
-      } else if (statusString === 'ng') {
-        dateStatuses[dateId] = 'ng';
-      }
-    });
-
-    return {
-      scheduleId: primitives.scheduleId,
-      userId: primitives.user.id,
-      username: primitives.user.username,
-      displayName: primitives.user.displayName,
-      dateStatuses,
-      comment: primitives.comment,
-      updatedAt: primitives.updatedAt.toISOString(),
-    };
+    return ResponseMapper.responseToDto(response);
   }
 }

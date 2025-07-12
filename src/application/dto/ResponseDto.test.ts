@@ -14,7 +14,6 @@ describe('ResponseDto', () => {
           'date-2': 'maybe',
           'date-3': 'ng',
         },
-        comment: 'This is a test comment',
         updatedAt: '2024-01-15T10:30:00Z',
       };
 
@@ -106,7 +105,6 @@ describe('ResponseDto', () => {
         dateStatuses: { 'date-1': 'ok' },
         updatedAt: '2024-01-15T10:30:00Z',
       };
-
     });
 
     it('should handle special characters in username and display name', () => {

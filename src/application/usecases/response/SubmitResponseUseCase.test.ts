@@ -204,7 +204,6 @@ describe('SubmitResponseUseCase', () => {
       expect(result.success).toBe(false);
       expect(result.errors).toContain('レスポンス1: 無効なステータスです');
     });
-
   });
 
   describe('Business Logic Validation', () => {
@@ -382,6 +381,5 @@ describe('SubmitResponseUseCase', () => {
       });
       expect(response.updatedAt).toBeDefined();
     });
-
   });
 });

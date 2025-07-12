@@ -1,13 +1,20 @@
 /**
  * Discord用メッセージフォーマッター実装
- * 
+ *
  * プレゼンテーション層のユーティリティをラップし、
  * アプリケーション層のインターフェースを実装
  */
 
-import type { IMessageFormatter, MessageEmbed, MessageComponent } from '../../application/ports/MessageFormatterPort';
 import type { ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
-import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../presentation/utils/embeds';
+import type {
+  IMessageFormatter,
+  MessageComponent,
+  MessageEmbed,
+} from '../../application/ports/MessageFormatterPort';
+import {
+  createScheduleEmbedWithTable,
+  createSimpleScheduleComponents,
+} from '../../presentation/utils/embeds';
 
 export class DiscordMessageFormatter implements IMessageFormatter {
   /**
@@ -16,7 +23,7 @@ export class DiscordMessageFormatter implements IMessageFormatter {
   createScheduleEmbed(summary: ScheduleSummaryResponse, isDetailed: boolean): MessageEmbed {
     // プレゼンテーション層のユーティリティを呼び出し
     const embed = createScheduleEmbedWithTable(summary, isDetailed);
-    
+
     // Discord APIのEmbed形式をアプリケーション層の形式にマッピング
     return {
       title: embed.title,
@@ -31,10 +38,13 @@ export class DiscordMessageFormatter implements IMessageFormatter {
   /**
    * スケジュールサマリーからComponentsを作成
    */
-  createScheduleComponents(summary: ScheduleSummaryResponse, showDetails: boolean): MessageComponent[] {
+  createScheduleComponents(
+    summary: ScheduleSummaryResponse,
+    showDetails: boolean
+  ): MessageComponent[] {
     // プレゼンテーション層のユーティリティを呼び出し
     const components = createSimpleScheduleComponents(summary.schedule, showDetails);
-    
+
     // そのまま返す（型は互換性がある）
     return components as MessageComponent[];
   }

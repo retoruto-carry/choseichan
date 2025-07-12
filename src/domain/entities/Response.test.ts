@@ -39,7 +39,6 @@ describe('Response', () => {
         user: testUser,
         dateStatuses: new Map(),
       });
-
     });
 
     it('should validate required fields', () => {
@@ -61,7 +60,6 @@ describe('Response', () => {
         })
       ).toThrow('スケジュールIDは必須です');
     });
-
 
     it('should use provided timestamps', () => {
       const createdAt = new Date('2024-01-01');
@@ -122,7 +120,6 @@ describe('Response', () => {
       expect(updated.getStatusForDate('date-1')).toBeUndefined();
     });
   });
-
 
   describe('getStatusForDate', () => {
     it('should return status for existing date', () => {
@@ -210,7 +207,6 @@ describe('Response', () => {
       });
 
       const primitives = response.toPrimitives();
-
     });
   });
 

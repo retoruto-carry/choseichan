@@ -1,6 +1,6 @@
 /**
  * メッセージフォーマッターのポート定義
- * 
+ *
  * Discord向けのメッセージフォーマットを生成するインターフェース
  * プレゼンテーション層の実装詳細から独立
  */
@@ -50,12 +50,12 @@ export interface IMessageFormatter {
   /**
    * スケジュールサマリーからEmbedを作成
    */
-  createScheduleEmbed(summary: ScheduleSummaryResponse, isDetailed: boolean): MessageEmbed;
+  createScheduleEmbed(summary: ScheduleSummaryResponse, showVoteButton: boolean): object;
 
   /**
    * スケジュールサマリーからComponentsを作成
    */
-  createScheduleComponents(summary: ScheduleSummaryResponse, showDetails: boolean): MessageComponent[];
+  createScheduleComponents(summary: ScheduleSummaryResponse, showVoteButton: boolean): object[];
 }
 
 /**

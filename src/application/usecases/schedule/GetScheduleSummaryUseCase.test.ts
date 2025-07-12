@@ -46,7 +46,6 @@ describe('GetScheduleSummaryUseCase', () => {
         'date-2': 'ok',
         'date-3': 'maybe',
       },
-      comment: 'I can attend the first two days',
       updatedAt: new Date('2024-01-02'),
     },
     {
@@ -69,7 +68,6 @@ describe('GetScheduleSummaryUseCase', () => {
         'date-2': 'ok',
         'date-3': 'ok',
       },
-      comment: 'Prefer the later dates',
       updatedAt: new Date('2024-01-04'),
     },
   ];
@@ -123,7 +121,6 @@ describe('GetScheduleSummaryUseCase', () => {
       expect(result.summary?.responses[0]).toMatchObject({
         userId: 'user-456',
         username: 'User1',
-        comment: 'I can attend the first two days',
       });
 
       // Verify response counts

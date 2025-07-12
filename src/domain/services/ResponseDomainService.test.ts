@@ -76,10 +76,7 @@ describe('ResponseDomainService', () => {
         { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) },
       ];
 
-      const result = ResponseDomainService.validateResponse(
-        testSchedule,
-        responseData
-      );
+      const result = ResponseDomainService.validateResponse(testSchedule, responseData);
 
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -119,7 +116,6 @@ describe('ResponseDomainService', () => {
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('同じ日程に対して複数の回答があります');
     });
-
   });
 
   describe('createOrUpdateResponse', () => {

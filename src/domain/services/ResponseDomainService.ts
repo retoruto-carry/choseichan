@@ -53,7 +53,6 @@ export class ResponseDomainService {
       errors.push('同じ日程に対して複数の回答があります');
     }
 
-
     return {
       isValid: errors.length === 0,
       errors,

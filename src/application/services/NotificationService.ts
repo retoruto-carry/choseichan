@@ -11,11 +11,19 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
-import { getLogger } from '../../infrastructure/logging/Logger';
-import type { DiscordMessage } from '../../infrastructure/types/discord-api';
 import { formatDate } from '../../utils/date';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { IDiscordApiPort } from '../ports/DiscordApiPort';
+import type { ILogger } from '../ports/LoggerPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
+
+interface DiscordMessage {
+  content: string;
+  embeds?: object[];
+  message_reference?: {
+    message_id: string;
+  };
+}
 
 const _STATUS_EMOJI = {
   open: '🟢',
@@ -23,10 +31,11 @@ const _STATUS_EMOJI = {
 };
 
 export class NotificationService {
-  private readonly logger = getLogger();
   private memberCache: Map<string, Map<string, { id: string; username: string }>> = new Map();
 
   constructor(
+    private logger: ILogger,
+    private discordApi: IDiscordApiPort,
     private scheduleRepository: IScheduleRepository,
     private responseRepository: IResponseRepository,
     private getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
@@ -182,20 +191,7 @@ export class NotificationService {
   }
 
   private async sendChannelMessage(channelId: string, message: object): Promise<void> {
-    const url = `https://discord.com/api/v10/channels/${channelId}/messages`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${this.discordToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to send message: ${response.status}`);
-    }
+    await this.discordApi.sendMessage(channelId, message, this.discordToken);
   }
 
   private async fetchGuildMembers(

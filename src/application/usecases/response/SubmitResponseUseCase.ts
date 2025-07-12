@@ -79,10 +79,7 @@ export class SubmitResponseUseCase {
       }));
 
       // 7. ドメインサービスによる業務ルール検証
-      const domainValidation = ResponseDomainService.validateResponse(
-        scheduleEntity,
-        responseData
-      );
+      const domainValidation = ResponseDomainService.validateResponse(scheduleEntity, responseData);
 
       if (!domainValidation.isValid) {
         return {
@@ -170,7 +167,6 @@ export class SubmitResponseUseCase {
         }
       });
     }
-
 
     return {
       isValid: errors.length === 0,

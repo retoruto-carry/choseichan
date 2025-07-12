@@ -4,9 +4,9 @@
  * 締切リマインダー処理のユースケース
  */
 
-import { getLogger } from '../../infrastructure/logging/Logger';
-import type { Env } from '../../infrastructure/types/discord';
-import { processBatches } from '../../infrastructure/utils/rate-limiter';
+import { processBatches } from '../../infrastructure/utils/processBatches';
+import type { IEnvironmentPort } from '../ports/EnvironmentPort';
+import type { ILogger } from '../ports/LoggerPort';
 import type { NotificationService } from '../services/NotificationService';
 import type { DeadlineCheckResult, ReminderInfo } from '../types/ReminderTypes';
 import type { CloseScheduleUseCase } from './schedule/CloseScheduleUseCase';
@@ -16,20 +16,22 @@ import type { GetScheduleUseCase } from './schedule/GetScheduleUseCase';
 import type { ProcessReminderUseCase } from './schedule/ProcessReminderUseCase';
 
 export class ProcessDeadlineRemindersUseCase {
-  private readonly logger = getLogger();
-
   constructor(
-    private deadlineReminderUseCase: DeadlineReminderUseCase,
-    private getScheduleUseCase: GetScheduleUseCase,
-    private getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
-    private processReminderUseCase: ProcessReminderUseCase,
-    private closeScheduleUseCase: CloseScheduleUseCase,
-    private notificationService: NotificationService,
-    private env: Env
+    private readonly logger: ILogger,
+    private readonly deadlineReminderUseCase: DeadlineReminderUseCase,
+    private readonly getScheduleUseCase: GetScheduleUseCase,
+    private readonly getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
+    private readonly processReminderUseCase: ProcessReminderUseCase,
+    private readonly closeScheduleUseCase: CloseScheduleUseCase,
+    private readonly notificationService: NotificationService,
+    private readonly env: IEnvironmentPort
   ) {}
 
   async execute(): Promise<void> {
-    if (!this.env.DISCORD_TOKEN || !this.env.DISCORD_APPLICATION_ID) {
+    const discordToken = this.env.get('DISCORD_TOKEN');
+    const discordAppId = this.env.get('DISCORD_APPLICATION_ID');
+
+    if (!discordToken || !discordAppId) {
       this.logger.error(
         'Missing Discord credentials for notifications',
         new Error('DISCORD_TOKEN or DISCORD_APPLICATION_ID is missing')
@@ -45,12 +47,10 @@ export class ProcessDeadlineRemindersUseCase {
     );
 
     // Rate limiting configuration
-    const reminderBatchSize = this.env.REMINDER_BATCH_SIZE
-      ? parseInt(this.env.REMINDER_BATCH_SIZE)
-      : 20;
-    const reminderBatchDelay = this.env.REMINDER_BATCH_DELAY
-      ? parseInt(this.env.REMINDER_BATCH_DELAY)
-      : 100;
+    const batchSizeEnv = this.env.getOptional('REMINDER_BATCH_SIZE');
+    const reminderBatchSize = batchSizeEnv ? parseInt(batchSizeEnv) : 20;
+    const batchDelayEnv = this.env.getOptional('REMINDER_BATCH_DELAY');
+    const reminderBatchDelay = batchDelayEnv ? parseInt(batchDelayEnv) : 100;
 
     // Send reminders for upcoming deadlines
     await this.processReminders(upcomingReminders, reminderBatchSize, reminderBatchDelay);

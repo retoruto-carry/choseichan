@@ -160,7 +160,6 @@ describe('UpdateResponseUseCase', () => {
       expect(result.errors).toEqual(['この日程調整は締め切られています']);
     });
 
-
     it('should validate required fields', async () => {
       const testCases = [
         {

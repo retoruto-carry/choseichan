@@ -10,10 +10,10 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { parseButtonIdToComponents } from '../utils/button-id';
-import { createVoteController } from './VoteController';
-import { createScheduleManagementController } from './ScheduleManagementController';
-import { createScheduleEditController } from './ScheduleEditController';
 import { createDisplayController } from './DisplayController';
+import { createScheduleEditController } from './ScheduleEditController';
+import { createScheduleManagementController } from './ScheduleManagementController';
+import { createVoteController } from './VoteController';
 
 export class ButtonInteractionController {
   private readonly logger = getLogger();

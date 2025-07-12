@@ -9,6 +9,7 @@ import type {
   IScheduleRepository,
 } from '../../../domain/repositories/interfaces';
 import type { ResponseDto, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
+import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetScheduleSummaryUseCaseResult {
   success: boolean;
@@ -42,16 +43,9 @@ export class GetScheduleSummaryUseCase {
 
       const responses = await this.responseRepository.findByScheduleId(scheduleId, guildId);
 
-      // Convert DomainResponse to ResponseDto
-      const responsesDtos: ResponseDto[] = responses.map((response) => ({
-        scheduleId: response.scheduleId,
-        userId: response.userId,
-        username: response.username,
-        displayName: response.displayName,
-        dateStatuses: response.dateStatuses,
-        comment: response.comment,
-        updatedAt: response.updatedAt.toISOString(),
-      }));
+      // Convert DomainResponse to ResponseDto using mapper
+      const responseEntities = responses.map((r) => ResponseMapper.toDomain(r));
+      const responsesDtos = responseEntities.map((r) => ResponseMapper.responseToDto(r));
 
       // Build summary response
       const responseCounts = this.calculateResponseCounts(schedule.dates, responsesDtos);
@@ -78,14 +72,9 @@ export class GetScheduleSummaryUseCase {
           createdAt: schedule.createdAt.toISOString(),
           updatedAt: schedule.updatedAt.toISOString(),
         },
-        responses: responses.map((response) => ({
-          scheduleId: response.scheduleId,
-          userId: response.userId,
-          username: response.username,
-          displayName: response.username,
+        responses: responsesDtos.map((response) => ({
+          ...response,
           dateStatuses: this.convertResponseFormat(response.dateStatuses),
-          comment: response.comment,
-          updatedAt: response.updatedAt.toISOString(),
         })),
         responseCounts,
         totalResponseUsers: responses.length,

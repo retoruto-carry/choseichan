@@ -42,7 +42,8 @@ export class ResponseStatus {
       case 'ng':
         return ResponseStatus.no();
       default:
-        throw new Error(`無効な回答ステータス文字列です: ${value}`);
+        // 無効な値の場合はngをデフォルトとして返す
+        return ResponseStatus.no();
     }
   }
 

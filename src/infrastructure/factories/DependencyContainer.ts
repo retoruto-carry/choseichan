@@ -26,13 +26,13 @@ import { UpdateScheduleUseCase } from '../../application/usecases/schedule/Updat
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
 import { CloudflareQueueAdapter } from '../adapters/CloudflareQueueAdapter';
+import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
+import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
+import { LoggerAdapter } from '../adapters/LoggerAdapter';
+import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
-import { DiscordApiService, type IDiscordApiService } from '../services/DiscordApiService';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
-import type { IMessageFormatter, IDiscordMessageUpdater } from '../../application/ports/MessageFormatterPort';
-import { DiscordMessageFormatter } from '../formatters/DiscordMessageFormatter';
-import { DiscordMessageUpdater } from '../formatters/DiscordMessageUpdater';
 
 export interface ApplicationServices {
   // Schedule Use Cases
@@ -59,10 +59,7 @@ export interface ApplicationServices {
 
 export interface InfrastructureServices {
   repositoryFactory: IRepositoryFactory;
-  discordApiService: IDiscordApiService;
   messageUpdateQueuePort: MessageUpdateQueuePort;
-  messageFormatter: IMessageFormatter;
-  messageUpdater: IDiscordMessageUpdater;
 }
 
 export interface DomainServices {
@@ -104,17 +101,11 @@ export class DependencyContainer {
 
   private createInfrastructureServices(env: Env): InfrastructureServices {
     const repositoryFactory = createRepositoryFactory(env);
-    const discordApiService = new DiscordApiService();
     const messageUpdateQueuePort = new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE);
-    const messageFormatter = new DiscordMessageFormatter();
-    const messageUpdater = new DiscordMessageUpdater();
 
     return {
       repositoryFactory,
-      discordApiService,
       messageUpdateQueuePort,
-      messageFormatter,
-      messageUpdater,
     };
   }
 
@@ -147,16 +138,26 @@ export class DependencyContainer {
       scheduleRepository,
       responseRepository
     );
-    const deadlineReminderUseCase = new DeadlineReminderUseCase(scheduleRepository);
+    const deadlineReminderUseCase = new DeadlineReminderUseCase(
+      new LoggerAdapter(),
+      scheduleRepository
+    );
     const processReminderUseCase = new ProcessReminderUseCase(scheduleRepository);
     const submitResponseUseCase = new SubmitResponseUseCase(scheduleRepository, responseRepository);
     const updateResponseUseCase = new UpdateResponseUseCase(scheduleRepository, responseRepository);
     const getResponseUseCase = new GetResponseUseCase(responseRepository);
 
+    // Create Adapters
+    const loggerAdapter = new LoggerAdapter();
+    const discordApiAdapter = new DiscordApiAdapter();
+    const environmentAdapter = new EnvironmentAdapter(this._env);
+
     // Create NotificationService if credentials are available
     let notificationService: NotificationService | null = null;
     if (this._env.DISCORD_TOKEN && this._env.DISCORD_APPLICATION_ID) {
       notificationService = new NotificationService(
+        loggerAdapter,
+        discordApiAdapter,
         scheduleRepository,
         responseRepository,
         getScheduleSummaryUseCase,
@@ -168,22 +169,24 @@ export class DependencyContainer {
     // Create composite use case
     const processDeadlineRemindersUseCase = notificationService
       ? new ProcessDeadlineRemindersUseCase(
+          loggerAdapter,
           deadlineReminderUseCase,
           getScheduleUseCase,
           getScheduleSummaryUseCase,
           processReminderUseCase,
           closeScheduleUseCase,
           notificationService,
-          this._env
+          environmentAdapter
         )
       : null;
 
     // Create message update use case
     const processMessageUpdateUseCase = this._env.DISCORD_TOKEN
       ? new ProcessMessageUpdateUseCase(
+          loggerAdapter,
           getScheduleSummaryUseCase,
-          infrastructure.discordApiService,
-          infrastructure.messageFormatter,
+          discordApiAdapter,
+          new MessageFormatterAdapter(),
           this._env.DISCORD_TOKEN
         )
       : null;

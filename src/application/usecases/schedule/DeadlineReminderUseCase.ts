@@ -5,7 +5,7 @@
  */
 
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import { getLogger } from '../../../infrastructure/logging/Logger';
+import type { ILogger } from '../../ports/LoggerPort';
 
 export interface ReminderInfo {
   scheduleId: string;
@@ -26,9 +26,10 @@ export interface DeadlineReminderUseCaseResult {
 }
 
 export class DeadlineReminderUseCase {
-  private readonly logger = getLogger();
-
-  constructor(private readonly scheduleRepository: IScheduleRepository) {}
+  constructor(
+    private readonly logger: ILogger,
+    private readonly scheduleRepository: IScheduleRepository
+  ) {}
 
   // デフォルトのリマインダータイミング定義
   private readonly DEFAULT_REMINDER_TIMINGS = [

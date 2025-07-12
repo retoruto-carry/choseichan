@@ -8,11 +8,11 @@ export function generateId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  
+
   // フォールバック: タイムスタンプ + セキュアなランダム値
   const timestamp = Date.now().toString(36);
   const randomBytes = new Uint8Array(16);
-  
+
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(randomBytes);
   } else {
@@ -22,11 +22,11 @@ export function generateId(): string {
       randomBytes[i] = Math.floor(Math.random() * 256);
     }
   }
-  
+
   const randomStr = Array.from(randomBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  
+
   return `${timestamp}-${randomStr}`;
 }
 

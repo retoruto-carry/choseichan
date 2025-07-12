@@ -7,6 +7,8 @@ import type {
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
 import type { ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { IDiscordApiPort } from '../ports/DiscordApiPort';
+import type { ILogger } from '../ports/LoggerPort';
 import { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 import { NotificationService } from './NotificationService';
 
@@ -15,6 +17,8 @@ global.fetch = vi.fn();
 
 describe('NotificationService', () => {
   let notificationService: NotificationService;
+  let mockLogger: ILogger;
+  let mockDiscordApi: IDiscordApiPort;
   let mockScheduleRepository: IScheduleRepository;
   let mockResponseRepository: IResponseRepository;
   let mockGetScheduleSummaryUseCase: GetScheduleSummaryUseCase;
@@ -48,6 +52,19 @@ describe('NotificationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    mockDiscordApi = {
+      updateMessage: vi.fn(),
+      sendMessage: vi.fn(),
+      sendNotification: vi.fn(),
+    };
+
     mockScheduleRepository = {
       save: vi.fn(),
       findById: vi.fn(),
@@ -72,8 +89,19 @@ describe('NotificationService', () => {
       mockScheduleRepository,
       mockResponseRepository
     );
+    vi.spyOn(mockGetScheduleSummaryUseCase, 'execute').mockResolvedValue({
+      success: true,
+      summary: {
+        schedule: mockSchedule,
+        responses: [],
+        responseCounts: {},
+        bestDateId: null,
+      } as ScheduleSummaryResponse,
+    });
 
     notificationService = new NotificationService(
+      mockLogger,
+      mockDiscordApi,
       mockScheduleRepository,
       mockResponseRepository,
       mockGetScheduleSummaryUseCase,
@@ -84,24 +112,20 @@ describe('NotificationService', () => {
 
   describe('sendDeadlineReminder', () => {
     it('should send reminder to channel', async () => {
-      // Mock channel message sending
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'channel-message-123' }),
-      });
-
       await notificationService.sendDeadlineReminder(mockSchedule);
 
-      // Verify channel message was sent
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/channels/channel123/messages',
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            Authorization: `Bot ${mockToken}`,
-          }),
-          body: expect.stringContaining('締切リマインダー'),
-        })
+          content: expect.stringContaining('⏰ **締切リマインダー**'),
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              color: 0xffcc00,
+              fields: expect.any(Array),
+            }),
+          ]),
+        }),
+        mockToken
       );
     });
 
