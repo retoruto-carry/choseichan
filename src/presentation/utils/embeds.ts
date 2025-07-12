@@ -9,7 +9,16 @@ export function createScheduleEmbed(
   totalResponses?: number,
   summary?: ScheduleSummaryResponse
 ) {
-  const dateList = schedule.dates.map((date, index) => `${index + 1}. ${date.datetime}`).join('\n');
+  // 最有力候補を判定
+  const bestDateId = summary?.bestDateId || summary?.statistics?.optimalDates?.optimalDateId;
+  const hasResponses = summary?.responses && summary.responses.length > 0;
+
+  const dateList = schedule.dates
+    .map((date, index) => {
+      const isBest = date.id === bestDateId && hasResponses;
+      return `${isBest ? '⭐ ' : ''}${index + 1}. ${date.datetime}`;
+    })
+    .join('\n');
 
   const descriptionParts = [schedule.description || '', ''];
 
