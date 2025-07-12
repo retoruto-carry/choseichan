@@ -182,23 +182,6 @@ export const NOTIFICATION_CONSTANTS = {
   },
 } as const;
 
-// キャッシュ定数
-export const CACHE_CONSTANTS = {
-  // TTL設定（秒単位）
-  GUILD_MEMBERS_TTL: 5 * 60, // 5分
-  SCHEDULE_CACHE_TTL: 1 * 60, // 1分
-  RESPONSE_CACHE_TTL: 30, // 30秒
-
-  // キャッシュキー
-  CACHE_KEYS: {
-    GUILD_MEMBERS: (guildId: string) => `guild:${guildId}:members`,
-    SCHEDULE: (scheduleId: string, guildId: string) => `schedule:${guildId}:${scheduleId}`,
-    RESPONSES: (scheduleId: string, guildId: string) => `responses:${guildId}:${scheduleId}`,
-    USER_RESPONSE: (scheduleId: string, userId: string, guildId: string) =>
-      `response:${guildId}:${scheduleId}:${userId}`,
-  },
-} as const;
-
 // 定数の型定義
 export type ScheduleStatus =
   (typeof BUSINESS_CONSTANTS.SCHEDULE_STATUS)[keyof typeof BUSINESS_CONSTANTS.SCHEDULE_STATUS];
