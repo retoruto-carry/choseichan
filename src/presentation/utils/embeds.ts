@@ -13,19 +13,26 @@ export function createScheduleEmbed(
   const bestDateId = summary?.bestDateId || summary?.statistics?.optimalDates?.optimalDateId;
   const hasResponses = summary?.responses && summary.responses.length > 0;
 
-  const dateList = schedule.dates
-    .map((date, index) => {
-      const isBest = date.id === bestDateId && hasResponses;
-      const prefix = isBest ? '⭐ ' : '';
+  // 日程フィールドを作成
+  const dateFields = schedule.dates.map((date, idx) => {
+    const isBest = date.id === bestDateId && hasResponses;
+    const prefix = isBest ? '⭐ ' : '';
+    const dateStr = date.datetime;
 
-      if (summary?.responseCounts) {
-        const count = summary.responseCounts[date.id] || { yes: 0, maybe: 0, no: 0 };
-        return `${prefix}${index + 1}. **${date.datetime}**\n**集計：** ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
-      } else {
-        return `${prefix}${index + 1}. **${date.datetime}**`;
-      }
-    })
-    .join('\n\n');
+    let fieldValue = '';
+    if (summary?.responseCounts) {
+      const count = summary.responseCounts[date.id] || { yes: 0, maybe: 0, no: 0 };
+      fieldValue = `**集計：** ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
+    } else {
+      fieldValue = '集計なし';
+    }
+
+    return {
+      name: `${prefix}${idx + 1}. **${dateStr}**`,
+      value: fieldValue,
+      inline: false,
+    };
+  });
 
   const descriptionParts = [schedule.description || '', ''];
 
@@ -33,21 +40,17 @@ export function createScheduleEmbed(
     const deadlineStr =
       schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
     descriptionParts.push(`⏰ **締切：** ${formatDate(deadlineStr)}`);
-    descriptionParts.push('');
   }
 
   if (totalResponses !== undefined) {
     descriptionParts.push(`**回答者：** ${totalResponses}人`);
-    descriptionParts.push('');
   }
-
-  descriptionParts.push(dateList);
 
   return {
     title: `📅 ${schedule.title}`,
     description: descriptionParts.filter(Boolean).join('\n'),
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
-    fields: [],
+    fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
       text: `作成：${schedule.createdBy.username}`,
     },
