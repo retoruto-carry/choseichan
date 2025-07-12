@@ -32,17 +32,17 @@ export function createScheduleEmbed(
   if (schedule.deadline) {
     const deadlineStr =
       schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
-    descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
+    descriptionParts.push(`⏰ **締切：** ${formatDate(deadlineStr)}`);
     descriptionParts.push('');
   }
 
   // 回答者数を表示（過去のバージョンとの互換性のため）
   if (totalResponses !== undefined) {
-    descriptionParts.push(`回答者: ${totalResponses}人`);
+    descriptionParts.push(`**回答者：** ${totalResponses}人`);
     descriptionParts.push('');
   }
 
-  descriptionParts.push('**候補日時:**');
+  descriptionParts.push('**候補日時：**');
   descriptionParts.push(dateList);
 
   return {
@@ -51,7 +51,7 @@ export function createScheduleEmbed(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: [],
     footer: {
-      text: `作成: ${schedule.createdBy.username}`,
+      text: `作成：${schedule.createdBy.username}`,
     },
     timestamp:
       schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt,
@@ -75,7 +75,7 @@ export function createScheduleEmbedWithTable(
     const dateStr = date.datetime;
 
     // 集計のみ（詳細なし）
-    let fieldValue = `集計: ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
+    let fieldValue = `**集計：** ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
 
     // 詳細表示の場合は各ユーザーの回答も含める
     if (showDetails && userResponses.length > 0) {
@@ -116,10 +116,10 @@ export function createScheduleEmbedWithTable(
       (schedule.deadline as unknown) instanceof Date
         ? (schedule.deadline as unknown as Date).toISOString()
         : (schedule.deadline as string);
-    descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
+    descriptionParts.push(`⏰ **締切：** ${formatDate(deadlineStr)}`);
   }
 
-  descriptionParts.push(`回答者: ${userResponses.length}人`);
+  descriptionParts.push(`**回答者：** ${userResponses.length}人`);
 
   return {
     title: `📅 ${schedule.title}`,
@@ -127,7 +127,7 @@ export function createScheduleEmbedWithTable(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
-      text: `作成: ${schedule.createdBy.username}`,
+      text: `作成：${schedule.createdBy.username}`,
     },
     timestamp: schedule.updatedAt,
   };
