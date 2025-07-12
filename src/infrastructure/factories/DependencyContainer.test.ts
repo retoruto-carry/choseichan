@@ -45,7 +45,7 @@ describe('DependencyContainer', () => {
     it('should initialize infrastructure services', () => {
       expect(container.infrastructureServices).toBeDefined();
       expect(container.infrastructureServices.repositoryFactory).toBeDefined();
-      expect(container.infrastructureServices.discordApiService).toBeDefined();
+      expect(container.infrastructureServices.messageUpdateQueuePort).toBeDefined();
     });
 
     it('should initialize application services', () => {

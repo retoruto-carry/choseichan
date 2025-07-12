@@ -1,15 +1,15 @@
 /**
  * Discord API Adapter
  *
- * Application層のIDiscordApiPortの実装
- * Infrastructure層のDiscordApiServiceを適合
+ * IDiscordApiPort の Infrastructure 実装
+ * infrastructure/services/DiscordApiService を使用
  */
 
 import type { IDiscordApiPort } from '../../application/ports/DiscordApiPort';
-import type { IDiscordApiService } from '../services/DiscordApiService';
+import { DiscordApiService } from '../services/DiscordApiService';
 
 export class DiscordApiAdapter implements IDiscordApiPort {
-  constructor(private discordApiService: IDiscordApiService) {}
+  private discordApiService = new DiscordApiService();
 
   async updateMessage(
     channelId: string,
@@ -25,6 +25,6 @@ export class DiscordApiAdapter implements IDiscordApiPort {
   }
 
   async sendNotification(channelId: string, content: string, token: string): Promise<void> {
-    await this.discordApiService.sendMessage(channelId, { content }, token);
+    await this.discordApiService.sendNotification(channelId, content, token);
   }
 }

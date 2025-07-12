@@ -4,7 +4,7 @@
  * 締切リマインダー処理のユースケース
  */
 
-import { processBatches } from '../../infrastructure/utils/processBatches';
+import { processBatches } from '../../infrastructure/utils/rate-limiter';
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';
 import type { NotificationService } from '../services/NotificationService';

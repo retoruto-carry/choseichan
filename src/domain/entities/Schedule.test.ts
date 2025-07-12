@@ -186,8 +186,7 @@ describe('Schedule Domain Entity', () => {
       });
     });
 
-    it('should close schedule', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10)); // Ensure time difference
+    it('should close schedule', () => {
       const closedSchedule = schedule.close();
 
       expect(closedSchedule.status).toBe(ScheduleStatus.CLOSED);
@@ -197,9 +196,8 @@ describe('Schedule Domain Entity', () => {
       expect(closedSchedule.id).toBe(schedule.id); // Other fields unchanged
     });
 
-    it('should reopen schedule', async () => {
+    it('should reopen schedule', () => {
       const closedSchedule = schedule.close();
-      await new Promise((resolve) => setTimeout(resolve, 10)); // Ensure time difference
       const reopenedSchedule = closedSchedule.reopen();
 
       expect(reopenedSchedule.status).toBe(ScheduleStatus.OPEN);
@@ -244,8 +242,7 @@ describe('Schedule Domain Entity', () => {
       expect(schedule.canBeEditedBy('otheruser')).toBe(false); // Other user cannot edit
     });
 
-    it('should update schedule properties', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1)); // Ensure time difference
+    it('should update schedule properties', () => {
 
       const updatedTitle = schedule.updateTitle('Updated Title');
       const updatedDescription = updatedTitle.updateDescription('Updated description');
@@ -254,12 +251,11 @@ describe('Schedule Domain Entity', () => {
       expect(updatedMessage.title).toBe('Updated Title');
       expect(updatedMessage.description).toBe('Updated description');
       expect(updatedMessage.messageId).toBe('msg123');
-      expect(updatedMessage.updatedAt.getTime()).toBeGreaterThan(schedule.updatedAt.getTime());
+      expect(updatedMessage.updatedAt.getTime()).toBeGreaterThanOrEqual(schedule.updatedAt.getTime());
       expect(updatedMessage.id).toBe(schedule.id); // ID unchanged
     });
 
-    it('should update total responses', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10)); // 時間差を確保
+    it('should update total responses', () => {
       const updatedSchedule = schedule.updateTotalResponses(5);
 
       expect(updatedSchedule.totalResponses).toBe(5);

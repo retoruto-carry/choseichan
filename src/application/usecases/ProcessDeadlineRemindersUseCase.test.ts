@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../../infrastructure/types/discord';
 import type { ScheduleResponse } from '../dto/ScheduleDto';
+import type { ILogger } from '../ports/LoggerPort';
+import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import { ProcessDeadlineRemindersUseCase } from './ProcessDeadlineRemindersUseCase';
 
 describe('ProcessDeadlineRemindersUseCase', () => {
   let useCase: ProcessDeadlineRemindersUseCase;
+  let mockLogger: ILogger;
   let mockDeadlineReminderUseCase: any;
   let mockGetScheduleUseCase: any;
   let mockGetScheduleSummaryUseCase: any;
   let mockProcessReminderUseCase: any;
   let mockCloseScheduleUseCase: any;
   let mockNotificationService: any;
-  let mockEnv: Env;
+  let mockEnv: IEnvironmentPort;
 
   const mockSchedule: ScheduleResponse = {
     id: 'schedule-123',
@@ -53,15 +56,33 @@ describe('ProcessDeadlineRemindersUseCase', () => {
   };
 
   beforeEach(() => {
+    // Setup mock logger
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
     // Setup mock environment
     mockEnv = {
-      DISCORD_TOKEN: 'test_token',
-      DISCORD_APPLICATION_ID: 'test_app',
-      DISCORD_PUBLIC_KEY: 'test_key',
-      DB: {} as D1Database,
-      REMINDER_BATCH_SIZE: '10',
-      REMINDER_BATCH_DELAY: '50',
-      ctx: { waitUntil: vi.fn() } as any,
+      get: vi.fn((key: string) => {
+        const env: Record<string, string> = {
+          DISCORD_TOKEN: 'test_token',
+          DISCORD_APPLICATION_ID: 'test_app',
+          REMINDER_BATCH_SIZE: '10',
+          REMINDER_BATCH_DELAY: '50',
+        };
+        return env[key];
+      }),
+      getOptional: vi.fn((key: string) => {
+        const env: Record<string, string> = {
+          REMINDER_BATCH_SIZE: '10',
+          REMINDER_BATCH_DELAY: '50',
+        };
+        return env[key];
+      }),
+      getRequired: vi.fn(),
     };
 
     // Setup mock use cases
@@ -92,6 +113,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     } as any;
 
     useCase = new ProcessDeadlineRemindersUseCase(
+      mockLogger,
       mockDeadlineReminderUseCase as any,
       mockGetScheduleUseCase as any,
       mockGetScheduleSummaryUseCase as any,
@@ -181,17 +203,27 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     });
 
     it('should skip processing when missing Discord credentials', async () => {
-      // Remove Discord credentials
-      const envWithoutCreds = { ...mockEnv, DISCORD_TOKEN: undefined };
+      // Mock environment without credentials
+      const envWithoutCreds: IEnvironmentPort = {
+        get: vi.fn((key: string) => {
+          if (key === 'DISCORD_TOKEN' || key === 'DISCORD_APPLICATION_ID') {
+            return undefined;
+          }
+          return 'test_value';
+        }),
+        getOptional: vi.fn(),
+        getRequired: vi.fn(),
+      };
 
       const useCaseWithoutCreds = new ProcessDeadlineRemindersUseCase(
+        mockLogger,
         mockDeadlineReminderUseCase as any,
         mockGetScheduleUseCase as any,
         mockGetScheduleSummaryUseCase as any,
         mockProcessReminderUseCase as any,
         mockCloseScheduleUseCase as any,
         mockNotificationService as any,
-        envWithoutCreds as any
+        envWithoutCreds
       );
 
       await useCaseWithoutCreds.execute();
@@ -353,13 +385,26 @@ describe('ProcessDeadlineRemindersUseCase', () => {
     });
 
     it('should use custom batch configuration', async () => {
-      const customEnv = {
-        ...mockEnv,
-        REMINDER_BATCH_SIZE: '5',
-        REMINDER_BATCH_DELAY: '200',
+      const customEnv: IEnvironmentPort = {
+        get: vi.fn((key: string) => {
+          const env: Record<string, string> = {
+            DISCORD_TOKEN: 'test_token',
+            DISCORD_APPLICATION_ID: 'test_app',
+          };
+          return env[key];
+        }),
+        getOptional: vi.fn((key: string) => {
+          const env: Record<string, string> = {
+            REMINDER_BATCH_SIZE: '5',
+            REMINDER_BATCH_DELAY: '200',
+          };
+          return env[key];
+        }),
+        getRequired: vi.fn(),
       };
 
       const customUseCase = new ProcessDeadlineRemindersUseCase(
+        mockLogger,
         mockDeadlineReminderUseCase as any,
         mockGetScheduleUseCase as any,
         mockGetScheduleSummaryUseCase as any,

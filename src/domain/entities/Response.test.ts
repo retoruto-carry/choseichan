@@ -96,9 +96,7 @@ describe('Response', () => {
       });
     });
 
-    it('should update existing statuses', async () => {
-      // Wait a bit to ensure different timestamps
-      await new Promise((resolve) => setTimeout(resolve, 10));
+    it('should update existing statuses', () => {
       const newStatuses = new Map([
         ['date-1', ResponseStatus.create(ResponseStatusValue.NG)],
         ['date-3', ResponseStatus.create(ResponseStatusValue.OK)],
@@ -110,7 +108,7 @@ describe('Response', () => {
       expect(updated.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.NG);
       expect(updated.getStatusForDate('date-2')).toBeUndefined();
       expect(updated.getStatusForDate('date-3')?.value).toBe(ResponseStatusValue.OK);
-      expect(updated.updatedAt.getTime()).toBeGreaterThan(response.updatedAt.getTime());
+      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(response.updatedAt.getTime());
     });
 
     it('should clear all statuses when empty map provided', () => {

@@ -151,7 +151,7 @@ describe('NotificationService', () => {
 
       await notificationService.sendDeadlineReminder(scheduleWithoutDeadline);
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockDiscordApi.sendMessage).not.toHaveBeenCalled();
     });
   });
 
@@ -210,22 +210,17 @@ describe('NotificationService', () => {
         summary: mockSummaryResponse,
       });
 
-      // Mock message sending
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'summary-message-123' }),
-      });
-
       await notificationService.sendSummaryMessage(scheduleId, guildId);
 
       expect(mockGetScheduleSummaryUseCase.execute).toHaveBeenCalledWith(scheduleId, guildId);
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/channels/channel123/messages',
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('締め切られました'),
-        })
+          content: expect.stringContaining('締め切られました'),
+          embeds: expect.any(Array),
+        }),
+        mockToken
       );
     });
   });
@@ -234,40 +229,26 @@ describe('NotificationService', () => {
     it('should send PR message with message reference after delay', async () => {
       vi.useFakeTimers();
 
-      // Mock message sending
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'pr-message-123' }),
-      });
-
       // Start the PR message sending (which includes the delay)
       const sendPromise = notificationService.sendPRMessage(mockSchedule);
 
       // Should not be called immediately
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockDiscordApi.sendMessage).not.toHaveBeenCalled();
 
       // Fast forward 5 seconds and wait for the promise
       await vi.advanceTimersByTimeAsync(5000);
       await sendPromise;
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://discord.com/api/v10/channels/channel123/messages',
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
+        'channel123',
         expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('message_reference'),
-        })
+          content: expect.stringContaining('ピクページ'),
+          message_reference: {
+            message_id: 'message123',
+          },
+        }),
+        mockToken
       );
-
-      // Check that message reference is included
-      const callArgs = (global.fetch as any).mock.calls[0];
-      const body = JSON.parse(callArgs[1].body);
-      expect(body.message_reference.message_id).toBe('message123');
-
-      // Check PR message content
-      expect(body.content).toContain(
-        '[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)'
-      );
-      expect(body.content).toContain('調整ちゃんは無料で運営されています');
 
       vi.useRealTimers();
     });

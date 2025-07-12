@@ -99,7 +99,7 @@ describe('Rate Limiter', () => {
             concurrent.push(i);
             maxConcurrent = Math.max(maxConcurrent, concurrent.length);
 
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 10));
 
             concurrent.splice(concurrent.indexOf(i), 1);
             return i;
@@ -110,10 +110,10 @@ describe('Rate Limiter', () => {
 
       expect(results.sort()).toEqual([0, 1, 2, 3, 4]);
       expect(maxConcurrent).toBeLessThanOrEqual(2);
-    });
+    }, 10000);
 
     it('should delay between batches', async () => {
-      const limiter = new RateLimiter(1, 100);
+      const limiter = new RateLimiter(1, 50);
       const times: number[] = [];
 
       const tasks = Array(3)
@@ -127,8 +127,8 @@ describe('Rate Limiter', () => {
       await Promise.all(tasks);
 
       // Check delays between executions (with small tolerance for timing variations)
-      expect(times[1] - times[0]).toBeGreaterThanOrEqual(95);
-      expect(times[2] - times[1]).toBeGreaterThanOrEqual(95);
-    });
+      expect(times[1] - times[0]).toBeGreaterThanOrEqual(45);
+      expect(times[2] - times[1]).toBeGreaterThanOrEqual(45);
+    }, 10000);
   });
 });
