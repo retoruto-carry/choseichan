@@ -124,8 +124,8 @@ export class VoteController {
       // 複数メッセージの場合は最初のメッセージに件数を表示
       const content =
         componentGroups.length > 1
-          ? `📝 **${schedule.title}** の回答（1/${componentGroups.length}）\n\n各日程について回答を選択してください：`
-          : `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：`;
+          ? `📝 **${schedule.title}** の回答（1/${componentGroups.length}）\n\n各日程について回答を選択してください：\n-# ※反映には約5秒~10秒かかります\n`
+          : `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：\n-# ※反映には約5秒~10秒かかります\n`;
 
       return new Response(
         JSON.stringify({
