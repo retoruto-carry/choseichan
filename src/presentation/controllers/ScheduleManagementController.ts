@@ -7,10 +7,6 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { updateScheduleMainMessage } from '../../application/services/ScheduleUpdaterService';
-import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
-import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
-import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFormatterAdapter';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
@@ -420,50 +416,42 @@ export class ScheduleManagementController {
   private async handlePostCloseActions(
     scheduleId: string,
     guildId: string,
-    interaction: ButtonInteraction,
+    _interaction: ButtonInteraction,
     env: Env
   ): Promise<void> {
     try {
-      // メインメッセージの更新
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
-        scheduleId,
-        guildId
-      );
-      if (
-        scheduleResult.success &&
-        scheduleResult.schedule?.messageId &&
-        env.DISCORD_APPLICATION_ID
-      ) {
-        const updatePromise = updateScheduleMainMessage(
-          scheduleId,
-          scheduleResult.schedule.messageId,
-          interaction.token,
-          this.dependencyContainer,
-          env,
-          guildId,
-          new DiscordApiAdapter(),
-          new MessageFormatterAdapter(),
-          new LoggerAdapter()
-        ).catch((error) =>
-          this.logger.error(
-            'Failed to update main message after closing',
-            error instanceof Error ? error : new Error(String(error))
-          )
-        );
+      // メインメッセージの更新と通知送信（NotificationServiceを使用）
+      const notificationService = this.dependencyContainer.applicationServices.notificationService;
+      if (notificationService) {
+        // メインメッセージ更新
+        const updatePromise = notificationService
+          .updateMainMessage(scheduleId, guildId)
+          .catch((error) =>
+            this.logger.error(
+              'Failed to update main message after closing',
+              error instanceof Error ? error : new Error(String(error))
+            )
+          );
 
         if (env.ctx && typeof env.ctx.waitUntil === 'function') {
           env.ctx.waitUntil(updatePromise);
         }
-      }
 
-      // 通知送信
-      const notificationService = this.dependencyContainer.applicationServices.notificationService;
-      if (notificationService) {
+        // 通知送信
         try {
           await notificationService.sendSummaryMessage(scheduleId, guildId);
+
+          // PRメッセージ送信のためにスケジュール情報を取得
+          // 一時的にPR通知機能をオフ
+          /*
+          const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
+            scheduleId,
+            guildId
+          );
           if (scheduleResult.success && scheduleResult.schedule) {
             notificationService.sendPRMessage(scheduleResult.schedule);
           }
+          */
         } catch (error) {
           this.logger.error(
             'Failed to send closure notifications:',
