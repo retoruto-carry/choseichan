@@ -19,12 +19,12 @@ export function formatDateShort(dateString: string): string {
  */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  
+
   // 無効な日付の場合はそのまま返す
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return dateString;
   }
-  
+
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -106,21 +106,9 @@ export function parseUserInputDate(input: string): Date | null {
       return null;
     }
 
-    const date = createJSTDate(
-      currentYear,
-      monthNum - 1,
-      dayNum,
-      parseInt(hour),
-      parseInt(minute)
-    );
+    const date = createJSTDate(currentYear, monthNum - 1, dayNum, parseInt(hour), parseInt(minute));
     if (date < now) {
-      return createJSTDate(
-        currentYear + 1,
-        monthNum - 1,
-        dayNum,
-        parseInt(hour),
-        parseInt(minute)
-      );
+      return createJSTDate(currentYear + 1, monthNum - 1, dayNum, parseInt(hour), parseInt(minute));
     }
     return date;
   }
@@ -219,14 +207,7 @@ export function parseUserInputDate(input: string): Date | null {
   const match6b = cleanedInput.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
   if (match6b) {
     const [, year, month, day] = match6b;
-    return createJSTDate(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      23,
-      59,
-      59
-    );
+    return createJSTDate(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59);
   }
 
   // ISO-8601形式

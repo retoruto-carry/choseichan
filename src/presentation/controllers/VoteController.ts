@@ -316,7 +316,7 @@ export class VoteController {
             });
           }
         }
-        
+
         env.ctx.waitUntil(this.sendClosureNotifications(scheduleId, guildId, env));
       }
 
@@ -352,11 +352,11 @@ export class VoteController {
       // Ensure Discord credentials are available
       const discordToken = env.DISCORD_TOKEN ?? '';
       const applicationId = env.DISCORD_APPLICATION_ID ?? '';
-      
+
       if (!discordToken || !applicationId) {
         throw new Error('Discord credentials are not configured');
       }
-      
+
       const notificationService = new NotificationService(
         this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
         this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),

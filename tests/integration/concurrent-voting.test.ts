@@ -1,6 +1,6 @@
 /**
  * 並行投票の統合テスト
- * 
+ *
  * 複数ユーザーが同時に投票を行った場合の競合対策をテスト
  */
 
@@ -247,7 +247,12 @@ describe('並行投票の統合テスト', () => {
       const votes = Array.from({ length: userCount }, (_, i) => ({
         userId: `user-${i}`,
         username: `ユーザー${i}`,
-        responses: [{ dateId: 'date1', status: i % 3 === 0 ? 'ok' : i % 3 === 1 ? 'maybe' : 'ng' }],
+        responses: [
+          {
+            dateId: 'date1',
+            status: (i % 3 === 0 ? 'ok' : i % 3 === 1 ? 'maybe' : 'ng') as 'ok' | 'maybe' | 'ng',
+          },
+        ],
       }));
 
       const startTime = Date.now();
@@ -293,9 +298,9 @@ describe('並行投票の統合テスト', () => {
       expect(date1Counts).toBeDefined();
 
       // 投票分布の確認（OK: 17, MAYBE: 17, NG: 16）
-      const expectedOk = Math.floor(userCount / 3) + (userCount % 3 > 0 ? 1 : 0);
-      const expectedMaybe = Math.floor(userCount / 3) + (userCount % 3 > 1 ? 1 : 0);
-      const expectedNg = Math.floor(userCount / 3);
+      const _expectedOk = Math.floor(userCount / 3) + (userCount % 3 > 0 ? 1 : 0);
+      const _expectedMaybe = Math.floor(userCount / 3) + (userCount % 3 > 1 ? 1 : 0);
+      const _expectedNg = Math.floor(userCount / 3);
 
       expect(date1Counts.yes + date1Counts.maybe + date1Counts.no).toBe(userCount);
     });
@@ -304,14 +309,14 @@ describe('並行投票の統合テスト', () => {
   describe('メッセージ更新戦略', () => {
     it('レート制限が正常に動作する', async () => {
       const strategy = getMessageUpdateStrategy();
-      
+
       // 最初の更新は許可される
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
       strategy.recordUpdate('schedule-1', 'message-1');
-      
+
       // 短時間内の更新はスキップされる
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-      
+
       // 最小間隔後は更新可能
       await new Promise((resolve) => setTimeout(resolve, 1100));
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
@@ -319,26 +324,26 @@ describe('並行投票の統合テスト', () => {
 
     it('異なるスケジュールの更新は独立して処理される', async () => {
       const strategy = getMessageUpdateStrategy();
-      
+
       // 両方とも最初の更新は許可される
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);
       strategy.recordUpdate('schedule-1', 'message-1');
-      
+
       expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(true);
       strategy.recordUpdate('schedule-2', 'message-2');
-      
+
       // それぞれのスケジュールは独立してレート制限される
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
       expect(strategy.shouldUpdate('schedule-2', 'message-2')).toBe(false);
     });
-    
+
     it('締切時の強制更新が動作する', async () => {
       const strategy = getMessageUpdateStrategy();
-      
+
       // 通常の更新を記録
       strategy.recordUpdate('schedule-1', 'message-1');
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(false);
-      
+
       // 強制更新後は即座に更新可能
       strategy.forceUpdate('schedule-1', 'message-1');
       expect(strategy.shouldUpdate('schedule-1', 'message-1')).toBe(true);

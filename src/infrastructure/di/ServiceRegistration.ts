@@ -66,25 +66,22 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
 function registerApplicationServices(container: IDIContainer, env: Env): void {
   // Notification Service (Singleton - only if credentials available)
   if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID) {
-    container.registerSingleton(
-      SERVICE_TOKENS.NOTIFICATION_SERVICE,
-      (c) => {
-        const discordToken = env.DISCORD_TOKEN ?? '';
-        const applicationId = env.DISCORD_APPLICATION_ID ?? '';
-        
-        if (!discordToken || !applicationId) {
-          throw new Error('Discord credentials are not configured for NotificationService');
-        }
-        
-        return new NotificationService(
-          c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY),
-          c.resolve(SERVICE_TOKENS.RESPONSE_REPOSITORY),
-          c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
-          discordToken,
-          applicationId
-        );
+    container.registerSingleton(SERVICE_TOKENS.NOTIFICATION_SERVICE, (c) => {
+      const discordToken = env.DISCORD_TOKEN ?? '';
+      const applicationId = env.DISCORD_APPLICATION_ID ?? '';
+
+      if (!discordToken || !applicationId) {
+        throw new Error('Discord credentials are not configured for NotificationService');
       }
-    );
+
+      return new NotificationService(
+        c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY),
+        c.resolve(SERVICE_TOKENS.RESPONSE_REPOSITORY),
+        c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
+        discordToken,
+        applicationId
+      );
+    });
   }
 }
 

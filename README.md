@@ -184,7 +184,9 @@ npm run db:shell -- --command="SELECT COUNT(*) FROM schedules"
 
 ## 📝 ライセンス
 
-MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照してください。
+非OSSライセンス（Custom License - Non-OSS） - 詳細は [LICENSE](LICENSE) ファイルを参照してください。
+
+このプロジェクトは現在、個人での学習・参考用途のみ許可されています。商用利用や再配布は禁止されています。
 
 ## 🙏 謝辞
 

@@ -117,34 +117,36 @@ export class NotificationService {
     if (!schedule.deadline) {
       return {
         content: `⏰ **リマインダー**: 日程調整「${schedule.title}」の締切が近づいています！`,
-        embeds: [{
-          title: '📅 未回答の方はご回答をお願いします',
-          color: 0xf39c12,
-          fields: [
-            {
-              name: '日程調整',
-              value: schedule.title,
-              inline: true,
+        embeds: [
+          {
+            title: '📅 未回答の方はご回答をお願いします',
+            color: 0xf39c12,
+            fields: [
+              {
+                name: '日程調整',
+                value: schedule.title,
+                inline: true,
+              },
+              {
+                name: '締切',
+                value: '未設定',
+                inline: true,
+              },
+              {
+                name: '未回答者',
+                value: nonRespondents.join(', ') || 'なし',
+                inline: false,
+              },
+            ],
+            footer: {
+              text: `ID: ${schedule.id}`,
             },
-            {
-              name: '締切',
-              value: '未設定',
-              inline: true,
-            },
-            {
-              name: '未回答者',
-              value: nonRespondents.join(', ') || 'なし',
-              inline: false,
-            },
-          ],
-          footer: {
-            text: `ID: ${schedule.id}`,
+            timestamp: new Date().toISOString(),
           },
-          timestamp: new Date().toISOString(),
-        }],
+        ],
       };
     }
-    
+
     const deadline =
       schedule.deadline instanceof Date ? schedule.deadline : new Date(schedule.deadline);
     return {

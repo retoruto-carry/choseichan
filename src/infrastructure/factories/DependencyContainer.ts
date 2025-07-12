@@ -5,10 +5,10 @@
  * Clean Architectureの依存性の注入を実現
  */
 
-import { NotificationService } from '../../application/services/NotificationService';
 import { MessageUpdateServiceImpl } from '../../application/services/MessageUpdateServiceImpl';
-import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
+import { NotificationService } from '../../application/services/NotificationService';
 import { ProcessMessageUpdateUseCase } from '../../application/usecases/message/ProcessMessageUpdateUseCase';
+import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 import { SubmitResponseUseCase } from '../../application/usecases/response/SubmitResponseUseCase';
 import { UpdateResponseUseCase } from '../../application/usecases/response/UpdateResponseUseCase';
@@ -110,7 +110,9 @@ export class DependencyContainer {
   }
 
   private createDomainServices(infrastructure: InfrastructureServices): DomainServices {
-    const messageUpdateService = new MessageUpdateServiceImpl(infrastructure.messageUpdateQueuePort);
+    const messageUpdateService = new MessageUpdateServiceImpl(
+      infrastructure.messageUpdateQueuePort
+    );
 
     return {
       messageUpdateService,
@@ -119,7 +121,7 @@ export class DependencyContainer {
 
   private createApplicationServices(
     infrastructure: InfrastructureServices,
-    domainServices: DomainServices
+    _domainServices: DomainServices
   ): ApplicationServices {
     const scheduleRepository = infrastructure.repositoryFactory.getScheduleRepository();
     const responseRepository = infrastructure.repositoryFactory.getResponseRepository();

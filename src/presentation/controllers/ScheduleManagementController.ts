@@ -608,18 +608,16 @@ export class ScheduleManagementController {
             // Check if required values are available
             const applicationId = env.DISCORD_APPLICATION_ID;
             const messageId = schedule.messageId;
-            
+
             if (!applicationId || !messageId) {
-              this.logger.warn('Missing Discord credentials or message ID, skipping message deletion');
+              this.logger.warn(
+                'Missing Discord credentials or message ID, skipping message deletion'
+              );
               return;
             }
-            
+
             const { deleteMessage } = await import('../../presentation/utils/discord');
-            await deleteMessage(
-              applicationId,
-              interaction.token,
-              messageId
-            );
+            await deleteMessage(applicationId, interaction.token, messageId);
           } catch (error) {
             this.logger.error(
               'Failed to delete main Discord message:',

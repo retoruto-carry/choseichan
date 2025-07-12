@@ -208,7 +208,11 @@ export class PerformanceLogger {
     }
   }
 
-  static async measure<T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): Promise<T> {
+  static async measure<T>(
+    operation: string,
+    fn: () => T | Promise<T>,
+    context?: LogContext
+  ): Promise<T> {
     PerformanceLogger.start(operation);
     try {
       const result = await fn();

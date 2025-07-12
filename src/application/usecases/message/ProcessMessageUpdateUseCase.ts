@@ -2,10 +2,10 @@
  * メッセージ更新処理ユースケース
  */
 
-import type { MessageUpdateTask } from '../../../infrastructure/ports/MessageUpdateQueuePort';
-import type { GetScheduleSummaryUseCase } from '../GetScheduleSummaryUseCase';
-import type { IDiscordApiService } from '../../../infrastructure/services/DiscordApiService';
 import { getLogger } from '../../../infrastructure/logging/Logger';
+import type { MessageUpdateTask } from '../../../infrastructure/ports/MessageUpdateQueuePort';
+import type { IDiscordApiService } from '../../../infrastructure/services/DiscordApiService';
+import type { GetScheduleSummaryUseCase } from '../schedule/GetScheduleSummaryUseCase';
 
 export class ProcessMessageUpdateUseCase {
   private readonly logger = getLogger();
@@ -70,7 +70,7 @@ export class ProcessMessageUpdateUseCase {
     for (const task of tasks) {
       const key = `${task.scheduleId}:${task.messageId}`;
       const existing = latestUpdates.get(key);
-      
+
       // より新しいタイムスタンプの更新で上書き
       if (!existing || task.timestamp > existing.timestamp) {
         latestUpdates.set(key, task);
@@ -78,8 +78,8 @@ export class ProcessMessageUpdateUseCase {
     }
 
     // 最新の更新のみを並行実行
-    const updatePromises = Array.from(latestUpdates.values()).map(task => 
-      this.execute(task).catch(error => {
+    const updatePromises = Array.from(latestUpdates.values()).map((task) =>
+      this.execute(task).catch((error) => {
         this.logger.error(
           'Failed to update message in batch',
           error instanceof Error ? error : new Error(String(error)),

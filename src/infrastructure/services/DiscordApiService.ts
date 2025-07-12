@@ -61,7 +61,7 @@ export interface IDiscordApiService {
   updateScheduleMessage(
     channelId: string,
     messageId: string,
-    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryDto,
+    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryResponse,
     botToken: string
   ): Promise<void>;
 }
@@ -128,7 +128,7 @@ export class DiscordApiService implements IDiscordApiService {
   async updateScheduleMessage(
     channelId: string,
     messageId: string,
-    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryDto,
+    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryResponse,
     botToken: string
   ): Promise<void> {
     const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import(

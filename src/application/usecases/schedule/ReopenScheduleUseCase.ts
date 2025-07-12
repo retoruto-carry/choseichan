@@ -4,7 +4,6 @@
  * スケジュールの再開ユースケース
  */
 
-import type { Schedule } from '../../../domain/entities/Schedule';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { ScheduleResponse } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';

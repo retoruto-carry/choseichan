@@ -137,7 +137,10 @@ export function createScheduleNotFoundError(scheduleId: string): ScheduleNotFoun
   return new ScheduleNotFoundError(scheduleId);
 }
 
-export function createScheduleValidationError(message: string, field?: string): ScheduleValidationError {
+export function createScheduleValidationError(
+  message: string,
+  field?: string
+): ScheduleValidationError {
   return new ScheduleValidationError(message, field);
 }
 
@@ -145,15 +148,24 @@ export function createScheduleAlreadyClosedError(scheduleId: string): ScheduleAl
   return new ScheduleAlreadyClosedError(scheduleId);
 }
 
-export function createSchedulePermissionError(action: string, userId: string): SchedulePermissionError {
+export function createSchedulePermissionError(
+  action: string,
+  userId: string
+): SchedulePermissionError {
   return new SchedulePermissionError(action, userId);
 }
 
-export function createResponseNotFoundError(scheduleId: string, userId: string): ResponseNotFoundError {
+export function createResponseNotFoundError(
+  scheduleId: string,
+  userId: string
+): ResponseNotFoundError {
   return new ResponseNotFoundError(scheduleId, userId);
 }
 
-export function createResponseValidationError(message: string, field?: string): ResponseValidationError {
+export function createResponseValidationError(
+  message: string,
+  field?: string
+): ResponseValidationError {
   return new ResponseValidationError(message, field);
 }
 
@@ -176,7 +188,10 @@ export function createDomainRuleViolationError(
   return new DomainRuleViolationError(rule, details);
 }
 
-export function createBusinessLogicError(message: string, details?: Record<string, unknown>): BusinessLogicError {
+export function createBusinessLogicError(
+  message: string,
+  details?: Record<string, unknown>
+): BusinessLogicError {
   return new BusinessLogicError(message, details);
 }
 

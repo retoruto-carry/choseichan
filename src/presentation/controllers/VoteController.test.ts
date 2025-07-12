@@ -50,12 +50,12 @@ describe('VoteController', () => {
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
-    
+
     // Mock MessageUpdateService
     mockMessageUpdateService = {
       scheduleUpdate: vi.fn().mockResolvedValue(undefined),
     };
-    
+
     // Mock environment
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test_key',

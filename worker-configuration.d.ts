@@ -5,10 +5,10 @@ interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_APPLICATION_ID: string;
   DISCORD_TOKEN: string;
-  
+
   // D1 Database
   DB: D1Database;
-  
+
   // Optional settings
   REMINDER_BATCH_SIZE?: string;
   REMINDER_BATCH_DELAY?: string;

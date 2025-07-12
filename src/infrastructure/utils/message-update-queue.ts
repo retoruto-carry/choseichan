@@ -1,13 +1,13 @@
 /**
  * メッセージ更新キューハンドラー
- * 
+ *
  * Cloudflare Queuesのバッチ処理を行うエントリーポイント
  */
 
 import { DependencyContainer } from '../factories/DependencyContainer';
+import { getLogger } from '../logging/Logger';
 import type { MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 import type { Env } from '../types/discord';
-import { getLogger } from '../logging/Logger';
 
 const logger = getLogger();
 
@@ -23,11 +23,14 @@ export async function handleMessageUpdateBatch(
   const processMessageUpdateUseCase = container.processMessageUpdateUseCase;
 
   if (!processMessageUpdateUseCase) {
-    logger.error('ProcessMessageUpdateUseCase not available - missing Discord credentials', {
-      operation: 'handle-message-update-batch',
-      service: 'message-update-queue',
-    });
-    
+    logger.error(
+      'ProcessMessageUpdateUseCase not available - missing Discord credentials',
+      new Error('Missing Discord credentials'),
+      {
+        service: 'message-update-queue',
+      }
+    );
+
     // すべてのメッセージをackして終了
     for (const message of batch.messages) {
       message.ack();

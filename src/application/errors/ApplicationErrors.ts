@@ -136,11 +136,18 @@ export class TimeoutError extends ApplicationError {
 }
 
 // エラーファクトリ関数
-export function createUseCaseValidationError(message: string, useCase?: string): UseCaseValidationError {
+export function createUseCaseValidationError(
+  message: string,
+  useCase?: string
+): UseCaseValidationError {
   return new UseCaseValidationError(message, useCase);
 }
 
-export function createUseCaseExecutionError(message: string, useCase: string, cause?: Error): UseCaseExecutionError {
+export function createUseCaseExecutionError(
+  message: string,
+  useCase: string,
+  cause?: Error
+): UseCaseExecutionError {
   return new UseCaseExecutionError(message, useCase, cause);
 }
 
@@ -152,11 +159,19 @@ export function createMappingError(from: string, to: string, cause?: Error): Map
   return new MappingError(from, to, cause);
 }
 
-export function createSerializationError(data: string, format: string, cause?: Error): SerializationError {
+export function createSerializationError(
+  data: string,
+  format: string,
+  cause?: Error
+): SerializationError {
   return new SerializationError(data, format, cause);
 }
 
-export function createExternalServiceError(service: string, operation: string, cause?: Error): ExternalServiceError {
+export function createExternalServiceError(
+  service: string,
+  operation: string,
+  cause?: Error
+): ExternalServiceError {
   return new ExternalServiceError(service, operation, cause);
 }
 
@@ -164,7 +179,11 @@ export function createRateLimitError(service: string, retryAfter?: number): Rate
   return new RateLimitError(service, retryAfter);
 }
 
-export function createIntegrationError(integration: string, operation: string, cause?: Error): IntegrationError {
+export function createIntegrationError(
+  integration: string,
+  operation: string,
+  cause?: Error
+): IntegrationError {
   return new IntegrationError(integration, operation, cause);
 }
 

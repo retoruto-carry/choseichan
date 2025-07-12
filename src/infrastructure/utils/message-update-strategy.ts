@@ -1,6 +1,6 @@
 /**
  * メッセージ更新戦略
- * 
+ *
  * Cloudflare Workers環境での制限を考慮した実装戦略:
  * 1. レート制限: 短時間での過度な更新を防ぐ
  * 2. 最終更新の保証: 必ず最新の状態が反映される
@@ -34,7 +34,7 @@ export class MessageUpdateStrategy {
 
   /**
    * 更新を実行すべきか判断
-   * 
+   *
    * @returns true: 実行すべき, false: スキップすべき
    */
   shouldUpdate(scheduleId: string, messageId: string): boolean {
@@ -50,7 +50,7 @@ export class MessageUpdateStrategy {
     // レート制限チェック
     const counterKey = `${key}:${Math.floor(now / this.windowMs)}`;
     const count = this.updateCounter.get(counterKey) || 0;
-    
+
     if (count >= this.maxUpdatesPerWindow) {
       return false;
     }
@@ -64,15 +64,15 @@ export class MessageUpdateStrategy {
   recordUpdate(scheduleId: string, messageId: string): void {
     const key = `${scheduleId}:${messageId}`;
     const now = Date.now();
-    
+
     // 実行時刻を記録
     this.lastExecutionTime.set(key, now);
-    
+
     // カウンターを更新
     const counterKey = `${key}:${Math.floor(now / this.windowMs)}`;
     const count = this.updateCounter.get(counterKey) || 0;
     this.updateCounter.set(counterKey, count + 1);
-    
+
     // 古いカウンターをクリーンアップ
     this.cleanupOldCounters();
   }
@@ -99,11 +99,11 @@ export class MessageUpdateStrategy {
   } {
     const now = Date.now();
     const currentWindow = Math.floor(now / this.windowMs);
-    
+
     const recentUpdates = Array.from(this.lastExecutionTime.entries()).map(([key, time]) => {
       const counterKey = `${key}:${currentWindow}`;
       const count = this.updateCounter.get(counterKey) || 0;
-      
+
       return {
         key,
         lastUpdateAge: now - time,

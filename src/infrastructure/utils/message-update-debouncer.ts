@@ -1,6 +1,6 @@
 /**
  * メッセージ更新のデバウンス機能
- * 
+ *
  * Cloudflare Workers環境での制限事項:
  * - setTimeoutが使えないため、即座に実行または保留の判断を行う
  * - 最後の更新を必ず実行するため、保留中フラグを管理
@@ -33,7 +33,7 @@ export class MessageUpdateDebouncer {
 
   /**
    * メッセージ更新の実行判断
-   * 
+   *
    * Cloudflare Workers環境での最適な実装:
    * 1. デバウンス期間内なら保留中の更新として記録
    * 2. デバウンス期間外なら即座に実行し、その後の期間は保留
@@ -64,10 +64,10 @@ export class MessageUpdateDebouncer {
 
     // デバウンス時間外の場合は即座に実行
     this.lastUpdateTime.set(key, now);
-    
+
     try {
       await updateFunction();
-      
+
       // 実行後、保留中の更新があればそれも処理が必要
       // ただし、Cloudflare Workersではタイマーが使えないため、
       // 次回のリクエスト時に処理するか、Durable Objectsを使用する必要がある
@@ -90,15 +90,15 @@ export class MessageUpdateDebouncer {
   async immediateUpdate(
     scheduleId: string,
     messageId: string,
-    token: string,
-    guildId: string,
+    _token: string,
+    _guildId: string,
     updateFunction: () => Promise<void>
   ): Promise<void> {
     const key = `${scheduleId}:${messageId}`;
-    
+
     // 更新時刻を記録
     this.lastUpdateTime.set(key, Date.now());
-    
+
     try {
       await updateFunction();
     } catch (error) {

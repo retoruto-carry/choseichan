@@ -2,20 +2,15 @@
  * Cloudflare Queuesアダプター（インフラストラクチャ層）
  */
 
-import type { MessageUpdateQueuePort, MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 import { getLogger } from '../logging/Logger';
+import type { MessageUpdateQueuePort, MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 
 export class CloudflareQueueAdapter implements MessageUpdateQueuePort {
   private readonly logger = getLogger();
 
-  constructor(
-    private readonly queue: Queue<MessageUpdateTask> | undefined
-  ) {}
+  constructor(private readonly queue: Queue<MessageUpdateTask> | undefined) {}
 
-  async enqueue(
-    task: MessageUpdateTask,
-    options?: { delaySeconds?: number }
-  ): Promise<void> {
+  async enqueue(task: MessageUpdateTask, options?: { delaySeconds?: number }): Promise<void> {
     if (!this.queue) {
       this.logger.warn('MESSAGE_UPDATE_QUEUE not configured, skipping message update', {
         operation: 'enqueue-message-update',
@@ -28,7 +23,7 @@ export class CloudflareQueueAdapter implements MessageUpdateQueuePort {
       await this.queue.send(task, {
         delaySeconds: options?.delaySeconds ?? 2,
       });
-      
+
       this.logger.info('Message update enqueued', {
         operation: 'enqueue-message-update',
         scheduleId: task.scheduleId,

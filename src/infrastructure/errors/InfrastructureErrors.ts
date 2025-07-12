@@ -52,7 +52,10 @@ export class DatabaseTransactionError extends InfrastructureError {
   readonly statusCode = 500;
 
   constructor(operation: string, cause?: Error) {
-    super(`データベーストランザクションが失敗しました: ${operation}`, { operation, cause: cause?.message });
+    super(`データベーストランザクションが失敗しました: ${operation}`, {
+      operation,
+      cause: cause?.message,
+    });
   }
 }
 
@@ -141,7 +144,10 @@ export class NetworkError extends InfrastructureError {
   readonly statusCode = 503;
 
   constructor(operation: string, cause?: Error) {
-    super(`${operation} 中にネットワークエラーが発生しました`, { operation, cause: cause?.message });
+    super(`${operation} 中にネットワークエラーが発生しました`, {
+      operation,
+      cause: cause?.message,
+    });
   }
 }
 
@@ -217,7 +223,10 @@ export class ServiceUnavailableError extends InfrastructureError {
 }
 
 // エラーファクトリ関数
-export function createDatabaseConnectionError(database: string, cause?: Error): DatabaseConnectionError {
+export function createDatabaseConnectionError(
+  database: string,
+  cause?: Error
+): DatabaseConnectionError {
   return new DatabaseConnectionError(database, cause);
 }
 
@@ -225,19 +234,33 @@ export function createDatabaseQueryError(query: string, cause?: Error): Database
   return new DatabaseQueryError(query, cause);
 }
 
-export function createDatabaseTransactionError(operation: string, cause?: Error): DatabaseTransactionError {
+export function createDatabaseTransactionError(
+  operation: string,
+  cause?: Error
+): DatabaseTransactionError {
   return new DatabaseTransactionError(operation, cause);
 }
 
-export function createDatabaseConstraintError(constraint: string, table?: string): DatabaseConstraintError {
+export function createDatabaseConstraintError(
+  constraint: string,
+  table?: string
+): DatabaseConstraintError {
   return new DatabaseConstraintError(constraint, table);
 }
 
-export function createHttpRequestError(url: string, status: number, statusText?: string): HttpRequestError {
+export function createHttpRequestError(
+  url: string,
+  status: number,
+  statusText?: string
+): HttpRequestError {
   return new HttpRequestError(url, status, statusText);
 }
 
-export function createApiResponseError(api: string, message: string, status?: number): ApiResponseError {
+export function createApiResponseError(
+  api: string,
+  message: string,
+  status?: number
+): ApiResponseError {
   return new ApiResponseError(api, message, status);
 }
 
@@ -249,11 +272,18 @@ export function createAuthorizationError(service: string, action: string): Autho
   return new AuthorizationError(service, action);
 }
 
-export function createDiscordApiError(endpoint: string, status: number, message?: string): DiscordApiError {
+export function createDiscordApiError(
+  endpoint: string,
+  status: number,
+  message?: string
+): DiscordApiError {
   return new DiscordApiError(endpoint, status, message);
 }
 
-export function createDiscordRateLimitError(endpoint: string, retryAfter: number): DiscordRateLimitError {
+export function createDiscordRateLimitError(
+  endpoint: string,
+  retryAfter: number
+): DiscordRateLimitError {
   return new DiscordRateLimitError(endpoint, retryAfter);
 }
 
@@ -261,7 +291,10 @@ export function createEnvironmentError(variable: string, expected?: string): Env
   return new EnvironmentError(variable, expected);
 }
 
-export function createServiceUnavailableError(service: string, reason?: string): ServiceUnavailableError {
+export function createServiceUnavailableError(
+  service: string,
+  reason?: string
+): ServiceUnavailableError {
   return new ServiceUnavailableError(service, reason);
 }
 
