@@ -18,6 +18,11 @@ export function formatDateShort(dateString: string): string {
  * @returns 12月25日(月) 19:00 形式の文字列
  */
 export function formatDate(dateString: string): string {
+  // 空文字列やnull/undefinedの場合はそのまま返す
+  if (!dateString || typeof dateString !== 'string') {
+    return String(dateString || '');
+  }
+
   const date = new Date(dateString);
 
   // 無効な日付の場合はそのまま返す
@@ -31,6 +36,12 @@ export function formatDate(dateString: string): string {
   const weekday = weekdays[date.getDay()];
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  // 各値が有効かチェック
+  if (Number.isNaN(month) || Number.isNaN(day) || Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return dateString;
+  }
+
   return `${month}月${day}日(${weekday}) ${hours}:${minutes}`;
 }
 

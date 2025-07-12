@@ -47,6 +47,7 @@ export function createScheduleEmbedWithTable(
   const dateFields = schedule.dates.map((date, idx) => {
     const count = responseCounts[date.id];
     const isBest = date.id === bestDateId && userResponses.length > 0;
+    // 日程候補は自由文字列なのでそのまま表示
     const dateStr = date.datetime;
 
     // 集計のみ（詳細なし）
