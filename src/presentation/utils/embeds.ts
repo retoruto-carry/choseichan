@@ -20,12 +20,12 @@ export function createScheduleEmbed(
 
       if (summary?.responseCounts) {
         const count = summary.responseCounts[date.id] || { yes: 0, maybe: 0, no: 0 };
-        return `${prefix}${index + 1}. **${date.datetime}**\n**集計：** ✅ ${count.yes}人 ❔ ${count.maybe}人 ❌ ${count.no}人`;
+        return `${prefix}${index + 1}. **${date.datetime}**\n**集計：** ${STATUS_EMOJI.yes} ${count.yes}人 ${STATUS_EMOJI.maybe} ${count.maybe}人 ${STATUS_EMOJI.no} ${count.no}人`;
       } else {
         return `${prefix}${index + 1}. **${date.datetime}**`;
       }
     })
-    .join('\n');
+    .join('\n\n');
 
   const descriptionParts = [schedule.description || '', ''];
 
