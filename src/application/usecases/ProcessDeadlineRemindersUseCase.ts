@@ -229,7 +229,8 @@ export class ProcessDeadlineRemindersUseCase {
           }
 
           await this.notificationService.sendSummaryMessage(scheduleId, guildId);
-          this.notificationService.sendPRMessage(scheduleResult.schedule);
+          // 一時的にPR通知機能をオフ
+          // this.notificationService.sendPRMessage(scheduleResult.schedule);
 
           this.logger.info(`Sent closure notification for schedule ${scheduleId}`);
           return { success: true, scheduleId };

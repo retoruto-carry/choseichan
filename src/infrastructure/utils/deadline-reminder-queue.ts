@@ -69,6 +69,8 @@ export async function handleDeadlineReminderBatch(
           case 'send_summary': {
             await notificationService.sendSummaryMessage(task.scheduleId, task.guildId);
 
+            // 一時的にPR通知機能をオフ
+            /*
             // Get schedule for PR message
             const schedule = await container.getScheduleUseCase.execute(
               task.scheduleId,
@@ -77,6 +79,7 @@ export async function handleDeadlineReminderBatch(
             if (schedule.success && schedule.schedule) {
               notificationService.sendPRMessage(schedule.schedule);
             }
+            */
             break;
           }
         }

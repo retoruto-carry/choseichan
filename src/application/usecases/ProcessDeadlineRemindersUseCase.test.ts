@@ -203,7 +203,8 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         'schedule-789',
         'guild-123'
       );
-      expect(mockNotificationService.sendPRMessage).toHaveBeenCalledWith(mockSchedule);
+      // 一時的にPR通知機能をオフのため、テストもスキップ
+      // expect(mockNotificationService.sendPRMessage).toHaveBeenCalledWith(mockSchedule);
     });
 
     it('should skip processing when missing Discord credentials', async () => {
