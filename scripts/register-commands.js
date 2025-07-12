@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, REST, Routes } from 'discord.js';
+import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -6,19 +6,7 @@ dotenv.config();
 const commands = [
   {
     name: 'chouseichan',
-    description: '日程調整を管理します',
-    options: [
-      {
-        name: 'create',
-        description: '新しい日程調整を作成（対話形式）',
-        type: ApplicationCommandOptionType.Subcommand,
-      },
-      // {
-      //   name: 'list',
-      //   description: 'このチャンネルの日程調整一覧を表示',
-      //   type: ApplicationCommandOptionType.Subcommand,
-      // },
-    ],
+    description: '新しい日程調整を作成',
   },
 ];
 

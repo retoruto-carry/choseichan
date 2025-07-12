@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
-import { DISCORD_CONSTANTS, ERROR_MESSAGES } from '../../constants/ApplicationConstants';
+import { DISCORD_CONSTANTS } from '../../constants/ApplicationConstants';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
@@ -25,20 +25,8 @@ export class CommandController {
    */
   async handleChouseichanCommand(interaction: CommandInteraction, _env: Env): Promise<Response> {
     try {
-      const subcommand = interaction.data.options?.[0];
-
-      if (!subcommand) {
-        return this.createErrorResponse(ERROR_MESSAGES.INVALID_INPUT);
-      }
-
-      switch (subcommand.name) {
-        case 'create':
-          return this.handleCreateCommand(interaction);
-        // case 'list':
-        //   return this.handleListCommand(interaction);
-        default:
-          return this.createErrorResponse(ERROR_MESSAGES.UNKNOWN_COMMAND);
-      }
+      // 直接作成コマンドを実行
+      return this.handleCreateCommand(interaction);
     } catch (error) {
       this.logger.error(
         'Error in handleChouseichanCommand',
@@ -46,7 +34,6 @@ export class CommandController {
         {
           operation: 'handle-chouseichan-command',
           useCase: 'CommandController',
-          subcommand: interaction.data.options?.[0]?.name,
           guildId: interaction.guild_id,
         }
       );
