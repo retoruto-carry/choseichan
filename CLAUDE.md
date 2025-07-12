@@ -100,11 +100,144 @@ await db.batch([
 - 締切更新: 即座に実行
 - バッチ処理で効率化
 
+## 開発プロセス - TDD (Test-Driven Development)
+
+### 基本的な流れ
+1. **Red**: 失敗するテストを先に書く
+2. **Green**: テストを通す最小限のコードを実装
+3. **Refactor**: コードを整理・最適化
+
+### 実践例
+```typescript
+// 1. Red - 失敗するテストから始める
+describe('ScheduleDomainService', () => {
+  it('締切日時を過ぎたスケジュールは締切可能', () => {
+    const schedule = new Schedule({ deadline: new Date('2024-01-01') });
+    expect(schedule.canBeClosed(new Date('2024-01-02'))).toBe(true);
+  });
+});
+
+// 2. Green - 最小限の実装
+canBeClosed(currentDate: Date): boolean {
+  return this.deadline ? currentDate > this.deadline : true;
+}
+
+// 3. Refactor - より良い実装に
+canBeClosed(currentDate: Date = new Date()): boolean {
+  if (!this.deadline) return true;
+  return currentDate > this.deadline;
+}
+```
+
 ## テスト戦略
 
+### テスト実行と構成
 - **Vitest**: 順次実行設定（`vitest.config.ts`）
 - **D1モック**: `better-sqlite3`でインメモリDB
 - **DependencyContainer**: 各テストで独立インスタンス
+- **カバレッジ目標**: 80%以上（ビジネスロジックは100%）
+
+### テストの種類と配置
+- **Unit Tests**: 各レイヤーと同じディレクトリに配置 (`*.test.ts`)
+- **Integration Tests**: `/tests/integration/` に配置
+- **Test Helpers**: `/tests/helpers/` に共通処理
+
+### テスト作成のベストプラクティス
+1. **Arrange-Act-Assert パターン**
+   ```typescript
+   it('投票を正しく処理する', async () => {
+     // Arrange: テストデータとモックを準備
+     const mockSchedule = createMockSchedule();
+     vi.mocked(mockUseCase.execute).mockResolvedValue({ success: true });
+     
+     // Act: テスト対象を実行
+     const result = await controller.handleVote(interaction);
+     
+     // Assert: 結果を検証
+     expect(result.status).toBe(200);
+     expect(mockUseCase.execute).toHaveBeenCalledWith(expectedParams);
+   });
+   ```
+
+2. **モックの独立性**
+   - 各テストで新しいモックインスタンスを作成
+   - `beforeEach` で `vi.clearAllMocks()` を実行
+   - グローバル状態を避ける
+
+3. **エラーケースも必ずテスト**
+   - 正常系だけでなく異常系も網羅
+   - エッジケースを意識的にテスト
+
+## コード品質管理
+
+### Linting (Biome)
+```bash
+# リントチェック
+npm run lint
+
+# 自動修正
+npm run lint:fix
+
+# フォーマットのみ
+npm run format
+```
+
+### 重要なルール
+- **未使用インポートの禁止**: Biomeが自動検出・削除
+- **console.log禁止**: 構造化ログ（Logger）を使用
+- **any型の最小化**: 適切な型定義を使用
+- **コメントは日本語**: ビジネスロジックの説明は日本語で
+
+### Type Checking
+```bash
+# 型チェック実行
+npm run typecheck
+
+# エラーが出た場合の対処
+# 1. まず型定義が正しいか確認
+# 2. 必要に応じて型ガードを追加
+# 3. どうしても必要な場合のみ型アサーションを使用
+```
+
+### 型安全性のポイント
+1. **strict mode有効**: `tsconfig.json` で設定済み
+2. **unknown vs any**: 不明な型は `unknown` を使用
+3. **型ガードの活用**:
+   ```typescript
+   function isScheduleResponse(data: unknown): data is ScheduleResponse {
+     return typeof data === 'object' && data !== null && 'id' in data;
+   }
+   ```
+
+## CI/CD前チェックリスト
+
+### コミット前に必ず実行
+```bash
+# 1. テストが全て通ることを確認
+npm test
+
+# 2. 型エラーがないことを確認
+npm run typecheck
+
+# 3. リントエラーがないことを確認
+npm run lint
+
+# 4. または一括チェック
+npm run check  # biome check && tsc --noEmit
+```
+
+### よくあるエラーと対処法
+
+1. **型エラー: 'X' is possibly 'undefined'**
+   - オプショナルチェイニング使用: `obj?.property`
+   - Null合体演算子使用: `value ?? defaultValue`
+
+2. **テストエラー: モックが正しく動作しない**
+   - `vi.clearAllMocks()` を `beforeEach` に追加
+   - モックの戻り値を正しく設定
+
+3. **リントエラー: Import順序**
+   - Biomeの自動修正を実行: `npm run lint:fix`
 
 ## Discord API 制限
 

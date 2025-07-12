@@ -1,5 +1,3 @@
-// import { parseISO } from 'date-fns'; // 未使用のインポートを削除
-
 /**
  * スケジュールの日付を短い形式で表示
  * @param dateString ISO形式の日付文字列
