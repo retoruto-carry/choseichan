@@ -100,13 +100,15 @@ npm run db:migrate:remote
 wrangler d1 migrations apply discord-choseisan-db
 ```
 
-7. Cloudflare Queuesを作成（推奨：メッセージ更新の最適化）
+7. Cloudflare Queuesを作成（推奨：非同期処理の最適化）
 ```bash
 # メッセージ更新用のQueueを作成
 wrangler queues create message-update-queue
-
-# デッドレターキューを作成（エラー処理用）
 wrangler queues create message-update-dlq
+
+# 締切リマインダー用のQueueを作成
+wrangler queues create deadline-reminder-queue
+wrangler queues create deadline-reminder-dlq
 ```
 
 詳細な設定方法は [docs/QUEUES_DEPLOYMENT.md](docs/QUEUES_DEPLOYMENT.md) を参照してください。
@@ -163,8 +165,8 @@ npm run db:shell -- --command="SELECT COUNT(*) FROM schedules"
 - **言語**: TypeScript (strict mode)
 - **アーキテクチャ**: Clean Architecture (Onion Architecture)
 - **データベース**: Cloudflare D1 (SQLite)
-- **キュー**: Cloudflare Queues (メッセージ更新の最適化)
-- **テスト**: Vitest (470+ テスト)
+- **キュー**: Cloudflare Queues (メッセージ更新・締切リマインダーの最適化)
+- **テスト**: Vitest (461テスト - 100%パス)
 - **コード品質**: Biome
 
 詳細なアーキテクチャについては [ARCHITECTURE.md](ARCHITECTURE.md) を参照してください。

@@ -1,10 +1,13 @@
 # Cloudflare Queues デプロイメントガイド
 
-このドキュメントでは、Discord 調整ちゃんのメッセージ更新機能で使用されるCloudflare Queuesのセットアップと運用について説明します。
+このドキュメントでは、Discord 調整ちゃんで使用されるCloudflare Queuesのセットアップと運用について説明します。
 
 ## 概要
 
-Cloudflare Queuesは、メッセージ更新の最適化とDiscord APIのレート制限対策のために使用されています。投票が頻繁に行われる際の更新をバッチ処理し、効率的にメッセージを更新します。
+Cloudflare Queuesは、以下の2つの機能で使用されています：
+
+1. **メッセージ更新Queue**: 投票時のメッセージ更新を最適化
+2. **締切リマインダーQueue**: Discord APIレート制限を考慮した締切処理の非同期化
 
 ## アーキテクチャ
 
@@ -32,15 +35,17 @@ Infrastructure Layer (インフラストラクチャ層)
 ```bash
 # メッセージ更新用のQueueを作成
 wrangler queues create message-update-queue
-
-# デッドレターキュー（DLQ）を作成（エラー処理用）
 wrangler queues create message-update-dlq
+
+# 締切リマインダー用のQueueを作成
+wrangler queues create deadline-reminder-queue
+wrangler queues create deadline-reminder-dlq
 ```
 
 ### 2. wrangler.toml の設定
 
 ```toml
-# Queues configuration for message update batching
+# メッセージ更新Queue
 [[queues.producers]]
 queue = "message-update-queue"
 binding = "MESSAGE_UPDATE_QUEUE"
@@ -51,6 +56,18 @@ max_batch_size = 10          # 一度に処理する最大メッセージ数
 max_batch_timeout = 5        # バッチタイムアウト（秒）
 max_retries = 3              # 最大リトライ回数
 dead_letter_queue = "message-update-dlq"  # エラー時の送信先
+
+# 締切リマインダーQueue
+[[queues.producers]]
+queue = "deadline-reminder-queue"
+binding = "DEADLINE_REMINDER_QUEUE"
+
+[[queues.consumers]]
+queue = "deadline-reminder-queue"
+max_batch_size = 20          # Discord APIレート制限を考慮
+max_batch_timeout = 10       # バッチタイムアウト（秒）
+max_retries = 3              # 最大リトライ回数
+dead_letter_queue = "deadline-reminder-dlq"
 ```
 
 ### 3. 環境変数の確認
@@ -65,7 +82,9 @@ wrangler secret put DISCORD_APPLICATION_ID
 
 ## 動作の仕組み
 
-### 1. メッセージ更新のスケジューリング
+### メッセージ更新Queue
+
+#### 1. スケジューリング
 
 投票や締切時にメッセージ更新がスケジュールされます：
 
@@ -81,19 +100,45 @@ await scheduleMessageUpdate(
 );
 ```
 
-### 2. 遅延実行
+#### 2. 遅延実行
 
 - **投票更新（VOTE_UPDATE）**: 2秒の遅延でデバウンス効果
 - **締切更新（CLOSE_UPDATE）**: 即座に実行
 - **サマリー更新（SUMMARY_UPDATE）**: 2秒の遅延
 
-### 3. バッチ処理
-
-複数の更新が同時にキューに入った場合、バッチで処理されます：
+#### 3. バッチ処理
 
 - 同じメッセージへの複数の更新は最新のものだけを実行
 - 最大10個のメッセージを同時処理
 - Discord APIのレート制限を考慮した効率的な更新
+
+### 締切リマインダーQueue
+
+#### 1. タスクタイプ
+
+締切リマインダーQueueは3種類のタスクを処理：
+
+```typescript
+interface DeadlineReminderTask {
+  type: 'send_reminder' | 'close_schedule' | 'send_summary';
+  scheduleId: string;
+  guildId: string;
+  customMessage?: string;
+}
+```
+
+#### 2. 処理フロー
+
+1. **Cronジョブ** → ProcessDeadlineRemindersUseCase実行
+2. 締切チェック → リマインダー対象の抽出
+3. Queueへタスク送信（バッチ処理）
+4. 各タスクの非同期処理（Discord API呼び出し）
+
+#### 3. レート制限対策
+
+- 最大20件/バッチでDiscord APIレート制限を回避
+- Search Guild Members API（10リクエスト/10秒）を考慮
+- 自然なペースでメッセージを送信
 
 ### 4. エラーハンドリング
 
@@ -200,7 +245,9 @@ vi.mock('../../infrastructure/utils/message-update-queue', () => ({
 
 ### Q: Queuesを使用しない場合の動作は？
 
-A: `MESSAGE_UPDATE_QUEUE` が設定されていない場合、メッセージ更新はスキップされます（ログに警告が出力されます）。
+A: 各Queueが設定されていない場合の動作：
+- `MESSAGE_UPDATE_QUEUE`: メッセージ更新がスキップされます（ログに警告）
+- `DEADLINE_REMINDER_QUEUE`: 直接処理にフォールバック（テスト環境用）
 
 ### Q: 更新の遅延時間を変更したい
 

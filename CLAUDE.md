@@ -13,7 +13,7 @@ Discord内で日程調整を行うボット。Clean Architecture（Onion Archite
 npm run dev
 
 # テスト実行
-npm test                    # 全テスト（464テスト - 100%パス）
+npm test                    # 全テスト（461テスト - 100%パス）
 npm test -- <file>          # 特定ファイルのテスト
 npm run test:ui             # UIでテスト実行
 npm run test:coverage       # カバレッジ計測
@@ -57,6 +57,8 @@ src/
 │   ├── repositories/     # D1 リポジトリ実装
 │   ├── services/         # Discord API通信
 │   ├── adapters/         # Port実装（Logger, DiscordApi等）
+│   ├── ports/            # インフラ固有のインターフェース
+│   ├── utils/            # Queueハンドラー等のユーティリティ
 │   └── factories/        # DependencyContainer (DI)
 │
 └── presentation/          # UI層（Application/Infrastructureに依存）
@@ -69,7 +71,8 @@ src/
 1. **依存性逆転**: インフラ層がドメイン層に依存（逆方向はNG）
 2. **DI コンテナ**: `DependencyContainer`で全依存関係を管理
 3. **リポジトリパターン**: D1データベースアクセスを抽象化
-4. **非同期処理**: Cloudflare Queuesでメッセージ更新を最適化
+4. **非同期処理**: Cloudflare Queuesでメッセージ更新・締切リマインダーを最適化
+5. **Port/Adapterパターン**: 環境依存の処理を抽象化（BackgroundExecutor等）
 
 ## Cloudflare Workers 特有の制約
 
@@ -95,12 +98,20 @@ await db.batch([
 ]);
 ```
 
-## メッセージ更新システム（Queues）
+## 非同期処理システム（Cloudflare Queues）
 
+### メッセージ更新Queue
 投票時のメッセージ更新を最適化：
 - 投票更新: 2秒遅延でデバウンス
 - 締切更新: 即座に実行
-- バッチ処理で効率化
+- バッチ処理で効率化（最大10件/バッチ）
+
+### 締切リマインダーQueue
+Discord APIレート制限に対応：
+- リマインダー送信: バッチで処理（最大20件/バッチ）
+- 自動締切処理: スケジュールを自動でクローズ
+- サマリー送信: 締切後の結果を通知
+- タスクタイプ: `send_reminder`, `close_schedule`, `send_summary`
 
 ## 開発プロセス - TDD (Test-Driven Development)
 
@@ -265,6 +276,8 @@ npm run check  # biome check && tsc --noEmit
 - Webhook: 30リクエスト/分
 - Embed: 最大10個、各6000文字
 - コンポーネント: 最大5行×5要素
+- Search Guild Members: 10リクエスト/10秒（ボット全体）
+- メンション形式: `<@ユーザーID>` のみ有効（`@username`は通知されない）
 
 ## 構造化ログ
 
@@ -287,6 +300,7 @@ logger.info('操作完了', {
 
 ## 主要エントリーポイント
 
-- `/src/index.ts`: Honoアプリケーション
-- `/src/infrastructure/utils/message-update-queue.ts`: Queuesハンドラー
+- `/src/index.ts`: Honoアプリケーション、Queuesコンシューマー
+- `/src/infrastructure/utils/message-update-queue.ts`: メッセージ更新Queueハンドラー
+- `/src/infrastructure/utils/deadline-reminder-queue.ts`: 締切リマインダーQueueハンドラー
 - `/src/infrastructure/factories/DependencyContainer.ts`: DI設定
