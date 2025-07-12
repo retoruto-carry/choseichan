@@ -150,6 +150,15 @@ export class CreateScheduleController {
                   messageId: message.id,
                 });
               }
+
+              // リマインダー設定のフォローアップメッセージを送信
+              if (
+                schedule.deadline &&
+                schedule.reminderTimings &&
+                schedule.reminderTimings.length > 0
+              ) {
+                await this.sendReminderFollowup(schedule, interaction.token, env);
+              }
             } catch (error) {
               this.logger.error(
                 'Failed to save message ID',

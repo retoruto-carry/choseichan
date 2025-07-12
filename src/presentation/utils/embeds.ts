@@ -4,7 +4,10 @@ import { formatDate } from '../../utils/date';
 import { createButtonId } from '../../utils/id';
 import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
 
-export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse) {
+export function createScheduleEmbed(
+  schedule: DomainSchedule | ScheduleResponse,
+  totalResponses?: number
+) {
   const dateList = schedule.dates.map((date, index) => `${index + 1}. ${date.datetime}`).join('\n');
 
   const descriptionParts = [schedule.description || '', ''];
@@ -13,6 +16,12 @@ export function createScheduleEmbed(schedule: DomainSchedule | ScheduleResponse)
     const deadlineStr =
       schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
     descriptionParts.push(`⏰ 締切: ${formatDate(deadlineStr)}`);
+    descriptionParts.push('');
+  }
+
+  // 回答者数を表示（過去のバージョンとの互換性のため）
+  if (totalResponses !== undefined) {
+    descriptionParts.push(`回答者: ${totalResponses}人`);
     descriptionParts.push('');
   }
 

@@ -25,12 +25,14 @@ export class ScheduleMainMessageBuilder {
       // 詳細表示（投票状況含む）
       return createScheduleEmbedWithTable(summary, showDetails);
     } else {
-      // 簡易表示（基本情報のみ・投票状況なし）
+      // 簡易表示（基本情報のみ・回答者数表示）
       const targetSchedule = schedule || summary?.schedule;
       if (!targetSchedule) {
         throw new Error('schedule or summary must be provided');
       }
-      return createScheduleEmbed(targetSchedule);
+      // summaryがある場合は回答者数を渡す
+      const totalResponses = summary?.responses?.length;
+      return createScheduleEmbed(targetSchedule, totalResponses);
     }
   }
 
