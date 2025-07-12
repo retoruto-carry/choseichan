@@ -17,7 +17,7 @@ vars = { ENVIRONMENT = "production" }
 [[d1_databases]]
 binding = "DB"
 database_name = "chouseichan-db"
-database_id = "b3fe7070-6294-4c22-bc6c-7e2c5b7aa85d"
+database_id = "89e100dd-150c-4506-bff3-f5389f2aae77"
 migrations_dir = "migrations"
 migrations_table = "d1_migrations"
 

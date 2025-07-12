@@ -18,12 +18,12 @@
     "format:check": "biome format .",
     "check": "biome check . && tsc --noEmit",
     "register": "node scripts/register-commands.js",
-    "db:migrate:remote": "wrangler d1 migrations apply discord-choseisan-db",
-    "db:migrate:local": "wrangler d1 migrations apply discord-choseisan-db --local",
-    "db:migrate:create": "wrangler d1 migrations create discord-choseisan-db",
-    "db:migrate:list": "wrangler d1 migrations list discord-choseisan-db",
-    "db:status": "wrangler d1 execute discord-choseisan-db --command=\"SELECT * FROM d1_migrations ORDER BY version DESC LIMIT 5\"",
-    "db:shell": "wrangler d1 execute discord-choseisan-db"
+    "db:migrate:remote": "wrangler d1 migrations apply chouseichan-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply chouseichan-db --local",
+    "db:migrate:create": "wrangler d1 migrations create chouseichan-db",
+    "db:migrate:list": "wrangler d1 migrations list chouseichan-db",
+    "db:status": "wrangler d1 execute chouseichan-db --command=\"SELECT * FROM d1_migrations ORDER BY version DESC LIMIT 5\"",
+    "db:shell": "wrangler d1 execute chouseichan-db"
   },
   "keywords": [],
   "author": "",
