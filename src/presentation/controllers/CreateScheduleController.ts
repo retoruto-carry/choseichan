@@ -15,6 +15,7 @@ import { parseUserInputDate } from '../../utils/date';
 import { generateId } from '../../utils/id';
 import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
+import { createEditReminderButtonId } from '../utils/button-id';
 import { getOriginalMessage, sendFollowupMessage } from '../utils/discord';
 
 export class CreateScheduleController {
@@ -218,6 +219,20 @@ export class CreateScheduleController {
 
     await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interactionToken, {
       content: `⏰ 締切前リマインダーを設定しました！\n締切の ${timingsDisplay} 前に ${mentionDisplay} にリマインダーを送信します。`,
+      components: [
+        {
+          type: 1, // ACTION_ROW
+          components: [
+            {
+              type: 2, // BUTTON
+              style: 2, // SECONDARY
+              label: 'リマインダー編集',
+              custom_id: createEditReminderButtonId(schedule.id),
+              emoji: { name: '⚙️' },
+            },
+          ],
+        },
+      ],
       flags: InteractionResponseFlags.EPHEMERAL,
     });
   }
