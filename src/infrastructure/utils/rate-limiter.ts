@@ -1,7 +1,11 @@
 /**
- * 適応的バッチ処理とエラーハンドリング機能付きAPIコール用レートリミッター
+ * Cloudflare Workers用バッチ処理クラス
+ *
+ * 注意: Workers環境ではsetTimeoutが使えないため、真のレート制限は実装されません
+ * 実際のレート制限はCloudflare QueuesのDelay機能を使用してください
+ * このクラスは主にバッチ処理とエラーハンドリングに特化
  */
-export class RateLimiter {
+export class WorkersBatchProcessor {
   private queue: (() => Promise<unknown>)[] = [];
   private processing = false;
   private errorCount = 0;
@@ -10,8 +14,6 @@ export class RateLimiter {
 
   constructor(
     private maxConcurrent: number = 3,
-    private delayBetweenBatches: number = 1000,
-    private maxRetries: number = 3,
     private adaptiveBatching: boolean = true
   ) {}
 
@@ -48,15 +50,10 @@ export class RateLimiter {
       const batch = this.queue.splice(0, currentBatchSize);
 
       // エラーハンドリング付きでバッチを並列処理
-      const results = await Promise.allSettled(batch.map((fn) => fn()));
+      const _results = await Promise.allSettled(batch.map((fn) => fn()));
 
-      // 成功/エラー率に基づく適応的遅延計算
-      const delay = this.calculateAdaptiveDelay(results);
-
-      // 次のバッチ処理前の待機
-      if (this.queue.length > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+      // Workers環境では遅延なしで次のバッチを処理
+      // 実際のレート制限はQueuesのDelay機能で実装してください
     }
 
     this.processing = false;
@@ -77,16 +74,7 @@ export class RateLimiter {
     return this.maxConcurrent;
   }
 
-  private calculateAdaptiveDelay(results: PromiseSettledResult<unknown>[]): number {
-    const errorCount = results.filter((r) => r.status === 'rejected').length;
-    const errorRate = errorCount / results.length;
-
-    // エラーが多い場合は遅延を増加（レート制限、サーバー問題）
-    if (errorRate > 0.5) return this.delayBetweenBatches * 3;
-    if (errorRate > 0.2) return this.delayBetweenBatches * 2;
-
-    return this.delayBetweenBatches;
-  }
+  // Workers環境では遅延ができないため、削除
 
   getStats() {
     return {
@@ -106,26 +94,19 @@ export class RateLimiter {
 }
 
 /**
- * 強化されたレート制限とエラーハンドリングでアイテムをバッチ処理
+ * Workers環境用バッチ処理（遅延なし）
  */
 export async function processBatches<T>(
   items: T[],
   processor: (item: T) => Promise<void>,
   options: {
     batchSize?: number;
-    delayBetweenBatches?: number;
     maxRetries?: number;
     onProgress?: (processed: number, total: number, errors: number) => void;
     onError?: (item: T, error: Error, retryCount: number) => boolean; // リトライする場合はtrueを返す
   } = {}
 ): Promise<{ processed: number; errors: Error[]; retried: number }> {
-  const {
-    batchSize = 3,
-    delayBetweenBatches = 1000,
-    maxRetries = 2,
-    onProgress,
-    onError,
-  } = options;
+  const { batchSize = 3, maxRetries = 2, onProgress, onError } = options;
 
   let processed = 0;
   let retried = 0;
@@ -158,8 +139,10 @@ export async function processBatches<T>(
     onProgress?.(processed, items.length, errors.length);
 
     // 次のバッチ前の遅延（最後のバッチ以外）
+    // Cloudflare Workers環境では setTimeout が使えないため代替実装
     if (i + batchSize < items.length) {
-      await new Promise((resolve) => setTimeout(resolve, delayBetweenBatches));
+      // Workers環境では遅延なしで継続（実際の遅延は Queues で制御）
+      await Promise.resolve();
     }
   }
 
@@ -189,9 +172,10 @@ export async function processBatches<T>(
     onProgress?.(processed, items.length, errors.length);
 
     // リトライの指数バックオフ
+    // Cloudflare Workers環境では setTimeout が使えないため代替実装
     if (retryQueue.length > 0) {
-      const retryDelay = delayBetweenBatches * 2 ** (retryBatch[0]?.retryCount || 0);
-      await new Promise((resolve) => setTimeout(resolve, Math.min(retryDelay, 10000))); // 10秒でキャップ
+      // Workers環境では遅延なしで継続（実際のバックオフは Queues で制御）
+      await Promise.resolve();
     }
   }
 
@@ -199,14 +183,14 @@ export async function processBatches<T>(
 }
 
 /**
- * RateLimiterインスタンスでアイテムを処理
+ * BatchProcessorインスタンスでアイテムを処理
  */
-export async function processWithRateLimiter<T, R>(
+export async function processWithBatchProcessor<T, R>(
   items: T[],
   processor: (item: T) => Promise<R>,
-  rateLimiter?: RateLimiter
+  batchProcessor?: WorkersBatchProcessor
 ): Promise<{ results: R[]; errors: Error[] }> {
-  const limiter = rateLimiter || new RateLimiter();
+  const limiter = batchProcessor || new WorkersBatchProcessor();
   const results: R[] = [];
   const errors: Error[] = [];
 

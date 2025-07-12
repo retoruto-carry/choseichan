@@ -11,7 +11,7 @@
 
 export type ServiceLifetime = 'singleton' | 'transient' | 'scoped';
 
-export interface ServiceDescriptor<T = any> {
+export interface ServiceDescriptor<T = unknown> {
   token: string | symbol;
   factory: (container: IDIContainer) => T;
   lifetime: ServiceLifetime;
@@ -32,7 +32,7 @@ export interface IDIContainer {
 
 export class DIContainer implements IDIContainer {
   private services = new Map<string | symbol, ServiceDescriptor>();
-  private instances = new Map<string | symbol, any>();
+  private instances = new Map<string | symbol, unknown>();
   private isDisposed = false;
   private readonly parent?: DIContainer;
   private readonly scopedServices = new Set<string | symbol>();
@@ -86,7 +86,7 @@ export class DIContainer implements IDIContainer {
 
     // Try to get from instances first (for registered instances and singletons)
     if (this.instances.has(token)) {
-      return this.instances.get(token);
+      return this.instances.get(token) as T;
     }
 
     // Get service descriptor
@@ -122,7 +122,7 @@ export class DIContainer implements IDIContainer {
           break;
       }
 
-      return instance;
+      return instance as T;
     } finally {
       this.resolving.delete(token);
     }
@@ -147,7 +147,12 @@ export class DIContainer implements IDIContainer {
     // Dispose scoped services that implement IDisposable
     for (const token of this.scopedServices) {
       const instance = this.instances.get(token);
-      if (instance && typeof instance.dispose === 'function') {
+      if (
+        instance &&
+        typeof instance === 'object' &&
+        'dispose' in instance &&
+        typeof instance.dispose === 'function'
+      ) {
         try {
           instance.dispose();
         } catch (error) {

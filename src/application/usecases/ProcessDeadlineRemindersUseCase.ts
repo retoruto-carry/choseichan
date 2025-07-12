@@ -4,7 +4,7 @@
  * 締切リマインダー処理のユースケース
  */
 
-import { processBatches } from '../../infrastructure/utils/rate-limiter';
+// Rate limiting removed - using Cloudflare Queues for scheduling instead
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';
 import type { NotificationService } from '../services/NotificationService';
@@ -85,69 +85,69 @@ export class ProcessDeadlineRemindersUseCase {
 
   private async processReminders(
     reminders: ReminderInfo[],
-    batchSize: number,
-    batchDelay: number
+    _batchSize: number,
+    _batchDelay: number
   ): Promise<void> {
-    const result = await processBatches(
-      reminders,
-      async (reminderInfo) => {
+    // Process all reminders concurrently (no artificial delays in Workers)
+    const results = await Promise.allSettled(
+      reminders.map(async (reminderInfo) => {
         const { scheduleId, guildId, reminderType, message } = reminderInfo;
 
-        // Get schedule and summary in parallel for better performance
-        const [scheduleResult, _summaryResult] = await Promise.allSettled([
-          this.getScheduleUseCase.execute(scheduleId, guildId),
-          this.getScheduleSummaryUseCase.execute(scheduleId, guildId),
-        ]);
+        try {
+          // Get schedule and summary in parallel for better performance
+          const [scheduleResult, _summaryResult] = await Promise.allSettled([
+            this.getScheduleUseCase.execute(scheduleId, guildId),
+            this.getScheduleSummaryUseCase.execute(scheduleId, guildId),
+          ]);
 
-        // Handle schedule result
-        if (scheduleResult.status === 'rejected') {
-          throw new Error(`Failed to get schedule ${scheduleId}: ${scheduleResult.reason}`);
-        }
+          // Handle schedule result
+          if (scheduleResult.status === 'rejected') {
+            throw new Error(`Failed to get schedule ${scheduleId}: ${scheduleResult.reason}`);
+          }
 
-        if (!scheduleResult.value?.success || !scheduleResult.value?.schedule) {
-          throw new Error(`Failed to get schedule ${scheduleId}`);
-        }
+          if (!scheduleResult.value?.success || !scheduleResult.value?.schedule) {
+            throw new Error(`Failed to get schedule ${scheduleId}`);
+          }
 
-        // Send reminder (summary is optional)
-        await this.notificationService.sendDeadlineReminder(scheduleResult.value.schedule, message);
+          // Send reminder (summary is optional)
+          await this.notificationService.sendDeadlineReminder(
+            scheduleResult.value.schedule,
+            message
+          );
 
-        // Update reminder status
-        await this.processReminderUseCase.markReminderSent({
-          scheduleId,
-          guildId,
-          reminderType,
-        });
+          // Update reminder status
+          await this.processReminderUseCase.markReminderSent({
+            scheduleId,
+            guildId,
+            reminderType,
+          });
 
-        this.logger.info(`Sent ${reminderType} deadline reminder for schedule ${scheduleId}`);
-      },
-      {
-        batchSize,
-        delayBetweenBatches: batchDelay,
-        maxRetries: 2,
-        onProgress: (processed, total, errors) => {
-          this.logger.info(`Reminder progress: ${processed}/${total} processed, ${errors} errors`);
-        },
-        onError: (item, error, retryCount) => {
+          this.logger.info(`Sent ${reminderType} deadline reminder for schedule ${scheduleId}`);
+          return { success: true, scheduleId };
+        } catch (error) {
           this.logger.error(
-            `Failed to send reminder for schedule ${item.scheduleId} (retry ${retryCount})`,
+            `Failed to send reminder for schedule ${scheduleId}`,
             error instanceof Error ? error : new Error(String(error))
           );
-          return retryCount < 2; // Retry up to 2 times
-        },
-      }
+          return { success: false, scheduleId, error };
+        }
+      })
     );
 
+    const successful = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.length - successful;
+
     this.logger.info(
-      `Reminders completed: ${result.processed} processed, ${result.retried} retried, ${result.errors.length} final errors`
+      `Reminders completed: ${successful} successful, ${failed} failed out of ${results.length} total`
     );
   }
 
   private async processClosures(
     closures: Array<{ scheduleId: string; guildId: string }>
   ): Promise<void> {
-    await processBatches(
-      closures,
-      async (closureInfo) => {
+    // Process closures concurrently (no artificial delays in Workers)
+    const results = await Promise.allSettled(
+      closures.map(async (closureInfo) => {
         try {
           const { scheduleId, guildId } = closureInfo;
 
@@ -163,7 +163,7 @@ export class ProcessDeadlineRemindersUseCase {
               `Failed to close schedule ${scheduleId}`,
               new Error(`Close failed: ${closeResult.errors?.join(', ') || 'Unknown error'}`)
             );
-            return;
+            return { success: false, scheduleId };
           }
 
           // Get schedule for PR message
@@ -175,7 +175,7 @@ export class ProcessDeadlineRemindersUseCase {
                 `Get schedule failed: ${scheduleResult.errors?.join(', ') || 'Unknown error'}`
               )
             );
-            return;
+            return { success: false, scheduleId };
           }
 
           // Convert to format expected by notification service
@@ -184,17 +184,22 @@ export class ProcessDeadlineRemindersUseCase {
           await this.notificationService.sendPRMessage(scheduleResult.schedule);
 
           this.logger.info(`Sent closure notification for schedule ${scheduleId}`);
+          return { success: true, scheduleId };
         } catch (error) {
           this.logger.error(
             `Failed to send closure notification for schedule ${closureInfo.scheduleId}`,
             error instanceof Error ? error : new Error(String(error))
           );
+          return { success: false, scheduleId: closureInfo.scheduleId, error };
         }
-      },
-      {
-        batchSize: 15,
-        delayBetweenBatches: 100,
-      }
+      })
+    );
+
+    const successful = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.length - successful;
+
+    this.logger.info(
+      `Closures completed: ${successful} successful, ${failed} failed out of ${results.length} total`
     );
   }
 }

@@ -1,4 +1,5 @@
 import type { InteractionResponseType, InteractionType } from 'discord-interactions';
+import type { MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 import type { DiscordComponent, DiscordEmbed } from './discord-api';
 
 export interface Env {
@@ -13,9 +14,9 @@ export interface Env {
   // D1 Database
   DB: D1Database;
   // Message Update Queue
-  MESSAGE_UPDATE_QUEUE?: Queue<any>;
+  MESSAGE_UPDATE_QUEUE?: Queue<MessageUpdateTask>;
   // 動的な環境変数アクセスを許可
-  [key: string]: string | D1Database | Queue<any> | ExecutionContext | undefined;
+  [key: string]: string | D1Database | Queue<MessageUpdateTask> | ExecutionContext | undefined;
 }
 
 export interface DiscordUser {

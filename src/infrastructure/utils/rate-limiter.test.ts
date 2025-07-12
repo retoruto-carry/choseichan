@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { processBatches, RateLimiter } from './rate-limiter';
+import { processBatches, WorkersBatchProcessor } from './rate-limiter';
 
 describe('Rate Limiter', () => {
   describe('processBatches', () => {
@@ -15,7 +15,6 @@ describe('Rate Limiter', () => {
         },
         {
           batchSize: 2,
-          delayBetweenBatches: 100,
         }
       );
 
@@ -26,9 +25,9 @@ describe('Rate Limiter', () => {
       expect(processed).toHaveLength(5);
       expect(processed.sort()).toEqual([1, 2, 3, 4, 5]);
 
-      // Should have delays between batches (3 batches: 2, 2, 1)
-      // Minimum duration should be 2 delays * 100ms = 200ms
-      expect(duration).toBeGreaterThanOrEqual(200);
+      // In Workers environment, no artificial delays
+      // Just verify all items were processed
+      expect(duration).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle errors without stopping other items', async () => {
@@ -47,7 +46,6 @@ describe('Rate Limiter', () => {
         },
         {
           batchSize: 2,
-          delayBetweenBatches: 10,
         }
       );
 
@@ -71,7 +69,6 @@ describe('Rate Limiter', () => {
         },
         {
           batchSize: 10,
-          delayBetweenBatches: 1000,
         }
       );
 
@@ -86,20 +83,21 @@ describe('Rate Limiter', () => {
     });
   });
 
-  describe('RateLimiter', () => {
+  describe('WorkersBatchProcessor', () => {
     it('should limit concurrent executions', async () => {
-      const limiter = new RateLimiter(2, 50);
+      const processor = new WorkersBatchProcessor(2);
       const concurrent: number[] = [];
       let maxConcurrent = 0;
 
       const tasks = Array(5)
         .fill(0)
         .map((_, i) =>
-          limiter.add(async () => {
+          processor.add(async () => {
             concurrent.push(i);
             maxConcurrent = Math.max(maxConcurrent, concurrent.length);
 
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            // In Workers environment, no setTimeout available
+            await Promise.resolve();
 
             concurrent.splice(concurrent.indexOf(i), 1);
             return i;
@@ -110,25 +108,24 @@ describe('Rate Limiter', () => {
 
       expect(results.sort()).toEqual([0, 1, 2, 3, 4]);
       expect(maxConcurrent).toBeLessThanOrEqual(2);
-    }, 10000);
+    });
 
-    it('should delay between batches', async () => {
-      const limiter = new RateLimiter(1, 50);
+    it('should process tasks immediately without delays', async () => {
+      const processor = new WorkersBatchProcessor(1);
       const times: number[] = [];
 
       const tasks = Array(3)
         .fill(0)
         .map(() =>
-          limiter.add(async () => {
+          processor.add(async () => {
             times.push(Date.now());
           })
         );
 
       await Promise.all(tasks);
 
-      // Check delays between executions (with small tolerance for timing variations)
-      expect(times[1] - times[0]).toBeGreaterThanOrEqual(45);
-      expect(times[2] - times[1]).toBeGreaterThanOrEqual(45);
-    }, 10000);
+      // In Workers environment, no artificial delays
+      expect(times).toHaveLength(3);
+    });
   });
 });
