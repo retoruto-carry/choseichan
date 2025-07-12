@@ -82,6 +82,14 @@ export class CreateScheduleUseCase {
         schedule: response,
       };
     } catch (error) {
+      this.logger.error(
+        'CreateScheduleUseCase error',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'create-schedule',
+          useCase: 'CreateScheduleUseCase',
+        }
+      );
       return {
         success: false,
         errors: [
@@ -127,13 +135,8 @@ export class CreateScheduleUseCase {
         }
         if (!date.datetime?.trim()) {
           errors.push(`日程候補${index + 1}: 日時が必要です`);
-        } else {
-          // 日時の形式チェック
-          const dateTime = new Date(date.datetime);
-          if (Number.isNaN(dateTime.getTime())) {
-            errors.push(`日程候補${index + 1}: 日時の形式が正しくありません`);
-          }
         }
+        // 日時の形式は自由なのでバリデーションしない
       });
     }
 

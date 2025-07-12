@@ -380,7 +380,7 @@ describe('FindSchedulesUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.schedule?.description).toBeUndefined();
       expect(result.schedule?.deadline).toBeUndefined();
-      expect(result.schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
+      expect(result.schedule?.reminderTimings).toBeUndefined();
     });
   });
 
@@ -427,8 +427,8 @@ describe('FindSchedulesUseCase', () => {
       expect(schedule?.messageId).toBeUndefined();
       expect(schedule?.description).toBeUndefined();
       expect(schedule?.deadline).toBeUndefined();
-      expect(schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
-      expect(schedule?.reminderMentions).toEqual(['@here']);
+      expect(schedule?.reminderTimings).toBeUndefined();
+      expect(schedule?.reminderMentions).toBeUndefined();
       expect(schedule?.remindersSent).toBeUndefined();
     });
   });

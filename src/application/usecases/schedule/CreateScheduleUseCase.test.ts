@@ -142,8 +142,8 @@ describe('CreateScheduleUseCase', () => {
       expect(result.schedule).toBeDefined();
       expect(result.schedule?.description).toBeUndefined();
       expect(result.schedule?.deadline).toBeUndefined();
-      expect(result.schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
-      expect(result.schedule?.reminderMentions).toEqual(['@here']);
+      expect(result.schedule?.reminderTimings).toBeUndefined();
+      expect(result.schedule?.reminderMentions).toBeUndefined();
     });
 
     it('should save schedule to repository', async () => {
@@ -249,20 +249,20 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('日程候補が必要です');
     });
 
-    it('should reject request with invalid date format', async () => {
+    it('should accept any date format', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
         authorUsername: 'testuser',
         title: 'Test Schedule',
-        dates: [{ id: 'date1', datetime: 'invalid-date' }],
+        dates: [{ id: 'date1', datetime: 'クリスマスイブの夕方' }],
       };
 
       const result = await useCase.execute(request);
 
-      expect(result.success).toBe(false);
-      expect(result.errors).toContain('日程候補1: 日時の形式が正しくありません');
+      expect(result.success).toBe(true);
+      expect(result.schedule?.dates[0].datetime).toBe('クリスマスイブの夕方');
     });
 
     it('should reject request with invalid deadline format', async () => {

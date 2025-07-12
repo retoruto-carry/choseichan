@@ -94,7 +94,9 @@ export class CreateScheduleController {
           authorId,
           errors: createResult.errors,
         });
-        return this.createErrorResponse('スケジュールの作成に失敗しました。');
+        // エラー詳細を含めて返す（デバッグ用）
+        const errorMessage = createResult.errors?.join('\n') || 'スケジュールの作成に失敗しました。';
+        return this.createErrorResponse(errorMessage);
       }
 
       const schedule = createResult.schedule;
