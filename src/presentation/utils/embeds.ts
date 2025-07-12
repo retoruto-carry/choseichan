@@ -41,7 +41,6 @@ export function createScheduleEmbed(
     descriptionParts.push('');
   }
 
-  descriptionParts.push('**候補日時：**');
   descriptionParts.push(dateList);
 
   return {
