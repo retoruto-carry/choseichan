@@ -6,15 +6,12 @@
 
 // Application Services
 import { NotificationService } from '../../application/services/NotificationService';
-import { TestBackgroundExecutor } from '../adapters/TestBackgroundExecutor';
-import { WorkersBackgroundExecutor } from '../adapters/WorkersBackgroundExecutor';
 import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 // Use Cases - Response
 import { SubmitResponseUseCase } from '../../application/usecases/response/SubmitResponseUseCase';
 import { UpdateResponseUseCase } from '../../application/usecases/response/UpdateResponseUseCase';
 import { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
-
 // Use Cases - Schedule
 import { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
 import { DeadlineReminderUseCase } from '../../application/usecases/schedule/DeadlineReminderUseCase';
@@ -29,6 +26,8 @@ import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
+import { TestBackgroundExecutorAdapter } from '../adapters/TestBackgroundExecutorAdapter';
+import { WorkersBackgroundExecutorAdapter } from '../adapters/WorkersBackgroundExecutorAdapter';
 // Infrastructure
 import { createRepositoryFactory } from '../factories/factory';
 import { DiscordApiService } from '../services/DiscordApiService';
@@ -79,9 +78,9 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
 
   container.registerSingleton(SERVICE_TOKENS.BACKGROUND_EXECUTOR, (c) => {
     const env = c.resolve(SERVICE_TOKENS.ENV) as Env;
-    return env.ctx 
-      ? new WorkersBackgroundExecutor(env.ctx)
-      : new TestBackgroundExecutor();
+    return env.ctx
+      ? new WorkersBackgroundExecutorAdapter(env.ctx)
+      : new TestBackgroundExecutorAdapter();
   });
 }
 

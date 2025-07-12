@@ -12,9 +12,9 @@ import type {
 } from '../../domain/repositories/interfaces';
 import { formatDate } from '../../utils/date';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
-import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 
 interface DiscordMessage {

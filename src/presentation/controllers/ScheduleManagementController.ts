@@ -7,7 +7,6 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { NotificationService } from '../../application/services/NotificationService';
 import { updateScheduleMainMessage } from '../../application/services/ScheduleUpdaterService';
 import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';

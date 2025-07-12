@@ -145,7 +145,7 @@ export class D1ResponseRepository implements IResponseRepository {
       // 次に、すべてのレスポンスの日付ステータスを一度に取得
       const responseIds = responseResult.results.map((row: any) => row.id);
       const placeholders = responseIds.map(() => '?').join(',');
-      
+
       const statusResult = await this.db
         .prepare(`
         SELECT response_id, date_id, status 
@@ -161,7 +161,10 @@ export class D1ResponseRepository implements IResponseRepository {
         if (!statusMap.has(row.response_id)) {
           statusMap.set(row.response_id, {});
         }
-        statusMap.get(row.response_id)![row.date_id] = row.status;
+        const responseStatuses = statusMap.get(row.response_id);
+        if (responseStatuses) {
+          responseStatuses[row.date_id] = row.status;
+        }
       }
 
       // DomainResponseオブジェクトを構築

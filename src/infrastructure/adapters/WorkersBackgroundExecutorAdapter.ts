@@ -4,7 +4,7 @@
 
 import type { BackgroundExecutorPort } from '../../application/ports/BackgroundExecutorPort';
 
-export class WorkersBackgroundExecutor implements BackgroundExecutorPort {
+export class WorkersBackgroundExecutorAdapter implements BackgroundExecutorPort {
   constructor(private ctx: ExecutionContext) {}
 
   execute(task: () => Promise<void>): void {

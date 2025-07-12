@@ -7,9 +7,9 @@ import type {
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
 import type { ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
-import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 import { NotificationService } from './NotificationService';
 

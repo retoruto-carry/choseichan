@@ -4,7 +4,7 @@
 
 import type { BackgroundExecutorPort } from '../../application/ports/BackgroundExecutorPort';
 
-export class TestBackgroundExecutor implements BackgroundExecutorPort {
+export class TestBackgroundExecutorAdapter implements BackgroundExecutorPort {
   execute(task: () => Promise<void>): void {
     // テスト環境: 即座にタスクを実行（fire-and-forget）
     task().catch((error) => {
