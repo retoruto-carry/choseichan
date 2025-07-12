@@ -66,7 +66,7 @@ export class ScheduleDate {
   /**
    * 日時が過去かどうかチェック
    */
-  isPast(): boolean {
-    return this.getDateTimeAsDate() < new Date();
+  isPast(currentTime: Date = new Date()): boolean {
+    return this.getDateTimeAsDate() < currentTime;
   }
 }

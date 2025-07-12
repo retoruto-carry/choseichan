@@ -233,8 +233,8 @@ export class Schedule {
     return this._deadline !== undefined;
   }
 
-  isDeadlinePassed(): boolean {
-    return this._deadline ? this._deadline < new Date() : false;
+  isDeadlinePassed(currentTime: Date = new Date()): boolean {
+    return this._deadline ? this._deadline < currentTime : false;
   }
 
   canBeEditedBy(userId: string): boolean {

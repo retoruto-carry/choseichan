@@ -3,10 +3,9 @@
  */
 
 import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
-import {
-  type IResponseRepository,
-  type IScheduleRepository,
-  RepositoryError,
+import type {
+  IResponseRepository,
+  IScheduleRepository,
 } from '../../../domain/repositories/interfaces';
 import type {
   DomainResponse,
@@ -14,6 +13,7 @@ import type {
   DomainScheduleDate,
   DomainScheduleSummary,
 } from '../../../domain/types/DomainTypes';
+import { RepositoryError } from '../errors';
 
 export class D1ResponseRepository implements IResponseRepository {
   constructor(

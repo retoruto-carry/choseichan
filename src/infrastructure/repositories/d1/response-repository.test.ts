@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { User } from '../../../domain/entities/User';
-import { type IScheduleRepository, RepositoryError } from '../../../domain/repositories/interfaces';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainResponse } from '../../../domain/types/DomainTypes';
+import { RepositoryError } from '../errors';
 import { D1ResponseRepository } from './response-repository';
 
 // Mock D1Database

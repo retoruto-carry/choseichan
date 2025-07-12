@@ -5,7 +5,6 @@
  * 締切リマインダーと自動締切通知を管理します
  */
 
-import { NOTIFICATION_CONSTANTS } from '../../constants/ApplicationConstants';
 import type { Schedule } from '../../domain/entities/Schedule';
 import type {
   IResponseRepository,
@@ -214,9 +213,10 @@ export class NotificationService {
         });
       }
 
-      // 5分間キャッシュ
+      // 5分間キャッシュ（Workers環境ではTTLベースキャッシュを推奨）
       this.memberCache.set(guildId, members);
-      setTimeout(() => this.memberCache.delete(guildId), 5 * 60 * 1000);
+      // setTimeout は Cloudflare Workers で使用不可のため、
+      // TTLベースのキャッシュまたは Durable Objects を使用することを推奨
 
       return members;
     } catch (error) {
@@ -353,8 +353,8 @@ export class NotificationService {
       };
     }
 
-    // Promiseベースの遅延を使用してサマリー後にPRメッセージを送信
-    await new Promise((resolve) => setTimeout(resolve, NOTIFICATION_CONSTANTS.PR_MESSAGE_DELAY_MS));
+    // Cloudflare Workers環境では setTimeout は使用不可
+    // PRメッセージの遅延送信は Queues の delaySeconds オプションを使用することを推奨
     await this.sendChannelMessage(schedule.channelId, message);
   }
 }

@@ -3,8 +3,9 @@
  */
 
 import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
-import { type IScheduleRepository, RepositoryError } from '../../../domain/repositories/interfaces';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
+import { RepositoryError } from '../errors';
 
 // Database row types
 interface ScheduleRow {

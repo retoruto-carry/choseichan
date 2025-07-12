@@ -153,33 +153,7 @@ export interface BatchOperationResult {
 }
 
 /**
- * リポジトリエラークラス
+ * リポジトリエラーは Infrastructure/repositories/errors.ts に移動されました
+ * Domain層はインフラ技術の詳細を知るべきではないため、
+ * 具体的なエラー処理はInfrastructure層で行います
  */
-export class RepositoryError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly originalError?: Error
-  ) {
-    super(message);
-    this.name = 'RepositoryError';
-  }
-}
-
-export class NotFoundError extends RepositoryError {
-  constructor(entity: string, id: string) {
-    super(`${entity} not found: ${id}`, 'NOT_FOUND');
-  }
-}
-
-export class ConflictError extends RepositoryError {
-  constructor(message: string) {
-    super(message, 'CONFLICT');
-  }
-}
-
-export class TransactionError extends RepositoryError {
-  constructor(message: string, originalError?: Error) {
-    super(message, 'TRANSACTION_ERROR', originalError);
-  }
-}

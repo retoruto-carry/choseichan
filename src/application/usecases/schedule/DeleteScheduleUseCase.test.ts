@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  type IResponseRepository,
-  type IScheduleRepository,
-  NotFoundError,
-  RepositoryError,
+import type {
+  IResponseRepository,
+  IScheduleRepository,
 } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
+import { NotFoundError, RepositoryError } from '../../../infrastructure/repositories/errors';
 import { DeleteScheduleUseCase } from './DeleteScheduleUseCase';
 
 describe('DeleteScheduleUseCase', () => {

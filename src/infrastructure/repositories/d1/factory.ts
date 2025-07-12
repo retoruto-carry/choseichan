@@ -2,14 +2,14 @@
  * D1実装のリポジトリファクトリ
  */
 
-import {
-  type DatabaseConfig,
-  type IRepositoryFactory,
-  type IResponseRepository,
-  type IScheduleRepository,
-  type ITransaction,
-  TransactionError,
+import type {
+  DatabaseConfig,
+  IRepositoryFactory,
+  IResponseRepository,
+  IScheduleRepository,
+  ITransaction,
 } from '../../../domain/repositories/interfaces';
+import { TransactionError } from '../errors';
 import { D1ResponseRepository } from './response-repository';
 import { D1ScheduleRepository } from './schedule-repository';
 

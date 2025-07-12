@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Schedule } from '../../../domain/entities/Schedule';
 import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { User } from '../../../domain/entities/User';
-import { RepositoryError } from '../../../domain/repositories/interfaces';
+import { RepositoryError } from '../errors';
 import { D1ScheduleRepository } from './schedule-repository';
 
 // Mock D1Database

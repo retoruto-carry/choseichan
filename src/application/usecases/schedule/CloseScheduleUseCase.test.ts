@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  type IScheduleRepository,
-  NotFoundError,
-  RepositoryError,
-} from '../../../domain/repositories/interfaces';
+import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
+import { NotFoundError, RepositoryError } from '../../../infrastructure/repositories/errors';
 import { CloseScheduleUseCase } from './CloseScheduleUseCase';
 
 describe('CloseScheduleUseCase', () => {
