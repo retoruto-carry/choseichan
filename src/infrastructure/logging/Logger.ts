@@ -122,10 +122,8 @@ let loggerInstance: Logger | null = null;
 
 export function getLogger(): Logger {
   if (!loggerInstance) {
-    const level = process.env.LOG_LEVEL?.toUpperCase();
-    const logLevel =
-      level && level in LogLevel ? LogLevel[level as keyof typeof LogLevel] : LogLevel.INFO;
-    loggerInstance = new Logger('discord-choseisan', logLevel);
+    // Workers環境では process.env は使用できないため、デフォルト値を使用
+    loggerInstance = new Logger('discord-choseisan', LogLevel.INFO);
   }
   return loggerInstance;
 }

@@ -5,6 +5,7 @@ import { Logger } from './infrastructure/logging/Logger';
 import type { DeadlineReminderTask } from './infrastructure/ports/DeadlineReminderQueuePort';
 import type { MessageUpdateTask } from './infrastructure/ports/MessageUpdateQueuePort';
 import type { ButtonInteraction, CommandInteraction, Env } from './infrastructure/types/discord';
+import type { MessageBatch } from '@cloudflare/workers-types';
 import { handleDeadlineReminderBatch } from './infrastructure/utils/deadline-reminder-queue';
 import { handleMessageUpdateBatch } from './infrastructure/utils/message-update-queue';
 import { createButtonInteractionController } from './presentation/controllers/ButtonInteractionController';
@@ -129,11 +130,14 @@ export async function queue(
   _ctx: ExecutionContext
 ): Promise<void> {
   // キューの名前で処理を分岐
-  if (batch.queue === 'message-update-queue') {
+  if (batch.queue === 'choseichan-message-update-queue') {
     await handleMessageUpdateBatch(batch as MessageBatch<MessageUpdateTask>, env);
-  } else if (batch.queue === 'deadline-reminder-queue') {
+  } else if (batch.queue === 'choseichan-deadline-reminder-queue') {
     await handleDeadlineReminderBatch(batch as MessageBatch<DeadlineReminderTask>, env);
   }
 }
 
-export default app;
+export default {
+  fetch: app.fetch,
+  queue,
+};

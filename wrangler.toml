@@ -16,8 +16,8 @@ vars = { ENVIRONMENT = "production" }
 # D1 Database configuration
 [[d1_databases]]
 binding = "DB"
-database_name = "discord-choseisan-db"
-database_id = "f9c793aa-2850-4646-8d5d-271550fdc3ac"
+database_name = "choseichan-db"
+database_id = "b3fe7070-6294-4c22-bc6c-7e2c5b7aa85d"
 migrations_dir = "migrations"
 migrations_table = "d1_migrations"
 
@@ -25,24 +25,22 @@ migrations_table = "d1_migrations"
 
 # Queues configuration for message update batching
 [[queues.producers]]
-queue = "message-update-queue"
+queue = "choseichan-message-update-queue"
 binding = "MESSAGE_UPDATE_QUEUE"
 
 [[queues.consumers]]
-queue = "message-update-queue"
+queue = "choseichan-message-update-queue"
 max_batch_size = 10
 max_batch_timeout = 5
 max_retries = 3
-dead_letter_queue = "message-update-dlq"
 
 # Queues configuration for deadline reminder processing
 [[queues.producers]]
-queue = "deadline-reminder-queue"
+queue = "choseichan-deadline-reminder-queue"
 binding = "DEADLINE_REMINDER_QUEUE"
 
 [[queues.consumers]]
-queue = "deadline-reminder-queue"
+queue = "choseichan-deadline-reminder-queue"
 max_batch_size = 20
 max_batch_timeout = 10
 max_retries = 3
-dead_letter_queue = "deadline-reminder-dlq"
