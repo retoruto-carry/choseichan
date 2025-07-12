@@ -117,7 +117,7 @@ export class VoteController {
         JSON.stringify({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：\n\n※反映には最大1分かかります`,
+            content: `📝 **${schedule.title}** の回答\n\n👇 回答を選択：\n\n> ※反映には約5秒~10秒かかります`,
             components,
             flags: 64, // Ephemeral
           },
