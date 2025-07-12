@@ -142,8 +142,9 @@ describe('CreateScheduleUseCase', () => {
       expect(result.schedule).toBeDefined();
       expect(result.schedule?.description).toBeUndefined();
       expect(result.schedule?.deadline).toBeUndefined();
-      expect(result.schedule?.reminderTimings).toBeUndefined();
-      expect(result.schedule?.reminderMentions).toBeUndefined();
+      // デフォルト値が設定される
+      expect(result.schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
+      expect(result.schedule?.reminderMentions).toEqual(['@here']);
     });
 
     it('should save schedule to repository', async () => {

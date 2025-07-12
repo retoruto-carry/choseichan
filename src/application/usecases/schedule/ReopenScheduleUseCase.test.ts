@@ -200,7 +200,9 @@ describe('ReopenScheduleUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.schedule?.description).toBeUndefined();
       expect(result.schedule?.deadline).toBeUndefined();
-      expect(result.schedule?.reminderTimings).toBeUndefined();
+      // デフォルト値が設定される
+      expect(result.schedule?.reminderTimings).toEqual(['3d', '1d', '8h']);
+      expect(result.schedule?.reminderMentions).toEqual(['@here']);
     });
 
     it('should handle repository save errors', async () => {

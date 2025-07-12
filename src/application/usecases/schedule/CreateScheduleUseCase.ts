@@ -10,6 +10,7 @@ import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import { User } from '../../../domain/entities/User';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
+import { getLogger } from '../../../infrastructure/logging/Logger';
 import { generateId } from '../../../utils/id';
 import type { CreateScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
 
@@ -20,6 +21,8 @@ export interface CreateScheduleUseCaseResult {
 }
 
 export class CreateScheduleUseCase {
+  private readonly logger = getLogger();
+
   constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
   async execute(request: CreateScheduleRequest): Promise<CreateScheduleUseCaseResult> {

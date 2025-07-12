@@ -174,17 +174,6 @@ export class ScheduleDomainService {
       if (data.deadline <= now) {
         errors.push('締切は未来の日時で設定してください');
       }
-
-      // 締切が最も早い日程候補より後かチェック
-      if (data.dates && data.dates.length > 0) {
-        const earliestDate = data.dates
-          .map((d) => d.getDateTimeAsDate())
-          .sort((a, b) => a.getTime() - b.getTime())[0];
-
-        if (earliestDate && data.deadline > earliestDate) {
-          errors.push('締切は最も早い日程候補より前に設定してください');
-        }
-      }
     }
 
     return {
@@ -223,15 +212,6 @@ export class ScheduleDomainService {
       const now = new Date();
       if (data.deadline <= now) {
         errors.push('締切は未来の日時で設定してください');
-      }
-
-      // 締切が最も早い日程候補より後かチェック
-      const earliestDate = data.schedule.dates
-        .map((d) => d.getDateTimeAsDate())
-        .sort((a, b) => a.getTime() - b.getTime())[0];
-
-      if (earliestDate && data.deadline > earliestDate) {
-        errors.push('締切は最も早い日程候補より前に設定してください');
       }
     }
 
