@@ -60,7 +60,7 @@ export function createScheduleEmbed(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: [],
     footer: {
-      text: [`作成: ${schedule.createdBy.username}`, '最新の情報は更新をクリック'].join(' | '),
+      text: `作成: ${schedule.createdBy.username}`,
     },
     timestamp:
       schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt,
@@ -136,7 +136,7 @@ export function createScheduleEmbedWithTable(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
-      text: [`作成: ${schedule.createdBy.username}`, '最新の情報は更新をクリック'].join(' | '),
+      text: `作成: ${schedule.createdBy.username}`,
     },
     timestamp: schedule.updatedAt,
   };
@@ -180,7 +180,8 @@ export function createSimpleScheduleComponents(
     });
   }
 
-  // 更新ボタン
+  // 更新ボタン（一時的にコメントアウト）
+  /*
   components.push({
     type: 2,
     style: 2, // Secondary
@@ -188,6 +189,7 @@ export function createSimpleScheduleComponents(
     custom_id: createButtonId('refresh', schedule.id),
     emoji: { name: '🔄' },
   });
+  */
 
   // 編集ボタン（常に表示）
   components.push({

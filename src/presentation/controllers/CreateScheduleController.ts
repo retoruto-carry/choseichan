@@ -220,7 +220,7 @@ export class CreateScheduleController {
       schedule.reminderMentions?.map((m: string) => `\`${m}\``).join(' ') || '`@here`';
 
     await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interactionToken, {
-      content: `**🔔 リマインダーが自動設定されました**\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーを送信されます。`,
+      content: `**🔔 リマインダーが自動設定されました**\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーが送信されます。`,
       components: [
         {
           type: 1, // ACTION_ROW

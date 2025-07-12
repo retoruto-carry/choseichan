@@ -100,7 +100,7 @@ export class NotificationService {
             },
           ],
           footer: {
-            text: 'まだ回答していない方は早めに回答をお願いします！',
+            text: 'まだ回答していない方は早めに回答をお願いします🙏',
           },
         },
       ],

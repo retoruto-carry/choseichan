@@ -74,7 +74,8 @@ export class ScheduleMainMessageBuilder {
       emoji: { name: showDetails ? '📊' : '👥' }, // 統一仕様
     });
 
-    // 更新ボタン
+    // 更新ボタン（一時的にコメントアウト）
+    /*
     firstRowButtons.push({
       type: 2, // BUTTON
       style: 2, // SECONDARY
@@ -82,6 +83,7 @@ export class ScheduleMainMessageBuilder {
       custom_id: createButtonId('refresh', schedule.id),
       emoji: { name: '🔄' },
     });
+    */
 
     // 編集ボタン
     firstRowButtons.push({
