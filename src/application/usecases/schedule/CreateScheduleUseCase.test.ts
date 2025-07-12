@@ -404,7 +404,10 @@ describe('CreateScheduleUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.schedule).toBeDefined();
 
-      const schedule = result.schedule!;
+      const schedule = result.schedule;
+      if (!schedule) {
+        throw new Error('Schedule should be defined');
+      }
       expect(schedule.guildId).toBe('guild123');
       expect(schedule.channelId).toBe('channel123');
       expect(schedule.title).toBe('Test Schedule');

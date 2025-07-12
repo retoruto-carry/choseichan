@@ -39,7 +39,10 @@ export class RateLimitService {
     if (!RateLimitService.stores.has(storeKey)) {
       RateLimitService.stores.set(storeKey, new Map());
     }
-    const store = RateLimitService.stores.get(storeKey)!;
+    const store = RateLimitService.stores.get(storeKey);
+    if (!store) {
+      throw new Error(`Rate limit store not found for ${storeKey}`);
+    }
 
     // 既存エントリの取得
     let entry = store.get(identifier);

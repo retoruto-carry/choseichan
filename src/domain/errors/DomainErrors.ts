@@ -132,54 +132,52 @@ export class BusinessLogicError extends DomainError {
   readonly statusCode = 422;
 }
 
-// Error Factory
-export class DomainErrorFactory {
-  static scheduleNotFound(scheduleId: string): ScheduleNotFoundError {
-    return new ScheduleNotFoundError(scheduleId);
-  }
+// Error Factory Functions
+export function createScheduleNotFoundError(scheduleId: string): ScheduleNotFoundError {
+  return new ScheduleNotFoundError(scheduleId);
+}
 
-  static scheduleValidation(message: string, field?: string): ScheduleValidationError {
-    return new ScheduleValidationError(message, field);
-  }
+export function createScheduleValidationError(message: string, field?: string): ScheduleValidationError {
+  return new ScheduleValidationError(message, field);
+}
 
-  static scheduleAlreadyClosed(scheduleId: string): ScheduleAlreadyClosedError {
-    return new ScheduleAlreadyClosedError(scheduleId);
-  }
+export function createScheduleAlreadyClosedError(scheduleId: string): ScheduleAlreadyClosedError {
+  return new ScheduleAlreadyClosedError(scheduleId);
+}
 
-  static schedulePermission(action: string, userId: string): SchedulePermissionError {
-    return new SchedulePermissionError(action, userId);
-  }
+export function createSchedulePermissionError(action: string, userId: string): SchedulePermissionError {
+  return new SchedulePermissionError(action, userId);
+}
 
-  static responseNotFound(scheduleId: string, userId: string): ResponseNotFoundError {
-    return new ResponseNotFoundError(scheduleId, userId);
-  }
+export function createResponseNotFoundError(scheduleId: string, userId: string): ResponseNotFoundError {
+  return new ResponseNotFoundError(scheduleId, userId);
+}
 
-  static responseValidation(message: string, field?: string): ResponseValidationError {
-    return new ResponseValidationError(message, field);
-  }
+export function createResponseValidationError(message: string, field?: string): ResponseValidationError {
+  return new ResponseValidationError(message, field);
+}
 
-  static invalidResponseStatus(status: string): InvalidResponseStatusError {
-    return new InvalidResponseStatusError(status);
-  }
+export function createInvalidResponseStatusError(status: string): InvalidResponseStatusError {
+  return new InvalidResponseStatusError(status);
+}
 
-  static userValidation(message: string, field?: string): UserValidationError {
-    return new UserValidationError(message, field);
-  }
+export function createUserValidationError(message: string, field?: string): UserValidationError {
+  return new UserValidationError(message, field);
+}
 
-  static dateValidation(message: string, datetime?: string): DateValidationError {
-    return new DateValidationError(message, datetime);
-  }
+export function createDateValidationError(message: string, datetime?: string): DateValidationError {
+  return new DateValidationError(message, datetime);
+}
 
-  static domainRuleViolation(
-    rule: string,
-    details?: Record<string, unknown>
-  ): DomainRuleViolationError {
-    return new DomainRuleViolationError(rule, details);
-  }
+export function createDomainRuleViolationError(
+  rule: string,
+  details?: Record<string, unknown>
+): DomainRuleViolationError {
+  return new DomainRuleViolationError(rule, details);
+}
 
-  static businessLogic(message: string, details?: Record<string, unknown>): BusinessLogicError {
-    return new BusinessLogicError(message, details);
-  }
+export function createBusinessLogicError(message: string, details?: Record<string, unknown>): BusinessLogicError {
+  return new BusinessLogicError(message, details);
 }
 
 // Type Guards

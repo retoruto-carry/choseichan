@@ -605,11 +605,20 @@ export class ScheduleManagementController {
       env.ctx.waitUntil(
         (async () => {
           try {
+            // Check if required values are available
+            const applicationId = env.DISCORD_APPLICATION_ID;
+            const messageId = schedule.messageId;
+            
+            if (!applicationId || !messageId) {
+              this.logger.warn('Missing Discord credentials or message ID, skipping message deletion');
+              return;
+            }
+            
             const { deleteMessage } = await import('../../presentation/utils/discord');
             await deleteMessage(
-              env.DISCORD_APPLICATION_ID!,
+              applicationId,
               interaction.token,
-              schedule.messageId!
+              messageId
             );
           } catch (error) {
             this.logger.error(

@@ -208,18 +208,16 @@ export class PerformanceLogger {
     }
   }
 
-  static measure<T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): Promise<T> {
-    return new Promise(async (resolve, reject) => {
-      PerformanceLogger.start(operation);
-      try {
-        const result = await fn();
-        PerformanceLogger.end(operation, context);
-        resolve(result);
-      } catch (error) {
-        PerformanceLogger.end(operation, { ...context, error: true });
-        reject(error);
-      }
-    });
+  static async measure<T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): Promise<T> {
+    PerformanceLogger.start(operation);
+    try {
+      const result = await fn();
+      PerformanceLogger.end(operation, context);
+      return result;
+    } catch (error) {
+      PerformanceLogger.end(operation, { ...context, error: true });
+      throw error;
+    }
   }
 }
 

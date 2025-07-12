@@ -14,7 +14,7 @@ import { ResponseDomainService } from '../../../domain/services/ResponseDomainSe
 import type { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
 import type { ResponseDto } from '../../dto/ResponseDto';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
-import { ResponseMapper, ScheduleMapper } from '../../mappers/DomainMappers';
+import { mapDomainResponseToEntity, mapDomainScheduleToEntity } from '../../mappers/DomainMappers';
 
 export interface GetScheduleUseCaseResult {
   success: boolean;
@@ -197,11 +197,11 @@ export class GetScheduleUseCase {
   }
 
   private toDomainSchedule(schedule: DomainSchedule): Schedule {
-    return ScheduleMapper.toDomain(schedule);
+    return mapDomainScheduleToEntity(schedule);
   }
 
   private toDomainResponse(response: DomainResponse): Response {
-    return ResponseMapper.toDomain(response);
+    return mapDomainResponseToEntity(response);
   }
 
   private buildResponseDto(response: Response): ResponseDto {

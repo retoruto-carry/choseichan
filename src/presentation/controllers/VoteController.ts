@@ -328,12 +328,20 @@ export class VoteController {
   ): Promise<void> {
     try {
       // Create NotificationService with Clean Architecture dependencies
+      // Ensure Discord credentials are available
+      const discordToken = env.DISCORD_TOKEN ?? '';
+      const applicationId = env.DISCORD_APPLICATION_ID ?? '';
+      
+      if (!discordToken || !applicationId) {
+        throw new Error('Discord credentials are not configured');
+      }
+      
       const notificationService = new NotificationService(
         this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
         this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
         this.dependencyContainer.getScheduleSummaryUseCase,
-        env.DISCORD_TOKEN!,
-        env.DISCORD_APPLICATION_ID!
+        discordToken,
+        applicationId
       );
 
       // Send summary message

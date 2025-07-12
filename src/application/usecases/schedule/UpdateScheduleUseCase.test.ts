@@ -235,9 +235,10 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors!).toContain('スケジュールIDが必要です');
-      expect(result.errors!).toContain('Guild IDが必要です');
-      expect(result.errors!).toContain('編集者IDが必要です');
+      expect(result.errors).toBeDefined();
+      expect(result.errors).toContain('スケジュールIDが必要です');
+      expect(result.errors).toContain('Guild IDが必要です');
+      expect(result.errors).toContain('編集者IDが必要です');
     });
 
     it('should validate empty title', async () => {
@@ -253,7 +254,8 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors!).toContain('タイトルが空です');
+      expect(result.errors).toBeDefined();
+      expect(result.errors).toContain('タイトルが空です');
     });
 
     it('should validate empty dates', async () => {
@@ -285,7 +287,8 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors!).toContain('スケジュールが見つかりません');
+      expect(result.errors).toBeDefined();
+      expect(result.errors).toContain('スケジュールが見つかりません');
     });
 
     it('should return error when user is not authorized', async () => {
@@ -301,7 +304,8 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors!).toContain('このスケジュールを編集する権限がありません');
+      expect(result.errors).toBeDefined();
+      expect(result.errors).toContain('このスケジュールを編集する権限がありません');
     });
 
     it('should return error when schedule is closed', async () => {
@@ -318,7 +322,8 @@ describe('UpdateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors!).toContain('締め切られたスケジュールは編集できません');
+      expect(result.errors).toBeDefined();
+      expect(result.errors).toContain('締め切られたスケジュールは編集できません');
     });
 
     it('should handle repository errors', async () => {

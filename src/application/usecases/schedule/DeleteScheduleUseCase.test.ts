@@ -124,7 +124,8 @@ describe('DeleteScheduleUseCase', () => {
       for (const { request, expectedError } of testCases) {
         const result = await useCase.execute(request as any);
         expect(result.success).toBe(false);
-        expect(result.errors!).toContain(expectedError);
+        expect(result.errors).toBeDefined();
+        expect(result.errors).toContain(expectedError);
       }
     });
 

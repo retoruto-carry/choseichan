@@ -69,7 +69,7 @@ export class ReopenScheduleUseCase {
       await this.scheduleRepository.save(reopenedSchedule.toPrimitives());
 
       // 7. レスポンスの構築
-      const response = this.buildResponse(reopenedSchedule);
+      const response = ScheduleMapper.scheduleToResponse(reopenedSchedule);
 
       return {
         success: true,
@@ -81,34 +81,5 @@ export class ReopenScheduleUseCase {
         errors: [error instanceof Error ? error.message : 'スケジュールの再開に失敗しました'],
       };
     }
-  }
-
-  private buildResponse(schedule: Schedule): ScheduleResponse {
-    return {
-      id: schedule.id,
-      guildId: schedule.guildId,
-      channelId: schedule.channelId,
-      messageId: schedule.messageId,
-      title: schedule.title,
-      description: schedule.description,
-      dates: schedule.dates.map((date) => ({
-        id: date.id,
-        datetime: date.datetime,
-      })),
-      deadline: schedule.deadline?.toISOString(),
-      status: schedule.status,
-      reminderTimings: schedule.reminderTimings,
-      reminderMentions: schedule.reminderMentions,
-      remindersSent: schedule.remindersSent,
-      notificationSent: schedule.notificationSent,
-      createdBy: {
-        id: schedule.createdBy.id,
-        username: schedule.createdBy.username,
-      },
-      authorId: schedule.authorId,
-      totalResponses: schedule.totalResponses,
-      createdAt: schedule.createdAt.toISOString(),
-      updatedAt: schedule.updatedAt.toISOString(),
-    };
   }
 }

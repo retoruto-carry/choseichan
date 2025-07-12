@@ -216,55 +216,53 @@ export class ServiceUnavailableError extends InfrastructureError {
   }
 }
 
-// Error Factory
-export class InfrastructureErrorFactory {
-  static databaseConnection(database: string, cause?: Error): DatabaseConnectionError {
-    return new DatabaseConnectionError(database, cause);
-  }
+// Error Factory Functions
+export function createDatabaseConnectionError(database: string, cause?: Error): DatabaseConnectionError {
+  return new DatabaseConnectionError(database, cause);
+}
 
-  static databaseQuery(query: string, cause?: Error): DatabaseQueryError {
-    return new DatabaseQueryError(query, cause);
-  }
+export function createDatabaseQueryError(query: string, cause?: Error): DatabaseQueryError {
+  return new DatabaseQueryError(query, cause);
+}
 
-  static databaseTransaction(operation: string, cause?: Error): DatabaseTransactionError {
-    return new DatabaseTransactionError(operation, cause);
-  }
+export function createDatabaseTransactionError(operation: string, cause?: Error): DatabaseTransactionError {
+  return new DatabaseTransactionError(operation, cause);
+}
 
-  static databaseConstraint(constraint: string, table?: string): DatabaseConstraintError {
-    return new DatabaseConstraintError(constraint, table);
-  }
+export function createDatabaseConstraintError(constraint: string, table?: string): DatabaseConstraintError {
+  return new DatabaseConstraintError(constraint, table);
+}
 
-  static httpRequest(url: string, status: number, statusText?: string): HttpRequestError {
-    return new HttpRequestError(url, status, statusText);
-  }
+export function createHttpRequestError(url: string, status: number, statusText?: string): HttpRequestError {
+  return new HttpRequestError(url, status, statusText);
+}
 
-  static apiResponse(api: string, message: string, status?: number): ApiResponseError {
-    return new ApiResponseError(api, message, status);
-  }
+export function createApiResponseError(api: string, message: string, status?: number): ApiResponseError {
+  return new ApiResponseError(api, message, status);
+}
 
-  static authentication(service: string, reason?: string): AuthenticationError {
-    return new AuthenticationError(service, reason);
-  }
+export function createAuthenticationError(service: string, reason?: string): AuthenticationError {
+  return new AuthenticationError(service, reason);
+}
 
-  static authorization(service: string, action: string): AuthorizationError {
-    return new AuthorizationError(service, action);
-  }
+export function createAuthorizationError(service: string, action: string): AuthorizationError {
+  return new AuthorizationError(service, action);
+}
 
-  static discordApi(endpoint: string, status: number, message?: string): DiscordApiError {
-    return new DiscordApiError(endpoint, status, message);
-  }
+export function createDiscordApiError(endpoint: string, status: number, message?: string): DiscordApiError {
+  return new DiscordApiError(endpoint, status, message);
+}
 
-  static discordRateLimit(endpoint: string, retryAfter: number): DiscordRateLimitError {
-    return new DiscordRateLimitError(endpoint, retryAfter);
-  }
+export function createDiscordRateLimitError(endpoint: string, retryAfter: number): DiscordRateLimitError {
+  return new DiscordRateLimitError(endpoint, retryAfter);
+}
 
-  static environment(variable: string, expected?: string): EnvironmentError {
-    return new EnvironmentError(variable, expected);
-  }
+export function createEnvironmentError(variable: string, expected?: string): EnvironmentError {
+  return new EnvironmentError(variable, expected);
+}
 
-  static serviceUnavailable(service: string, reason?: string): ServiceUnavailableError {
-    return new ServiceUnavailableError(service, reason);
-  }
+export function createServiceUnavailableError(service: string, reason?: string): ServiceUnavailableError {
+  return new ServiceUnavailableError(service, reason);
 }
 
 // Type Guards

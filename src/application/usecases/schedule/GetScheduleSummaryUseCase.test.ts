@@ -182,7 +182,8 @@ describe('GetScheduleSummaryUseCase', () => {
       for (const { scheduleId, guildId, expectedError } of testCases) {
         const result = await useCase.execute(scheduleId, guildId);
         expect(result.success).toBe(false);
-        expect(result.errors!).toContain(expectedError);
+        expect(result.errors).toBeDefined();
+        expect(result.errors).toContain(expectedError);
       }
     });
 

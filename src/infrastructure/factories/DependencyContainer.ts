@@ -142,7 +142,9 @@ export class DependencyContainer {
       getScheduleSummaryUseCase,
       deadlineReminderUseCase,
       processReminderUseCase,
-      processDeadlineRemindersUseCase: processDeadlineRemindersUseCase!,
+      processDeadlineRemindersUseCase: processDeadlineRemindersUseCase || (() => {
+        throw new Error('ProcessDeadlineRemindersUseCase is not initialized');
+      })(),
 
       // Response Use Cases
       submitResponseUseCase,

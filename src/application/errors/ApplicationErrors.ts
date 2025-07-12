@@ -135,47 +135,45 @@ export class TimeoutError extends ApplicationError {
   }
 }
 
-// Error Factory
-export class ApplicationErrorFactory {
-  static useCaseValidation(message: string, useCase?: string): UseCaseValidationError {
-    return new UseCaseValidationError(message, useCase);
-  }
+// Error Factory Functions
+export function createUseCaseValidationError(message: string, useCase?: string): UseCaseValidationError {
+  return new UseCaseValidationError(message, useCase);
+}
 
-  static useCaseExecution(message: string, useCase: string, cause?: Error): UseCaseExecutionError {
-    return new UseCaseExecutionError(message, useCase, cause);
-  }
+export function createUseCaseExecutionError(message: string, useCase: string, cause?: Error): UseCaseExecutionError {
+  return new UseCaseExecutionError(message, useCase, cause);
+}
 
-  static concurrency(resource: string, operation: string): ConcurrencyError {
-    return new ConcurrencyError(resource, operation);
-  }
+export function createConcurrencyError(resource: string, operation: string): ConcurrencyError {
+  return new ConcurrencyError(resource, operation);
+}
 
-  static mapping(from: string, to: string, cause?: Error): MappingError {
-    return new MappingError(from, to, cause);
-  }
+export function createMappingError(from: string, to: string, cause?: Error): MappingError {
+  return new MappingError(from, to, cause);
+}
 
-  static serialization(data: string, format: string, cause?: Error): SerializationError {
-    return new SerializationError(data, format, cause);
-  }
+export function createSerializationError(data: string, format: string, cause?: Error): SerializationError {
+  return new SerializationError(data, format, cause);
+}
 
-  static externalService(service: string, operation: string, cause?: Error): ExternalServiceError {
-    return new ExternalServiceError(service, operation, cause);
-  }
+export function createExternalServiceError(service: string, operation: string, cause?: Error): ExternalServiceError {
+  return new ExternalServiceError(service, operation, cause);
+}
 
-  static rateLimit(service: string, retryAfter?: number): RateLimitError {
-    return new RateLimitError(service, retryAfter);
-  }
+export function createRateLimitError(service: string, retryAfter?: number): RateLimitError {
+  return new RateLimitError(service, retryAfter);
+}
 
-  static integration(integration: string, operation: string, cause?: Error): IntegrationError {
-    return new IntegrationError(integration, operation, cause);
-  }
+export function createIntegrationError(integration: string, operation: string, cause?: Error): IntegrationError {
+  return new IntegrationError(integration, operation, cause);
+}
 
-  static configuration(setting: string, value?: string): ConfigurationError {
-    return new ConfigurationError(setting, value);
-  }
+export function createConfigurationError(setting: string, value?: string): ConfigurationError {
+  return new ConfigurationError(setting, value);
+}
 
-  static timeout(operation: string, timeout: number): TimeoutError {
-    return new TimeoutError(operation, timeout);
-  }
+export function createTimeoutError(operation: string, timeout: number): TimeoutError {
+  return new TimeoutError(operation, timeout);
 }
 
 // Type Guards

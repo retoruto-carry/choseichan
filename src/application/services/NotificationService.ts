@@ -35,8 +35,8 @@ export class NotificationService {
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
-    // This method is currently not used, as notifications are handled
-    // by the deadline-reminder.ts module called from GitHub Actions
+    // このメソッドは現在使用されていません
+    // 通知はGitHub Actionsから呼び出されるdeadline-reminder.tsモジュールで処理されます
     const schedules = await this.getSchedulesNearingDeadline();
 
     for (const schedule of schedules) {
@@ -47,8 +47,8 @@ export class NotificationService {
   }
 
   private async getSchedulesNearingDeadline(): Promise<Schedule[]> {
-    // This method is not currently used
-    // Deadline checking is handled by deadline-reminder.ts
+    // このメソッドは現在使用されていません
+    // 締切チェックはdeadline-reminder.tsで処理されます
     return [];
   }
 
@@ -61,10 +61,10 @@ export class NotificationService {
     const deadlineDate =
       schedule.deadline instanceof Date ? schedule.deadline : new Date(schedule.deadline);
 
-    // Build mentions string
+    // メンション文字列を構築
     let mentions = '';
     if (schedule.reminderMentions && schedule.reminderMentions.length > 0 && schedule.guildId) {
-      // Resolve user mentions to proper Discord format
+      // ユーザーメンションを適切なDiscord形式に解決
       const resolvedMentions = await this.resolveUserMentions(
         schedule.reminderMentions,
         schedule.guildId
@@ -72,7 +72,7 @@ export class NotificationService {
       mentions = `${resolvedMentions.join(' ')} `;
     }
 
-    // Send reminder to channel
+    // チャンネルにリマインダーを送信
     const message = {
       content: `${mentions}⏰ **締切リマインダー**: 「${schedule.title}」の${customMessage}です！`,
       embeds: [
@@ -104,8 +104,8 @@ export class NotificationService {
   }
 
   private async getNonRespondents(_summary: ScheduleSummaryResponse): Promise<string[]> {
-    // In a real implementation, this would get channel members
-    // and compare with respondents
+    // 実際の実装では、チャンネルメンバーを取得し
+    // 回答者と比較します
     return [];
   }
 
@@ -113,14 +113,46 @@ export class NotificationService {
     schedule: Schedule | ScheduleResponse,
     nonRespondents: string[]
   ): object {
+    // 締切が設定されていない場合は早期リターン
+    if (!schedule.deadline) {
+      return {
+        content: `⏰ **リマインダー**: 日程調整「${schedule.title}」の締切が近づいています！`,
+        embeds: [{
+          title: '📅 未回答の方はご回答をお願いします',
+          color: 0xf39c12,
+          fields: [
+            {
+              name: '日程調整',
+              value: schedule.title,
+              inline: true,
+            },
+            {
+              name: '締切',
+              value: '未設定',
+              inline: true,
+            },
+            {
+              name: '未回答者',
+              value: nonRespondents.join(', ') || 'なし',
+              inline: false,
+            },
+          ],
+          footer: {
+            text: `ID: ${schedule.id}`,
+          },
+          timestamp: new Date().toISOString(),
+        }],
+      };
+    }
+    
     const deadline =
-      schedule.deadline instanceof Date ? schedule.deadline : new Date(schedule.deadline!);
+      schedule.deadline instanceof Date ? schedule.deadline : new Date(schedule.deadline);
     return {
       content: `⏰ **リマインダー**: 日程調整「${schedule.title}」の締切が近づいています！`,
       embeds: [
         {
           title: '📅 未回答の方はご回答をお願いします',
-          color: 0xf39c12, // Warning color
+          color: 0xf39c12, // 警告色
           fields: [
             {
               name: '日程調整',
@@ -167,15 +199,16 @@ export class NotificationService {
   private async fetchGuildMembers(
     guildId: string
   ): Promise<Map<string, { id: string; username: string }>> {
-    if (this.memberCache.has(guildId)) {
-      return this.memberCache.get(guildId)!;
+    const cachedMembers = this.memberCache.get(guildId);
+    if (cachedMembers) {
+      return cachedMembers;
     }
 
     const members = new Map<string, { id: string; username: string }>();
     let after: string | undefined;
 
     try {
-      // Discord API allows fetching up to 1000 members at a time
+      // Discord APIは一度に最大1000人のメンバーを取得可能
       while (true) {
         const url = `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000${after ? `&after=${after}` : ''}`;
 
@@ -210,7 +243,7 @@ export class NotificationService {
         after = memberList[memberList.length - 1].user.id;
       }
 
-      // Cache for 5 minutes
+      // 5分間キャッシュ
       this.memberCache.set(guildId, members);
       setTimeout(() => this.memberCache.delete(guildId), 5 * 60 * 1000);
 
@@ -227,7 +260,7 @@ export class NotificationService {
   private async resolveUserMentions(mentions: string[], guildId: string): Promise<string[]> {
     const resolved: string[] = [];
 
-    // Check if we need to fetch members
+    // メンバーを取得する必要があるかチェック
     const needsResolution = mentions.some(
       (m) => m !== '@everyone' && m !== '@here' && !(m.startsWith('<@') && m.endsWith('>'))
     );
@@ -242,9 +275,9 @@ export class NotificationService {
       if (mention === '@everyone' || mention === '@here') {
         resolved.push(mention);
       } else if (mention.startsWith('<@') && mention.endsWith('>')) {
-        resolved.push(mention); // Already in correct format
+        resolved.push(mention); // すでに正しい形式
       } else if (mention.startsWith('@')) {
-        // Remove @ prefix and search for username
+        // @プレフィックスを削除してユーザー名を検索
         const username = mention.substring(1).toLowerCase();
         const member = members.get(username);
 
@@ -252,11 +285,11 @@ export class NotificationService {
           resolved.push(`<@${member.id}>`);
         } else {
           this.logger.warn(`Could not resolve user mention: ${mention}`);
-          // Keep original mention as fallback
+          // フォールバックとして元のメンションを保持
           resolved.push(mention);
         }
       } else {
-        // Try without @ prefix
+        // @プレフィックスなしで試す
         const member = members.get(mention.toLowerCase());
         if (member) {
           resolved.push(`<@${member.id}>`);
@@ -276,7 +309,7 @@ export class NotificationService {
     const summary = summaryResult.summary;
     const { schedule, responses, responseCounts, bestDateId } = summary;
 
-    // Add mentions from reminder settings if available
+    // リマインダー設定からメンションを追加（利用可能な場合）
     let mentionText = '';
     if (schedule.reminderMentions && schedule.reminderMentions.length > 0 && schedule.guildId) {
       const resolvedMentions = await this.resolveUserMentions(
@@ -307,7 +340,7 @@ export class NotificationService {
               const count = responseCounts[date.id];
               const isBest = date.id === bestDateId && responses.length > 0;
 
-              // Get responses for this date with user names
+              // この日付のユーザー名付き回答を取得
               const dateResponses = responses
                 .map((response) => {
                   const status = response.dateStatuses[date.id];
@@ -342,14 +375,14 @@ export class NotificationService {
       content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています`,
     };
 
-    // Add message reference if messageId exists
+    // messageIdが存在する場合はメッセージ参照を追加
     if (schedule.messageId) {
       message.message_reference = {
         message_id: schedule.messageId,
       };
     }
 
-    // Send PR message with delay after summary using Promise-based delay
+    // Promiseベースの遅延を使用してサマリー後にPRメッセージを送信
     await new Promise((resolve) => setTimeout(resolve, NOTIFICATION_CONSTANTS.PR_MESSAGE_DELAY_MS));
     await this.sendChannelMessage(schedule.channelId, message);
   }

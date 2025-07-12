@@ -391,7 +391,10 @@ describe('SubmitResponseUseCase', () => {
       expect(result.success).toBe(true);
       expect(result.response).toBeDefined();
 
-      const response = result.response!;
+      const response = result.response;
+      if (!response) {
+        throw new Error('Response should be defined');
+      }
       expect(response.scheduleId).toBe('test-schedule-1');
       expect(response.userId).toBe('user456');
       expect(response.username).toBe('responder');

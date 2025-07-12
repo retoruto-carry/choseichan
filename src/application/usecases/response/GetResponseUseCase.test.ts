@@ -210,7 +210,10 @@ describe('GetResponseUseCase', () => {
       expect(result.statistics).toBeDefined();
 
       // Verify statistics
-      const stats = result.statistics!;
+      const stats = result.statistics;
+      if (!stats) {
+        throw new Error('Statistics should be defined');
+      }
       expect(stats.totalUsers).toBe(3);
 
       // Check date-1 statistics

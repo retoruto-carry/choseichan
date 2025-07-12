@@ -116,16 +116,9 @@ export class SubmitResponseUseCase {
       };
       await this.responseRepository.save(domainResponse, request.guildId);
 
-      // 10. スケジュールの総回答数を更新
-      const allResponses = await this.responseRepository.findByScheduleId(
-        request.scheduleId,
-        request.guildId
-      );
-
-      const updatedSchedule = scheduleEntity.updateTotalResponses(allResponses.length);
-      await this.scheduleRepository.save(updatedSchedule.toPrimitives());
-
-      // 11. レスポンスの構築
+      // 10. レスポンスの構築
+      // 注: total_responsesの更新はデータベーストリガーで自動的に行われるため、
+      // アプリケーション層での手動更新は不要（競合状態を防ぐため）
       const responseDto = this.buildResponseDto(response);
 
       return {

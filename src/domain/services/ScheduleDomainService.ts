@@ -91,7 +91,12 @@ export class ScheduleDomainService {
       return false;
     }
 
-    const deadline = schedule.deadline!;
+    // Return false if deadline is not set
+    if (!schedule.deadline) {
+      return false;
+    }
+
+    const deadline = schedule.deadline;
     const now = new Date();
     const timeUntilDeadline = deadline.getTime() - now.getTime();
 

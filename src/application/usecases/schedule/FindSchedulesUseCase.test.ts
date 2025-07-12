@@ -156,7 +156,8 @@ describe('FindSchedulesUseCase', () => {
       for (const { channelId, guildId, expectedError } of testCases) {
         const result = await useCase.findByChannel(channelId, guildId);
         expect(result.success).toBe(false);
-        expect(result.errors!).toContain(expectedError);
+        expect(result.errors).toBeDefined();
+        expect(result.errors).toContain(expectedError);
       }
     });
 
@@ -251,7 +252,8 @@ describe('FindSchedulesUseCase', () => {
       for (const { startTime, endTime, expectedError } of testCases) {
         const result = await useCase.findByDeadlineRange(startTime, endTime);
         expect(result.success).toBe(false);
-        expect(result.errors!).toContain(expectedError);
+        expect(result.errors).toBeDefined();
+        expect(result.errors).toContain(expectedError);
       }
     });
 
@@ -332,7 +334,8 @@ describe('FindSchedulesUseCase', () => {
       for (const { messageId, guildId, expectedError } of testCases) {
         const result = await useCase.findByMessageId(messageId, guildId);
         expect(result.success).toBe(false);
-        expect(result.errors!).toContain(expectedError);
+        expect(result.errors).toBeDefined();
+        expect(result.errors).toContain(expectedError);
       }
     });
 
