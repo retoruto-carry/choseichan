@@ -96,9 +96,9 @@ describe('ScheduleDomainService', () => {
       expect(validation.errors).toContain('日程候補を1つ以上入力してください');
     });
 
-    it('should reject more than 10 dates', () => {
-      const manyDates = Array.from({ length: 11 }, (_, i) =>
-        ScheduleDate.create(`date${i}`, `2024-12-${i + 1} 10:00`)
+    it('should reject more than 50 dates', () => {
+      const manyDates = Array.from({ length: 51 }, (_, i) =>
+        ScheduleDate.create(`date${i}`, `2024-12-${(i % 28) + 1} 10:00`)
       );
 
       const validation = ScheduleDomainService.validateScheduleForCreation({
@@ -107,7 +107,7 @@ describe('ScheduleDomainService', () => {
       });
 
       expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('日程候補は10個以内で入力してください');
+      expect(validation.errors).toContain('日程候補は50個以内で入力してください');
     });
 
     it('should reject past deadline', () => {

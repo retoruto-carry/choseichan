@@ -15,7 +15,7 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
-import { updateOriginalMessage } from '../utils/discord';
+import { sendFollowupMessage, updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
 
@@ -33,7 +33,7 @@ export class VoteController {
   async handleRespondButton(
     interaction: ButtonInteraction,
     params: string[],
-    _env: Env
+    env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -85,39 +85,53 @@ export class VoteController {
         responseResult.response || null
       );
 
-      // Max 5 select menus per message
-      const firstBatch = selectMenus.slice(0, 5);
-      const hasMore = selectMenus.length > 5;
+      // Discord制限: 1メッセージあたり最大5個のセレクトメニュー
+      // 5個ずつのグループに分割
+      const componentGroups: any[][] = [];
+      for (let i = 0; i < selectMenus.length; i += 5) {
+        componentGroups.push(selectMenus.slice(i, i + 5));
+      }
 
-      // 6個以上の日程がある場合は分割
-      const components = [];
-      if (selectMenus.length <= 5) {
-        components.push(...selectMenus);
-      } else {
-        // 最初の5個を表示
-        components.push(...firstBatch);
-        // 残りがあることを示すメッセージを追加
-        if (hasMore) {
-          components.push({
-            type: 1,
-            components: [
-              {
-                type: 2,
-                style: 2,
-                label: `※ 他に${selectMenus.length - 5}個の日程があります`,
-                custom_id: 'dummy_more',
-                disabled: true,
-              },
-            ],
-          });
+      // 最初のグループをコンポーネントに追加
+      const components = [...componentGroups[0]];
+
+      // 複数グループがある場合はフォローアップメッセージを送信
+      if (componentGroups.length > 1 && env.DISCORD_APPLICATION_ID) {
+        const sendFollowups = async () => {
+          for (let i = 1; i < componentGroups.length; i++) {
+            await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interaction.token, {
+              content: `📝 **${schedule.title}** の回答（続き ${i + 1}/${componentGroups.length}）`,
+              components: componentGroups[i],
+              flags: 64, // Ephemeral
+            });
+          }
+        };
+
+        // waitUntilを使って非同期で送信
+        if (env.ctx && typeof env.ctx.waitUntil === 'function') {
+          env.ctx.waitUntil(sendFollowups());
+        } else {
+          // フォールバック
+          sendFollowups().catch((error) =>
+            this.logger.error(
+              'Failed to send followup messages',
+              error instanceof Error ? error : new Error(String(error))
+            )
+          );
         }
       }
+
+      // 複数メッセージの場合は最初のメッセージに件数を表示
+      const content =
+        componentGroups.length > 1
+          ? `📝 **${schedule.title}** の回答（1/${componentGroups.length}）\n\n👇 回答を選択：\n\n> 📋 日程が${schedule.dates.length}件あります\n> ※反映には約5秒~10秒かかります`
+          : `📝 **${schedule.title}** の回答\n\n👇 回答を選択：\n\n> ※反映には約5秒~10秒かかります`;
 
       return new Response(
         JSON.stringify({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `📝 **${schedule.title}** の回答\n\n👇 回答を選択：\n\n> ※反映には約5秒~10秒かかります`,
+            content,
             components,
             flags: 64, // Ephemeral
           },

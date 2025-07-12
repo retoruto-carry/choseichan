@@ -5,6 +5,7 @@
  * エンティティ単体では表現できないドメインの知識を含む
  */
 
+import { BUSINESS_CONSTANTS } from '../../constants/ApplicationConstants';
 import type { Response } from '../entities/Response';
 import type { Schedule } from '../entities/Schedule';
 import type { ScheduleDate } from '../entities/ScheduleDate';
@@ -155,8 +156,8 @@ export class ScheduleDomainService {
     // 日程チェック
     if (!data.dates || data.dates.length === 0) {
       errors.push('日程候補を1つ以上入力してください');
-    } else if (data.dates.length > 10) {
-      errors.push('日程候補は10個以内で入力してください');
+    } else if (data.dates.length > BUSINESS_CONSTANTS.MAX_DATES_PER_SCHEDULE) {
+      errors.push(`日程候補は${BUSINESS_CONSTANTS.MAX_DATES_PER_SCHEDULE}個以内で入力してください`);
     }
 
     // 重複チェック

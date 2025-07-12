@@ -319,7 +319,7 @@ describe('CreateScheduleUseCase', () => {
     });
 
     it('should reject schedule with too many dates', async () => {
-      const manyDates = Array.from({ length: 11 }, (_, i) => ({
+      const manyDates = Array.from({ length: 51 }, (_, i) => ({
         id: `date${i}`,
         datetime: `2024-12-${(i % 30) + 1} 10:00`,
       }));
@@ -336,7 +336,7 @@ describe('CreateScheduleUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('日程候補は10個以内で入力してください');
+      expect(result.errors).toContain('日程候補は50個以内で入力してください');
     });
 
     it('should reject schedule with too long title', async () => {
