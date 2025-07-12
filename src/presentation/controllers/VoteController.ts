@@ -89,29 +89,36 @@ export class VoteController {
       const firstBatch = selectMenus.slice(0, 5);
       const hasMore = selectMenus.length > 5;
 
+      // 6個以上の日程がある場合は分割
+      const components = [];
+      if (selectMenus.length <= 5) {
+        components.push(...selectMenus);
+      } else {
+        // 最初の5個を表示
+        components.push(...firstBatch);
+        // 残りがあることを示すメッセージを追加
+        if (hasMore) {
+          components.push({
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 2,
+                label: `※ 他に${selectMenus.length - 5}個の日程があります`,
+                custom_id: 'dummy_more',
+                disabled: true,
+              },
+            ],
+          });
+        }
+      }
+
       return new Response(
         JSON.stringify({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：`,
-            components: [
-              ...firstBatch,
-              {
-                type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 2,
-                    label: hasMore ? '残りの日程を回答' : '完了',
-                    custom_id: hasMore
-                      ? `vote_continue:${schedule.id}:5`
-                      : `vote_complete:${schedule.id}`,
-                    disabled: true,
-                    emoji: { name: hasMore ? '➡️' : '✅' },
-                  },
-                ],
-              },
-            ],
+            content: `📝 **${schedule.title}** の回答\n\n各日程について回答を選択してください：\n\n※反映には最大1分かかります`,
+            components,
             flags: 64, // Ephemeral
           },
         }),

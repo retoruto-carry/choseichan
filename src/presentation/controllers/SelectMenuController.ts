@@ -98,25 +98,11 @@ export class SelectMenuController {
         }
       }
 
-      // 選択した日程の情報を取得
-      const selectedDate = schedule.dates.find((d) => d.id === dateId);
-      const statusEmoji =
-        selectedValue === 'yes'
-          ? '✅'
-          : selectedValue === 'maybe'
-            ? '❔'
-            : selectedValue === 'no'
-              ? '❌'
-              : '➖';
-      const statusText = selectedValue === 'none' ? '未回答' : statusEmoji;
-
+      // 選択を受け付けたことを示すためだけにDeferredUpdateを返す
+      // UIは変更せず、バックグラウンドで処理
       return new Response(
         JSON.stringify({
-          type: InteractionResponseType.UPDATE_MESSAGE,
-          data: {
-            content: `${statusText} **${selectedDate?.datetime || '日程'}** の回答を更新しました\n\n※反映には最大1分かかります`,
-            components: interaction.message?.components || [], // 既存のコンポーネントを維持
-          },
+          type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
         }),
         { headers: { 'Content-Type': 'application/json' } }
       );

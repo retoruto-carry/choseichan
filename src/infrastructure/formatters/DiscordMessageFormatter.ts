@@ -22,10 +22,10 @@ export class DiscordMessageFormatter implements IMessageFormatter {
    */
   formatScheduleMessage(
     summary: ScheduleSummaryResponse,
-    showVoteButton: boolean
+    showDetails: boolean
   ): { embed: object; components: object[] } {
-    const embed = this.createScheduleEmbed(summary, false);
-    const components = this.createScheduleComponents(summary, showVoteButton);
+    const embed = this.createScheduleEmbed(summary, showDetails);
+    const components = this.createScheduleComponents(summary, showDetails);
     return { embed, components };
   }
   /**
