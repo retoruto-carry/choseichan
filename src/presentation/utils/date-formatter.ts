@@ -7,13 +7,18 @@
  */
 export function formatDateTime(date: Date | string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // 明示的にJST（UTC+9）として変換
+  const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+  const jstDate = new Date(dateObj.getTime() + jstOffset);
+  
   const days = ['日', '月', '火', '水', '木', '金', '土'];
-  const dayOfWeek = days[dateObj.getDay()];
+  const dayOfWeek = days[jstDate.getUTCDay()];
 
-  const month = dateObj.getMonth() + 1;
-  const day = dateObj.getDate();
-  const hours = String(dateObj.getHours()).padStart(2, '0');
-  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  const month = jstDate.getUTCMonth() + 1;
+  const day = jstDate.getUTCDate();
+  const hours = String(jstDate.getUTCHours()).padStart(2, '0');
+  const minutes = String(jstDate.getUTCMinutes()).padStart(2, '0');
 
   return `${month}/${day}(${dayOfWeek}) ${hours}:${minutes}`;
 }
@@ -24,10 +29,14 @@ export function formatDateTime(date: Date | string): string {
 export function formatDateTimeShort(date: Date | string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
 
-  const month = dateObj.getMonth() + 1;
-  const day = dateObj.getDate();
-  const hours = String(dateObj.getHours()).padStart(2, '0');
-  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  // 明示的にJST（UTC+9）として変換
+  const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+  const jstDate = new Date(dateObj.getTime() + jstOffset);
+
+  const month = jstDate.getUTCMonth() + 1;
+  const day = jstDate.getUTCDate();
+  const hours = String(jstDate.getUTCHours()).padStart(2, '0');
+  const minutes = String(jstDate.getUTCMinutes()).padStart(2, '0');
 
   return `${month}/${day} ${hours}:${minutes}`;
 }

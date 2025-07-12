@@ -30,12 +30,16 @@ export function formatDate(dateString: string): string {
     return dateString;
   }
 
+  // 明示的にJST（UTC+9）として変換
+  const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+  const jstDate = new Date(date.getTime() + jstOffset);
+  
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const weekday = weekdays[date.getDay()];
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const month = jstDate.getUTCMonth() + 1;
+  const day = jstDate.getUTCDate();
+  const weekday = weekdays[jstDate.getUTCDay()];
+  const hours = jstDate.getUTCHours().toString().padStart(2, '0');
+  const minutes = jstDate.getUTCMinutes().toString().padStart(2, '0');
 
   // 各値が有効かチェック
   if (Number.isNaN(month) || Number.isNaN(day) || Number.isNaN(hours) || Number.isNaN(minutes)) {

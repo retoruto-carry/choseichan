@@ -236,16 +236,25 @@ export class ScheduleUIBuilder {
    */
   private static formatDateTime(date: Date | string): string {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // 明示的にJST（UTC+9）として変換
+    const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+    const jstDate = new Date(dateObj.getTime() + jstOffset);
+    
     const days = ['日', '月', '火', '水', '木', '金', '土'];
-    const dayOfWeek = days[dateObj.getDay()];
-    return `${dateObj.getMonth() + 1}/${dateObj.getDate()}(${dayOfWeek}) ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+    const dayOfWeek = days[jstDate.getUTCDay()];
+    return `${jstDate.getUTCMonth() + 1}/${jstDate.getUTCDate()}(${dayOfWeek}) ${String(jstDate.getUTCHours()).padStart(2, '0')}:${String(jstDate.getUTCMinutes()).padStart(2, '0')}`;
   }
 
   /**
    * 日時フォーマット（短縮）
    */
   private static formatDateTimeShort(date: Date): string {
-    return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    // 明示的にJST（UTC+9）として変換
+    const jstOffset = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+    const jstDate = new Date(date.getTime() + jstOffset);
+    
+    return `${jstDate.getUTCMonth() + 1}/${jstDate.getUTCDate()} ${String(jstDate.getUTCHours()).padStart(2, '0')}:${String(jstDate.getUTCMinutes()).padStart(2, '0')}`;
   }
 
   /**
