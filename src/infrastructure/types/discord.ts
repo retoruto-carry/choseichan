@@ -71,6 +71,7 @@ export interface ButtonInteraction {
   token: string;
   message?: {
     id: string;
+    content?: string;
     embeds: DiscordEmbed[];
     components?: DiscordComponent[];
     message_reference?: {
@@ -103,6 +104,7 @@ export interface ModalInteraction {
   token: string;
   message?: {
     id: string;
+    content?: string;
     embeds: DiscordEmbed[];
     components?: DiscordComponent[];
     message_reference?: {

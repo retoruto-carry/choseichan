@@ -98,11 +98,23 @@ export class SelectMenuController {
         }
       }
 
-      // 選択を受け付けたことを示すためだけにDeferredUpdateを返す
-      // UIは変更せず、バックグラウンドで処理
+      // 元のメッセージを取得して反映時間の注記を追加
+      const originalContent = interaction.message?.content || '';
+      let updatedContent = originalContent;
+
+      // 反映時間の注記がまだ含まれていない場合は追加
+      if (!updatedContent.includes('※反映には約5秒~10秒かかります')) {
+        updatedContent += '\n\n> ※反映には約5秒~10秒かかります';
+      }
+
+      // メッセージを更新して反映時間の注記を表示
       return new Response(
         JSON.stringify({
-          type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
+          type: InteractionResponseType.UPDATE_MESSAGE,
+          data: {
+            content: updatedContent,
+            components: interaction.message?.components || [],
+          },
         }),
         { headers: { 'Content-Type': 'application/json' } }
       );
