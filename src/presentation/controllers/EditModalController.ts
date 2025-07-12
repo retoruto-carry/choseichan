@@ -313,7 +313,7 @@ export class EditModalController {
         newDeadline = parseUserInputDate(deadlineInput.trim());
 
         if (!newDeadline) {
-          return this.createErrorResponse('締切日の形式が正しくありません。例: 2023/12/31 23:59');
+          return this.createErrorResponse('締切日の形式が正しくありません。例: 2025/12/31 23:59');
         }
 
         if (newDeadline.getTime() <= Date.now()) {

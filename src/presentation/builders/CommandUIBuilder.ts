@@ -69,7 +69,7 @@ export class CommandUIBuilder {
               custom_id: 'deadline',
               label: '締切（任意）',
               style: 1, // Short
-              placeholder: '例: 12/20 23:59',
+              placeholder: '例: 2025/12/20 23:59',
               required: false,
               max_length: 50,
             },

@@ -159,7 +159,7 @@ export class ScheduleEditUIBuilder {
               label: '締切日時（空白で無期限）',
               style: 1,
               value: currentDeadline,
-              placeholder: '例: 2024-04-01 19:00',
+              placeholder: '例: 2025/12/24 19:00',
               required: false,
               max_length: 50,
             },
