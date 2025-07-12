@@ -88,12 +88,16 @@ export class VoteController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error handling respond button', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-respond-button',
-        useCase: 'VoteController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error handling respond button',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-respond-button',
+          useCase: 'VoteController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+        }
+      );
       return createErrorResponse('エラーが発生しました。');
     }
   }
@@ -143,12 +147,16 @@ export class VoteController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error toggling details', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'toggle-details',
-        useCase: 'VoteController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error toggling details',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'toggle-details',
+          useCase: 'VoteController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+        }
+      );
       return createErrorResponse('表示の切り替えに失敗しました。');
     }
   }
@@ -228,13 +236,17 @@ export class VoteController {
 
       return createEphemeralResponse(responseContent);
     } catch (error) {
-      this.logger.error('Error handling vote modal', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-vote-modal',
-        useCase: 'VoteController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-        userId: interaction.member?.user.id || interaction.user?.id,
-      });
+      this.logger.error(
+        'Error handling vote modal',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-vote-modal',
+          useCase: 'VoteController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+          userId: interaction.member?.user.id || interaction.user?.id,
+        }
+      );
       return createErrorResponse('回答の処理中にエラーが発生しました。');
     }
   }
@@ -291,13 +303,17 @@ export class VoteController {
         '✅ 日程調整を締め切りました。\n📊 集計結果と個人宛通知を送信しています...'
       );
     } catch (error) {
-      this.logger.error('Error closing schedule', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'close-schedule',
-        useCase: 'VoteController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-        userId: interaction.member?.user.id || interaction.user?.id,
-      });
+      this.logger.error(
+        'Error closing schedule',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'close-schedule',
+          useCase: 'VoteController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+          userId: interaction.member?.user.id || interaction.user?.id,
+        }
+      );
       return createErrorResponse('締切処理中にエラーが発生しました。');
     }
   }
@@ -332,12 +348,16 @@ export class VoteController {
         await notificationService.sendPRMessage(scheduleResult.schedule);
       }
     } catch (error) {
-      this.logger.error('Error sending closure notifications', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'send-closure-notifications',
-        useCase: 'VoteController',
-        scheduleId,
-        guildId,
-      });
+      this.logger.error(
+        'Error sending closure notifications',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'send-closure-notifications',
+          useCase: 'VoteController',
+          scheduleId,
+          guildId,
+        }
+      );
     }
   }
 
@@ -387,13 +407,17 @@ export class VoteController {
         messageId
       );
     } catch (error) {
-      this.logger.error('Error updating main message', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'update-main-message',
-        useCase: 'VoteController',
-        scheduleId,
-        messageId,
-        guildId,
-      });
+      this.logger.error(
+        'Error updating main message',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'update-main-message',
+          useCase: 'VoteController',
+          scheduleId,
+          messageId,
+          guildId,
+        }
+      );
     }
   }
 

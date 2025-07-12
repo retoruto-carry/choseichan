@@ -186,7 +186,10 @@ export class NotificationService {
         });
 
         if (!response.ok) {
-          this.logger.error(`Failed to fetch guild members: ${response.status}`, new Error(`HTTP ${response.status}: Failed to fetch guild members`));
+          this.logger.error(
+            `Failed to fetch guild members: ${response.status}`,
+            new Error(`HTTP ${response.status}: Failed to fetch guild members`)
+          );
           break;
         }
 
@@ -213,7 +216,10 @@ export class NotificationService {
 
       return members;
     } catch (error) {
-      this.logger.error('Error fetching guild members', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error fetching guild members',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return members;
     }
   }

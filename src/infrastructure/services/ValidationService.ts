@@ -1,6 +1,6 @@
 /**
  * Validation Service
- * 
+ *
  * 再利用可能なバリデーション機能を提供
  * 入力データの検証とサニタイゼーションを統一化
  */
@@ -35,9 +35,9 @@ export class ValidationService {
       return { isValid: false, error: '過去の日付は指定できません' };
     }
 
-    return { 
-      isValid: true, 
-      sanitizedValue: parsed 
+    return {
+      isValid: true,
+      sanitizedValue: parsed,
     };
   }
 
@@ -60,9 +60,9 @@ export class ValidationService {
       return { isValid: false, error: `無効な${type}形式です` };
     }
 
-    return { 
-      isValid: true, 
-      sanitizedValue: trimmedId 
+    return {
+      isValid: true,
+      sanitizedValue: trimmedId,
     };
   }
 
@@ -70,7 +70,7 @@ export class ValidationService {
    * テキスト入力のサニタイゼーションとバリデーション
    */
   static validateAndSanitizeText(
-    text: string, 
+    text: string,
     options: {
       maxLength?: number;
       minLength?: number;
@@ -103,22 +103,22 @@ export class ValidationService {
 
     // 長さのバリデーション
     if (minLength && sanitized.length < minLength) {
-      return { 
-        isValid: false, 
-        error: `${minLength}文字以上で入力してください` 
+      return {
+        isValid: false,
+        error: `${minLength}文字以上で入力してください`,
       };
     }
 
     if (maxLength && sanitized.length > maxLength) {
-      return { 
-        isValid: false, 
-        error: `${maxLength}文字以内で入力してください` 
+      return {
+        isValid: false,
+        error: `${maxLength}文字以内で入力してください`,
       };
     }
 
-    return { 
-      isValid: true, 
-      sanitizedValue: sanitized 
+    return {
+      isValid: true,
+      sanitizedValue: sanitized,
     };
   }
 
@@ -126,7 +126,7 @@ export class ValidationService {
    * スケジュールタイトルのバリデーション
    */
   static validateScheduleTitle(title: string): ValidationResult {
-    return this.validateAndSanitizeText(title, {
+    return ValidationService.validateAndSanitizeText(title, {
       required: true,
       minLength: 1,
       maxLength: 100,
@@ -141,7 +141,7 @@ export class ValidationService {
       return { isValid: true, sanitizedValue: undefined };
     }
 
-    return this.validateAndSanitizeText(description, {
+    return ValidationService.validateAndSanitizeText(description, {
       maxLength: 1000,
       allowEmpty: true,
     });
@@ -155,7 +155,7 @@ export class ValidationService {
       return { isValid: true, sanitizedValue: undefined };
     }
 
-    return this.validateAndSanitizeText(comment, {
+    return ValidationService.validateAndSanitizeText(comment, {
       maxLength: 500,
       allowEmpty: true,
     });
@@ -170,15 +170,15 @@ export class ValidationService {
     }
 
     const trimmed = timing.trim().toLowerCase();
-    
+
     // 許可されるパターン: 数字 + 単位 (m, h, d)
     const pattern = /^(\d+)(m|h|d)$/;
     const match = trimmed.match(pattern);
 
     if (!match) {
-      return { 
-        isValid: false, 
-        error: '無効なリマインダータイミングです（例: 30m, 8h, 3d）' 
+      return {
+        isValid: false,
+        error: '無効なリマインダータイミングです（例: 30m, 8h, 3d）',
       };
     }
 
@@ -186,19 +186,22 @@ export class ValidationService {
     const numValue = parseInt(value, 10);
 
     // 制限値チェック
-    if (unit === 'm' && (numValue < 1 || numValue > 1440)) { // 1分〜24時間
+    if (unit === 'm' && (numValue < 1 || numValue > 1440)) {
+      // 1分〜24時間
       return { isValid: false, error: '分指定は1-1440の範囲で入力してください' };
     }
-    if (unit === 'h' && (numValue < 1 || numValue > 168)) { // 1時間〜7日
+    if (unit === 'h' && (numValue < 1 || numValue > 168)) {
+      // 1時間〜7日
       return { isValid: false, error: '時間指定は1-168の範囲で入力してください' };
     }
-    if (unit === 'd' && (numValue < 1 || numValue > 30)) { // 1日〜30日
+    if (unit === 'd' && (numValue < 1 || numValue > 30)) {
+      // 1日〜30日
       return { isValid: false, error: '日指定は1-30の範囲で入力してください' };
     }
 
-    return { 
-      isValid: true, 
-      sanitizedValue: trimmed 
+    return {
+      isValid: true,
+      sanitizedValue: trimmed,
     };
   }
 
@@ -214,24 +217,22 @@ export class ValidationService {
     const trimmed = status.trim().toLowerCase();
 
     if (!validStatuses.includes(trimmed)) {
-      return { 
-        isValid: false, 
-        error: `無効なステータスです。使用可能: ${validStatuses.join(', ')}` 
+      return {
+        isValid: false,
+        error: `無効なステータスです。使用可能: ${validStatuses.join(', ')}`,
       };
     }
 
-    return { 
-      isValid: true, 
-      sanitizedValue: trimmed 
+    return {
+      isValid: true,
+      sanitizedValue: trimmed,
     };
   }
 
   /**
    * 複数の値を一度にバリデーション
    */
-  static validateMultiple(
-    validations: Array<() => ValidationResult>
-  ): ValidationResult {
+  static validateMultiple(validations: Array<() => ValidationResult>): ValidationResult {
     const errors: string[] = [];
     const sanitizedValues: unknown[] = [];
 

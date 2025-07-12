@@ -78,12 +78,16 @@ export class ButtonInteractionController {
           return this.createErrorResponse('不明なボタンです。');
       }
     } catch (error) {
-      this.logger.error('Error in handleButtonInteraction', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-button-interaction',
-        useCase: 'ButtonInteractionController',
-        customId: interaction.data.custom_id,
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleButtonInteraction',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-button-interaction',
+          useCase: 'ButtonInteractionController',
+          customId: interaction.data.custom_id,
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('ボタンの処理中にエラーが発生しました。');
     }
   }

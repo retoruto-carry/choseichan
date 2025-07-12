@@ -17,7 +17,6 @@ vi.mock('../../utils/date', () => ({
   parseUserInputDate: vi.fn(),
 }));
 
-
 vi.mock('../utils/embeds', () => ({
   createScheduleEmbedWithTable: vi.fn().mockReturnValue({
     title: 'Test Schedule',

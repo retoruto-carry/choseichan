@@ -102,13 +102,17 @@ export class CreateScheduleController {
         guildId
       );
       if (!summaryResult.success || !summaryResult.summary) {
-        this.logger.error('Failed to get schedule summary', new Error('Schedule summary retrieval failed'), {
-          operation: 'get-schedule-summary',
-          useCase: 'CreateScheduleController',
-          scheduleId: schedule.id,
-          guildId,
-          errors: summaryResult.errors,
-        });
+        this.logger.error(
+          'Failed to get schedule summary',
+          new Error('Schedule summary retrieval failed'),
+          {
+            operation: 'get-schedule-summary',
+            useCase: 'CreateScheduleController',
+            scheduleId: schedule.id,
+            guildId,
+            errors: summaryResult.errors,
+          }
+        );
         return this.createErrorResponse('スケジュール情報の取得に失敗しました。');
       }
 
@@ -135,12 +139,16 @@ export class CreateScheduleController {
                 });
               }
             } catch (error) {
-              this.logger.error('Failed to save message ID', error instanceof Error ? error : new Error(String(error)), {
-                operation: 'save-message-id',
-                useCase: 'CreateScheduleController',
-                scheduleId: schedule.id,
-                guildId,
-              });
+              this.logger.error(
+                'Failed to save message ID',
+                error instanceof Error ? error : new Error(String(error)),
+                {
+                  operation: 'save-message-id',
+                  useCase: 'CreateScheduleController',
+                  scheduleId: schedule.id,
+                  guildId,
+                }
+              );
             }
           })()
         );
@@ -157,12 +165,16 @@ export class CreateScheduleController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleCreateScheduleModal', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-create-schedule-modal',
-        useCase: 'CreateScheduleController',
-        guildId: interaction.guild_id,
-        authorId: interaction.member?.user.id || interaction.user?.id,
-      });
+      this.logger.error(
+        'Error in handleCreateScheduleModal',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-create-schedule-modal',
+          useCase: 'CreateScheduleController',
+          guildId: interaction.guild_id,
+          authorId: interaction.member?.user.id || interaction.user?.id,
+        }
+      );
       return this.createErrorResponse('スケジュール作成中にエラーが発生しました。');
     }
   }

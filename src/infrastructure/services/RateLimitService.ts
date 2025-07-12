@@ -1,6 +1,6 @@
 /**
  * Rate Limit Service
- * 
+ *
  * ユーザーとギルドごとのレート制限を実装
  * Discord Botの過度な使用を防止
  */
@@ -36,10 +36,10 @@ export class RateLimitService {
 
     // ストアの取得または作成
     const storeKey = `${maxRequests}:${windowMs}`;
-    if (!this.stores.has(storeKey)) {
-      this.stores.set(storeKey, new Map());
+    if (!RateLimitService.stores.has(storeKey)) {
+      RateLimitService.stores.set(storeKey, new Map());
     }
-    const store = this.stores.get(storeKey)!;
+    const store = RateLimitService.stores.get(storeKey)!;
 
     // 既存エントリの取得
     let entry = store.get(identifier);
@@ -73,12 +73,8 @@ export class RateLimitService {
    * ユーザーごとのレート制限チェック
    * デフォルト: 10リクエスト/分
    */
-  static checkUser(
-    userId: string,
-    maxRequests = 10,
-    windowMs = 60 * 1000
-  ): RateLimitResult {
-    return this.check({
+  static checkUser(userId: string, maxRequests = 10, windowMs = 60 * 1000): RateLimitResult {
+    return RateLimitService.check({
       maxRequests,
       windowMs,
       identifier: `user:${userId}`,
@@ -89,12 +85,8 @@ export class RateLimitService {
    * ギルドごとのレート制限チェック
    * デフォルト: 50リクエスト/分
    */
-  static checkGuild(
-    guildId: string,
-    maxRequests = 50,
-    windowMs = 60 * 1000
-  ): RateLimitResult {
-    return this.check({
+  static checkGuild(guildId: string, maxRequests = 50, windowMs = 60 * 1000): RateLimitResult {
+    return RateLimitService.check({
       maxRequests,
       windowMs,
       identifier: `guild:${guildId}`,
@@ -110,7 +102,7 @@ export class RateLimitService {
     maxRequests = 5,
     windowMs = 60 * 60 * 1000
   ): RateLimitResult {
-    return this.check({
+    return RateLimitService.check({
       maxRequests,
       windowMs,
       identifier: `schedule_create:${userId}`,
@@ -126,7 +118,7 @@ export class RateLimitService {
     maxRequests = 30,
     windowMs = 60 * 1000
   ): RateLimitResult {
-    return this.check({
+    return RateLimitService.check({
       maxRequests,
       windowMs,
       identifier: `response_submit:${userId}`,
@@ -139,17 +131,17 @@ export class RateLimitService {
    */
   static cleanup(): void {
     const now = Date.now();
-    
-    for (const [storeKey, store] of this.stores.entries()) {
+
+    for (const [storeKey, store] of RateLimitService.stores.entries()) {
       for (const [identifier, entry] of store.entries()) {
         if (now >= entry.resetTime) {
           store.delete(identifier);
         }
       }
-      
+
       // 空になったストアを削除
       if (store.size === 0) {
-        this.stores.delete(storeKey);
+        RateLimitService.stores.delete(storeKey);
       }
     }
   }
@@ -159,7 +151,7 @@ export class RateLimitService {
    * 管理者操作やテスト用
    */
   static reset(identifier: string): void {
-    for (const store of this.stores.values()) {
+    for (const store of RateLimitService.stores.values()) {
       for (const key of store.keys()) {
         if (key.includes(identifier)) {
           store.delete(key);
@@ -173,7 +165,7 @@ export class RateLimitService {
    * テスト用
    */
   static clear(): void {
-    this.stores.clear();
+    RateLimitService.stores.clear();
   }
 
   /**
@@ -181,8 +173,8 @@ export class RateLimitService {
    */
   static getStats(): Record<string, unknown> {
     const stats: Record<string, unknown> = {};
-    
-    for (const [storeKey, store] of this.stores.entries()) {
+
+    for (const [storeKey, store] of RateLimitService.stores.entries()) {
       stats[storeKey] = {
         entryCount: store.size,
         entries: Array.from(store.entries()).map(([id, entry]) => ({
@@ -192,7 +184,7 @@ export class RateLimitService {
         })),
       };
     }
-    
+
     return stats;
   }
 }

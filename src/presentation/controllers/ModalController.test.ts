@@ -16,7 +16,6 @@ describe('ModalController', () => {
       getNotificationService: vi.fn(),
     } as unknown as DependencyContainer;
 
-
     mockEnv = {
       DISCORD_APPLICATION_ID: 'test-app-id',
       DISCORD_PUBLIC_KEY: 'test-public-key',
@@ -232,7 +231,7 @@ describe('ModalController', () => {
       const result = await controller.handleModalSubmit(mockInteraction as any, mockEnv);
 
       expect(result).toBeInstanceOf(Response);
-      const response = await result.json() as any;
+      const response = (await result.json()) as any;
       expect(response.data.content).toContain('不明なモーダルです。');
     });
 
@@ -272,7 +271,7 @@ describe('ModalController', () => {
       const result = await controller.handleModalSubmit(mockInteraction as any, mockEnv);
 
       expect(result).toBeInstanceOf(Response);
-      const response = await result.json() as any;
+      const response = (await result.json()) as any;
       expect(response.data.content).toContain('エラーが発生しました');
     });
 

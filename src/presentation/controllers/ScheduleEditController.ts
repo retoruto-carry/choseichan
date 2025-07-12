@@ -51,12 +51,16 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditInfoButton', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-edit-info-button',
-        useCase: 'ScheduleEditController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleEditInfoButton',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-edit-info-button',
+          useCase: 'ScheduleEditController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('基本情報編集の表示中にエラーが発生しました。');
     }
   }
@@ -96,7 +100,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleUpdateDatesButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleUpdateDatesButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程更新の表示中にエラーが発生しました。');
     }
   }
@@ -130,7 +137,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleAddDatesButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleAddDatesButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程追加の表示中にエラーが発生しました。');
     }
   }
@@ -171,7 +181,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleRemoveDatesButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleRemoveDatesButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程削除の表示中にエラーが発生しました。');
     }
   }
@@ -241,7 +254,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleConfirmRemoveDateButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleConfirmRemoveDateButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程削除中にエラーが発生しました。');
     }
   }
@@ -281,7 +297,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditDeadlineButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleEditDeadlineButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('締切編集の表示中にエラーが発生しました。');
     }
   }
@@ -318,7 +337,10 @@ export class ScheduleEditController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleReminderEditButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleReminderEditButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('リマインダー編集の表示中にエラーが発生しました。');
     }
   }

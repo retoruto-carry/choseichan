@@ -37,10 +37,14 @@ app.post('/cron/deadline-check', async (c) => {
     logger.info('Deadline check completed successfully', { operation: 'deadline-check' });
     return c.json({ success: true, message: 'Deadline check completed' });
   } catch (error) {
-    logger.error('Deadline check failed', error instanceof Error ? error : new Error(String(error)), {
-      operation: 'deadline-check',
-      useCase: 'cron'
-    });
+    logger.error(
+      'Deadline check failed',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        operation: 'deadline-check',
+        useCase: 'cron',
+      }
+    );
     return c.json({ success: false, error: 'Internal server error' }, 500);
   }
 });

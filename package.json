@@ -12,7 +12,11 @@
     "test:coverage": "vitest --coverage",
     "deploy": "wrangler deploy && npm run register",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check . && tsc --noEmit",
     "register": "node scripts/register-commands.js"
   },
   "keywords": [],

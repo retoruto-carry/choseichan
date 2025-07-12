@@ -64,12 +64,16 @@ export class DisplayController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleToggleDetailsButton', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-toggle-details-button',
-        useCase: 'DisplayController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleToggleDetailsButton',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-toggle-details-button',
+          useCase: 'DisplayController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse();
     }
   }

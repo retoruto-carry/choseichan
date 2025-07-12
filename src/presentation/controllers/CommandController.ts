@@ -43,12 +43,16 @@ export class CommandController {
           return this.createErrorResponse(ERROR_MESSAGES.UNKNOWN_COMMAND);
       }
     } catch (error) {
-      this.logger.error('Error in handleChoseichanCommand', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-choseichan-command',
-        useCase: 'CommandController',
-        subcommand: interaction.data.options?.[0]?.name,
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleChoseichanCommand',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-choseichan-command',
+          useCase: 'CommandController',
+          subcommand: interaction.data.options?.[0]?.name,
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('コマンドの処理中にエラーが発生しました。');
     }
   }
@@ -69,11 +73,15 @@ export class CommandController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleCreateCommand', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-create-command',
-        useCase: 'CommandController',
-        guildId: _interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleCreateCommand',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-create-command',
+          useCase: 'CommandController',
+          guildId: _interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('スケジュール作成画面の表示中にエラーが発生しました。');
     }
   }
@@ -131,12 +139,16 @@ export class CommandController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleListCommand', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-list-command',
-        useCase: 'CommandController',
-        channelId: interaction.channel_id,
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleListCommand',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-list-command',
+          useCase: 'CommandController',
+          channelId: interaction.channel_id,
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('スケジュール一覧の表示中にエラーが発生しました。');
     }
   }

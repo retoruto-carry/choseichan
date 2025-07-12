@@ -59,7 +59,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleStatusButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleStatusButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('スケジュール表示中にエラーが発生しました。');
     }
   }
@@ -115,7 +118,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleEditButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('編集メニュー表示中にエラーが発生しました。');
     }
   }
@@ -156,7 +162,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleDetailsButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleDetailsButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('詳細表示中にエラーが発生しました。');
     }
   }
@@ -205,7 +214,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleCloseButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleCloseButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('スケジュール締切中にエラーが発生しました。');
     }
   }
@@ -266,7 +278,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleReopenButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleReopenButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('スケジュール再開中にエラーが発生しました。');
     }
   }
@@ -328,7 +343,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleDeleteButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleDeleteButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('スケジュール削除中にエラーが発生しました。');
     }
   }
@@ -369,7 +387,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleRefreshButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleRefreshButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('メッセージの更新に失敗しました。');
     }
   }
@@ -413,7 +434,10 @@ export class ScheduleManagementController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleHideDetailsButton:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleHideDetailsButton:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('表示切替中にエラーが発生しました。');
     }
   }
@@ -441,7 +465,10 @@ export class ScheduleManagementController {
         });
       }
     } catch (error) {
-      this.logger.error('Failed to save message ID:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Failed to save message ID:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
@@ -473,7 +500,12 @@ export class ScheduleManagementController {
           this.dependencyContainer,
           env,
           guildId
-        ).catch((error) => this.logger.error('Failed to update main message after closing', error instanceof Error ? error : new Error(String(error))));
+        ).catch((error) =>
+          this.logger.error(
+            'Failed to update main message after closing',
+            error instanceof Error ? error : new Error(String(error))
+          )
+        );
 
         if (env.ctx && typeof env.ctx.waitUntil === 'function') {
           env.ctx.waitUntil(updatePromise);
@@ -502,13 +534,19 @@ export class ScheduleManagementController {
                 await notificationService.sendPRMessage(scheduleResult.schedule);
               }
             } catch (error) {
-              this.logger.error('Failed to send closure notifications:', error instanceof Error ? error : new Error(String(error)));
+              this.logger.error(
+                'Failed to send closure notifications:',
+                error instanceof Error ? error : new Error(String(error))
+              );
             }
           })()
         );
       }
     } catch (error) {
-      this.logger.error('Failed to handle post close actions:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Failed to handle post close actions:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
@@ -539,14 +577,22 @@ export class ScheduleManagementController {
           this.dependencyContainer,
           env,
           guildId
-        ).catch((error) => this.logger.error('Failed to update main message after reopening', error instanceof Error ? error : new Error(String(error))));
+        ).catch((error) =>
+          this.logger.error(
+            'Failed to update main message after reopening',
+            error instanceof Error ? error : new Error(String(error))
+          )
+        );
 
         if (env.ctx && typeof env.ctx.waitUntil === 'function') {
           env.ctx.waitUntil(updatePromise);
         }
       }
     } catch (error) {
-      this.logger.error('Failed to handle post reopen actions:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Failed to handle post reopen actions:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
@@ -566,7 +612,10 @@ export class ScheduleManagementController {
               schedule.messageId!
             );
           } catch (error) {
-            this.logger.error('Failed to delete main Discord message:', error instanceof Error ? error : new Error(String(error)));
+            this.logger.error(
+              'Failed to delete main Discord message:',
+              error instanceof Error ? error : new Error(String(error))
+            );
           }
         })()
       );

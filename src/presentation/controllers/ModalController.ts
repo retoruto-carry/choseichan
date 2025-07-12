@@ -51,12 +51,16 @@ export class ModalController {
           return this.createErrorResponse('不明なモーダルです。');
       }
     } catch (error) {
-      this.logger.error('Error in handleModalSubmit', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-modal-submit',
-        useCase: 'ModalController',
-        customId: interaction.data.custom_id,
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleModalSubmit',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-modal-submit',
+          useCase: 'ModalController',
+          customId: interaction.data.custom_id,
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('モーダル処理中にエラーが発生しました。');
     }
   }

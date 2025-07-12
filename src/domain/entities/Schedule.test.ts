@@ -263,7 +263,9 @@ describe('Schedule Domain Entity', () => {
       const updatedSchedule = schedule.updateTotalResponses(5);
 
       expect(updatedSchedule.totalResponses).toBe(5);
-      expect(updatedSchedule.updatedAt.getTime()).toBeGreaterThanOrEqual(schedule.updatedAt.getTime());
+      expect(updatedSchedule.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        schedule.updatedAt.getTime()
+      );
     });
 
     it('should add new date', () => {

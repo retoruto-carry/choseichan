@@ -4,8 +4,8 @@
  * 締切リマインダー処理のユースケース
  */
 
-import type { Env } from '../../infrastructure/types/discord';
 import { getLogger } from '../../infrastructure/logging/Logger';
+import type { Env } from '../../infrastructure/types/discord';
 import { processBatches } from '../../infrastructure/utils/rate-limiter';
 import type { NotificationService } from '../services/NotificationService';
 import type { DeadlineCheckResult, ReminderInfo } from '../types/ReminderTypes';
@@ -30,7 +30,10 @@ export class ProcessDeadlineRemindersUseCase {
 
   async execute(): Promise<void> {
     if (!this.env.DISCORD_TOKEN || !this.env.DISCORD_APPLICATION_ID) {
-      this.logger.error('Missing Discord credentials for notifications', new Error('DISCORD_TOKEN or DISCORD_APPLICATION_ID is missing'));
+      this.logger.error(
+        'Missing Discord credentials for notifications',
+        new Error('DISCORD_TOKEN or DISCORD_APPLICATION_ID is missing')
+      );
       return;
     }
 
@@ -60,7 +63,10 @@ export class ProcessDeadlineRemindersUseCase {
     const result = await this.deadlineReminderUseCase.checkDeadlines();
 
     if (!result.success || !result.result) {
-      this.logger.error('Failed to check deadlines:', new Error(`Error: ${result.errors?.join(", ") || "Unknown error"}`));
+      this.logger.error(
+        'Failed to check deadlines:',
+        new Error(`Error: ${result.errors?.join(', ') || 'Unknown error'}`)
+      );
       return {
         upcomingReminders: [],
         justClosed: [],
@@ -153,7 +159,10 @@ export class ProcessDeadlineRemindersUseCase {
           });
 
           if (!closeResult.success) {
-            this.logger.error(`Failed to close schedule ${scheduleId}`, new Error(`Close failed: ${closeResult.errors?.join(', ') || 'Unknown error'}`));
+            this.logger.error(
+              `Failed to close schedule ${scheduleId}`,
+              new Error(`Close failed: ${closeResult.errors?.join(', ') || 'Unknown error'}`)
+            );
             return;
           }
 
@@ -162,7 +171,9 @@ export class ProcessDeadlineRemindersUseCase {
           if (!scheduleResult.success || !scheduleResult.schedule) {
             this.logger.error(
               `Failed to get schedule ${scheduleId} for notification`,
-              new Error(`Get schedule failed: ${scheduleResult.errors?.join(', ') || 'Unknown error'}`)
+              new Error(
+                `Get schedule failed: ${scheduleResult.errors?.join(', ') || 'Unknown error'}`
+              )
             );
             return;
           }

@@ -180,7 +180,9 @@ describe('D1ScheduleRepository', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0].id).toBe('schedule-1');
-      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('WHERE guild_id = ? AND channel_id = ?'));
+      expect(mockDb.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE guild_id = ? AND channel_id = ?')
+      );
     });
 
     it('should apply limit when specified', async () => {
@@ -243,7 +245,7 @@ describe('D1ScheduleRepository', () => {
       await repository.updateReminders({
         scheduleId: 'test-id',
         guildId: 'guild-123',
-        remindersSent: ['1d', '8h']
+        remindersSent: ['1d', '8h'],
       });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE schedules'));

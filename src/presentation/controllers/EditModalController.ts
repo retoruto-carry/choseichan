@@ -86,12 +86,16 @@ export class EditModalController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditInfoModal', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'handle-edit-info-modal',
-        useCase: 'EditModalController',
-        scheduleId: params[0],
-        guildId: interaction.guild_id,
-      });
+      this.logger.error(
+        'Error in handleEditInfoModal',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'handle-edit-info-modal',
+          useCase: 'EditModalController',
+          scheduleId: params[0],
+          guildId: interaction.guild_id,
+        }
+      );
       return this.createErrorResponse('基本情報の更新中にエラーが発生しました。');
     }
   }
@@ -173,7 +177,10 @@ export class EditModalController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleUpdateDatesModal:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleUpdateDatesModal:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程の更新中にエラーが発生しました。');
     }
   }
@@ -258,7 +265,10 @@ export class EditModalController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleAddDatesModal:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleAddDatesModal:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('日程の追加中にエラーが発生しました。');
     }
   }
@@ -327,7 +337,10 @@ export class EditModalController {
       const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute(updateData);
 
       if (!updateResult.success) {
-        this.logger.error('UpdateScheduleUseCase failed', new Error(`UpdateScheduleUseCase failed: ${updateResult.errors?.join(', ')}`));
+        this.logger.error(
+          'UpdateScheduleUseCase failed',
+          new Error(`UpdateScheduleUseCase failed: ${updateResult.errors?.join(', ')}`)
+        );
         return this.createErrorResponse('締切日の更新に失敗しました。');
       }
 
@@ -380,7 +393,10 @@ export class EditModalController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditDeadlineModal:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleEditDeadlineModal:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('締切日の更新中にエラーが発生しました。');
     }
   }
@@ -451,7 +467,10 @@ export class EditModalController {
         { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (error) {
-      this.logger.error('Error in handleEditReminderModal:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error in handleEditReminderModal:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return this.createErrorResponse('リマインダー設定の更新中にエラーが発生しました。');
     }
   }
@@ -502,7 +521,10 @@ export class EditModalController {
         messageId
       );
     } catch (error) {
-      this.logger.error('Error updating main message:', error instanceof Error ? error : new Error(String(error)));
+      this.logger.error(
+        'Error updating main message:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 

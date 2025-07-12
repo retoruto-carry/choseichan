@@ -1,6 +1,6 @@
 /**
  * Error Response Factory
- * 
+ *
  * エラーレスポンス作成の標準化ファクトリー
  * 一貫性のあるエラーハンドリングとレスポンス形式を提供
  */
@@ -45,7 +45,7 @@ export class ErrorResponseFactory {
     if (error instanceof Error) {
       return {
         success: false,
-        error: this.sanitizeErrorMessage(error.message),
+        error: ErrorResponseFactory.sanitizeErrorMessage(error.message),
         statusCode: 500,
       };
     }
@@ -64,8 +64,8 @@ export class ErrorResponseFactory {
     content: string;
     flags?: number;
   } {
-    const errorResponse = this.create(error);
-    
+    const errorResponse = ErrorResponseFactory.create(error);
+
     return {
       content: `❌ ${errorResponse.error}`,
       flags: 64, // EPHEMERAL
@@ -75,11 +75,7 @@ export class ErrorResponseFactory {
   /**
    * バリデーションエラー用のレスポンス作成
    */
-  static createValidationError(
-    message: string,
-    field?: string,
-    value?: unknown
-  ): ErrorResponse {
+  static createValidationError(message: string, field?: string, value?: unknown): ErrorResponse {
     return {
       success: false,
       error: message,
@@ -104,13 +100,8 @@ export class ErrorResponseFactory {
   /**
    * リソースが見つからない場合のエラーレスポンス作成
    */
-  static createNotFoundError(
-    resource: string,
-    id?: string
-  ): ErrorResponse {
-    const message = id 
-      ? `${resource} with ID '${id}' not found`
-      : `${resource} not found`;
+  static createNotFoundError(resource: string, id?: string): ErrorResponse {
+    const message = id ? `${resource} with ID '${id}' not found` : `${resource} not found`;
 
     return {
       success: false,
@@ -124,9 +115,7 @@ export class ErrorResponseFactory {
   /**
    * レート制限エラー用のレスポンス作成
    */
-  static createRateLimitError(
-    retryAfter?: number
-  ): ErrorResponse {
+  static createRateLimitError(retryAfter?: number): ErrorResponse {
     return {
       success: false,
       error: 'Rate limit exceeded',

@@ -11,12 +11,12 @@ import type {
   CreateScheduleRequest,
   UpdateScheduleRequest,
 } from '../../application/dto/ScheduleDto';
-import { getLogger } from '../../infrastructure/logging/Logger';
 import type { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
 import type { CloseScheduleUseCase } from '../../application/usecases/schedule/CloseScheduleUseCase';
 import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
 import type { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
 import type { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
+import { getLogger } from '../../infrastructure/logging/Logger';
 import type {
   DiscordMessage,
   IDiscordApiService,
@@ -344,12 +344,16 @@ export class ScheduleController {
 
       return responsesResult.statistics;
     } catch (error) {
-      this.logger.error('Failed to build response statistics', error instanceof Error ? error : new Error(String(error)), {
-        operation: 'build-response-statistics',
-        useCase: 'ScheduleController',
-        scheduleId,
-        guildId,
-      });
+      this.logger.error(
+        'Failed to build response statistics',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'build-response-statistics',
+          useCase: 'ScheduleController',
+          scheduleId,
+          guildId,
+        }
+      );
       return null;
     }
   }
