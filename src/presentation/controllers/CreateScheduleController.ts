@@ -220,14 +220,14 @@ export class CreateScheduleController {
       schedule.reminderMentions?.map((m: string) => `\`${m}\``).join(' ') || '`@here`';
 
     await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interactionToken, {
-      content: `⏰ 締切前リマインダーを設定しました！\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーを送信します。`,
+      content: `⏰ 締切前リマインダーが自動設定されました。\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーを送信されます。`,
       components: [
         {
           type: 1, // ACTION_ROW
           components: [
             {
               type: 2, // BUTTON
-              style: 1, // PRIMARY (青)
+              style: 2, // SECONDARY (グレー/NEUTRAL)
               label: 'リマインダー編集',
               custom_id: createEditReminderButtonId(schedule.id),
               emoji: { name: '⚙️' },
