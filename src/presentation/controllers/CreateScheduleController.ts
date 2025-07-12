@@ -228,8 +228,9 @@ export class CreateScheduleController {
             {
               type: 2, // BUTTON
               style: 2, // SECONDARY (グレー/NEUTRAL)
-              label: '🔔 通知設定',
+              label: '通知設定',
               custom_id: createEditReminderButtonId(schedule.id),
+              emoji: { name: '🔔' },
             },
           ],
         },
