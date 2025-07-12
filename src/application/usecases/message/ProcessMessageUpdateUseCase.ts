@@ -6,6 +6,7 @@ import { getLogger } from '../../../infrastructure/logging/Logger';
 import type { MessageUpdateTask } from '../../../infrastructure/ports/MessageUpdateQueuePort';
 import type { IDiscordApiService } from '../../../infrastructure/services/DiscordApiService';
 import type { GetScheduleSummaryUseCase } from '../schedule/GetScheduleSummaryUseCase';
+import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../../../presentation/utils/embeds';
 
 export class ProcessMessageUpdateUseCase {
   private readonly logger = getLogger();
@@ -31,11 +32,18 @@ export class ProcessMessageUpdateUseCase {
         throw new Error(`Failed to get schedule summary: ${task.scheduleId}`);
       }
 
+      // embedとcomponentsを作成
+      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
+      const components = createSimpleScheduleComponents(summaryResult.summary.schedule, false);
+
       // メッセージ更新を実行
-      await this.discordApiService.updateScheduleMessage(
+      await this.discordApiService.updateMessage(
         task.channelId,
         task.messageId,
-        summaryResult.summary,
+        {
+          embeds: [embed],
+          components,
+        },
         this.discordToken
       );
 

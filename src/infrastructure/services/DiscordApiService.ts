@@ -54,16 +54,6 @@ export interface IDiscordApiService {
    * Discord Interaction Response を作成
    */
   createInteractionResponse(message: DiscordMessage): DiscordWebhookResponse;
-
-  /**
-   * スケジュールメッセージを更新
-   */
-  updateScheduleMessage(
-    channelId: string,
-    messageId: string,
-    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryResponse,
-    botToken: string
-  ): Promise<void>;
 }
 
 export class DiscordApiService implements IDiscordApiService {
@@ -125,32 +115,7 @@ export class DiscordApiService implements IDiscordApiService {
     };
   }
 
-  async updateScheduleMessage(
-    channelId: string,
-    messageId: string,
-    summary: import('../../application/dto/ScheduleDto').ScheduleSummaryResponse,
-    botToken: string
-  ): Promise<void> {
-    const { createScheduleEmbedWithTable, createSimpleScheduleComponents } = await import(
-      '../../presentation/utils/embeds'
-    );
-
-    const embed = createScheduleEmbedWithTable(summary, false);
-    const components = createSimpleScheduleComponents(summary.schedule, false);
-
-    const response = await this.updateMessage(
-      channelId,
-      messageId,
-      {
-        embeds: [embed],
-        components,
-      },
-      botToken
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Discord API error: ${response.status} - ${errorText}`);
-    }
-  }
+  // updateScheduleMessageメソッドは削除されました
+  // Clean Architectureの原則に従い、embedとcomponentsの作成は
+  // プレゼンテーション層で行い、updateMessageを直接使用してください
 }
