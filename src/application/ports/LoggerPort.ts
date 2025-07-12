@@ -21,5 +21,5 @@ export interface LogContext {
   scheduleId?: string;
   userId?: string;
   guildId?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 }
