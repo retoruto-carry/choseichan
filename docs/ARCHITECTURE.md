@@ -169,55 +169,6 @@ export class LoggerAdapter implements ILogger {
 - better-sqlite3 (テスト用D1モック)
 - discord-interactions
 
-## 移行状況とアーキテクチャ戦略
-
-### 完了済み実装
-- ✅ D1 データベース実装
-- ✅ Clean Architecture完全実装
-- ✅ 全テスト動作確認（470+ テスト合格）
-- ✅ 型安全性確保（TypeScript strict mode、エラー0件）
-- ✅ コード品質確保（Biome導入、未使用import削除）
-- ✅ 構造化ログシステム導入（全console.log移行済み）
-- ✅ ベストプラクティス適用
-  - ErrorResponseFactory による統一エラーハンドリング
-  - ValidationService による入力検証統一
-  - RateLimitService によるレート制限
-- ✅ 日本語コメント化完了
-- ✅ Cloudflare Queues によるメッセージ更新最適化
-
-### 現在の実装状況（2025年7月時点）
-
-#### ✅ Clean Architecture 完全移行済み
-- **ドメイン層**: 5エンティティ、3ドメインサービス
-  - エンティティ: Schedule, Response, ScheduleDate, ResponseStatus, User
-  - ドメインサービス: ScheduleDomainService, ResponseDomainService, MessageUpdateService
-- **アプリケーション層**: 14ユースケース実装
-  - Schedule: Create, Update, Delete, Close, Reopen, GetSchedule, GetSummary, FindSchedules
-  - Response: Submit, Update, GetResponse
-  - System: ProcessDeadlineReminders, DeadlineReminder
-  - Message: ProcessMessageUpdate
-- **インフラストラクチャ層**: 
-  - D1リポジトリ実装
-  - 構造化ログシステム
-  - バリデーションサービス
-  - レート制限サービス
-  - エラーレスポンスファクトリー
-  - Cloudflare Queues アダプター
-- **プレゼンテーション層**: 11コントローラー、11UIビルダー
-
-#### 🎯 品質指標
-- **テスト**: 464 テスト（100% 合格）
-- **型安全性**: TypeScript strict mode、エラー0件
-- **コード品質**: Biome による統一されたフォーマット
-- **ログ**: 全ての console.log を構造化ログに移行
-- **Clean Architecture**: Port/Adapter パターンで100%準拠
-
-#### 主要機能の特徴
-1. **日程調整**: モーダルフォームによる直感的な作成
-2. **回答システム**: ○△× の3段階評価機能（コメント機能は削除済み）
-3. **自動化**: 締切リマインダーと自動締切処理
-4. **セキュリティ**: Ed25519署名検証とレート制限
-5. **パフォーマンス**: Cloudflare Queuesによる非同期メッセージ更新
 
 ## 依存性注入（DI）
 
@@ -561,7 +512,7 @@ export class SomeUseCase {
 
 ### Clean Architecture 実装
 - 🔄 ドメインロジックの独立性
-- 🧪 高いテスタビリティ（464テスト 100%合格）
+- 🧪 高いテスタビリティ（450+ テスト 100%合格）
 - 🔧 変更の局所化
 - 📈 拡張性とメンテナンス性
 - 🛡️ Port/Adapterパターンによる技術詳細の抽象化
@@ -680,7 +631,7 @@ this.logger.error('Database operation failed', error, {
 - 統一されたコードスタイル
 
 ### テスト戦略
-- 464 テスト（100% 合格）
+- 450+ テスト（100% 合格）
 - 単体テスト: 各レイヤーにco-located
 - 統合テスト: `/tests/integration/`
 - テストヘルパー: `/tests/helpers/`
