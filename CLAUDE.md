@@ -1,129 +1,138 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Discord 調整ちゃん - 開発ガイド
 
-このドキュメントは、AI アシスタント（Claude）が効率的にこのプロジェクトを理解し、開発を支援するためのガイドです。
+Discord内で日程調整を行うボット。Clean Architecture（Onion Architecture）を採用し、ビジネスロジックと技術的詳細を明確に分離。
 
-## プロジェクト概要
-
-Discord 調整ちゃんは、Discord サーバー内で日程調整を行うためのボットです。外部サービスを使わずに Discord 内で完結する点が特徴です。
-
-## 技術スタック
-
-- **ランタイム**: Cloudflare Workers
-- **データベース**: Cloudflare D1 (SQLite) - KVから移行済み
-- **言語**: TypeScript
-- **テスト**: Vitest
-- **デプロイ**: Wrangler
-
-## 重要なコマンド
+## 開発コマンド
 
 ```bash
-# 開発サーバー起動
+# 開発サーバー起動（ローカル）
 npm run dev
 
 # テスト実行
-npm test
+npm test                    # 全テスト（476+ テスト）
+npm test -- <file>          # 特定ファイルのテスト
+npm run test:ui             # UIでテスト実行
+npm run test:coverage       # カバレッジ計測
 
-# 型チェック
-npm run typecheck
+# 型チェック・リント
+npm run typecheck           # TypeScript型チェック
+npm run lint                # Biomeでリント
+npm run lint:fix            # 自動修正
+npm run check               # lint + typecheck
 
-# リント
-npm run lint
+# データベース操作
+npm run db:migrate:create   # 新規マイグレーション作成
+npm run db:migrate:remote   # 本番環境に適用
+npm run db:migrate:local    # ローカルに適用
+npm run db:status           # マイグレーション状態確認
 
 # デプロイ
-npm run deploy
-
-# D1マイグレーション
-wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema.sql
+npm run deploy              # 本番デプロイ + コマンド登録
+npm run register            # Discord コマンド登録のみ
 ```
 
-## アーキテクチャの特徴
+## アーキテクチャ概要
 
-### Clean Architecture（Onion Architecture）
-**完全移行済み - Jeffrey Palermoのアーキテクチャパターン**
-- `src/domain/` - 純粋ビジネスロジック（エンティティ・ドメインサービス）
-- `src/application/` - ユースケース実装（11個完備）
-- `src/infrastructure/` - 外部技術（D1リポジトリ・API）
-- `src/presentation/` - UI構築とコントローラー
+### Clean Architecture レイヤー構成
 
-### データアクセス
-- **リポジトリパターン**: Clean Architecture に準拠
-- D1データベースへの直接アクセスを抽象化
-- ドメイン層のインターフェースとインフラ層の実装を分離
+```
+src/
+├── domain/                 # ビジネスロジック（依存なし）
+│   ├── entities/          # Schedule, Response など
+│   ├── services/          # ScheduleDomainService など
+│   └── repositories/      # インターフェース定義
+│
+├── application/           # ユースケース（Domainに依存）
+│   ├── usecases/         # 14個のユースケース実装
+│   ├── dto/              # データ転送オブジェクト
+│   └── services/         # アプリケーションサービス
+│
+├── infrastructure/        # 外部技術（Domain/Applicationに依存）
+│   ├── repositories/     # D1 リポジトリ実装
+│   ├── services/         # Discord API通信
+│   ├── adapters/         # CloudflareQueueAdapter
+│   └── factories/        # DependencyContainer (DI)
+│
+└── presentation/          # UI層（Application/Infrastructureに依存）
+    ├── controllers/      # VoteController など
+    └── builders/         # Discord UI構築
+```
 
-## データモデル
+### 重要な設計原則
 
-### D1 テーブル構造
-- `schedules` - 日程調整マスタ
-- `schedule_dates` - 日程候補（正規化）
-- `responses` - 回答マスタ
-- `response_date_status` - 各日程への回答状態
+1. **依存性逆転**: インフラ層がドメイン層に依存（逆方向はNG）
+2. **DI コンテナ**: `DependencyContainer`で全依存関係を管理
+3. **リポジトリパターン**: D1データベースアクセスを抽象化
+4. **非同期処理**: Cloudflare Queuesでメッセージ更新を最適化
 
-### 重要な機能
-- 6ヶ月後の自動削除（TTL）
-- リアルタイム投票更新
-- カスタムリマインダー
-- 締切後の編集可能
+## Cloudflare Workers 特有の制約
 
-## 開発時の注意点
+- **実行時間**: 最大30秒（通常は3秒以内）
+- **メモリ**: 128MB制限
+- **setTimeout不可**: `waitUntil()`または Queues を使用
+- **CPU制限**: 無限ループや再帰的Promise禁止
 
-### Cloudflare Workers の制限
-- 実行時間: 最大3秒
-- `setTimeout` は使えない（`waitUntil` を使用）
-- メモリ: 128MB
+## データベース（D1）
 
-### Discord API の制限
+### テーブル構造
+- `schedules`: 日程調整マスタ（6ヶ月でTTL）
+- `schedule_dates`: 日程候補（正規化）
+- `responses`: 回答マスタ
+- `response_date_status`: 各日程への回答状態
+
+### トランザクション処理
+```typescript
+// D1はトランザクションをサポート
+await db.batch([
+  db.prepare('INSERT INTO schedules...').bind(...),
+  db.prepare('INSERT INTO schedule_dates...').bind(...)
+]);
+```
+
+## メッセージ更新システム（Queues）
+
+投票時のメッセージ更新を最適化：
+- 投票更新: 2秒遅延でデバウンス
+- 締切更新: 即座に実行
+- バッチ処理で効率化
+
+## テスト戦略
+
+- **Vitest**: 順次実行設定（`vitest.config.ts`）
+- **D1モック**: `better-sqlite3`でインメモリDB
+- **DependencyContainer**: 各テストで独立インスタンス
+
+## Discord API 制限
+
 - Webhook: 30リクエスト/分
-- コンポーネント: 最大5行、各行最大5要素
 - Embed: 最大10個、各6000文字
+- コンポーネント: 最大5行×5要素
 
-### テスト
-- `vitest.config.ts` で順次実行設定（テスト分離のため）
-- リポジトリパターンを使用したモック
-- 各テストで独立したDependencyContainer
+## 構造化ログ
 
-## よくある問題と解決法
+```typescript
+import { getLogger } from '../infrastructure/logging/Logger';
+const logger = getLogger();
 
-### タイムゾーン
-- ユーザー入力: JST
-- 保存: UTC
-- 表示: JST
+logger.info('操作完了', { 
+  operation: 'create-schedule',
+  scheduleId: 'xxx' 
+});
+```
 
-### 型エラー
-- TypeScript strict mode で厳密な型チェック
-- ドメインエンティティとDTOの明確な分離
+## 日本語対応
 
-### テストの失敗
-- DependencyContainerの適切な初期化を確認
-- モックサービスの正しい設定
-- D1データベースのテスト用セットアップ
+- コメント: 日本語で記述
+- ユーザー入力: JST想定
+- 内部保存: UTC
+- 表示: JST変換
 
-## 今後の改善案
+## 主要エントリーポイント
 
-1. 残りのハンドラーのプレゼンテーション層への移行
-2. 国際化対応（i18n）
-3. パフォーマンスモニタリング
-4. WebSocket サポート（リアルタイム更新）
-5. 管理者ダッシュボード
-
-## 重要なファイル
-
-### Clean Architecture 実装
-- `/src/domain/entities/Schedule.ts` - スケジュールエンティティ
-- `/src/application/usecases/schedule/` - スケジュール関連ユースケース
-- `/src/infrastructure/factories/DependencyContainer.ts` - DI コンテナ
-- `/src/cron/deadline-reminder.ts` - クリーンアーキテクチャ化済み
-
-### 主要ファイル
-- `/src/index.ts` - エントリーポイント
-- `/src/infrastructure/utils/message-update-queue.ts` - Queuesハンドラー
-- `/src/handlers/` - Discord ハンドラー（段階的にプレゼンテーション層へ移行中）
-
-### Database
-- `/migrations/0001_initial_schema.sql` - D1スキーマ
-
-## デバッグのヒント
-
-1. `console.log` は Cloudflare ダッシュボードで確認
-2. `wrangler tail` でリアルタイムログ
-3. `--local` フラグでローカルテスト
-4. D1 クエリは `wrangler d1 execute` で直接実行可能
+- `/src/index.ts`: Honoアプリケーション
+- `/src/infrastructure/utils/message-update-queue.ts`: Queuesハンドラー
+- `/src/infrastructure/factories/DependencyContainer.ts`: DI設定
