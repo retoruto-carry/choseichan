@@ -262,7 +262,7 @@ export class NotificationService {
     }
 
     const message: any = {
-      content: `${mentionText}✅❓❌ 日程調整「${schedule.title}」が締め切られました！`,
+      content: `${mentionText}📅 日程調整「${schedule.title}」が締め切られました！`,
       embeds: [
         {
           title: '📊 集計結果',
