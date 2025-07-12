@@ -109,6 +109,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       sendDeadlineReminder: vi.fn(),
       sendSummaryMessage: vi.fn(),
       sendPRMessage: vi.fn(),
+      updateMainMessage: vi.fn(),
     } as any;
 
     useCase = new ProcessDeadlineRemindersUseCase(
@@ -194,6 +195,10 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       });
 
       // Verify closure notifications
+      expect(mockNotificationService.updateMainMessage).toHaveBeenCalledWith(
+        'schedule-789',
+        'guild-123'
+      );
       expect(mockNotificationService.sendSummaryMessage).toHaveBeenCalledWith(
         'schedule-789',
         'guild-123'

@@ -60,6 +60,9 @@ export async function handleDeadlineReminderBatch(
               guildId: task.guildId,
               editorUserId: 'system', // システムによる自動締切
             });
+
+            // メインメッセージを更新（締切済み状態に）
+            await notificationService.updateMainMessage(task.scheduleId, task.guildId);
             break;
           }
 

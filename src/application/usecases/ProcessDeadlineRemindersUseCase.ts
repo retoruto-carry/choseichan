@@ -214,6 +214,9 @@ export class ProcessDeadlineRemindersUseCase {
             return { success: false, scheduleId };
           }
 
+          // メインメッセージを更新（締切済み状態に）
+          await this.notificationService.updateMainMessage(scheduleId, guildId);
+
           const scheduleResult = await this.getScheduleUseCase.execute(scheduleId, guildId);
           if (!scheduleResult.success || !scheduleResult.schedule) {
             this.logger.error(

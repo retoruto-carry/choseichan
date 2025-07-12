@@ -10,6 +10,7 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
+import { ScheduleMainMessageBuilder } from '../../presentation/builders/ScheduleMainMessageBuilder';
 import { formatDate } from '../../utils/date';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
@@ -309,6 +310,49 @@ export class NotificationService {
     };
 
     await this.sendChannelMessage(schedule.channelId, message);
+  }
+
+  async updateMainMessage(scheduleId: string, guildId: string = 'default'): Promise<void> {
+    try {
+      const summaryResult = await this.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+      if (!summaryResult.success || !summaryResult.summary) {
+        this.logger.warn(`Failed to get summary for schedule ${scheduleId}`);
+        return;
+      }
+
+      const { schedule } = summaryResult.summary;
+
+      // メッセージIDが設定されていない場合は更新不可
+      if (!schedule.messageId) {
+        this.logger.warn(`No message ID for schedule ${scheduleId}, cannot update main message`);
+        return;
+      }
+
+      // 締切済みスケジュールなので投票ボタンは非表示
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+        summaryResult.summary,
+        undefined,
+        false, // 簡易表示
+        false // 投票ボタン非表示（締切済み）
+      );
+
+      await this.discordApi.updateMessage(
+        schedule.channelId,
+        schedule.messageId,
+        {
+          embeds: [embed],
+          components,
+        },
+        this.discordToken
+      );
+
+      this.logger.info(`Updated main message for closed schedule ${scheduleId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update main message for schedule ${scheduleId}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
   }
 
   sendPRMessage(schedule: Schedule | ScheduleResponse): void {
