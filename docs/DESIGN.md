@@ -16,7 +16,7 @@ Discord サーバー内で完結する日程調整ボット。調整さんのよ
 ### 1. 日程調整の作成
 
 ```
-/chouseichan create
+/chouseichan
 ```
 
 モーダルで以下を入力：
@@ -120,7 +120,7 @@ interface DateResponse {
 ### 1. 作成フロー
 
 ```
-User → /chouseichan create → モーダル表示
+User → /chouseichan → モーダル表示
      ↓
 モーダル入力（タイトル、説明、日程、締切）
      ↓
