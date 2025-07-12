@@ -6,6 +6,7 @@
 
 import { IDIContainer, SERVICE_TOKENS } from './DIContainer';
 import { Env } from '../types/discord';
+import { IRepositoryFactory } from '../../domain/repositories/interfaces';
 
 // Infrastructure
 import { createRepositoryFactory } from '../factories/factory';
