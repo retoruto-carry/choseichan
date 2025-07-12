@@ -310,20 +310,24 @@ describe('並行投票の統合テスト', () => {
         updateCount++;
       });
 
-      // 短時間に複数回更新をスケジュール
-      debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-      debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
-      debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
+      // 短時間に複数回更新を試行
+      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
+      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
+      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
+
+      // 最初の1回だけ実行されることを確認（デバウンス期間内のため）
+      expect(updateCount).toBe(1);
 
       // 統計情報を確認
       const stats = debouncer.getStats();
-      expect(stats.pendingCount).toBe(1); // 同じキーなので1つにまとめられる
+      expect(stats.recentUpdateCount).toBe(1);
 
-      // デバウンス時間を待機
+      // デバウンス時間後に再度更新
       await new Promise((resolve) => setTimeout(resolve, 2100));
+      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate);
 
-      // 1回だけ実行されることを確認
-      expect(updateCount).toBe(1);
+      // 2回目が実行されることを確認
+      expect(updateCount).toBe(2);
     });
 
     it('異なるスケジュールの更新は独立して処理される', async () => {
@@ -339,20 +343,17 @@ describe('並行投票の統合テスト', () => {
         updateCount2++;
       });
 
-      // 異なるスケジュールで更新をスケジュール
-      debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate1);
-      debouncer.scheduleUpdate('schedule-2', 'message-2', 'token', 'guild-1', mockUpdate2);
+      // 異なるスケジュールで更新を実行
+      await debouncer.scheduleUpdate('schedule-1', 'message-1', 'token', 'guild-1', mockUpdate1);
+      await debouncer.scheduleUpdate('schedule-2', 'message-2', 'token', 'guild-1', mockUpdate2);
+
+      // それぞれ1回ずつ実行されることを確認（異なるキーのため）
+      expect(updateCount1).toBe(1);
+      expect(updateCount2).toBe(1);
 
       // 統計情報を確認
       const stats = debouncer.getStats();
-      expect(stats.pendingCount).toBe(2); // 異なるキーなので2つ
-
-      // デバウンス時間を待機
-      await new Promise((resolve) => setTimeout(resolve, 2100));
-
-      // それぞれ1回ずつ実行されることを確認
-      expect(updateCount1).toBe(1);
-      expect(updateCount2).toBe(1);
+      expect(stats.recentUpdateCount).toBe(2); // 両方が最近の更新として記録される
     });
   });
 });

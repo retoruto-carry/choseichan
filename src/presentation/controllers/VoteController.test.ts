@@ -8,7 +8,7 @@ import { VoteController } from './VoteController';
 
 // デバウンサーをモック
 const mockDebouncer = {
-  scheduleUpdate: vi.fn(),
+  scheduleUpdate: vi.fn().mockResolvedValue(undefined),
   clear: vi.fn(),
   getStats: vi.fn(),
 };
@@ -431,7 +431,8 @@ describe('VoteController', () => {
 
       await controller.handleVoteModal(mockModalInteraction, ['schedule-123'], mockEnv);
 
-      // デバウンサーが呼ばれることを確認
+      // waitUntilとデバウンサーが呼ばれることを確認
+      expect(mockEnv.ctx?.waitUntil).toHaveBeenCalled();
       expect(mockDebouncer.scheduleUpdate).toHaveBeenCalledWith(
         'schedule-123',
         'msg-123',

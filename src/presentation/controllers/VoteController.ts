@@ -231,12 +231,15 @@ export class VoteController {
       // Update main message in background with debouncing
       if (env.ctx && schedule.messageId && env.DISCORD_APPLICATION_ID) {
         const debouncer = getMessageUpdateDebouncer();
-        debouncer.scheduleUpdate(
-          scheduleId,
-          schedule.messageId,
-          interaction.token,
-          guildId,
-          () => this.updateMainMessage(scheduleId, schedule.messageId!, interaction.token, env, guildId)
+        // Cloudflare Workersでは非同期実行をwaitUntilでラップ
+        env.ctx.waitUntil(
+          debouncer.scheduleUpdate(
+            scheduleId,
+            schedule.messageId,
+            interaction.token,
+            guildId,
+            () => this.updateMainMessage(scheduleId, schedule.messageId!, interaction.token, env, guildId)
+          )
         );
       }
 

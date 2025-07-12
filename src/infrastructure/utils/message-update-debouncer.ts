@@ -1,21 +1,18 @@
 /**
  * メッセージ更新のデバウンス機能
  * 
- * 複数の投票が同時に発生した場合に、メッセージ更新を一定時間遅延させて
- * 最後の更新のみを実行することでDiscord APIの負荷を軽減
+ * Cloudflare Workers環境での制限事項:
+ * - setTimeoutが使えないため、即座に実行またはスキップの判断を行う
+ * - 実際の遅延はCloudflare Durable Objectsか外部サービスが必要
+ * - 現在は最後の更新タイムスタンプを記録し、短時間の重複更新を防ぐ実装
  */
 
-interface PendingUpdate {
-  scheduleId: string;
-  messageId: string;
-  token: string;
-  guildId: string;
-  timestamp: number;
-}
+// Cloudflare Workers環境では非同期タイマーが使えないため、
+// 最後の更新時刻のみを記録する簡易的な実装
 
 export class MessageUpdateDebouncer {
   private static instance: MessageUpdateDebouncer;
-  private pendingUpdates = new Map<string, PendingUpdate>();
+  private lastUpdateTime = new Map<string, number>();
   private readonly debounceMs: number;
 
   private constructor(debounceMs = 2000) {
@@ -30,78 +27,39 @@ export class MessageUpdateDebouncer {
   }
 
   /**
-   * メッセージ更新をデバウンス付きでスケジュール
+   * メッセージ更新の実行判断
+   * 
+   * Cloudflare Workers環境では遅延実行ができないため、
+   * 最後の更新時刻を記録して短時間での重複更新を防ぐ
    */
-  scheduleUpdate(
+  async scheduleUpdate(
     scheduleId: string,
     messageId: string,
     token: string,
     guildId: string,
     updateFunction: () => Promise<void>
-  ): void {
+  ): Promise<void> {
     const key = `${scheduleId}:${messageId}`;
     const now = Date.now();
+    const lastUpdate = this.lastUpdateTime.get(key) || 0;
 
-    // 既存の更新をキャンセル（存在する場合）
-    if (this.pendingUpdates.has(key)) {
-      const existing = this.pendingUpdates.get(key)!;
-      // 既存の更新が新しい場合は、そのまま継続
-      if (now - existing.timestamp < this.debounceMs) {
-        this.pendingUpdates.set(key, {
-          scheduleId,
-          messageId,
-          token,
-          guildId,
-          timestamp: now,
-        });
-        return;
-      }
+    // デバウンス時間内の場合はスキップ
+    if (now - lastUpdate < this.debounceMs) {
+      return;
     }
 
-    // 新しい更新をスケジュール
-    this.pendingUpdates.set(key, {
-      scheduleId,
-      messageId,
-      token,
-      guildId,
-      timestamp: now,
-    });
+    // 更新時刻を記録
+    this.lastUpdateTime.set(key, now);
 
-    // 遅延実行（環境に応じてsetTimeoutまたはPromiseベースを使用）
-    const executeDelayed = async () => {
-      // テスト環境ではsetTimeoutを使用、Cloudflare WorkersではPromiseベースを使用
-      if (typeof setTimeout !== 'undefined') {
-        // Node.js/テスト環境
-        await new Promise(resolve => setTimeout(resolve, this.debounceMs));
-      } else {
-        // Cloudflare Workers環境
-        await new Promise(resolve => {
-          const start = Date.now();
-          const check = () => {
-            if (Date.now() - start >= this.debounceMs) {
-              resolve(undefined);
-            } else {
-              Promise.resolve().then(check);
-            }
-          };
-          check();
-        });
-      }
-
-      const current = this.pendingUpdates.get(key);
-      if (current && current.timestamp === now) {
-        // まだ最新の更新要求の場合のみ実行
-        try {
-          await updateFunction();
-        } catch (error) {
-          console.error(`Failed to update message ${messageId}:`, error);
-        } finally {
-          this.pendingUpdates.delete(key);
-        }
-      }
-    };
-
-    executeDelayed();
+    // Cloudflare Workers環境では即座に実行
+    try {
+      await updateFunction();
+    } catch (error) {
+      console.error(`Failed to update message ${messageId}:`, error);
+      // エラー時は更新時刻をリセットして再試行可能にする
+      this.lastUpdateTime.delete(key);
+      throw error;
+    }
   }
 
   /**
@@ -116,13 +74,14 @@ export class MessageUpdateDebouncer {
   ): Promise<void> {
     const key = `${scheduleId}:${messageId}`;
     
-    // 既存の待機中更新をキャンセル
-    this.pendingUpdates.delete(key);
+    // 更新時刻を記録
+    this.lastUpdateTime.set(key, Date.now());
     
     try {
       await updateFunction();
     } catch (error) {
       console.error(`Failed to immediately update message ${messageId}:`, error);
+      this.lastUpdateTime.delete(key);
       throw error;
     }
   }
@@ -131,33 +90,31 @@ export class MessageUpdateDebouncer {
    * 統計情報を取得（デバッグ用）
    */
   getStats(): {
-    pendingCount: number;
-    pendingUpdates: Array<{
+    recentUpdateCount: number;
+    recentUpdates: Array<{
       key: string;
-      scheduleId: string;
-      messageId: string;
-      age: number;
+      lastUpdateAge: number;
     }>;
   } {
     const now = Date.now();
-    const pendingUpdates = Array.from(this.pendingUpdates.entries()).map(([key, update]) => ({
-      key,
-      scheduleId: update.scheduleId,
-      messageId: update.messageId,
-      age: now - update.timestamp,
-    }));
+    const recentUpdates = Array.from(this.lastUpdateTime.entries())
+      .filter(([_, time]) => now - time < this.debounceMs * 5) // 最近の更新のみ
+      .map(([key, time]) => ({
+        key,
+        lastUpdateAge: now - time,
+      }));
 
     return {
-      pendingCount: this.pendingUpdates.size,
-      pendingUpdates,
+      recentUpdateCount: recentUpdates.length,
+      recentUpdates,
     };
   }
 
   /**
-   * 全ての待機中更新をクリア（テスト用）
+   * 全ての更新履歴をクリア（テスト用）
    */
   clear(): void {
-    this.pendingUpdates.clear();
+    this.lastUpdateTime.clear();
   }
 }
 
