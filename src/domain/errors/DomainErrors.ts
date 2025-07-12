@@ -1,5 +1,5 @@
 /**
- * Domain Layer Error Types
+ * ドメイン層エラー型定義
  *
  * ドメイン層のエラー定義
  * Clean Architectureでは、ドメイン層が最も重要な層なので、
@@ -29,13 +29,13 @@ export abstract class DomainError extends Error {
   }
 }
 
-// Schedule Domain Errors
+// スケジュールドメインエラー
 export class ScheduleNotFoundError extends DomainError {
   readonly code = 'SCHEDULE_NOT_FOUND';
   readonly statusCode = 404;
 
   constructor(scheduleId: string) {
-    super(`Schedule not found: ${scheduleId}`, { scheduleId });
+    super(`スケジュールが見つかりません: ${scheduleId}`, { scheduleId });
   }
 }
 

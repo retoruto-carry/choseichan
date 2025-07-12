@@ -19,7 +19,7 @@ export interface ParsedButtonId {
  */
 export class ButtonIdParseError extends Error {
   constructor(buttonId: string, reason: string) {
-    super(`Failed to parse button ID "${buttonId}": ${reason}`);
+    super(`ボタンID "${buttonId}" のパースに失敗しました: ${reason}`);
     this.name = 'ButtonIdParseError';
   }
 }
@@ -44,11 +44,11 @@ export function createButtonIdFromParams(params: ButtonIdParams): string {
   for (const part of parts) {
     if (part.includes(BUTTON_ID_SEPARATOR)) {
       throw new Error(
-        `Button ID part cannot contain separator "${BUTTON_ID_SEPARATOR}": ${part}`
+        `ボタンID部分に区切り文字 "${BUTTON_ID_SEPARATOR}" を含めることはできません: ${part}`
       );
     }
     if (!part.trim()) {
-      throw new Error('Button ID part cannot be empty');
+      throw new Error('ボタンID部分を空にすることはできません');
     }
   }
 
@@ -60,7 +60,7 @@ export function createButtonIdFromParams(params: ButtonIdParams): string {
  */
 export function parseButtonIdToComponents(buttonId: string): ParsedButtonId {
   if (!buttonId || !buttonId.trim()) {
-    throw new ButtonIdParseError(buttonId, 'Button ID is empty');
+    throw new ButtonIdParseError(buttonId, 'ボタンIDが空です');
   }
 
   const parts = buttonId.split(BUTTON_ID_SEPARATOR);
@@ -68,18 +68,18 @@ export function parseButtonIdToComponents(buttonId: string): ParsedButtonId {
   if (parts.length < MIN_BUTTON_ID_PARTS) {
     throw new ButtonIdParseError(
       buttonId,
-      `Expected at least ${MIN_BUTTON_ID_PARTS} parts, got ${parts.length}`
+      `最低 ${MIN_BUTTON_ID_PARTS} 個の部分が必要ですが、${parts.length} 個でした`
     );
   }
 
   const [action, scheduleId, ...additionalParams] = parts;
 
   if (!action.trim()) {
-    throw new ButtonIdParseError(buttonId, 'Action part is empty');
+    throw new ButtonIdParseError(buttonId, 'アクション部分が空です');
   }
 
   if (!scheduleId.trim()) {
-    throw new ButtonIdParseError(buttonId, 'Schedule ID part is empty');
+    throw new ButtonIdParseError(buttonId, 'スケジュールID部分が空です');
   }
 
   return {

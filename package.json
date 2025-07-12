@@ -17,7 +17,13 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check . && tsc --noEmit",
-    "register": "node scripts/register-commands.js"
+    "register": "node scripts/register-commands.js",
+    "db:migrate": "wrangler d1 migrations apply discord-choseisan-db",
+    "db:migrate:local": "wrangler d1 migrations apply discord-choseisan-db --local",
+    "db:migrate:create": "wrangler d1 migrations create discord-choseisan-db",
+    "db:migrate:list": "wrangler d1 migrations list discord-choseisan-db",
+    "db:status": "wrangler d1 execute discord-choseisan-db --command=\"SELECT * FROM d1_migrations ORDER BY version DESC LIMIT 5\"",
+    "db:shell": "wrangler d1 execute discord-choseisan-db"
   },
   "keywords": [],
   "author": "",

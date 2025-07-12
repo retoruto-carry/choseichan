@@ -58,32 +58,93 @@ npm install
 ```
 
 3. 環境変数を設定
+
+環境変数とDiscordアプリケーションの設定が必要です：
+
 ```bash
-cp wrangler.toml.example wrangler.toml
-# wrangler.toml を編集して必要な値を設定
+# Discordアプリケーションの設定（wrangler secret使用）
+wrangler secret put DISCORD_APPLICATION_ID
+wrangler secret put DISCORD_PUBLIC_KEY  
+wrangler secret put DISCORD_TOKEN
 ```
 
-4. D1 データベースを作成
+4. wrangler.toml の設定
+
+`wrangler.toml` ファイルを編集してD1データベース設定を更新：
+
+```toml
+name = "discord-choseisan"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "discord-choseisan-db"
+database_id = "YOUR_DATABASE_ID_HERE"  # 次のステップで作成されるIDを設定
+migrations_dir = "migrations"
+migrations_table = "d1_migrations"
+```
+
+5. D1 データベースを作成
 ```bash
 wrangler d1 create discord-choseisan-db
+# 出力されるdatabase_idをwrangler.tomlに設定してください
 ```
 
-5. マイグレーションを実行
+6. マイグレーションを実行
 ```bash
-wrangler d1 execute discord-choseisan-db --file=./migrations/0001_initial_schema.sql
+# 新しいマイグレーションコマンドを使用
+npm run db:migrate
+
+# または手動で実行
+wrangler d1 migrations apply discord-choseisan-db
 ```
 
-6. デプロイ
+7. デプロイ
 ```bash
 npm run deploy
 ```
 
-7. Discord コマンドを登録
+8. Discord コマンドを登録
 ```bash
-npm run register-commands
+npm run register
 ```
 
 詳細なセットアップガイドは [docs/DEPLOY.md](docs/DEPLOY.md) を参照してください。
+
+## 🗄️ データベース管理
+
+### マイグレーション管理
+
+```bash
+# 新しいマイグレーションファイルを作成
+npm run db:migrate:create
+
+# 本番環境にマイグレーションを適用
+npm run db:migrate
+
+# ローカル環境にマイグレーションを適用
+npm run db:migrate:local
+
+# 未適用のマイグレーションを確認
+npm run db:migrate:list
+
+# マイグレーション状態を確認
+npm run db:status
+
+# データベースシェルでクエリを実行
+npm run db:shell -- --command="SELECT COUNT(*) FROM schedules"
+```
+
+### 環境変数
+
+必要な環境変数：
+
+- `DISCORD_APPLICATION_ID` - Discord アプリケーション ID
+- `DISCORD_PUBLIC_KEY` - Discord アプリケーション公開キー  
+- `DISCORD_TOKEN` - Discord ボットトークン
+
+これらは `wrangler secret put` コマンドで設定します。
 
 ## 🛠️ 技術スタック
 
