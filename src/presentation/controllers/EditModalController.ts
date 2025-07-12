@@ -134,13 +134,19 @@ export class EditModalController {
         return this.createErrorResponse('有効な日程が入力されていません。');
       }
 
-      // Create new dates
-      const newDates = parsedDates.map((datetime: string) => ({
-        id: generateId(),
-        datetime: datetime.trim(),
-      }));
+      // Create new dates (preserve existing IDs for matching datetimes)
+      const existingDates = scheduleResult.schedule.dates;
+      const newDates = parsedDates.map((datetime: string) => {
+        const trimmedDatetime = datetime.trim();
+        // 既存の日程候補と文字列が一致する場合、既存のIDを保持
+        const existingDate = existingDates.find((d) => d.datetime === trimmedDatetime);
+        return {
+          id: existingDate?.id || generateId(),
+          datetime: trimmedDatetime,
+        };
+      });
 
-      // Update schedule with new dates - this will reset all responses
+      // Update schedule with new dates - existing responses for matching dates are preserved
       const updateResult = await this.dependencyContainer.updateScheduleUseCase.execute({
         scheduleId,
         guildId,
@@ -170,7 +176,7 @@ export class EditModalController {
         JSON.stringify({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `✅ 日程を更新しました。（${parsedDates.length}件）\n既存の回答はリセットされました。`,
+            content: `✅ 日程を更新しました。（${parsedDates.length}件）\n一致する日程の既存回答は保持されました。`,
             flags: InteractionResponseFlags.EPHEMERAL,
           },
         }),

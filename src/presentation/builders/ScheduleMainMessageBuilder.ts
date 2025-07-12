@@ -24,14 +24,13 @@ export class ScheduleMainMessageBuilder {
     if (showDetails && summary) {
       // 詳細表示（投票状況含む）
       return createScheduleEmbedWithTable(summary, showDetails);
-    } else if (schedule) {
-      // 簡易表示（投票状況なし）
-      return createScheduleEmbed(schedule);
-    } else if (summary) {
-      // Summary渡されたが簡易表示
-      return createScheduleEmbed(summary.schedule);
     } else {
-      throw new Error('schedule or summary must be provided');
+      // 簡易表示（基本情報のみ・投票状況なし）
+      const targetSchedule = schedule || summary?.schedule;
+      if (!targetSchedule) {
+        throw new Error('schedule or summary must be provided');
+      }
+      return createScheduleEmbed(targetSchedule);
     }
   }
 
@@ -81,28 +80,18 @@ export class ScheduleMainMessageBuilder {
         emoji: { name: '🔄' },
       });
 
+      // 編集ボタンも第1行に追加
+      firstRowButtons.push({
+        type: 2, // BUTTON
+        style: 2, // SECONDARY
+        label: '編集',
+        custom_id: createButtonId('edit', schedule.id),
+        emoji: { name: '⚙️' }, // 統一仕様
+      });
+
       components.push({
         type: 1, // ACTION_ROW
         components: firstRowButtons,
-      });
-    }
-
-    // 第2行: 編集ボタン（常に表示）
-    const secondRowButtons = [];
-
-    // 編集ボタン
-    secondRowButtons.push({
-      type: 2, // BUTTON
-      style: 2, // SECONDARY
-      label: '編集',
-      custom_id: createButtonId('edit', schedule.id),
-      emoji: { name: '⚙️' }, // 統一仕様
-    });
-
-    if (secondRowButtons.length > 0) {
-      components.push({
-        type: 1, // ACTION_ROW
-        components: secondRowButtons,
       });
     }
 
