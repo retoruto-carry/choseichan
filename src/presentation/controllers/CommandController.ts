@@ -11,15 +11,13 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
 import { CommandUIBuilder } from '../builders/CommandUIBuilder';
-import { HelpUIBuilder } from '../builders/HelpUIBuilder';
 
 export class CommandController {
   private readonly logger = getLogger();
 
   constructor(
     private readonly dependencyContainer: DependencyContainer,
-    private readonly uiBuilder: CommandUIBuilder,
-    private readonly helpUIBuilder: HelpUIBuilder
+    private readonly uiBuilder: CommandUIBuilder
   ) {}
 
   /**
@@ -36,10 +34,8 @@ export class CommandController {
       switch (subcommand.name) {
         case 'create':
           return this.handleCreateCommand(interaction);
-        case 'list':
-          return this.handleListCommand(interaction);
-        case 'help':
-          return this.handleHelpCommand();
+        // case 'list':
+        //   return this.handleListCommand(interaction);
         default:
           return this.createErrorResponse(ERROR_MESSAGES.UNKNOWN_COMMAND);
       }
@@ -154,24 +150,6 @@ export class CommandController {
     }
   }
 
-  /**
-   * ヘルプコマンド処理
-   */
-  private handleHelpCommand(): Response {
-    const embed = this.helpUIBuilder.createHelpEmbed();
-
-    return new Response(
-      JSON.stringify({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          embeds: [embed],
-          flags: DISCORD_CONSTANTS.FLAGS.EPHEMERAL,
-        },
-      }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
   private createErrorResponse(message: string): Response {
     return new Response(
       JSON.stringify({
@@ -192,7 +170,6 @@ export class CommandController {
 export function createCommandController(env: Env): CommandController {
   const container = new DependencyContainer(env);
   const uiBuilder = new CommandUIBuilder();
-  const helpUIBuilder = new HelpUIBuilder();
 
-  return new CommandController(container, uiBuilder, helpUIBuilder);
+  return new CommandController(container, uiBuilder);
 }

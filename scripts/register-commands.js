@@ -13,16 +13,11 @@ const commands = [
         description: '新しい日程調整を作成（対話形式）',
         type: ApplicationCommandOptionType.Subcommand,
       },
-      {
-        name: 'list',
-        description: 'このチャンネルの日程調整一覧を表示',
-        type: ApplicationCommandOptionType.Subcommand,
-      },
-      {
-        name: 'help',
-        description: '調整ちゃんの使い方を表示',
-        type: ApplicationCommandOptionType.Subcommand,
-      },
+      // {
+      //   name: 'list',
+      //   description: 'このチャンネルの日程調整一覧を表示',
+      //   type: ApplicationCommandOptionType.Subcommand,
+      // },
     ],
   },
 ];
