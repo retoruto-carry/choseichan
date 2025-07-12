@@ -6,7 +6,8 @@ import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
 
 export function createScheduleEmbed(
   schedule: DomainSchedule | ScheduleResponse,
-  totalResponses?: number
+  totalResponses?: number,
+  summary?: ScheduleSummaryResponse
 ) {
   const dateList = schedule.dates.map((date, index) => `${index + 1}. ${date.datetime}`).join('\n');
 
@@ -22,6 +23,22 @@ export function createScheduleEmbed(
   // 回答者数を表示（過去のバージョンとの互換性のため）
   if (totalResponses !== undefined) {
     descriptionParts.push(`回答者: ${totalResponses}人`);
+    descriptionParts.push('');
+  }
+
+  // 簡易投票状況表示（summaryがある場合）
+  if (summary?.responseCounts) {
+    const voteCounts = Object.values(summary.responseCounts).reduce(
+      (acc, count) => {
+        acc.yes += count.yes;
+        acc.maybe += count.maybe;
+        acc.no += count.no;
+        return acc;
+      },
+      { yes: 0, maybe: 0, no: 0 }
+    );
+
+    descriptionParts.push(`✅ ${voteCounts.yes}人 ❔ ${voteCounts.maybe}人 ❌ ${voteCounts.no}人`);
     descriptionParts.push('');
   }
 
