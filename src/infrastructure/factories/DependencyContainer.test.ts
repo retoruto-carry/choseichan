@@ -34,11 +34,7 @@ describe('DependencyContainer', () => {
     DISCORD_TOKEN: 'test-token',
     DISCORD_PUBLIC_KEY: 'test-public-key',
     DISCORD_APPLICATION_ID: 'test-app-id',
-    DATABASE_TYPE: 'd1',
-    DB: {} as D1Database,
-    CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
-    CLOUDFLARE_DATABASE_ID: 'test-db-id',
-    API_TOKEN: 'test-api-token'
+    DB: {} as D1Database
   };
 
   beforeEach(() => {
@@ -82,8 +78,8 @@ describe('DependencyContainer', () => {
     it('should not create NotificationService when Discord credentials are missing', () => {
       const envWithoutCredentials: Env = {
         ...mockEnv,
-        DISCORD_TOKEN: undefined,
-        DISCORD_APPLICATION_ID: undefined
+        DISCORD_TOKEN: '',
+        DISCORD_APPLICATION_ID: ''
       };
 
       const containerWithoutNotification = new DependencyContainer(envWithoutCredentials);

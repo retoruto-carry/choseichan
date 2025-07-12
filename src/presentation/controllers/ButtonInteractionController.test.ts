@@ -53,12 +53,19 @@ describe('ButtonInteractionController', () => {
   let controller: ButtonInteractionController;
   let mockContainer: DependencyContainer;
   let mockInteraction: any;
+  let mockEnv: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
     
     mockContainer = {} as DependencyContainer;
     controller = new ButtonInteractionController(mockContainer);
+    
+    mockEnv = {
+      DISCORD_TOKEN: 'test-token',
+      DISCORD_APPLICATION_ID: 'test-app-id',
+      ctx: { waitUntil: vi.fn() }
+    };
     
     mockInteraction = {
       data: {
@@ -83,7 +90,7 @@ describe('ButtonInteractionController', () => {
     it('should handle respond button', async () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'respond', id: 'schedule-123' });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
       expect(parseButtonId).toHaveBeenCalledWith('respond:schedule-123');
@@ -93,7 +100,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'status', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'status:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -102,7 +109,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'hide_details', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'hide_details:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -111,7 +118,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'refresh', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'refresh:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -120,7 +127,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'edit', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'edit:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -129,7 +136,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'close', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'close:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -138,7 +145,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'reopen', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'reopen:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -147,7 +154,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'delete', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'delete:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -156,7 +163,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'delete_confirm', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'delete_confirm:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -165,7 +172,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'delete_cancel', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'delete_cancel:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -174,7 +181,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'add_date', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'add_date:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -183,7 +190,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'add_reminder', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'add_reminder:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({ type: 1 });
     });
@@ -192,7 +199,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce({ action: 'unknown', id: 'schedule-123' });
       mockInteraction.data.custom_id = 'unknown:schedule-123';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -207,7 +214,7 @@ describe('ButtonInteractionController', () => {
       vi.mocked(parseButtonId).mockReturnValueOnce(null);
       mockInteraction.data.custom_id = 'invalid-format';
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -223,7 +230,7 @@ describe('ButtonInteractionController', () => {
         throw new Error('Parse error');
       });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

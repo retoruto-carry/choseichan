@@ -62,12 +62,12 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
   // Individual Repositories (Singleton - derived from factory)
   container.registerSingleton(
     SERVICE_TOKENS.SCHEDULE_REPOSITORY,
-    (c) => c.resolve(SERVICE_TOKENS.REPOSITORY_FACTORY).getScheduleRepository()
+    (c) => (c.resolve(SERVICE_TOKENS.REPOSITORY_FACTORY) as IRepositoryFactory).getScheduleRepository()
   );
 
   container.registerSingleton(
     SERVICE_TOKENS.RESPONSE_REPOSITORY,
-    (c) => c.resolve(SERVICE_TOKENS.REPOSITORY_FACTORY).getResponseRepository()
+    (c) => (c.resolve(SERVICE_TOKENS.REPOSITORY_FACTORY) as IRepositoryFactory).getResponseRepository()
   );
 }
 

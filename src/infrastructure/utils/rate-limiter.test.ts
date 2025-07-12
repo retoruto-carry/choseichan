@@ -46,7 +46,9 @@ describe('Rate Limiter', () => {
       // All items except 3 should be processed
       expect(processed).toHaveLength(4);
       expect(processed.sort()).toEqual([1, 2, 4, 5]);
-      expect(errors).toEqual([3]);
+      // Item 3 should fail 4 times (initial + 3 retries)
+      expect(errors).toHaveLength(4);
+      expect(errors.every(err => err === 3)).toBe(true);
     });
     
     it('should process all items in one batch if batchSize is large', async () => {

@@ -31,6 +31,7 @@ describe('CreateScheduleController', () => {
   let mockContainer: DependencyContainer;
   let mockCreateScheduleUseCase: CreateScheduleUseCase;
   let mockInteraction: any;
+  let mockEnv: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,6 +45,12 @@ describe('CreateScheduleController', () => {
     } as unknown as DependencyContainer;
     
     controller = new CreateScheduleController(mockContainer);
+    
+    mockEnv = {
+      DISCORD_TOKEN: 'test-token',
+      DISCORD_APPLICATION_ID: 'test-app-id',
+      ctx: { waitUntil: vi.fn() }
+    };
     
     mockInteraction = {
       data: {
@@ -103,7 +110,7 @@ describe('CreateScheduleController', () => {
         }
       });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -147,7 +154,7 @@ describe('CreateScheduleController', () => {
         }
       });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       expect(result.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       
@@ -178,7 +185,7 @@ describe('CreateScheduleController', () => {
         }
       });
 
-      await controller.handle(mockInteraction);
+      await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       const executeCall = vi.mocked(mockCreateScheduleUseCase.execute).mock.calls[0][0];
       expect(executeCall.dates).toHaveLength(3);
@@ -194,7 +201,7 @@ describe('CreateScheduleController', () => {
         errors: ['タイトルは必須です']
       });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -210,7 +217,7 @@ describe('CreateScheduleController', () => {
         throw new Error('ID generation failed');
       });
 
-      const result = await controller.handle(mockInteraction);
+      const result = await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       expect(result).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -241,7 +248,7 @@ describe('CreateScheduleController', () => {
         }
       });
 
-      await controller.handle(mockInteraction);
+      await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       const executeCall = vi.mocked(mockCreateScheduleUseCase.execute).mock.calls[0][0];
       expect(executeCall.dates).toHaveLength(2);
@@ -262,7 +269,7 @@ describe('CreateScheduleController', () => {
         }
       });
 
-      await controller.handle(mockInteraction);
+      await controller.handleCreateScheduleModal(mockInteraction, mockEnv);
 
       // Verify that the modal data was correctly parsed
       expect(mockCreateScheduleUseCase.execute).toHaveBeenCalledWith(

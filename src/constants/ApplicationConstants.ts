@@ -149,6 +149,8 @@ export const ERROR_MESSAGES = {
   SCHEDULE_PERMISSION_DENIED: 'この操作を行う権限がありません',
   RESPONSE_NOT_FOUND: '回答が見つかりません',
   INVALID_RESPONSE_STATUS: '無効な回答ステータスです',
+  INVALID_INPUT: '入力内容に問題があります。',
+  UNKNOWN_COMMAND: '不明なコマンドです。',
   
   // System Errors
   DATABASE_ERROR: 'データベースエラーが発生しました',
