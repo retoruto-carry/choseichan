@@ -110,12 +110,14 @@ export class ScheduleMainMessageBuilder {
    * @param schedule スケジュール情報（簡易表示時）
    * @param showDetails 詳細表示フラグ
    * @param showVoteButton 投票ボタン表示フラグ
+   * @param isNewlyCreated 新規作成フラグ
    */
   static createMainMessage(
     summary?: ScheduleSummaryResponse,
     schedule?: ScheduleResponse,
     showDetails: boolean = false,
-    showVoteButton: boolean = true
+    showVoteButton: boolean = true,
+    isNewlyCreated: boolean = false
   ) {
     const targetSchedule = schedule || summary?.schedule;
     if (!targetSchedule) {
@@ -129,6 +131,11 @@ export class ScheduleMainMessageBuilder {
       showVoteButton
     );
 
-    return { embed, components };
+    // 新規作成時のみcontentを追加
+    const content = isNewlyCreated
+      ? `${targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`
+      : undefined;
+
+    return { embed, components, content };
   }
 }

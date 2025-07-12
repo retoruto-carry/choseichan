@@ -124,12 +124,13 @@ export class CreateScheduleController {
         return this.createErrorResponse('スケジュール情報の取得に失敗しました。');
       }
 
-      // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+      // 統一UIBuilderを使用（簡易表示・投票ボタン表示・新規作成）
+      const { embed, components, content } = ScheduleMainMessageBuilder.createMainMessage(
         summaryResult.summary,
         undefined,
         false, // 簡易表示
-        true // 投票ボタン表示
+        true, // 投票ボタン表示
+        true // 新規作成フラグ
       );
 
       // バックグラウンドでメッセージIDを保存
@@ -180,6 +181,7 @@ export class CreateScheduleController {
         JSON.stringify({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
+            content,
             embeds: [embed],
             components,
           },
