@@ -1,8 +1,8 @@
-# Discord 調整ちゃん - アーキテクチャドキュメント
+# Discord 調整ちゃん - Clean Architecture 設計書
 
 ## 概要
 
-Discord 調整ちゃんは、Clean Architecture (Onion Architecture) パターンを採用した Discord ボットです。Jeffrey Palermo のアーキテクチャパターンに基づき、ビジネスロジックと技術的な詳細を明確に分離しています。
+Discord 調整ちゃんは、Jeffrey Palermo の Onion Architecture（Clean Architecture）パターンを採用した Discord ボットです。Port/Adapter パターンを使用してビジネスロジックと技術的詳細を明確に分離し、テスタビリティ、保守性、拡張性を重視した設計となっています。
 
 ## 技術スタック
 
@@ -14,85 +14,106 @@ Discord 調整ちゃんは、Clean Architecture (Onion Architecture) パター�
 - **コード品質**: Biome (Linting & Formatting)
 - **デプロイ**: Wrangler CLI
 
-## 依存関係の方向
+## Clean Architecture レイヤー構成
+
+### 依存関係のルール
+
+**依存方向**: 外側から内側への一方向のみ
 
 ```
-User Interface → Application → Domain ← Infrastructure
+Presentation → Application → Domain
+Infrastructure → Application → Domain
 ```
 
-- **Domain**: 純粋なビジネスロジック（依存なし）
-- **Application**: ユースケースとDTO（Domainに依存）
-- **Infrastructure**: 外部技術（DomainとApplicationに依存）
-- **Presentation**: UI構築（ApplicationとInfrastructureに依存）
+- **Domain層**: 他のレイヤーに依存しない（最内層）
+- **Application層**: Domain層のみに依存
+- **Infrastructure層**: Domain層とApplication層に依存
+- **Presentation層**: Application層とInfrastructure層に依存（最外層）
 
-## レイヤー構成
+### ディレクトリ構造
 
-### 1. Domain Layer (`src/domain/`)
-ビジネスロジックの中核。外部への依存なし。
+```
+src/
+├── domain/                 # ビジネスロジック（依存なし）
+│   ├── entities/          # Schedule, Response など
+│   ├── services/          # ScheduleDomainService など
+│   └── repositories/      # インターフェース定義
+│
+├── application/           # ユースケース（Domainに依存）
+│   ├── usecases/         # 14個のユースケース実装
+│   ├── services/         # アプリケーションサービス
+│   ├── dto/              # データ転送オブジェクト
+│   ├── mappers/          # ドメイン⇔DTO変換
+│   ├── ports/            # 外部依存の抽象化（Port Interface）
+│   └── types/            # アプリケーション型定義
+│
+├── infrastructure/        # 外部技術（Domain/Applicationに依存）
+│   ├── repositories/     # D1 リポジトリ実装
+│   ├── services/         # Discord API通信
+│   ├── adapters/         # Port実装（Adapter）
+│   └── factories/        # DependencyContainer (DI)
+│
+└── presentation/          # UI層（Application/Infrastructureに依存）
+    ├── controllers/      # VoteController など
+    └── builders/         # Discord UI構築
+```
 
-- **Entities**: `entities/` - ビジネスルールを持つドメインオブジェクト
-  - `Schedule.ts` - スケジュールエンティティ
-  - `Response.ts` - 回答エンティティ
-  - `ScheduleDate.ts`, `ResponseStatus.ts`, `User.ts`
+## Port/Adapter パターン
 
-- **Domain Services**: `services/` - 複数エンティティにまたがるビジネスロジック
-  - `ScheduleDomainService.ts` - スケジュール関連のドメインサービス
-  - `ResponseDomainService.ts` - 回答関連のドメインサービス
-  - `MessageUpdateService.ts` - メッセージ更新のビジネスルール
+### Port Interface（ポート）
 
-- **Repository Interfaces**: `repositories/interfaces.ts` - データアクセス抽象化
+Application層で定義される外部依存の抽象化：
 
-### 2. Application Layer (`src/application/`)
-ユースケースとデータ転送オブジェクト。Domainにのみ依存。
+```typescript
+// src/application/ports/DiscordApiPort.ts
+export interface IDiscordApiPort {
+  updateMessage(channelId: string, messageId: string, content: object, token: string): Promise<void>;
+  sendMessage(channelId: string, content: object, token: string): Promise<{ id: string }>;
+  sendNotification(channelId: string, content: string, token: string): Promise<void>;
+  fetchGuildMembers(guildId: string, token: string): Promise<Array<{...}>>;
+}
 
-- **Use Cases**: `usecases/` - ビジネス要件に対応する処理フロー
-  - `schedule/` - スケジュール関連ユースケース
-  - `response/` - 回答関連ユースケース
-  - `message/` - メッセージ更新関連ユースケース
+// src/application/ports/LoggerPort.ts
+export interface ILogger {
+  info(message: string, meta?: object): void;
+  warn(message: string, meta?: object): void;
+  error(message: string, error?: Error, meta?: object): void;
+  debug(message: string, meta?: object): void;
+}
 
-- **Services**: `services/` - アプリケーションサービス
-  - `MessageUpdateServiceImpl.ts` - メッセージ更新サービス実装
+// src/application/ports/EnvironmentPort.ts
+export interface IEnvironmentPort {
+  get(key: string): string | undefined;
+  getOptional(key: string): string | undefined;
+  getRequired(key: string): string;
+}
+```
 
-- **DTOs**: `dto/` - レイヤー間データ転送オブジェクト
-  - `ScheduleDto.ts`, `ResponseDto.ts`
+### Adapter 実装（アダプター）
 
-- **Mappers**: `mappers/` - ドメインオブジェクトとDTOの変換
-  - `ScheduleMapper.ts`, `ResponseMapper.ts`
+Infrastructure層でPortインターフェースを実装：
 
-### 3. Infrastructure Layer (`src/infrastructure/`)
-外部技術の実装。DomainとApplicationに依存。
+```typescript
+// src/infrastructure/adapters/DiscordApiAdapter.ts
+export class DiscordApiAdapter implements IDiscordApiPort {
+  private discordApiService = new DiscordApiService();
 
-- **Repository Implementations**: `repositories/d1/` - データアクセス実装
-  - `schedule-repository.ts`, `response-repository.ts`
-  - `factory.ts` - リポジトリファクトリ
+  async updateMessage(channelId: string, messageId: string, content: object, token: string): Promise<void> {
+    await this.discordApiService.updateMessage(channelId, messageId, content, token);
+  }
+  // ... 他のメソッド実装
+}
 
-- **External Services**: `services/` - 外部サービス実装
-  - `DiscordApiService.ts` - Discord API通信
+// src/infrastructure/adapters/LoggerAdapter.ts
+export class LoggerAdapter implements ILogger {
+  private logger = getLogger();
 
-- **Adapters**: `adapters/` - 外部システムアダプター
-  - `CloudflareQueueAdapter.ts` - Cloudflare Queues アダプター
-
-- **Ports**: `ports/` - インフラストラクチャポート定義
-  - `MessageUpdateQueuePort.ts` - メッセージ更新キューポート
-
-- **Factories**: `factories/` - 依存関係注入
-  - `DependencyContainer.ts` - アプリケーション全体の依存関係管理
-  - `factory.ts` - 環境に応じたファクトリ
-
-### 4. Presentation Layer (`src/presentation/`)
-UI構築とコントローラー。ApplicationとInfrastructureに依存。
-
-- **Controllers**: `controllers/` - ユースケース実行とUI調整
-  - `ScheduleController.ts`, `ResponseController.ts`
-
-- **UI Builders**: `builders/` - Discord UI構築専用
-  - `ScheduleUIBuilder.ts`, `ResponseUIBuilder.ts`
-
-### 5. Legacy Handlers (`src/handlers/`)
-既存のハンドラー。段階的にPresentationレイヤーに移行予定。
-
-- Discord インタラクションの直接処理
-- 旧StorageServiceV2を使用（後方互換性のため）
+  info(message: string, meta?: LogContext): void {
+    this.logger.info(message, meta);
+  }
+  // ... 他のメソッド実装
+}
+```
 
 ## データベース構成
 
@@ -185,62 +206,400 @@ UI構築とコントローラー。ApplicationとInfrastructureに依存。
 - **プレゼンテーション層**: 11コントローラー、11UIビルダー
 
 #### 🎯 品質指標
-- **テスト**: 470+ テスト（全て合格）
+- **テスト**: 464 テスト（100% 合格）
 - **型安全性**: TypeScript strict mode、エラー0件
 - **コード品質**: Biome による統一されたフォーマット
 - **ログ**: 全ての console.log を構造化ログに移行
+- **Clean Architecture**: Port/Adapter パターンで100%準拠
 
 #### 主要機能の特徴
 1. **日程調整**: モーダルフォームによる直感的な作成
-2. **回答システム**: ○△× の3段階評価とコメント機能
+2. **回答システム**: ○△× の3段階評価機能（コメント機能は削除済み）
 3. **自動化**: 締切リマインダーと自動締切処理
 4. **セキュリティ**: Ed25519署名検証とレート制限
 5. **パフォーマンス**: Cloudflare Queuesによる非同期メッセージ更新
 
-### アーキテクチャ利点
+## 依存性注入（DI）
 
-#### Clean Architecture (新機能)
-- 🔄 ドメインロジックの独立性
-- 🧪 高いテスタビリティ
-- 🔧 変更の局所化
-- 📈 拡張性とメンテナンス性
+### DependencyContainer
 
-#### Legacy Architecture (既存機能)
-- ✅ 実績のある安定稼働
-- 🛡️ ビジネス継続性保証
-- ⚡ 既知の性能特性
-- 🔄 現行運用との親和性
+全ての依存関係を管理する中央集権的なコンテナ：
 
-### 今後の改善案
-- 📋 パフォーマンスモニタリングの実装
-- 📋 国際化対応（i18n）
-- 📋 WebSocket サポート（リアルタイム更新）
-- 📋 管理者ダッシュボード
-- 📋 高度な集計・分析機能
+```typescript
+// src/infrastructure/factories/DependencyContainer.ts
+export class DependencyContainer {
+  private static instance: DependencyContainer;
+  private repositories: Map<string, any> = new Map();
+  private services: Map<string, any> = new Map();
+  private useCases: Map<string, any> = new Map();
+
+  static getInstance(): DependencyContainer {
+    if (!this.instance) {
+      this.instance = new DependencyContainer();
+    }
+    return this.instance;
+  }
+
+  createVoteController(env: Env): VoteController {
+    const scheduleRepo = this.getScheduleRepository(env);
+    const responseRepo = this.getResponseRepository(env);
+    
+    // Port/Adapter パターンを使用
+    const logger = new LoggerAdapter();
+    const discordApi = new DiscordApiAdapter();
+    
+    const useCase = new VoteUseCase(scheduleRepo, responseRepo);
+    
+    return new VoteController(useCase, logger, discordApi);
+  }
+}
+```
 
 ## ベストプラクティス
 
-### コード品質
-- TypeScript strict mode（エラー0件維持）
-- Biome による自動フォーマットとリント
-- 470+ のテストによる品質保証
-- 構造化ログによる詳細な追跡
+### Entity 設計
 
-### セキュリティ
-- Ed25519 署名検証による安全な通信
-- ValidationService による包括的な入力検証
-- RateLimitService による DoS 攻撃対策
-- 秘密情報の環境変数管理
-- Discord API 制限の遵守
+```typescript
+// src/domain/entities/Schedule.ts
+export class Schedule {
+  private constructor(
+    private readonly _id: string,
+    private readonly _guildId: string,
+    // ... プライベートフィールド
+  ) {}
 
-### パフォーマンス
-- レート制限対応
-- バッチ処理の実装
-- メモリ効率の最適化（128MB制限）
+  // ファクトリーメソッド
+  static create(data: ScheduleCreateData): Schedule {
+    // バリデーションロジック
+    return new Schedule(/* ... */);
+  }
+
+  // ビジネスロジック
+  canBeClosed(currentDate: Date = new Date()): boolean {
+    if (!this.deadline) return true;
+    return currentDate > this.deadline;
+  }
+
+  // イミュータブルな更新
+  updateDeadline(newDeadline: Date): Schedule {
+    return new Schedule(
+      this._id,
+      this._guildId,
+      // ... 他のフィールド
+      newDeadline,
+      // ...
+    );
+  }
+}
+```
+
+### UseCase 設計
+
+```typescript
+// src/application/usecases/schedule/CreateScheduleUseCase.ts
+export class CreateScheduleUseCase {
+  constructor(
+    private scheduleRepository: IScheduleRepository,
+    private responseRepository: IResponseRepository,
+    private logger: ILogger  // Portインターフェース使用
+  ) {}
+
+  async execute(input: CreateScheduleInput): Promise<CreateScheduleResult> {
+    try {
+      // 1. 入力検証
+      const validatedInput = this.validateInput(input);
+      
+      // 2. ビジネスロジック実行
+      const schedule = Schedule.create(validatedInput);
+      
+      // 3. 永続化
+      await this.scheduleRepository.save(schedule);
+      
+      // 4. 結果返却
+      return {
+        success: true,
+        schedule: ScheduleMapper.scheduleToDto(schedule)
+      };
+    } catch (error) {
+      this.logger.error('Schedule creation failed', error);
+      return {
+        success: false,
+        errors: [error.message]
+      };
+    }
+  }
+}
+```
+
+### Repository パターン
+
+```typescript
+// src/domain/repositories/interfaces/IScheduleRepository.ts
+export interface IScheduleRepository {
+  save(schedule: Schedule): Promise<void>;
+  findById(id: string, guildId: string): Promise<Schedule | null>;
+  findByChannel(channelId: string, guildId: string): Promise<Schedule[]>;
+  delete(id: string, guildId: string): Promise<void>;
+}
+
+// src/infrastructure/repositories/D1ScheduleRepository.ts
+export class D1ScheduleRepository implements IScheduleRepository {
+  constructor(private db: D1Database) {}
+
+  async save(schedule: Schedule): Promise<void> {
+    const data = ScheduleMapper.domainToData(schedule);
+    await this.db.prepare(INSERT_SCHEDULE_SQL).bind(...data).run();
+  }
+}
+```
+
+## テスト戦略
+
+### 単体テスト
+
+各レイヤーを独立してテスト：
+
+```typescript
+// Domain層のテスト
+describe('Schedule Entity', () => {
+  it('should allow closing after deadline', () => {
+    const schedule = Schedule.create({ 
+      deadline: new Date('2024-01-01') 
+    });
+    expect(schedule.canBeClosed(new Date('2024-01-02'))).toBe(true);
+  });
+});
+
+// Application層のテスト（モック使用）
+describe('CreateScheduleUseCase', () => {
+  it('should create schedule successfully', async () => {
+    const mockRepo = { save: vi.fn() };
+    const mockLogger = { info: vi.fn(), error: vi.fn() };
+    
+    const useCase = new CreateScheduleUseCase(mockRepo, mockLogger);
+    const result = await useCase.execute(validInput);
+    
+    expect(result.success).toBe(true);
+    expect(mockRepo.save).toHaveBeenCalled();
+  });
+});
+```
+
+### 統合テスト
+
+```typescript
+// tests/integration/schedule-creation.test.ts
+describe('Schedule Creation Integration', () => {
+  let container: DependencyContainer;
+  let testDb: D1Database;
+
+  beforeEach(async () => {
+    testDb = createTestDatabase();
+    container = new DependencyContainer();
+    container.setDatabase(testDb);
+  });
+
+  it('should create and persist schedule', async () => {
+    const useCase = container.getCreateScheduleUseCase();
+    const result = await useCase.execute(testInput);
+    
+    expect(result.success).toBe(true);
+    
+    // データベースから検証
+    const saved = await testDb.prepare('SELECT * FROM schedules WHERE id = ?')
+      .bind(result.schedule.id).first();
+    expect(saved).toBeDefined();
+  });
+});
+```
+
+## エラーハンドリング
+
+### 統一的なエラー処理
+
+```typescript
+// src/application/types/Result.ts
+export interface Result<T> {
+  success: boolean;
+  data?: T;
+  errors?: string[];
+}
+
+// UseCase での使用例
+export class SomeUseCase {
+  async execute(input: SomeInput): Promise<Result<SomeOutput>> {
+    try {
+      const result = await this.businessLogic(input);
+      return { success: true, data: result };
+    } catch (error) {
+      this.logger.error('UseCase failed', error);
+      return { 
+        success: false, 
+        errors: [error.message] 
+      };
+    }
+  }
+}
+```
+
+## Clean Architecture違反の回避
+
+### 禁止事項
+
+- Application層からInfrastructure層への直接参照
+- Domain層からApplication層への参照
+- 循環参照の作成
+
+### 解決方法
+
+- Portインターフェースを使用した抽象化
+- Dependency Injectionによる依存関係の逆転
+- イベント駆動アーキテクチャの活用（必要に応じて）
+
+## アーキテクチャ利点
+
+### Clean Architecture 実装
+- 🔄 ドメインロジックの独立性
+- 🧪 高いテスタビリティ（464テスト 100%合格）
+- 🔧 変更の局所化
+- 📈 拡張性とメンテナンス性
+- 🛡️ Port/Adapterパターンによる技術詳細の抽象化
+
+### 今後の拡張指針
+
+#### 新機能追加時の手順
+
+1. **Domain層**: エンティティの拡張またはドメインサービス追加
+2. **Application層**: 新しいUseCaseの実装、必要に応じてPortインターフェース追加
+3. **Infrastructure層**: 必要に応じてRepositoryやAdapterを拡張
+4. **Presentation層**: UIコンポーネントとControllerを追加
+5. **テスト**: 各レイヤーの単体テストと統合テストを追加
+
+## パフォーマンス考慮事項
+
+### Cloudflare Workers 制約
+
+- **実行時間制限**: 最大30秒（通常は3秒以内）
+- **メモリ制限**: 128MB
+- **CPU制限**: 長時間実行処理は Queues に移譲
+
+### 最適化戦略
+
+```typescript
+// バッチ処理での遅延制御
+export class ProcessDeadlineRemindersUseCase {
+  async execute(): Promise<void> {
+    const batchSize = Number(this.env.getOptional('REMINDER_BATCH_SIZE')) || 10;
+    const batchDelay = Number(this.env.getOptional('REMINDER_BATCH_DELAY')) || 100;
+
+    for (let i = 0; i < reminders.length; i += batchSize) {
+      const batch = reminders.slice(i, i + batchSize);
+      await Promise.all(batch.map(r => this.processReminder(r)));
+      
+      if (i + batchSize < reminders.length) {
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
+      }
+    }
+  }
+}
+```
+
+## セキュリティ
+
+### 入力検証
+
+```typescript
+// Domain層での検証
+export class Schedule {
+  static create(data: ScheduleCreateData): Schedule {
+    if (!data.title || data.title.length > 100) {
+      throw new Error('Invalid title');
+    }
+    if (data.dates.length === 0 || data.dates.length > 10) {
+      throw new Error('Invalid dates count');
+    }
+    // ...
+  }
+}
+
+// Application層での検証
+export class CreateScheduleUseCase {
+  private validateInput(input: CreateScheduleInput): ValidatedInput {
+    // サニタイゼーション
+    const sanitized = {
+      ...input,
+      title: input.title.trim(),
+      description: input.description?.trim()
+    };
+    
+    // ビジネスルール検証
+    if (sanitized.dates.some(d => new Date(d) < new Date())) {
+      throw new Error('Past dates not allowed');
+    }
+    
+    return sanitized;
+  }
+}
+```
+
+## ログ管理
+
+### 構造化ログ
+
+```typescript
+// 推奨ログ形式
+this.logger.info('Schedule created', {
+  operation: 'create-schedule',
+  scheduleId: schedule.id,
+  guildId: schedule.guildId,
+  userInput: {
+    title: input.title,
+    dateCount: input.dates.length
+  },
+  timestamp: new Date().toISOString()
+});
+
+this.logger.error('Database operation failed', error, {
+  operation: 'save-schedule',
+  scheduleId: schedule.id,
+  retryCount: 3
+});
+```
+
+## コード品質
+
+### TypeScript strict mode
+- エラー0件維持
+- unknown vs any: 不明な型は `unknown` を使用
+- 型ガードの活用
+
+### Biome設定
+- 自動フォーマットとリント
+- 未使用インポートの自動削除
+- 統一されたコードスタイル
+
+### テスト戦略
+- 464 テスト（100% 合格）
+- 単体テスト: 各レイヤーにco-located
+- 統合テスト: `/tests/integration/`
+- テストヘルパー: `/tests/helpers/`
+
+## まとめ
+
+このプロジェクトのClean Architectureは以下の利点を提供します：
+
+1. **テスタビリティ**: 各レイヤーを独立してテスト可能
+2. **保守性**: ビジネスロジックと技術的詳細の分離
+3. **拡張性**: 新機能追加時の影響範囲の最小化
+4. **移植性**: Cloudflare Workers以外の環境への移植が容易
+5. **チーム開発**: 明確な責務分離によるコード品質向上
+
+これらの設計原則を遵守することで、長期的に保守可能で拡張しやすいシステムを維持できます。
 
 ## 参考資料
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Onion Architecture by Jeffrey Palermo](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
+- [Ports and Adapters by Alistair Cockburn](https://alistair.cockburn.us/hexagonal-architecture/)
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [Discord API Documentation](https://discord.com/developers/docs/)

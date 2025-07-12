@@ -13,7 +13,7 @@ Discord内で日程調整を行うボット。Clean Architecture（Onion Archite
 npm run dev
 
 # テスト実行
-npm test                    # 全テスト（476+ テスト）
+npm test                    # 全テスト（464テスト - 100%パス）
 npm test -- <file>          # 特定ファイルのテスト
 npm run test:ui             # UIでテスト実行
 npm run test:coverage       # カバレッジ計測
@@ -49,12 +49,14 @@ src/
 ├── application/           # ユースケース（Domainに依存）
 │   ├── usecases/         # 14個のユースケース実装
 │   ├── dto/              # データ転送オブジェクト
-│   └── services/         # アプリケーションサービス
+│   ├── services/         # アプリケーションサービス
+│   ├── ports/            # Infrastructure抽象化Interface
+│   └── types/            # Application層専用型定義
 │
 ├── infrastructure/        # 外部技術（Domain/Applicationに依存）
 │   ├── repositories/     # D1 リポジトリ実装
 │   ├── services/         # Discord API通信
-│   ├── adapters/         # CloudflareQueueAdapter
+│   ├── adapters/         # Port実装（Logger, DiscordApi等）
 │   └── factories/        # DependencyContainer (DI)
 │
 └── presentation/          # UI層（Application/Infrastructureに依存）
