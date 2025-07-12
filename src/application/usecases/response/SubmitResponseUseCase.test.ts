@@ -40,7 +40,6 @@ describe('SubmitResponseUseCase', () => {
           { dateId: 'date1', status: 'ok' },
           { dateId: 'date2', status: 'maybe' },
         ],
-        comment: 'Looking forward to it!',
       };
 
       const result = await useCase.execute(request);
@@ -55,7 +54,6 @@ describe('SubmitResponseUseCase', () => {
         date1: 'ok',
         date2: 'maybe',
       });
-      expect(result.response?.comment).toBe('Looking forward to it!');
     });
 
     it('should update existing response', async () => {
@@ -81,7 +79,6 @@ describe('SubmitResponseUseCase', () => {
           { dateId: 'date1', status: 'ok' },
           { dateId: 'date2', status: 'maybe' },
         ],
-        comment: 'Changed my mind!',
       };
 
       const result = await useCase.execute(request);
@@ -91,7 +88,6 @@ describe('SubmitResponseUseCase', () => {
         date1: 'ok',
         date2: 'maybe',
       });
-      expect(result.response?.comment).toBe('Changed my mind!');
     });
 
     it('should handle response without comment', async () => {
@@ -112,7 +108,6 @@ describe('SubmitResponseUseCase', () => {
       const result = await useCase.execute(request);
 
       expect(result.success).toBe(true);
-      expect(result.response?.comment).toBeUndefined();
     });
 
     it('should save response to repository', async () => {
@@ -210,23 +205,6 @@ describe('SubmitResponseUseCase', () => {
       expect(result.errors).toContain('レスポンス1: 無効なステータスです');
     });
 
-    it('should reject request with too long comment', async () => {
-      const longComment = 'a'.repeat(1001);
-
-      const request: SubmitResponseRequest = {
-        scheduleId: 'test-schedule-1',
-        guildId: 'guild123',
-        userId: 'user456',
-        username: 'responder',
-        responses: [{ dateId: 'date1', status: 'ok' }],
-        comment: longComment,
-      };
-
-      const result = await useCase.execute(request);
-
-      expect(result.success).toBe(false);
-      expect(result.errors).toContain('コメントは500文字以内で入力してください');
-    });
   });
 
   describe('Business Logic Validation', () => {
@@ -383,7 +361,6 @@ describe('SubmitResponseUseCase', () => {
           { dateId: 'date1', status: 'ok' },
           { dateId: 'date2', status: 'maybe' },
         ],
-        comment: 'Test comment',
       };
 
       const result = await useCase.execute(request);
@@ -403,29 +380,8 @@ describe('SubmitResponseUseCase', () => {
         date1: 'ok',
         date2: 'maybe',
       });
-      expect(response.comment).toBe('Test comment');
       expect(response.updatedAt).toBeDefined();
     });
 
-    it('should handle unicode characters in comment', async () => {
-      const schedule = createTestScheduleData();
-      await mockScheduleRepository.save(schedule);
-
-      const unicodeComment = '参加します！楽しみですね 😊';
-
-      const request: SubmitResponseRequest = {
-        scheduleId: 'test-schedule-1',
-        guildId: 'guild123',
-        userId: 'user456',
-        username: 'responder',
-        responses: [{ dateId: 'date1', status: 'ok' }],
-        comment: unicodeComment,
-      };
-
-      const result = await useCase.execute(request);
-
-      expect(result.success).toBe(true);
-      expect(result.response?.comment).toBe(unicodeComment);
-    });
   });
 });

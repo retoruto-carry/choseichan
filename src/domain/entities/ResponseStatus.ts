@@ -36,14 +36,10 @@ export class ResponseStatus {
   static fromString(value: string): ResponseStatus {
     switch (value) {
       case 'ok':
-      case 'yes':
-      case 'available':
         return ResponseStatus.yes();
       case 'maybe':
         return ResponseStatus.maybe();
       case 'ng':
-      case 'no':
-      case 'unavailable':
         return ResponseStatus.no();
       default:
         throw new Error(`無効な回答ステータス文字列です: ${value}`);

@@ -22,14 +22,12 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Test comment',
       });
 
       expect(response.id).toBe('response-123');
       expect(response.scheduleId).toBe('schedule-123');
       expect(response.user).toEqual(testUser);
       expect(response.dateStatuses).toEqual(dateStatuses);
-      expect(response.comment).toBe('Test comment');
       expect(response.createdAt).toBeInstanceOf(Date);
       expect(response.updatedAt).toBeInstanceOf(Date);
     });
@@ -42,7 +40,6 @@ describe('Response', () => {
         dateStatuses: new Map(),
       });
 
-      expect(response.comment).toBeUndefined();
     });
 
     it('should validate required fields', () => {
@@ -65,19 +62,6 @@ describe('Response', () => {
       ).toThrow('スケジュールIDは必須です');
     });
 
-    it('should handle long comments', () => {
-      const longComment = 'a'.repeat(1001);
-
-      expect(() =>
-        Response.create({
-          id: 'response-123',
-          scheduleId: 'schedule-123',
-          user: testUser,
-          dateStatuses: new Map(),
-          comment: longComment,
-        })
-      ).toThrow('コメントは1000文字以内で入力してください');
-    });
 
     it('should use provided timestamps', () => {
       const createdAt = new Date('2024-01-01');
@@ -111,7 +95,6 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Original comment',
       });
     });
 
@@ -129,7 +112,6 @@ describe('Response', () => {
       expect(updated.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.NG);
       expect(updated.getStatusForDate('date-2')).toBeUndefined();
       expect(updated.getStatusForDate('date-3')?.value).toBe(ResponseStatusValue.OK);
-      expect(updated.comment).toBe('Original comment'); // Comment preserved
       expect(updated.updatedAt.getTime()).toBeGreaterThan(response.updatedAt.getTime());
     });
 
@@ -141,43 +123,6 @@ describe('Response', () => {
     });
   });
 
-  describe('updateComment', () => {
-    let response: Response;
-
-    beforeEach(() => {
-      response = Response.create({
-        id: 'response-123',
-        scheduleId: 'schedule-123',
-        user: testUser,
-        dateStatuses: new Map([['date-1', ResponseStatus.create(ResponseStatusValue.OK)]]),
-        comment: 'Original comment',
-      });
-    });
-
-    it('should update comment', async () => {
-      // Wait a bit to ensure different timestamps
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      const updated = response.updateComment('New comment');
-
-      expect(updated.comment).toBe('New comment');
-      expect(updated.dateStatuses).toEqual(response.dateStatuses); // Statuses preserved
-      expect(updated.updatedAt.getTime()).toBeGreaterThan(response.updatedAt.getTime());
-    });
-
-    it('should remove comment when undefined provided', () => {
-      const updated = response.updateComment(undefined);
-
-      expect(updated.comment).toBeUndefined();
-    });
-
-    it('should validate comment length', () => {
-      const longComment = 'a'.repeat(1001);
-
-      expect(() => response.updateComment(longComment)).toThrow(
-        'コメントは1000文字以内で入力してください'
-      );
-    });
-  });
 
   describe('getStatusForDate', () => {
     it('should return status for existing date', () => {
@@ -239,7 +184,6 @@ describe('Response', () => {
         scheduleId: 'schedule-123',
         user: testUser,
         dateStatuses,
-        comment: 'Test comment',
       });
 
       const primitives = response.toPrimitives();
@@ -252,7 +196,6 @@ describe('Response', () => {
           'date-1': 'ok',
           'date-2': 'maybe',
         },
-        comment: 'Test comment',
         createdAt: response.createdAt,
         updatedAt: response.updatedAt,
       });
@@ -268,7 +211,6 @@ describe('Response', () => {
 
       const primitives = response.toPrimitives();
 
-      expect(primitives.comment).toBeUndefined();
     });
   });
 
@@ -285,7 +227,6 @@ describe('Response', () => {
           'date-1': 'ok' as const,
           'date-2': 'maybe' as const,
         },
-        comment: 'Test comment',
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-02'),
       };
@@ -298,7 +239,6 @@ describe('Response', () => {
       expect(response.user.username).toBe('TestUser');
       expect(response.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.OK);
       expect(response.getStatusForDate('date-2')?.value).toBe(ResponseStatusValue.MAYBE);
-      expect(response.comment).toBe('Test comment');
       expect(response.createdAt).toEqual(primitives.createdAt);
       expect(response.updatedAt).toEqual(primitives.updatedAt);
     });

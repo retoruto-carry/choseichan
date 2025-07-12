@@ -16,9 +16,6 @@ export interface DateResponses {
   readonly value: Record<string, ResponseStatus>;
 }
 
-export interface Comment {
-  readonly value: string;
-}
 
 export class Response {
   private constructor(
@@ -27,8 +24,7 @@ export class Response {
     private readonly _user: User,
     private readonly _dateStatuses: Map<string, ResponseStatus>,
     private readonly _createdAt: Date,
-    private readonly _updatedAt: Date,
-    private readonly _comment?: string
+    private readonly _updatedAt: Date
   ) {}
 
   static create(params: {
@@ -36,7 +32,6 @@ export class Response {
     scheduleId: string;
     user: User;
     dateStatuses: Map<string, ResponseStatus>;
-    comment?: string;
     createdAt?: Date;
     updatedAt?: Date;
   }): Response {
@@ -46,9 +41,6 @@ export class Response {
     if (!params.scheduleId?.trim()) {
       throw new Error('スケジュールIDは必須です');
     }
-    if (params.comment && params.comment.length > 1000) {
-      throw new Error('コメントは1000文字以内で入力してください');
-    }
 
     const now = new Date();
     return new Response(
@@ -57,8 +49,7 @@ export class Response {
       params.user,
       params.dateStatuses,
       params.createdAt || now,
-      params.updatedAt || now,
-      params.comment
+      params.updatedAt || now
     );
   }
 
@@ -71,7 +62,6 @@ export class Response {
       displayName?: string;
     };
     dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
-    comment?: string;
     createdAt: Date;
     updatedAt: Date;
   }): Response {
@@ -87,7 +77,6 @@ export class Response {
       scheduleId: data.scheduleId,
       user,
       dateStatuses,
-      comment: data.comment,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -109,9 +98,6 @@ export class Response {
     return this._dateStatuses;
   }
 
-  get comment(): string | undefined {
-    return this._comment;
-  }
 
   get createdAt(): Date {
     return this._createdAt;
@@ -138,27 +124,7 @@ export class Response {
       this._user,
       newStatuses,
       this._createdAt,
-      new Date(),
-      this._comment
-    );
-  }
-
-  /**
-   * コメントを更新
-   */
-  updateComment(comment?: string): Response {
-    if (comment && comment.length > 1000) {
-      throw new Error('コメントは1000文字以内で入力してください');
-    }
-
-    return new Response(
-      this._id,
-      this._scheduleId,
-      this._user,
-      this._dateStatuses,
-      this._createdAt,
-      new Date(),
-      comment
+      new Date()
     );
   }
 
@@ -178,7 +144,6 @@ export class Response {
       displayName?: string;
     };
     dateStatuses: Record<string, string>;
-    comment?: string;
     createdAt: Date;
     updatedAt: Date;
   } {
@@ -192,7 +157,6 @@ export class Response {
       scheduleId: this.scheduleId,
       user: this.user.toPrimitives(),
       dateStatuses,
-      comment: this.comment,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

@@ -78,8 +78,7 @@ describe('ResponseDomainService', () => {
 
       const result = ResponseDomainService.validateResponse(
         testSchedule,
-        responseData,
-        'テストコメント'
+        responseData
       );
 
       expect(result.isValid).toBe(true);
@@ -148,15 +147,13 @@ describe('ResponseDomainService', () => {
       const response = ResponseDomainService.createOrUpdateResponse(
         'schedule-123',
         testUser,
-        responseData,
-        'テストコメント'
+        responseData
       );
 
       expect(response.scheduleId).toBe('schedule-123');
       expect(response.user.id).toBe('user-123');
       expect(response.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.OK);
       expect(response.getStatusForDate('date-2')?.value).toBe(ResponseStatusValue.MAYBE);
-      expect(response.comment).toBe('テストコメント');
     });
 
     it('should update existing response', () => {
@@ -170,14 +167,12 @@ describe('ResponseDomainService', () => {
         'schedule-123',
         testUser,
         responseData,
-        '更新されたコメント',
         existingResponse
       );
 
       expect(updatedResponse.scheduleId).toBe('schedule-123');
       expect(updatedResponse.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.NG);
       expect(updatedResponse.getStatusForDate('date-2')?.value).toBe(ResponseStatusValue.NG);
-      expect(updatedResponse.comment).toBe('更新されたコメント');
     });
   });
 

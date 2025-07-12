@@ -9,7 +9,7 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
-import { parseButtonId } from '../../utils/id';
+import { parseButtonIdToComponents } from '../utils/button-id';
 import { createVoteController } from './VoteController';
 import { createScheduleManagementController } from './ScheduleManagementController';
 import { createScheduleEditController } from './ScheduleEditController';
@@ -26,13 +26,9 @@ export class ButtonInteractionController {
   async handleButtonInteraction(interaction: ButtonInteraction, env: Env): Promise<Response> {
     try {
       const customId = interaction.data.custom_id;
-      const parsed = parseButtonId(customId);
-
-      if (!parsed) {
-        return this.createErrorResponse('ボタンIDの解析に失敗しました');
-      }
-
-      const { action, params } = parsed;
+      const parsed = parseButtonIdToComponents(customId);
+      const action = parsed.action;
+      const params = [parsed.scheduleId, ...parsed.additionalParams];
 
       // Route to appropriate controller based on action
       switch (action) {
@@ -92,7 +88,7 @@ export class ButtonInteractionController {
           guildId: interaction.guild_id,
         }
       );
-      return this.createErrorResponse('ボタンの処理中にエラーが発生しました。');
+      return this.createErrorResponse('不明なボタンです。');
     }
   }
 

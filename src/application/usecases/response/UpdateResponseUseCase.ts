@@ -88,8 +88,7 @@ export class UpdateResponseUseCase {
         // 7. ドメインサービスによる業務ルール検証
         const domainValidation = ResponseDomainService.validateResponse(
           scheduleEntity,
-          responseData,
-          request.comment
+          responseData
         );
 
         if (!domainValidation.isValid) {
@@ -114,10 +113,6 @@ export class UpdateResponseUseCase {
         updatedResponse = updatedResponse.updateStatuses(newStatuses);
       }
 
-      // コメントの更新
-      if (request.comment !== undefined) {
-        updatedResponse = updatedResponse.updateComment(request.comment);
-      }
 
       // 9. リポジトリへの保存
       const primitives = updatedResponse.toPrimitives();
@@ -127,7 +122,6 @@ export class UpdateResponseUseCase {
         username: primitives.user.username,
         displayName: primitives.user.displayName,
         dateStatuses: primitives.dateStatuses as Record<string, DomainResponseStatus>,
-        comment: primitives.comment,
         updatedAt: primitives.updatedAt,
       };
       await this.responseRepository.save(domainResponse, request.guildId);
@@ -187,13 +181,8 @@ export class UpdateResponseUseCase {
       }
     }
 
-    // コメント長さチェック
-    if (request.comment && request.comment.length > 500) {
-      errors.push('コメントは500文字以内で入力してください');
-    }
-
-    // レスポンスもコメントも指定されていない場合
-    if (!request.responses && request.comment === undefined) {
+    // レスポンスが指定されていない場合
+    if (!request.responses) {
       errors.push('更新内容が指定されていません');
     }
 

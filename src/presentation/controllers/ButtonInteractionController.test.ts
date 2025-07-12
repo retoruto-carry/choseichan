@@ -1,12 +1,12 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
-import { parseButtonId } from '../../utils/id';
+import { parseButtonIdToComponents } from '../utils/button-id';
 import { ButtonInteractionController } from './ButtonInteractionController';
 
 // Mock dependencies
-vi.mock('../../utils/id', () => ({
-  parseButtonId: vi.fn(),
+vi.mock('../utils/button-id', () => ({
+  parseButtonIdToComponents: vi.fn(),
 }));
 
 describe('ButtonInteractionController', () => {
@@ -40,23 +40,7 @@ describe('ButtonInteractionController', () => {
 
   describe('handle', () => {
     it('should handle parse error', async () => {
-      vi.mocked(parseButtonId).mockReturnValue(null as any);
-
-      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
-
-      expect(result.status).toBe(200);
-      const responseData = JSON.parse(await result.text());
-      expect(responseData).toEqual({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: 'ボタンIDの解析に失敗しました',
-          flags: InteractionResponseFlags.EPHEMERAL,
-        },
-      });
-    });
-
-    it('should handle errors gracefully', async () => {
-      vi.mocked(parseButtonId).mockImplementation(() => {
+      vi.mocked(parseButtonIdToComponents).mockImplementation(() => {
         throw new Error('Parse error');
       });
 
@@ -67,16 +51,35 @@ describe('ButtonInteractionController', () => {
       expect(responseData).toEqual({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: 'ボタンの処理中にエラーが発生しました。',
+          content: '不明なボタンです。',
+          flags: InteractionResponseFlags.EPHEMERAL,
+        },
+      });
+    });
+
+    it('should handle errors gracefully', async () => {
+      vi.mocked(parseButtonIdToComponents).mockImplementation(() => {
+        throw new Error('Parse error');
+      });
+
+      const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);
+
+      expect(result.status).toBe(200);
+      const responseData = JSON.parse(await result.text());
+      expect(responseData).toEqual({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: '不明なボタンです。',
           flags: InteractionResponseFlags.EPHEMERAL,
         },
       });
     });
 
     it('should handle unknown action', async () => {
-      vi.mocked(parseButtonId).mockReturnValue({
+      vi.mocked(parseButtonIdToComponents).mockReturnValue({
         action: 'unknown_action',
-        params: [],
+        scheduleId: 'test-schedule',
+        additionalParams: [],
       });
 
       const result = await controller.handleButtonInteraction(mockInteraction, mockEnv);

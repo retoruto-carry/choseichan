@@ -294,16 +294,6 @@ describe('VoteController', () => {
               },
             ],
           },
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'comment',
-                value: 'Test comment',
-              },
-            ],
-          },
         ],
       },
       guild_id: 'guild-123',
@@ -351,7 +341,6 @@ describe('VoteController', () => {
           { dateId: 'date-1', status: 'ok' },
           { dateId: 'date-2', status: 'maybe' },
         ],
-        comment: 'Test comment',
         guildId: 'guild-123',
       });
     });
@@ -382,16 +371,6 @@ describe('VoteController', () => {
                     type: 4,
                     custom_id: 'vote_date-1',
                     value: testCase.input,
-                  },
-                ],
-              },
-              {
-                type: 1,
-                components: [
-                  {
-                    type: 4,
-                    custom_id: 'comment',
-                    value: '',
                   },
                 ],
               },

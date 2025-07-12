@@ -59,7 +59,6 @@ export function mapDomainResponseToEntity(data: DomainResponse): Response {
     scheduleId: data.scheduleId,
     user,
     dateStatuses,
-    comment: data.comment,
     updatedAt: data.updatedAt,
   });
 }
@@ -115,7 +114,6 @@ export function mapResponseToDto(response: Response): ResponseDto {
     dateStatuses: Object.fromEntries(
       Object.entries(primitives.dateStatuses).map(([key, value]) => [key, value as string])
     ) as Record<string, 'ok' | 'maybe' | 'ng'>,
-    comment: primitives.comment,
     updatedAt: primitives.updatedAt.toISOString(),
   };
 }

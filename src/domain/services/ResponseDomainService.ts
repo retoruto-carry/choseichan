@@ -25,8 +25,7 @@ export class ResponseDomainService {
    */
   static validateResponse(
     schedule: Schedule,
-    responseData: UserResponseData[],
-    comment?: string
+    responseData: UserResponseData[]
   ): ResponseValidationResult {
     const errors: string[] = [];
 
@@ -54,10 +53,6 @@ export class ResponseDomainService {
       errors.push('同じ日程に対して複数の回答があります');
     }
 
-    // コメント長さチェック
-    if (comment && comment.length > 500) {
-      errors.push('コメントは500文字以内で入力してください');
-    }
 
     return {
       isValid: errors.length === 0,
@@ -72,7 +67,6 @@ export class ResponseDomainService {
     scheduleId: string,
     user: User,
     responseData: UserResponseData[],
-    comment?: string,
     existingResponse?: Response
   ): Response {
     // 日程ステータスのマップを作成
@@ -89,14 +83,7 @@ export class ResponseDomainService {
         newDateStatuses.set(data.dateId, data.status);
       });
 
-      let updatedResponse = existingResponse.updateStatuses(newDateStatuses);
-
-      // コメントを更新
-      if (comment !== undefined) {
-        updatedResponse = updatedResponse.updateComment(comment);
-      }
-
-      return updatedResponse;
+      return existingResponse.updateStatuses(newDateStatuses);
     } else {
       // 新しいレスポンスを作成
       const dateStatusesMap = new Map<string, ResponseStatus>();
@@ -109,7 +96,6 @@ export class ResponseDomainService {
         scheduleId,
         user,
         dateStatuses: dateStatusesMap,
-        comment,
       });
     }
   }

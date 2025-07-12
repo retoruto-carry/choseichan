@@ -30,10 +30,6 @@ describe('ResponseStatus', () => {
       expect(ResponseStatus.fromString('ng').value).toBe(ResponseStatusValue.NG);
     });
 
-    it('should handle legacy values', () => {
-      expect(ResponseStatus.fromString('available').value).toBe(ResponseStatusValue.OK);
-      expect(ResponseStatus.fromString('unavailable').value).toBe(ResponseStatusValue.NG);
-    });
 
     it('should throw error for invalid string', () => {
       expect(() => ResponseStatus.fromString('invalid')).toThrow(

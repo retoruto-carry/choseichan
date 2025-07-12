@@ -81,8 +81,7 @@ export class SubmitResponseUseCase {
       // 7. ドメインサービスによる業務ルール検証
       const domainValidation = ResponseDomainService.validateResponse(
         scheduleEntity,
-        responseData,
-        request.comment
+        responseData
       );
 
       if (!domainValidation.isValid) {
@@ -99,7 +98,6 @@ export class SubmitResponseUseCase {
         request.scheduleId,
         user,
         responseData,
-        request.comment,
         existingResponse
       );
 
@@ -111,7 +109,6 @@ export class SubmitResponseUseCase {
         username: primitives.user.username,
         displayName: primitives.user.displayName,
         dateStatuses: primitives.dateStatuses as Record<string, DomainResponseStatus>,
-        comment: primitives.comment,
         updatedAt: primitives.updatedAt,
       };
       await this.responseRepository.save(domainResponse, request.guildId);
@@ -174,10 +171,6 @@ export class SubmitResponseUseCase {
       });
     }
 
-    // コメント長さチェック
-    if (request.comment && request.comment.length > 500) {
-      errors.push('コメントは500文字以内で入力してください');
-    }
 
     return {
       isValid: errors.length === 0,
@@ -207,7 +200,6 @@ export class SubmitResponseUseCase {
       username: primitives.user.username,
       displayName: primitives.user.displayName,
       dateStatuses,
-      comment: primitives.comment,
       updatedAt: primitives.updatedAt.toISOString(),
     };
   }

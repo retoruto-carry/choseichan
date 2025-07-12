@@ -73,7 +73,6 @@ describe('D1ResponseRepository', () => {
         userId: 'user-456',
         username: 'RespondentUser',
         dateStatuses: { 'date-1': 'ok', 'date-2': 'maybe' },
-        comment: 'Looking forward to it!',
         updatedAt: new Date(),
       };
 
@@ -90,7 +89,6 @@ describe('D1ResponseRepository', () => {
         'user-456',
         'RespondentUser',
         null, // displayName
-        'Looking forward to it!',
         expect.any(Number), // updatedAt
         expect.any(Number) // expiresAt
       );
@@ -138,7 +136,6 @@ describe('D1ResponseRepository', () => {
         user_id: 'user-456',
         username: 'RespondentUser',
         display_name: null,
-        comment: 'Test comment',
         updated_at: Math.floor(Date.now() / 1000),
       };
 
@@ -176,7 +173,6 @@ describe('D1ResponseRepository', () => {
           user_id: 'user-456',
           username: 'User1',
           display_name: null,
-          comment: null,
           updated_at: Math.floor(Date.now() / 1000),
         },
         {
@@ -185,7 +181,6 @@ describe('D1ResponseRepository', () => {
           user_id: 'user-789',
           username: 'User2',
           display_name: 'Display User 2',
-          comment: 'Cannot make it',
           updated_at: Math.floor(Date.now() / 1000),
         },
       ];
@@ -273,7 +268,6 @@ describe('D1ResponseRepository', () => {
           user_id: 'user-1',
           username: 'User1',
           display_name: null,
-          comment: null,
           updated_at: Math.floor(Date.now() / 1000),
         },
         {
@@ -282,7 +276,6 @@ describe('D1ResponseRepository', () => {
           user_id: 'user-2',
           username: 'User2',
           display_name: null,
-          comment: null,
           updated_at: Math.floor(Date.now() / 1000),
         },
       ];

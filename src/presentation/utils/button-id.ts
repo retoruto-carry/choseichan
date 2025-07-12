@@ -187,28 +187,3 @@ export function createEditReminderButtonId(scheduleId: string): string {
   });
 }
 
-/**
- * レガシーボタンIDサポート（既存のcreateButtonId関数との互換性）
- */
-export function createButtonId(
-  action: string,
-  scheduleId: string,
-  ...additionalParams: string[]
-): string {
-  return createButtonIdFromParams({
-    action,
-    scheduleId,
-    additionalParams: additionalParams.length > 0 ? additionalParams : undefined,
-  });
-}
-
-/**
- * レガシーボタンIDパーサー（既存のparseButtonId関数との互換性）
- */
-export function parseButtonId(buttonId: string): {
-  action: string;
-  scheduleId: string;
-  additionalParams: string[];
-} {
-  return parseButtonIdToComponents(buttonId);
-}

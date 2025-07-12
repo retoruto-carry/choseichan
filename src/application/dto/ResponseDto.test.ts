@@ -25,7 +25,6 @@ describe('ResponseDto', () => {
       expect(responseDto.dateStatuses['date-1']).toBe('ok');
       expect(responseDto.dateStatuses['date-2']).toBe('maybe');
       expect(responseDto.dateStatuses['date-3']).toBe('ng');
-      expect(responseDto.comment).toBe('This is a test comment');
       expect(responseDto.updatedAt).toBe('2024-01-15T10:30:00Z');
     });
 
@@ -41,7 +40,6 @@ describe('ResponseDto', () => {
       };
 
       expect(responseDto.displayName).toBeUndefined();
-      expect(responseDto.comment).toBeUndefined();
       expect(responseDto.scheduleId).toBe('schedule-123');
       expect(responseDto.dateStatuses['date-1']).toBe('ok');
     });
@@ -106,12 +104,9 @@ describe('ResponseDto', () => {
         userId: 'user-456',
         username: 'TestUser',
         dateStatuses: { 'date-1': 'ok' },
-        comment: longComment,
         updatedAt: '2024-01-15T10:30:00Z',
       };
 
-      expect(responseDto.comment).toBe(longComment);
-      expect(responseDto.comment?.length).toBe(1000);
     });
 
     it('should handle special characters in username and display name', () => {

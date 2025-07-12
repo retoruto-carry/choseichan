@@ -109,38 +109,6 @@ describe('ModalController', () => {
       expect(result).toBeInstanceOf(Response);
     });
 
-    it('should handle comment modal', async () => {
-      const mockInteraction = {
-        id: 'interaction-123',
-        type: 5, // MODAL_SUBMIT
-        token: 'interaction-token',
-        data: {
-          custom_id: 'comment:schedule-123',
-          components: [
-            {
-              components: [
-                {
-                  custom_id: 'comment',
-                  value: 'Test comment',
-                },
-              ],
-            },
-          ],
-        },
-        member: {
-          user: {
-            id: 'user-123',
-            username: 'testuser',
-          },
-        },
-        guild_id: 'guild-456',
-        channel_id: 'channel-789',
-      };
-
-      const result = await controller.handleModalSubmit(mockInteraction as any, mockEnv);
-
-      expect(result).toBeInstanceOf(Response);
-    });
 
     it('should handle edit modal', async () => {
       const mockInteraction = {

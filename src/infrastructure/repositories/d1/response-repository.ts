@@ -39,12 +39,11 @@ export class D1ResponseRepository implements IResponseRepository {
         .prepare(`
         INSERT INTO responses (
           schedule_id, guild_id, user_id, username, display_name, 
-          comment, updated_at, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          updated_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(schedule_id, user_id) DO UPDATE SET
           username = excluded.username,
           display_name = excluded.display_name,
-          comment = excluded.comment,
           updated_at = excluded.updated_at,
           expires_at = excluded.expires_at
         RETURNING id
@@ -55,7 +54,6 @@ export class D1ResponseRepository implements IResponseRepository {
           response.userId,
           response.username,
           response.displayName || null,
-          response.comment || null,
           Math.floor(response.updatedAt.getTime() / 1000),
           expiresAt
         )
@@ -305,7 +303,6 @@ export class D1ResponseRepository implements IResponseRepository {
       username: r.username as string,
       displayName: (r.display_name as string) || undefined,
       dateStatuses,
-      comment: (r.comment as string) || undefined,
       updatedAt: new Date((r.updated_at as number) * 1000),
     };
   }

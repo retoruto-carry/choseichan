@@ -305,7 +305,6 @@ export function createTestResponseData(overrides: Partial<DomainResponse> = {}):
       date1: 'ok',
       date2: 'maybe',
     },
-    comment: 'Test comment',
     updatedAt: new Date(),
     ...overrides,
   };

@@ -116,7 +116,6 @@ describe('DomainMappers', () => {
         scheduleId: 'schedule-456',
         user: User.create('user-789', 'RespondentUser', 'Respondent Display'),
         dateStatuses,
-        comment: 'Looking forward to it!',
         createdAt: new Date('2024-01-01T10:00:00Z'),
         updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
@@ -133,7 +132,6 @@ describe('DomainMappers', () => {
           'date-2': 'maybe',
           'date-3': 'ng',
         },
-        comment: 'Looking forward to it!',
         updatedAt: '2024-01-02T15:30:00.000Z',
       });
     });
@@ -153,7 +151,6 @@ describe('DomainMappers', () => {
 
       const result = DomainMappers.responseToDto(response);
 
-      expect(result.comment).toBeUndefined();
       expect(result.displayName).toBeUndefined();
       expect(result.username).toBe('RespondentUser');
       expect(result.dateStatuses).toEqual({ 'date-1': 'ok' });
@@ -227,7 +224,7 @@ describe('DomainMappers', () => {
       expect(result.description).toBe(longDescription);
     });
 
-    it('should handle special characters in usernames and comments', () => {
+    it('should handle special characters in usernames', () => {
       const dateStatuses = new Map<string, ResponseStatus>();
       dateStatuses.set('date-1', ResponseStatus.fromString('ok'));
 
@@ -236,7 +233,6 @@ describe('DomainMappers', () => {
         scheduleId: 'schedule-456',
         user: User.create('user-789', 'テストユーザー🎉', 'ディスプレイ名 #123'),
         dateStatuses,
-        comment: 'コメント with emoji 🚀 and special chars !@#$%',
         createdAt: new Date('2024-01-01T10:00:00Z'),
         updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
@@ -245,7 +241,6 @@ describe('DomainMappers', () => {
 
       expect(result.username).toBe('テストユーザー🎉');
       expect(result.displayName).toBe('ディスプレイ名 #123');
-      expect(result.comment).toBe('コメント with emoji 🚀 and special chars !@#$%');
     });
 
     it('should handle many dates in schedule', () => {

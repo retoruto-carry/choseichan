@@ -16,7 +16,6 @@ describe('GetResponseUseCase', () => {
       'date-2': 'maybe',
       'date-3': 'ng',
     },
-    comment: 'Test comment',
     updatedAt: new Date('2024-01-02'),
   };
 
@@ -42,7 +41,6 @@ describe('GetResponseUseCase', () => {
         'date-2': 'maybe',
         'date-3': 'ok',
       },
-      comment: 'Cannot make it on date 1',
       updatedAt: new Date('2024-01-04'),
     },
   ];
@@ -79,7 +77,6 @@ describe('GetResponseUseCase', () => {
         'date-2': 'maybe',
         'date-3': 'ng',
       });
-      expect(result.response?.comment).toBe('Test comment');
       expect(result.response?.updatedAt).toBe('2024-01-02T00:00:00.000Z');
 
       expect(mockResponseRepository.findByUser).toHaveBeenCalledWith(
@@ -147,23 +144,6 @@ describe('GetResponseUseCase', () => {
       expect(result.response?.displayName).toBe('Display Name');
     });
 
-    it('should handle responses without comment', async () => {
-      const responseWithoutComment = {
-        ...mockResponse,
-        comment: undefined,
-      };
-
-      vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce(responseWithoutComment);
-
-      const result = await useCase.execute({
-        scheduleId: 'schedule-123',
-        userId: 'user-456',
-        guildId: 'guild-123',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.response?.comment).toBeUndefined();
-    });
 
     it('should handle repository errors', async () => {
       vi.mocked(mockResponseRepository.findByUser).mockRejectedValueOnce(
@@ -317,25 +297,6 @@ describe('GetResponseUseCase', () => {
       expect(result.statistics?.totalUsers).toBe(1);
     });
 
-    it('should handle responses without comments', async () => {
-      const responsesWithoutComments = mockResponses.map((r) => ({
-        ...r,
-        comment: undefined,
-      }));
-
-      vi.mocked(mockResponseRepository.findByScheduleId).mockResolvedValueOnce(
-        responsesWithoutComments
-      );
-
-      const result = await useCase.getAllResponses({
-        scheduleId: 'schedule-123',
-        guildId: 'guild-123',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.responses).toHaveLength(3);
-      expect(result.responses?.every((r) => r.comment === undefined)).toBe(true);
-    });
 
     it('should handle repository errors', async () => {
       vi.mocked(mockResponseRepository.findByScheduleId).mockRejectedValueOnce(

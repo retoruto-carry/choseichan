@@ -46,7 +46,6 @@ export interface DomainResponse {
   username: string;
   displayName?: string;
   dateStatuses: Record<string, DomainResponseStatus>;
-  comment?: string;
   updatedAt: Date;
 }
 

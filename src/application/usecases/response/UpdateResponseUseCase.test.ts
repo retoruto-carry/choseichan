@@ -39,7 +39,6 @@ describe('UpdateResponseUseCase', () => {
       'date-1': 'ok',
       'date-2': 'maybe',
     },
-    comment: 'Original comment',
     updatedAt: new Date('2024-01-02'),
   };
 
@@ -80,7 +79,6 @@ describe('UpdateResponseUseCase', () => {
           { dateId: 'date-1', status: 'ng' }, // Changed
           { dateId: 'date-2', status: 'ok' }, // Changed
         ],
-        comment: 'Updated comment',
         guildId: 'guild-123',
       });
 
@@ -90,7 +88,6 @@ describe('UpdateResponseUseCase', () => {
         'date-1': 'ng',
         'date-2': 'ok',
       });
-      expect(result.response?.comment).toBe('Updated comment');
 
       const savedResponse = vi.mocked(mockResponseRepository.save).mock.calls[0][0];
       expect(savedResponse.dateStatuses).toEqual({
@@ -163,24 +160,6 @@ describe('UpdateResponseUseCase', () => {
       expect(result.errors).toEqual(['この日程調整は締め切られています']);
     });
 
-    it('should update only comment when no responses provided', async () => {
-      vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
-      vi.mocked(mockResponseRepository.findByUser).mockResolvedValueOnce(mockResponse);
-      vi.mocked(mockResponseRepository.save).mockResolvedValueOnce(undefined);
-
-      const result = await useCase.execute({
-        scheduleId: 'schedule-123',
-        userId: 'user-456',
-        comment: 'Just updating comment',
-        guildId: 'guild-123',
-      });
-
-      expect(result.success).toBe(true);
-
-      const savedResponse = vi.mocked(mockResponseRepository.save).mock.calls[0][0];
-      expect(savedResponse.dateStatuses).toEqual(mockResponse.dateStatuses); // Preserved from existing response
-      expect(savedResponse.comment).toBe('Just updating comment');
-    });
 
     it('should validate required fields', async () => {
       const testCases = [

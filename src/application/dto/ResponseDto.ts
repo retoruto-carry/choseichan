@@ -14,7 +14,6 @@ export interface SubmitResponseRequest {
     dateId: string;
     status: 'ok' | 'maybe' | 'ng';
   }>;
-  comment?: string; // 後方互換性のため残す（将来削除予定）
 }
 
 export interface UpdateResponseRequest {
@@ -25,7 +24,6 @@ export interface UpdateResponseRequest {
     dateId: string;
     status: 'ok' | 'maybe' | 'ng';
   }>;
-  comment?: string; // 後方互換性のため残す（将来削除予定）
 }
 
 export interface GetResponseRequest {
@@ -47,7 +45,6 @@ export interface ResponseDto {
   username: string;
   displayName?: string;
   dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
-  comment?: string; // 後方互換性のため残す（将来削除予定）
   updatedAt: string; // ISO string
 }
 

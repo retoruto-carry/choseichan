@@ -43,7 +43,7 @@ export class GetScheduleSummaryUseCase {
       const responses = await this.responseRepository.findByScheduleId(scheduleId, guildId);
 
       // Convert DomainResponse to ResponseDto
-      const responsesDtos = responses.map((response) => ({
+      const responsesDtos: ResponseDto[] = responses.map((response) => ({
         scheduleId: response.scheduleId,
         userId: response.userId,
         username: response.username,
@@ -117,7 +117,6 @@ export class GetScheduleSummaryUseCase {
 
     for (const [dateId, status] of Object.entries(dateStatuses)) {
       switch (status) {
-        // Current format
         case 'ok':
           converted[dateId] = 'ok';
           break;
@@ -125,13 +124,6 @@ export class GetScheduleSummaryUseCase {
           converted[dateId] = 'maybe';
           break;
         case 'ng':
-          converted[dateId] = 'ng';
-          break;
-        // Legacy format
-        case 'available':
-          converted[dateId] = 'ok';
-          break;
-        case 'unavailable':
           converted[dateId] = 'ng';
           break;
         default:

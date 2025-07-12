@@ -223,7 +223,6 @@ export class GetResponseUseCase {
       username: primitives.user.username,
       displayName: primitives.user.displayName,
       dateStatuses,
-      comment: primitives.comment,
       updatedAt: primitives.updatedAt.toISOString(),
     };
   }
