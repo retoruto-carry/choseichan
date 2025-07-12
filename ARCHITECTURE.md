@@ -413,6 +413,106 @@ describe('Schedule Creation Integration', () => {
 });
 ```
 
+## Cloudflare Queues による非同期処理
+
+### なぜ Queues を使うのか
+
+Discord 調整ちゃんでは、メッセージ更新と締切リマインダー処理に Cloudflare Queues を採用しています。その設計理由を説明します。
+
+### メッセージ更新 Queue
+
+#### 問題点（Queues なし）
+```typescript
+// ❌ 同期的な更新の問題
+async handleVote(interaction) {
+  await saveVoteToDatabase();  // 10ms
+  await updateDiscordMessage(); // 300ms ← ユーザーを待たせる
+  return response;              // 合計 310ms+
+}
+```
+
+**課題:**
+1. Discord の 3 秒制限に近づく
+2. 複数人の同時投票で詰まる
+3. API エラーで投票自体が失敗
+
+#### 解決策（Queues あり）
+```typescript
+// ✅ 非同期更新による解決
+async handleVote(interaction) {
+  await saveVoteToDatabase();           // 10ms
+  await queueMessageUpdate();           // 5ms
+  return response;                      // 合計 15ms のみ！
+}
+```
+
+### 重要：更新の一貫性保証
+
+```typescript
+// ProcessMessageUpdateUseCase.executeBatch() 内
+const latestUpdates = new Map<string, MessageUpdateTask>();
+
+for (const task of tasks) {
+  const key = `${task.scheduleId}:${task.messageId}`;
+  latestUpdates.set(key, task); // 最新のタスクのみ保持
+}
+```
+
+**動作例:**
+```
+0秒: User A 投票 → task1（A=○）
+1秒: User B 投票 → task2（A=○, B=△）
+2秒: User C 投票 → task3（A=○, B=△, C=×）
+
+5秒後のバッチ処理:
+- 3つのタスクが届く
+- Map により task3（最新）のみ選択
+- DB から最新状態を取得して更新
+→ 古い状態での上書きを完全に防止
+```
+
+### 締切リマインダー Queue
+
+#### バッチ送信による効率化
+```typescript
+// ProcessDeadlineRemindersUseCase 内
+const tasks = reminders.map(reminder => ({
+  type: 'send_reminder',
+  scheduleId: reminder.scheduleId,
+  guildId: reminder.guildId,
+}));
+
+await deadlineReminderQueue.sendBatch(tasks); // 一括送信
+```
+
+**利点:**
+- Discord API レート制限（10 リクエスト/10 秒）を自然に回避
+- 大量のリマインダーを効率的に処理
+- エラー時の自動リトライ
+
+### Queues 設定
+
+```toml
+# wrangler.toml
+[[queues.consumers]]
+queue = "message-update-queue"
+max_batch_size = 10      # 10個まで待つ
+max_batch_timeout = 5    # または5秒でタイムアウト
+
+[[queues.consumers]]
+queue = "deadline-reminder-queue"
+max_batch_size = 20      # 20個まで待つ
+max_batch_timeout = 10   # または10秒でタイムアウト
+```
+
+### まとめ
+
+Cloudflare Queues により：
+1. **高速レスポンス**: ユーザー体験の向上（15ms vs 310ms）
+2. **データ整合性**: 最新状態のみを反映する仕組み
+3. **スケーラビリティ**: 大量の同時操作に対応
+4. **信頼性**: エラー時の自動リトライとデッドレターキュー
+
 ## エラーハンドリング
 
 ### 統一的なエラー処理
