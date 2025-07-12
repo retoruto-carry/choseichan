@@ -33,7 +33,7 @@ describe('Response', () => {
     });
 
     it('should create response without comment', () => {
-      const response = Response.create({
+      const _response = Response.create({
         id: 'response-123',
         scheduleId: 'schedule-123',
         user: testUser,
@@ -204,7 +204,7 @@ describe('Response', () => {
         dateStatuses: new Map(),
       });
 
-      const primitives = response.toPrimitives();
+      const _primitives = response.toPrimitives();
     });
   });
 

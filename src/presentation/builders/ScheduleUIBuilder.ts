@@ -231,10 +231,6 @@ export class ScheduleUIBuilder {
         responseText += `${index + 1}. ${statusEmoji}\n`;
       });
 
-      if (response.comment) {
-        responseText += `💬 ${response.comment}`;
-      }
-
       fields.push({
         name: `👤 ${userName}`,
         value: responseText || '回答なし',

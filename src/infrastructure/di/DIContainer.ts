@@ -189,6 +189,11 @@ export const SERVICE_TOKENS = {
   SCHEDULE_REPOSITORY: Symbol('ScheduleRepository'),
   RESPONSE_REPOSITORY: Symbol('ResponseRepository'),
 
+  // Adapters
+  LOGGER_ADAPTER: Symbol('LoggerAdapter'),
+  DISCORD_API_ADAPTER: Symbol('DiscordApiAdapter'),
+  ENVIRONMENT_ADAPTER: Symbol('EnvironmentAdapter'),
+
   // Application Services
   NOTIFICATION_SERVICE: Symbol('NotificationService'),
 

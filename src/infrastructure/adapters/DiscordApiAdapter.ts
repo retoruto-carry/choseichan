@@ -28,9 +28,14 @@ export class DiscordApiAdapter implements IDiscordApiPort {
     await this.discordApiService.sendNotification(channelId, content, token);
   }
 
-  async fetchGuildMembers(guildId: string, token: string): Promise<Array<{
-    user: { id: string; username: string; discriminator: string };
-  }>> {
+  async fetchGuildMembers(
+    guildId: string,
+    token: string
+  ): Promise<
+    Array<{
+      user: { id: string; username: string; discriminator: string };
+    }>
+  > {
     const members: Array<{
       user: { id: string; username: string; discriminator: string };
     }> = [];

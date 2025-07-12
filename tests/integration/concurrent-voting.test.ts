@@ -121,7 +121,7 @@ describe('並行投票の統合テスト', () => {
       );
 
       // 3. すべての投票が成功したことを確認
-      voteResults.forEach((result, index) => {
+      voteResults.forEach((result, _index) => {
         expect(result.status).toBe('fulfilled');
         if (result.status === 'fulfilled') {
           expect(result.value.success).toBe(true);
@@ -137,14 +137,17 @@ describe('並行投票の統合テスト', () => {
       expect(summaryResult.success).toBe(true);
       expect(summaryResult.summary).toBeDefined();
 
-      const summary = summaryResult.summary!;
+      if (!summaryResult.summary) {
+        throw new Error('Summary should be defined');
+      }
+      const summary = summaryResult.summary;
 
       // 投票数の確認
       expect(summary.totalResponseUsers).toBe(4); // 4ユーザーが投票
 
       // 各日程の投票数を確認
-      const date1Counts = summary.responseCounts['date1'];
-      const date2Counts = summary.responseCounts['date2'];
+      const date1Counts = summary.responseCounts.date1;
+      const date2Counts = summary.responseCounts.date2;
 
       expect(date1Counts).toBeDefined();
       expect(date2Counts).toBeDefined();
@@ -212,11 +215,16 @@ describe('並行投票の統合テスト', () => {
       );
 
       expect(summaryResult.success).toBe(true);
-      const summary = summaryResult.summary!;
+      expect(summaryResult.summary).toBeDefined();
+
+      if (!summaryResult.summary) {
+        throw new Error('Summary should be defined');
+      }
+      const summary = summaryResult.summary;
 
       expect(summary.totalResponseUsers).toBe(1); // 1ユーザーのみ
 
-      const date1Counts = summary.responseCounts['date1'];
+      const date1Counts = summary.responseCounts.date1;
       expect(date1Counts).toBeDefined();
       expect(date1Counts.yes).toBe(0); // 最初のOKは上書きされた
       expect(date1Counts.maybe).toBe(0);
@@ -277,7 +285,7 @@ describe('並行投票の統合テスト', () => {
       expect(duration).toBeLessThan(5000);
 
       // 4. すべての投票が成功したことを確認
-      voteResults.forEach((result, index) => {
+      voteResults.forEach((result, _index) => {
         expect(result.status).toBe('fulfilled');
         if (result.status === 'fulfilled') {
           expect(result.value.success).toBe(true);
@@ -291,10 +299,15 @@ describe('並行投票の統合テスト', () => {
       );
 
       expect(summaryResult.success).toBe(true);
-      const summary = summaryResult.summary!;
+      expect(summaryResult.summary).toBeDefined();
+
+      if (!summaryResult.summary) {
+        throw new Error('Summary should be defined');
+      }
+      const summary = summaryResult.summary;
       expect(summary.totalResponseUsers).toBe(userCount);
 
-      const date1Counts = summary.responseCounts['date1'];
+      const date1Counts = summary.responseCounts.date1;
       expect(date1Counts).toBeDefined();
 
       // 投票分布の確認（OK: 17, MAYBE: 17, NG: 16）

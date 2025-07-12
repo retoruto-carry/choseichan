@@ -9,6 +9,9 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 import { NotificationService } from '../../application/services/NotificationService';
 import { updateScheduleMainMessage } from '../../application/services/ScheduleUpdaterService';
+import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
+import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
+import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFormatterAdapter';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
@@ -498,7 +501,10 @@ export class ScheduleManagementController {
           interaction.token,
           this.dependencyContainer,
           env,
-          guildId
+          guildId,
+          new DiscordApiAdapter(),
+          new MessageFormatterAdapter(),
+          new LoggerAdapter()
         ).catch((error) =>
           this.logger.error(
             'Failed to update main message after closing',
@@ -514,6 +520,8 @@ export class ScheduleManagementController {
       // 通知送信
       if (env.DISCORD_TOKEN && env.DISCORD_APPLICATION_ID && env.ctx) {
         const notificationService = new NotificationService(
+          new LoggerAdapter(),
+          new DiscordApiAdapter(),
           this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
           this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
           this.dependencyContainer.getScheduleSummaryUseCase,
@@ -567,7 +575,10 @@ export class ScheduleManagementController {
           interaction.token,
           this.dependencyContainer,
           env,
-          guildId
+          guildId,
+          new DiscordApiAdapter(),
+          new MessageFormatterAdapter(),
+          new LoggerAdapter()
         ).catch((error) =>
           this.logger.error(
             'Failed to update main message after reopening',

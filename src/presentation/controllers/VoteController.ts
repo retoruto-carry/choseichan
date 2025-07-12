@@ -9,6 +9,8 @@ import { InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 import { NotificationService } from '../../application/services/NotificationService';
 import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
+import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
+import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
@@ -167,7 +169,7 @@ export class VoteController {
   async handleVoteModal(
     interaction: ModalInteraction,
     params: string[],
-    env: Env
+    _env: Env
   ): Promise<Response> {
     try {
       const [scheduleId] = params;
@@ -356,6 +358,8 @@ export class VoteController {
       }
 
       const notificationService = new NotificationService(
+        new LoggerAdapter(),
+        new DiscordApiAdapter(),
         this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
         this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
         this.dependencyContainer.getScheduleSummaryUseCase,

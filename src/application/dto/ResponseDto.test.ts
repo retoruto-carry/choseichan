@@ -97,8 +97,8 @@ describe('ResponseDto', () => {
     });
 
     it('should handle long comment', () => {
-      const longComment = 'A'.repeat(1000);
-      const responseDto: ResponseDto = {
+      const _longComment = 'A'.repeat(1000);
+      const _responseDto: ResponseDto = {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         username: 'TestUser',

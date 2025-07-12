@@ -18,6 +18,17 @@ import {
 
 export class DiscordMessageFormatter implements IMessageFormatter {
   /**
+   * スケジュールメッセージ（EmbedとComponents）を作成
+   */
+  formatScheduleMessage(
+    summary: ScheduleSummaryResponse,
+    showVoteButton: boolean
+  ): { embed: object; components: object[] } {
+    const embed = this.createScheduleEmbed(summary, false);
+    const components = this.createScheduleComponents(summary, showVoteButton);
+    return { embed, components };
+  }
+  /**
    * スケジュールサマリーからEmbedを作成
    */
   createScheduleEmbed(summary: ScheduleSummaryResponse, isDetailed: boolean): MessageEmbed {

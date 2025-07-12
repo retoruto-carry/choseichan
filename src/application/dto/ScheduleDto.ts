@@ -107,6 +107,5 @@ export interface ResponseDto {
   username: string;
   displayName?: string;
   dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
-  comment?: string;
   updatedAt: string; // ISO文字列
 }

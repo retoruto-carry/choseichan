@@ -114,7 +114,7 @@ export class ScheduleManagementUIBuilder {
           .map((response) => {
             const status = response.dateStatuses[date.id];
             if (!status) return null;
-            const comment = response.comment ? ` (${response.comment})` : '';
+            const comment = '';
             const emoji =
               status === 'ok'
                 ? STATUS_EMOJI.yes

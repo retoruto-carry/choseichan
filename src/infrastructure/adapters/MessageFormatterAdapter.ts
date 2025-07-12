@@ -6,17 +6,21 @@
  */
 
 import type { ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
-import type { IMessageFormatter } from '../../application/ports/MessageFormatterPort';
+import type { IMessageFormatterPort } from '../../application/ports/MessageFormatterPort';
 import { ScheduleUIBuilder } from '../../presentation/builders/ScheduleUIBuilder';
 
-export class MessageFormatterAdapter implements IMessageFormatter {
-  private uiBuilder = new ScheduleUIBuilder();
+export class MessageFormatterAdapter implements IMessageFormatterPort {
+  formatScheduleMessage(
+    summary: ScheduleSummaryResponse,
+    showVoteButton: boolean
+  ): { embed: object; components: object[] } {
+    const embed = ScheduleUIBuilder.buildScheduleEmbed(summary.schedule, summary.responseCounts, {
+      showVoteButtons: showVoteButton,
+    });
+    const components = ScheduleUIBuilder.buildActionButtons(summary.schedule, {
+      showVoteButtons: showVoteButton,
+    });
 
-  createScheduleEmbed(summary: ScheduleSummaryResponse, showVoteButton: boolean): object {
-    return this.uiBuilder.createEmbed(summary, showVoteButton);
-  }
-
-  createScheduleComponents(summary: ScheduleSummaryResponse, showVoteButton: boolean): object[] {
-    return this.uiBuilder.createComponents(summary, showVoteButton);
+    return { embed, components };
   }
 }

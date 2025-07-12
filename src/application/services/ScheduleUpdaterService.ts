@@ -1,6 +1,8 @@
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { Env } from '../../infrastructure/types/discord';
-import type { IDiscordMessageUpdater, IMessageFormatter } from '../ports/MessageFormatterPort';
+import type { IDiscordApiPort } from '../ports/DiscordApiPort';
+import type { ILogger } from '../ports/LoggerPort';
+import type { IMessageFormatterPort } from '../ports/MessageFormatterPort';
 
 /**
  * スケジュールのメイン画面を更新する共通関数 - Clean Architecture版
@@ -10,8 +12,9 @@ import type { IDiscordMessageUpdater, IMessageFormatter } from '../ports/Message
  * @param container DependencyContainer インスタンス
  * @param env 環境変数
  * @param guildId ギルドID
+ * @param discordApi Discord API アダプター
  * @param messageFormatter メッセージフォーマッター
- * @param messageUpdater メッセージ更新サービス
+ * @param logger ログアダプター
  * @returns 更新が成功したかどうか
  */
 export async function updateScheduleMainMessage(
@@ -21,14 +24,18 @@ export async function updateScheduleMainMessage(
   container: DependencyContainer,
   env: Env,
   guildId: string = 'default',
-  messageFormatter?: IMessageFormatter,
-  messageUpdater?: IDiscordMessageUpdater
+  discordApi: IDiscordApiPort,
+  messageFormatter: IMessageFormatterPort,
+  logger: ILogger
 ): Promise<boolean> {
   try {
     // 最新のスケジュール情報を取得
-    const scheduleResult = await container.getScheduleUseCase.execute(scheduleId, guildId);
+    const scheduleResult = await container.applicationServices.getScheduleUseCase.execute(
+      scheduleId,
+      guildId
+    );
     if (!scheduleResult.success || !scheduleResult.schedule) {
-      console.error(`Schedule not found for ID: ${scheduleId}`);
+      logger.error(`Schedule not found for ID: ${scheduleId}`);
       return false;
     }
     const schedule = scheduleResult.schedule;
@@ -36,51 +43,47 @@ export async function updateScheduleMainMessage(
     // メッセージIDを決定
     const targetMessageId = messageId || schedule.messageId;
     if (!targetMessageId) {
-      console.error(`No message ID available for schedule: ${scheduleId}`);
+      logger.error(`No message ID available for schedule: ${scheduleId}`);
       return false;
     }
 
     // スケジュールの集計情報を取得
-    const summaryResult = await container.getScheduleSummaryUseCase.execute(scheduleId, guildId);
+    const summaryResult = await container.applicationServices.getScheduleSummaryUseCase.execute(
+      scheduleId,
+      guildId
+    );
     if (!summaryResult.success || !summaryResult.summary) {
-      console.error(`Failed to get schedule summary for ID: ${scheduleId}`);
+      logger.error(`Failed to get schedule summary for ID: ${scheduleId}`);
       return false;
     }
     const summary = summaryResult.summary;
 
-    // フォーマッターとアップデーターが提供されていない場合はDependencyContainerから取得
-    const formatter = messageFormatter || container.infrastructureServices.messageFormatter;
-    const updater = messageUpdater || container.infrastructureServices.messageUpdater;
-
-    if (!formatter || !updater) {
-      console.error('MessageFormatter or MessageUpdater not available');
-      return false;
-    }
-
     // 現在の状態（showDetails）を維持したいが、これは別途管理が必要
     // とりあえずシンプルな表示で更新
-    const embed = formatter.createScheduleEmbed(summary, false);
-    const components = formatter.createScheduleComponents(summary, false);
+    const { embed, components } = messageFormatter.formatScheduleMessage(summary, false);
 
     // Discord APIを使ってメッセージを更新
     if (!env.DISCORD_APPLICATION_ID) {
-      console.error('DISCORD_APPLICATION_ID is not set');
+      logger.error('DISCORD_APPLICATION_ID is not set');
       return false;
     }
 
-    await updater.updateOriginalMessage(
-      env.DISCORD_APPLICATION_ID,
-      interactionToken,
+    await discordApi.updateMessage(
+      schedule.channelId,
+      targetMessageId,
       {
         embeds: [embed],
         components,
       },
-      targetMessageId
+      interactionToken
     );
 
     return true;
   } catch (error) {
-    console.error('Error updating schedule main message:', error);
+    logger.error(
+      'Error updating schedule main message',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return false;
   }
 }
@@ -98,7 +101,10 @@ export async function saveScheduleMessageId(
   container: DependencyContainer,
   guildId: string = 'default'
 ): Promise<void> {
-  const scheduleResult = await container.getScheduleUseCase.execute(scheduleId, guildId);
+  const scheduleResult = await container.applicationServices.getScheduleUseCase.execute(
+    scheduleId,
+    guildId
+  );
   if (!scheduleResult.success || !scheduleResult.schedule) {
     console.error(`Schedule not found: ${scheduleId}`);
     return;
@@ -106,7 +112,7 @@ export async function saveScheduleMessageId(
 
   if (scheduleResult.schedule.messageId !== messageId) {
     // Use UpdateScheduleUseCase to update the message ID
-    await container.updateScheduleUseCase.execute({
+    await container.applicationServices.updateScheduleUseCase.execute({
       scheduleId,
       guildId,
       editorUserId: 'system', // System update

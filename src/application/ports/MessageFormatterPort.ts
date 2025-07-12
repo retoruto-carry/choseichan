@@ -46,17 +46,20 @@ export interface MessageComponent {
 /**
  * メッセージフォーマッターのインターフェース
  */
-export interface IMessageFormatter {
+export interface IMessageFormatterPort {
   /**
-   * スケジュールサマリーからEmbedを作成
+   * スケジュールメッセージ（EmbedとComponents）を作成
    */
-  createScheduleEmbed(summary: ScheduleSummaryResponse, showVoteButton: boolean): object;
-
-  /**
-   * スケジュールサマリーからComponentsを作成
-   */
-  createScheduleComponents(summary: ScheduleSummaryResponse, showVoteButton: boolean): object[];
+  formatScheduleMessage(
+    summary: ScheduleSummaryResponse,
+    showVoteButton: boolean
+  ): { embed: object; components: object[] };
 }
+
+/**
+ * 後方互換性のためのエイリアス
+ */
+export interface IMessageFormatter extends IMessageFormatterPort {}
 
 /**
  * Discord メッセージ更新のインターフェース

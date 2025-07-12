@@ -31,6 +31,16 @@ export interface IDiscordApiService {
   sendWebhookMessage(webhookUrl: string, message: DiscordMessage): Promise<Response>;
 
   /**
+   * Discord メッセージを送信
+   */
+  sendMessage(channelId: string, message: object, botToken: string): Promise<{ id: string }>;
+
+  /**
+   * Discord 通知を送信
+   */
+  sendNotification(channelId: string, content: string, botToken: string): Promise<void>;
+
+  /**
    * Discord メッセージを更新
    */
   updateMessage(
@@ -66,6 +76,35 @@ export class DiscordApiService implements IDiscordApiService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(message),
+    });
+  }
+
+  async sendMessage(channelId: string, message: object, botToken: string): Promise<{ id: string }> {
+    const response = await fetch(`${this.baseUrl}/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send message: ${response.status}`);
+    }
+
+    const data = (await response.json()) as { id: string };
+    return { id: data.id };
+  }
+
+  async sendNotification(channelId: string, content: string, botToken: string): Promise<void> {
+    await fetch(`${this.baseUrl}/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
     });
   }
 

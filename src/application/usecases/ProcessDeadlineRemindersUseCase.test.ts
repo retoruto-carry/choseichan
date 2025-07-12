@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Env } from '../../infrastructure/types/discord';
 import type { ScheduleResponse } from '../dto/ScheduleDto';
-import type { ILogger } from '../ports/LoggerPort';
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
+import type { ILogger } from '../ports/LoggerPort';
 import { ProcessDeadlineRemindersUseCase } from './ProcessDeadlineRemindersUseCase';
 
 describe('ProcessDeadlineRemindersUseCase', () => {

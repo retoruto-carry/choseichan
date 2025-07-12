@@ -170,6 +170,11 @@ canBeClosed(currentDate: Date = new Date()): boolean {
    - 正常系だけでなく異常系も網羅
    - エッジケースを意識的にテスト
 
+4. **型安全性の徹底**
+   - 非nullアサーション（`!`）は避ける
+   - テストでも明示的な型ガードを使用
+   - `expect().toBeDefined()` + `if (!value)` パターンを推奨
+
 ## コード品質管理
 
 ### Linting (Biome)
@@ -188,6 +193,7 @@ npm run format
 - **未使用インポートの禁止**: Biomeが自動検出・削除
 - **console.log禁止**: 構造化ログ（Logger）を使用
 - **any型の最小化**: 適切な型定義を使用
+- **非nullアサーション禁止**: テストでも型ガードを使用
 - **コメントは日本語**: ビジネスロジックの説明は日本語で
 
 ### Type Checking
@@ -238,7 +244,20 @@ npm run check  # biome check && tsc --noEmit
    - `vi.clearAllMocks()` を `beforeEach` に追加
    - モックの戻り値を正しく設定
 
-3. **リントエラー: Import順序**
+3. **テストでの型安全性: 非nullアサーション（!）の回避**
+   ```typescript
+   // ❌ 避けるべき書き方
+   const summary = summaryResult.summary!;
+   
+   // ✅ 推奨する書き方
+   expect(summaryResult.summary).toBeDefined();
+   if (!summaryResult.summary) {
+     throw new Error('Summary should be defined');
+   }
+   const summary = summaryResult.summary;
+   ```
+
+4. **リントエラー: Import順序**
    - Biomeの自動修正を実行: `npm run lint:fix`
 
 ## Discord API 制限

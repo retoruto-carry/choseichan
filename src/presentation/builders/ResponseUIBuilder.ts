@@ -39,14 +39,6 @@ export class ResponseUIBuilder {
         value: currentVote,
         inline: false,
       });
-
-      if (userResponse.comment) {
-        fields.push({
-          name: '💬 コメント',
-          value: userResponse.comment,
-          inline: false,
-        });
-      }
     }
 
     // 投票方法の説明
@@ -92,14 +84,6 @@ export class ResponseUIBuilder {
         inline: false,
       },
     ];
-
-    if (submittedResponse.comment) {
-      fields.push({
-        name: '💬 コメント',
-        value: submittedResponse.comment,
-        inline: false,
-      });
-    }
 
     return {
       title: `✅ ${actionText}`,

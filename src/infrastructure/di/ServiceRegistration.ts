@@ -24,6 +24,9 @@ import { ProcessReminderUseCase } from '../../application/usecases/schedule/Proc
 import { ReopenScheduleUseCase } from '../../application/usecases/schedule/ReopenScheduleUseCase';
 import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
+import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
+import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
+import { LoggerAdapter } from '../adapters/LoggerAdapter';
 // Infrastructure
 import { createRepositoryFactory } from '../factories/factory';
 import { DiscordApiService } from '../services/DiscordApiService';
@@ -61,6 +64,16 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
   container.registerSingleton(SERVICE_TOKENS.RESPONSE_REPOSITORY, (c) =>
     (c.resolve(SERVICE_TOKENS.REPOSITORY_FACTORY) as IRepositoryFactory).getResponseRepository()
   );
+
+  // Adapters (Singleton)
+  container.registerSingleton(SERVICE_TOKENS.LOGGER_ADAPTER, () => new LoggerAdapter());
+
+  container.registerSingleton(SERVICE_TOKENS.DISCORD_API_ADAPTER, () => new DiscordApiAdapter());
+
+  container.registerSingleton(
+    SERVICE_TOKENS.ENVIRONMENT_ADAPTER,
+    (c) => new EnvironmentAdapter(c.resolve(SERVICE_TOKENS.ENV))
+  );
 }
 
 function registerApplicationServices(container: IDIContainer, env: Env): void {
@@ -75,6 +88,8 @@ function registerApplicationServices(container: IDIContainer, env: Env): void {
       }
 
       return new NotificationService(
+        c.resolve(SERVICE_TOKENS.LOGGER_ADAPTER),
+        c.resolve(SERVICE_TOKENS.DISCORD_API_ADAPTER),
         c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY),
         c.resolve(SERVICE_TOKENS.RESPONSE_REPOSITORY),
         c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
@@ -141,7 +156,11 @@ function registerUseCases(container: IDIContainer, env: Env): void {
 
   container.registerTransient(
     SERVICE_TOKENS.DEADLINE_REMINDER_USE_CASE,
-    (c) => new DeadlineReminderUseCase(c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY))
+    (c) =>
+      new DeadlineReminderUseCase(
+        c.resolve(SERVICE_TOKENS.LOGGER_ADAPTER),
+        c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY)
+      )
   );
 
   container.registerTransient(
@@ -179,13 +198,14 @@ function registerUseCases(container: IDIContainer, env: Env): void {
       SERVICE_TOKENS.PROCESS_DEADLINE_REMINDERS_USE_CASE,
       (c) =>
         new ProcessDeadlineRemindersUseCase(
+          c.resolve(SERVICE_TOKENS.LOGGER_ADAPTER),
           c.resolve(SERVICE_TOKENS.DEADLINE_REMINDER_USE_CASE),
           c.resolve(SERVICE_TOKENS.GET_SCHEDULE_USE_CASE),
           c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
           c.resolve(SERVICE_TOKENS.PROCESS_REMINDER_USE_CASE),
           c.resolve(SERVICE_TOKENS.CLOSE_SCHEDULE_USE_CASE),
           c.resolve(SERVICE_TOKENS.NOTIFICATION_SERVICE),
-          env
+          c.resolve(SERVICE_TOKENS.ENVIRONMENT_ADAPTER)
         )
     );
   }

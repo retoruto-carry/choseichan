@@ -64,8 +64,7 @@ export function createScheduleEmbedWithTable(
               : status === 'maybe'
                 ? STATUS_EMOJI.maybe
                 : STATUS_EMOJI.no;
-          const comment = ur.comment ? ` (${ur.comment})` : '';
-          return `${statusEmoji} ${ur.username}${comment}`;
+          return `${statusEmoji} ${ur.username}`;
         })
         .filter((r): r is string => r !== null);
 

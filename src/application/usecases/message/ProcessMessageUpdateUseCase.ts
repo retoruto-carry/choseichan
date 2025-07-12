@@ -33,8 +33,7 @@ export class ProcessMessageUpdateUseCase {
       }
 
       // embedとcomponentsを作成（MessageFormatterを使用）
-      const embed = this.messageFormatter.createScheduleEmbed(summaryResult.summary, false);
-      const components = this.messageFormatter.createScheduleComponents(
+      const { embed, components } = this.messageFormatter.formatScheduleMessage(
         summaryResult.summary,
         false
       );
@@ -80,9 +79,7 @@ export class ProcessMessageUpdateUseCase {
 
     for (const task of tasks) {
       const key = `${task.scheduleId}:${task.messageId}`;
-      const existing = latestUpdates.get(key);
-
-      // 最新の更新で上書き
+      // 同じメッセージの最新タスクのみ保持（重複除去）
       latestUpdates.set(key, task);
     }
 

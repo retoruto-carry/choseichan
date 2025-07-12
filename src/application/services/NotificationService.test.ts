@@ -93,10 +93,41 @@ describe('NotificationService', () => {
     vi.spyOn(mockGetScheduleSummaryUseCase, 'execute').mockResolvedValue({
       success: true,
       summary: {
-        schedule: mockSchedule,
+        schedule: {
+          id: mockSchedule.id,
+          guildId: mockSchedule.guildId,
+          channelId: mockSchedule.channelId,
+          messageId: mockSchedule.messageId,
+          title: mockSchedule.title,
+          description: mockSchedule.description,
+          dates: mockSchedule.dates.map((d) => ({ id: d.id, datetime: d.datetime })),
+          createdBy: { id: mockSchedule.createdBy.id, username: mockSchedule.createdBy.username },
+          authorId: mockSchedule.authorId,
+          deadline: mockSchedule.deadline?.toISOString(),
+          reminderTimings: mockSchedule.reminderTimings || [],
+          reminderMentions: mockSchedule.reminderMentions || [],
+          remindersSent: mockSchedule.remindersSent || [],
+          status: mockSchedule.status,
+          notificationSent: mockSchedule.notificationSent,
+          totalResponses: mockSchedule.totalResponses,
+          createdAt: mockSchedule.createdAt.toISOString(),
+          updatedAt: mockSchedule.updatedAt.toISOString(),
+        },
         responses: [],
         responseCounts: {},
-        bestDateId: null,
+        totalResponseUsers: 0,
+        bestDateId: undefined,
+        statistics: {
+          overallParticipation: {
+            fullyAvailable: 0,
+            partiallyAvailable: 0,
+            unavailable: 0,
+          },
+          optimalDates: {
+            alternativeDateIds: [],
+            scores: {},
+          },
+        },
       } as ScheduleSummaryResponse,
     });
 
@@ -440,7 +471,9 @@ describe('NotificationService', () => {
       expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
         'channel123',
         expect.objectContaining({
-          content: expect.stringMatching(/@everyone.*<@111111111>.*<@333333333>.*<@222222222>.*@NonExistentUser/),
+          content: expect.stringMatching(
+            /@everyone.*<@111111111>.*<@333333333>.*<@222222222>.*@NonExistentUser/
+          ),
         }),
         mockToken
       );

@@ -6,12 +6,14 @@
  */
 
 import type { IEnvironmentPort } from '../../application/ports/EnvironmentPort';
+import type { Env } from '../types/discord';
 
 export class EnvironmentAdapter implements IEnvironmentPort {
   constructor(private env: Env) {}
 
   get(key: string): string | undefined {
-    return this.env[key] as string | undefined;
+    const value = this.env[key];
+    return typeof value === 'string' ? value : undefined;
   }
 
   getOptional(key: string): string | undefined {

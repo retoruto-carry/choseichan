@@ -29,7 +29,12 @@ export interface IDiscordApiPort {
   /**
    * ギルドメンバーを取得
    */
-  fetchGuildMembers(guildId: string, token: string): Promise<Array<{
-    user: { id: string; username: string; discriminator: string };
-  }>>;
+  fetchGuildMembers(
+    guildId: string,
+    token: string
+  ): Promise<
+    Array<{
+      user: { id: string; username: string; discriminator: string };
+    }>
+  >;
 }

@@ -243,7 +243,6 @@ describe('Schedule Domain Entity', () => {
     });
 
     it('should update schedule properties', () => {
-
       const updatedTitle = schedule.updateTitle('Updated Title');
       const updatedDescription = updatedTitle.updateDescription('Updated description');
       const updatedMessage = updatedDescription.updateMessageId('msg123');
@@ -251,7 +250,9 @@ describe('Schedule Domain Entity', () => {
       expect(updatedMessage.title).toBe('Updated Title');
       expect(updatedMessage.description).toBe('Updated description');
       expect(updatedMessage.messageId).toBe('msg123');
-      expect(updatedMessage.updatedAt.getTime()).toBeGreaterThanOrEqual(schedule.updatedAt.getTime());
+      expect(updatedMessage.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        schedule.updatedAt.getTime()
+      );
       expect(updatedMessage.id).toBe(schedule.id); // ID unchanged
     });
 
