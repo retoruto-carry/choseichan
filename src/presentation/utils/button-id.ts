@@ -137,13 +137,6 @@ export function createCloseButtonId(scheduleId: string): string {
   });
 }
 
-export function createReopenButtonId(scheduleId: string): string {
-  return createButtonIdFromParams({
-    action: 'reopen',
-    scheduleId,
-  });
-}
-
 export function createDetailsButtonId(scheduleId: string): string {
   return createButtonIdFromParams({
     action: 'details',

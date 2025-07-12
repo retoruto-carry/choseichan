@@ -53,7 +53,6 @@ describe('DependencyContainer', () => {
       expect(container.applicationServices.createScheduleUseCase).toBeDefined();
       expect(container.applicationServices.updateScheduleUseCase).toBeDefined();
       expect(container.applicationServices.closeScheduleUseCase).toBeDefined();
-      expect(container.applicationServices.reopenScheduleUseCase).toBeDefined();
       expect(container.applicationServices.deleteScheduleUseCase).toBeDefined();
       expect(container.applicationServices.getScheduleUseCase).toBeDefined();
       expect(container.applicationServices.findSchedulesUseCase).toBeDefined();
@@ -100,9 +99,6 @@ describe('DependencyContainer', () => {
       );
       expect(container.closeScheduleUseCase).toBe(
         container.applicationServices.closeScheduleUseCase
-      );
-      expect(container.reopenScheduleUseCase).toBe(
-        container.applicationServices.reopenScheduleUseCase
       );
       expect(container.deleteScheduleUseCase).toBe(
         container.applicationServices.deleteScheduleUseCase

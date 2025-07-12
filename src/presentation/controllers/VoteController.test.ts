@@ -87,9 +87,6 @@ describe('VoteController', () => {
       closeScheduleUseCase: {
         execute: vi.fn().mockResolvedValue({ success: false }),
       },
-      reopenScheduleUseCase: {
-        execute: vi.fn().mockResolvedValue({ success: false }),
-      },
       getScheduleSummaryUseCase: {
         execute: vi.fn().mockResolvedValue({ success: false }),
       },

@@ -228,70 +228,6 @@ export class ScheduleManagementController {
   }
 
   /**
-   * スケジュール再開ボタンの処理
-   */
-  async handleReopenButton(
-    interaction: ButtonInteraction,
-    params: string[],
-    env: Env
-  ): Promise<Response> {
-    try {
-      const [scheduleId] = params;
-      const guildId = interaction.guild_id || 'default';
-      const userId = interaction.member?.user.id || interaction.user?.id;
-
-      if (!userId) {
-        return this.createErrorResponse('ユーザー情報を取得できませんでした。');
-      }
-
-      // スケジュール取得と権限確認
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
-        scheduleId,
-        guildId
-      );
-
-      if (!scheduleResult.success || !scheduleResult.schedule) {
-        return this.createErrorResponse('日程調整が見つかりません。');
-      }
-
-      if (scheduleResult.schedule.authorId !== userId) {
-        return this.createErrorResponse('日程調整を再開できるのは作成者のみです。');
-      }
-
-      // 再開処理
-      const reopenResult = await this.dependencyContainer.reopenScheduleUseCase.execute({
-        scheduleId,
-        guildId,
-        editorUserId: userId,
-      });
-
-      if (!reopenResult.success) {
-        return this.createErrorResponse(reopenResult.errors?.[0] || '再開に失敗しました。');
-      }
-
-      // メッセージ更新処理
-      await this.handlePostReopenActions(scheduleId, guildId, interaction, env);
-
-      return new Response(
-        JSON.stringify({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            content: '✅ スケジュールを再開しました。',
-            flags: InteractionResponseFlags.EPHEMERAL,
-          },
-        }),
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-    } catch (error) {
-      this.logger.error(
-        'Error in handleReopenButton:',
-        error instanceof Error ? error : new Error(String(error))
-      );
-      return this.createErrorResponse('スケジュール再開中にエラーが発生しました。');
-    }
-  }
-
-  /**
    * スケジュール削除ボタンの処理
    */
   async handleDeleteButton(
@@ -534,51 +470,6 @@ export class ScheduleManagementController {
     } catch (error) {
       this.logger.error(
         'Failed to handle post close actions:',
-        error instanceof Error ? error : new Error(String(error))
-      );
-    }
-  }
-
-  private async handlePostReopenActions(
-    scheduleId: string,
-    guildId: string,
-    interaction: ButtonInteraction,
-    env: Env
-  ): Promise<void> {
-    try {
-      const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
-        scheduleId,
-        guildId
-      );
-      if (
-        scheduleResult.success &&
-        scheduleResult.schedule?.messageId &&
-        env.DISCORD_APPLICATION_ID
-      ) {
-        const updatePromise = updateScheduleMainMessage(
-          scheduleId,
-          scheduleResult.schedule.messageId,
-          interaction.token,
-          this.dependencyContainer,
-          env,
-          guildId,
-          new DiscordApiAdapter(),
-          new MessageFormatterAdapter(),
-          new LoggerAdapter()
-        ).catch((error) =>
-          this.logger.error(
-            'Failed to update main message after reopening',
-            error instanceof Error ? error : new Error(String(error))
-          )
-        );
-
-        if (env.ctx && typeof env.ctx.waitUntil === 'function') {
-          env.ctx.waitUntil(updatePromise);
-        }
-      }
-    } catch (error) {
-      this.logger.error(
-        'Failed to handle post reopen actions:',
         error instanceof Error ? error : new Error(String(error))
       );
     }

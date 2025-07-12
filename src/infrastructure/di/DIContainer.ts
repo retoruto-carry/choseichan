@@ -207,7 +207,6 @@ export const SERVICE_TOKENS = {
   CREATE_SCHEDULE_USE_CASE: Symbol('CreateScheduleUseCase'),
   UPDATE_SCHEDULE_USE_CASE: Symbol('UpdateScheduleUseCase'),
   CLOSE_SCHEDULE_USE_CASE: Symbol('CloseScheduleUseCase'),
-  REOPEN_SCHEDULE_USE_CASE: Symbol('ReopenScheduleUseCase'),
   DELETE_SCHEDULE_USE_CASE: Symbol('DeleteScheduleUseCase'),
   GET_SCHEDULE_USE_CASE: Symbol('GetScheduleUseCase'),
   FIND_SCHEDULES_USE_CASE: Symbol('FindSchedulesUseCase'),
@@ -262,10 +261,6 @@ export class ServiceAccessor {
 
   getCloseScheduleUseCase() {
     return this.container.resolve(SERVICE_TOKENS.CLOSE_SCHEDULE_USE_CASE);
-  }
-
-  getReopenScheduleUseCase() {
-    return this.container.resolve(SERVICE_TOKENS.REOPEN_SCHEDULE_USE_CASE);
   }
 
   getDeleteScheduleUseCase() {

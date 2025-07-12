@@ -46,8 +46,6 @@ export class ButtonInteractionController {
           return this.handleDetailsButton(interaction, params);
         case 'close':
           return this.handleCloseButton(interaction, params, env);
-        case 'reopen':
-          return this.handleReopenButton(interaction, params, env);
         case 'delete':
           return this.handleDeleteButton(interaction, params, env);
         case 'refresh':
@@ -135,15 +133,6 @@ export class ButtonInteractionController {
   ): Promise<Response> {
     const controller = createScheduleManagementController(env);
     return controller.handleCloseButton(interaction, params, env);
-  }
-
-  private async handleReopenButton(
-    interaction: ButtonInteraction,
-    params: string[],
-    env: Env
-  ): Promise<Response> {
-    const controller = createScheduleManagementController(env);
-    return controller.handleReopenButton(interaction, params, env);
   }
 
   private async handleDeleteButton(

@@ -20,7 +20,6 @@ import { FindSchedulesUseCase } from '../../application/usecases/schedule/FindSc
 import { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
 import { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
 import { ProcessReminderUseCase } from '../../application/usecases/schedule/ProcessReminderUseCase';
-import { ReopenScheduleUseCase } from '../../application/usecases/schedule/ReopenScheduleUseCase';
 import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
@@ -124,11 +123,6 @@ function registerUseCases(container: IDIContainer, env: Env): void {
   container.registerTransient(
     SERVICE_TOKENS.CLOSE_SCHEDULE_USE_CASE,
     (c) => new CloseScheduleUseCase(c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY))
-  );
-
-  container.registerTransient(
-    SERVICE_TOKENS.REOPEN_SCHEDULE_USE_CASE,
-    (c) => new ReopenScheduleUseCase(c.resolve(SERVICE_TOKENS.SCHEDULE_REPOSITORY))
   );
 
   container.registerTransient(

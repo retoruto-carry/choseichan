@@ -196,16 +196,6 @@ describe('Schedule Domain Entity', () => {
       expect(closedSchedule.id).toBe(schedule.id); // Other fields unchanged
     });
 
-    it('should reopen schedule', () => {
-      const closedSchedule = schedule.close();
-      const reopenedSchedule = closedSchedule.reopen();
-
-      expect(reopenedSchedule.status).toBe(ScheduleStatus.OPEN);
-      expect(reopenedSchedule.updatedAt.getTime()).toBeGreaterThanOrEqual(
-        closedSchedule.updatedAt.getTime()
-      );
-    });
-
     it('should check if deadline is passed', () => {
       const futureDeadline = new Date(Date.now() + 86400000); // 24 hours later
       const pastDeadline = new Date(Date.now() - 86400000); // 24 hours ago

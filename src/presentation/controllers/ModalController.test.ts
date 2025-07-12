@@ -34,7 +34,6 @@ describe('ModalController', () => {
         },
         updateScheduleUseCase: { execute: vi.fn() },
         closeScheduleUseCase: { execute: vi.fn() },
-        reopenScheduleUseCase: { execute: vi.fn() },
         deleteScheduleUseCase: { execute: vi.fn() },
         getScheduleUseCase: { execute: vi.fn() },
         findSchedulesUseCase: { execute: vi.fn() },

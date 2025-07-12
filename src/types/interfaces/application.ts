@@ -150,7 +150,6 @@ export interface ScheduleService {
   createSchedule(request: CreateScheduleRequest): Promise<Result<ScheduleResponse>>;
   updateSchedule(request: UpdateScheduleRequest): Promise<Result<ScheduleResponse>>;
   closeSchedule(request: CloseScheduleRequest): Promise<Result<ScheduleResponse>>;
-  reopenSchedule(request: GetScheduleRequest): Promise<Result<ScheduleResponse>>;
   deleteSchedule(request: DeleteScheduleRequest): Promise<Result<void>>;
   getSchedule(request: GetScheduleRequest): Promise<Result<ScheduleResponse>>;
   findSchedules(request: FindSchedulesRequest): Promise<Result<SchedulesResponse>>;

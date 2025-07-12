@@ -22,7 +22,6 @@ import { FindSchedulesUseCase } from '../../application/usecases/schedule/FindSc
 import { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
 import { GetScheduleUseCase } from '../../application/usecases/schedule/GetScheduleUseCase';
 import { ProcessReminderUseCase } from '../../application/usecases/schedule/ProcessReminderUseCase';
-import { ReopenScheduleUseCase } from '../../application/usecases/schedule/ReopenScheduleUseCase';
 import { UpdateScheduleUseCase } from '../../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
@@ -44,7 +43,6 @@ export interface ApplicationServices {
   createScheduleUseCase: CreateScheduleUseCase;
   updateScheduleUseCase: UpdateScheduleUseCase;
   closeScheduleUseCase: CloseScheduleUseCase;
-  reopenScheduleUseCase: ReopenScheduleUseCase;
   deleteScheduleUseCase: DeleteScheduleUseCase;
   getScheduleUseCase: GetScheduleUseCase;
   findSchedulesUseCase: FindSchedulesUseCase;
@@ -152,7 +150,6 @@ export class DependencyContainer {
     const createScheduleUseCase = new CreateScheduleUseCase(scheduleRepository);
     const updateScheduleUseCase = new UpdateScheduleUseCase(scheduleRepository);
     const closeScheduleUseCase = new CloseScheduleUseCase(scheduleRepository);
-    const reopenScheduleUseCase = new ReopenScheduleUseCase(scheduleRepository);
     const deleteScheduleUseCase = new DeleteScheduleUseCase(scheduleRepository, responseRepository);
     const getScheduleUseCase = new GetScheduleUseCase(scheduleRepository, responseRepository);
     const findSchedulesUseCase = new FindSchedulesUseCase(scheduleRepository);
@@ -220,7 +217,6 @@ export class DependencyContainer {
       createScheduleUseCase,
       updateScheduleUseCase,
       closeScheduleUseCase,
-      reopenScheduleUseCase,
       deleteScheduleUseCase,
       getScheduleUseCase,
       findSchedulesUseCase,
@@ -251,9 +247,6 @@ export class DependencyContainer {
   }
   get closeScheduleUseCase() {
     return this._applicationServices.closeScheduleUseCase;
-  }
-  get reopenScheduleUseCase() {
-    return this._applicationServices.reopenScheduleUseCase;
   }
   get deleteScheduleUseCase() {
     return this._applicationServices.deleteScheduleUseCase;
