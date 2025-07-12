@@ -1,10 +1,10 @@
 /**
- * Core Interfaces
+ * コアインターフェース
  *
  * アプリケーション全体で使用される基本インターフェース
  */
 
-// Base Entity Interfaces
+// 基本エンティティインターフェース
 export interface Entity {
   readonly id: string;
   readonly createdAt: Date;
@@ -12,10 +12,10 @@ export interface Entity {
 }
 
 export interface AggregateRoot extends Entity {
-  // Marker interface for aggregate roots
+  // 集約ルート用のマーカーインターフェース
 }
 
-// Common Value Objects
+// 共通値オブジェクト
 export interface User {
   readonly id: string;
   readonly username: string;
@@ -28,11 +28,11 @@ export interface ScheduleDate {
   readonly description?: string;
 }
 
-// Domain Enums
+// ドメイン列挙型
 export type ScheduleStatus = 'open' | 'closed';
 export type ResponseStatus = 'ok' | 'maybe' | 'ng';
 
-// Business Objects
+// ビジネスオブジェクト
 export interface Schedule extends AggregateRoot {
   readonly guildId: string;
   readonly channelId: string;
@@ -58,7 +58,7 @@ export interface Response extends Entity {
   readonly comment?: string;
 }
 
-// Repository Interfaces
+// リポジトリインターフェース
 export interface Repository<TEntity extends Entity, TId = string> {
   save(entity: TEntity): Promise<void>;
   findById(id: TId): Promise<TEntity | null>;
@@ -84,7 +84,7 @@ export interface ResponseRepository extends Repository<Response> {
   deleteBySchedule(scheduleId: string, guildId: string): Promise<void>;
 }
 
-// Use Case Interfaces
+// ユースケースインターフェース
 export interface UseCase<TRequest, TResponse> {
   execute(request: TRequest): Promise<TResponse>;
 }
@@ -92,7 +92,7 @@ export interface UseCase<TRequest, TResponse> {
 export interface Command<TRequest, TResponse = void> extends UseCase<TRequest, TResponse> {}
 export interface Query<TRequest, TResponse> extends UseCase<TRequest, TResponse> {}
 
-// Result Pattern
+// Resultパターン
 export interface Result<T, E = Error> {
   readonly success: boolean;
   readonly data?: T;
@@ -114,7 +114,7 @@ export interface FailureResult<E = Error> extends Result<never, E> {
   readonly errors?: E[];
 }
 
-// Factory functions for Result
+// Result用のファクトリ関数
 export const Result = {
   success<T>(data: T): SuccessResult<T> {
     return { success: true, data };
@@ -129,7 +129,7 @@ export const Result = {
   },
 } as const;
 
-// Common Error Types
+// 共通エラー型
 export interface DomainError extends Error {
   readonly code: string;
   readonly statusCode?: number;
@@ -141,7 +141,7 @@ export interface ValidationError extends DomainError {
   readonly value: unknown;
 }
 
-// Configuration Interfaces
+// 設定インターフェース
 export interface DatabaseConfig {
   readonly type: 'd1';
   readonly database: D1Database;

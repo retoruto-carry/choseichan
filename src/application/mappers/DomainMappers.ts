@@ -48,14 +48,14 @@ export function mapDomainScheduleToEntity(data: DomainSchedule): Schedule {
 export function mapDomainResponseToEntity(data: DomainResponse): Response {
   const user = User.create(data.userId, data.username, data.displayName);
 
-  // Convert string statuses to ResponseStatus objects
+  // 文字列ステータスをResponseStatusオブジェクトに変換
   const dateStatuses = new Map<string, ResponseStatus>();
   Object.entries(data.dateStatuses).forEach(([dateId, status]) => {
     dateStatuses.set(dateId, ResponseStatus.fromString(status));
   });
 
   return Response.create({
-    id: `${data.scheduleId}-${data.userId}`, // Generate ID from scheduleId and userId
+    id: `${data.scheduleId}-${data.userId}`, // scheduleIdとuserIdからIDを生成
     scheduleId: data.scheduleId,
     user,
     dateStatuses,
@@ -64,10 +64,10 @@ export function mapDomainResponseToEntity(data: DomainResponse): Response {
   });
 }
 
-// Main mapper functions for application layer
+// アプリケーション層用のメインマッパー関数
 
 /**
- * Convert Schedule entity to ScheduleResponse DTO
+ * ScheduleエンティティをScheduleResponse DTOに変換
  */
 export function mapScheduleToResponse(schedule: Schedule): ScheduleResponse {
   const primitives = schedule.toPrimitives();
@@ -102,7 +102,7 @@ export function mapScheduleToResponse(schedule: Schedule): ScheduleResponse {
 }
 
 /**
- * Convert Response entity to ResponseDto
+ * ResponseエンティティをResponseDtoに変換
  */
 export function mapResponseToDto(response: Response): ResponseDto {
   const primitives = response.toPrimitives();

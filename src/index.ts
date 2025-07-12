@@ -12,7 +12,7 @@ const app = new Hono<{ Bindings: Env }>();
 // Loggerインスタンスを作成
 const logger = new Logger('discord-choseisan-main');
 
-// Health check endpoint
+// ヘルスチェックエンドポイント
 app.get('/', (c) => {
   return c.json({
     status: 'ok',
@@ -22,11 +22,11 @@ app.get('/', (c) => {
   });
 });
 
-// Cron endpoint for deadline checks
+// 締切チェック用のCronエンドポイント
 app.post('/cron/deadline-check', async (c) => {
   const cronSecret = c.req.header('X-Cron-Secret');
 
-  // Verify cron secret
+  // Cronシークレットを検証
   if (!cronSecret || cronSecret !== c.env.CRON_SECRET) {
     return c.text('Unauthorized', 401);
   }
@@ -52,10 +52,10 @@ app.post('/cron/deadline-check', async (c) => {
 app.post('/interactions', async (c) => {
   const { DISCORD_PUBLIC_KEY } = c.env;
 
-  // Get body text first (can only be read once)
+  // ボディテキストを最初に取得（一度しか読めない）
   const body = await c.req.text();
 
-  // Verify the request
+  // リクエストを検証
   const signature = c.req.header('X-Signature-Ed25519');
   const timestamp = c.req.header('X-Signature-Timestamp');
 
@@ -71,12 +71,12 @@ app.post('/interactions', async (c) => {
 
   const interaction = JSON.parse(body);
 
-  // Handle PING
+  // PINGを処理
   if (interaction.type === InteractionType.PING) {
     return c.json({ type: InteractionResponseType.PONG });
   }
 
-  // Handle slash commands
+  // スラッシュコマンドを処理
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     const command = interaction as CommandInteraction;
 
@@ -99,16 +99,16 @@ app.post('/interactions', async (c) => {
     }
   }
 
-  // Handle button interactions
+  // ボタンインタラクションを処理
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
     const button = interaction as ButtonInteraction;
-    // Pass execution context through env
+    // 実行コンテキストをenv経由で渡す
     const envWithContext = { ...c.env, ctx: c.executionCtx };
     const buttonController = createButtonInteractionController(envWithContext);
     return buttonController.handleButtonInteraction(button, envWithContext);
   }
 
-  // Handle modal submits
+  // モーダル送信を処理
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
     const envWithContext = { ...c.env, ctx: c.executionCtx };
     const modalController = createModalController(envWithContext);

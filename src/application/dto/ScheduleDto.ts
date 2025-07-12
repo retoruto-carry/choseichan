@@ -1,5 +1,5 @@
 /**
- * Schedule Data Transfer Objects
+ * スケジュールデータ転送オブジェクト
  *
  * アプリケーション層とプレゼンテーション層間のデータ転送用オブジェクト
  */
@@ -15,7 +15,7 @@ export interface CreateScheduleRequest {
     id: string;
     datetime: string;
   }>;
-  deadline?: string; // ISO string
+  deadline?: string; // ISO文字列
   reminderTimings?: string[];
   reminderMentions?: string[];
 }
@@ -26,7 +26,7 @@ export interface UpdateScheduleRequest {
   editorUserId: string;
   title?: string;
   description?: string;
-  deadline?: string | null; // ISO string or null to remove
+  deadline?: string | null; // ISO文字列またはnullで削除
   messageId?: string;
   dates?: Array<{
     id: string;
@@ -34,7 +34,7 @@ export interface UpdateScheduleRequest {
   }>;
   reminderTimings?: string[];
   reminderMentions?: string[];
-  reminderStates?: Record<string, never>; // Empty object to reset reminder states when deadline changes
+  reminderStates?: Record<string, never>; // 締切変更時にリマインダー状態をリセットするための空オブジェクト
 }
 
 export interface AddDatesRequest {
@@ -70,15 +70,15 @@ export interface ScheduleResponse {
     displayName?: string;
   };
   authorId: string;
-  deadline?: string; // ISO string
+  deadline?: string; // ISO文字列
   reminderTimings?: string[];
   reminderMentions?: string[];
   remindersSent?: string[];
   status: 'open' | 'closed';
   notificationSent: boolean;
   totalResponses: number;
-  createdAt: string; // ISO string
-  updatedAt: string; // ISO string
+  createdAt: string; // ISO文字列
+  updatedAt: string; // ISO文字列
 }
 
 export interface ScheduleSummaryResponse {
@@ -108,5 +108,5 @@ export interface ResponseDto {
   displayName?: string;
   dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
   comment?: string;
-  updatedAt: string; // ISO string
+  updatedAt: string; // ISO文字列
 }

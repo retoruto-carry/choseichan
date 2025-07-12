@@ -6,6 +6,16 @@ import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastruct
 import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';
 
+// デバウンサーをモック
+const mockDebouncer = {
+  scheduleUpdate: vi.fn(),
+  clear: vi.fn(),
+  getStats: vi.fn(),
+};
+vi.mock('../../infrastructure/utils/message-update-debouncer', () => ({
+  getMessageUpdateDebouncer: () => mockDebouncer,
+}));
+
 describe('VoteController', () => {
   let controller: VoteController;
   let mockContainer: DependencyContainer;
@@ -46,6 +56,10 @@ describe('VoteController', () => {
   };
 
   beforeEach(() => {
+    // Reset mocks
+    vi.clearAllMocks();
+    mockDebouncer.scheduleUpdate.mockClear();
+    
     // Mock environment
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test_key',
@@ -417,7 +431,14 @@ describe('VoteController', () => {
 
       await controller.handleVoteModal(mockModalInteraction, ['schedule-123'], mockEnv);
 
-      expect(mockEnv.ctx?.waitUntil).toHaveBeenCalled();
+      // デバウンサーが呼ばれることを確認
+      expect(mockDebouncer.scheduleUpdate).toHaveBeenCalledWith(
+        'schedule-123',
+        'msg-123',
+        'interaction_token',
+        'guild-123',
+        expect.any(Function)
+      );
     });
 
     it('should allow author to vote on closed schedule', async () => {

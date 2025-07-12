@@ -1,5 +1,5 @@
 /**
- * Schedule Edit Controller
+ * スケジュール編集コントローラー
  *
  * スケジュール編集機能のコントローラー
  * 元: src/handlers/edit-handlers.ts の Clean Architecture版
@@ -174,7 +174,7 @@ export class ScheduleEditController {
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
             content: '削除する日程を選択してください：',
-            components: components.slice(0, 5), // Max 5 rows
+            components: components.slice(0, 5), // 最大5行
             flags: InteractionResponseFlags.EPHEMERAL,
           },
         }),
@@ -242,7 +242,7 @@ export class ScheduleEditController {
         return this.createErrorResponse('日程の削除に失敗しました。');
       }
 
-      // Note: Response data with removed date IDs will be handled by the repository layer
+      // 注：削除された日付IDを含むレスポンスデータはリポジトリ層で処理されます
 
       return new Response(
         JSON.stringify({
@@ -360,7 +360,7 @@ export class ScheduleEditController {
 }
 
 /**
- * Factory function for creating controller with dependencies
+ * 依存関係を含むコントローラーを作成するファクトリ関数
  */
 export function createScheduleEditController(env: Env): ScheduleEditController {
   const container = new DependencyContainer(env);

@@ -12,6 +12,7 @@ import { NotificationService } from '../../application/services/NotificationServ
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
+import { getMessageUpdateDebouncer } from '../../infrastructure/utils/message-update-debouncer';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
@@ -227,10 +228,15 @@ export class VoteController {
       // Send response message
       const responseContent = this.createResponseMessage(schedule, responses, username);
 
-      // Update main message in background
+      // Update main message in background with debouncing
       if (env.ctx && schedule.messageId && env.DISCORD_APPLICATION_ID) {
-        env.ctx.waitUntil(
-          this.updateMainMessage(scheduleId, schedule.messageId, interaction.token, env, guildId)
+        const debouncer = getMessageUpdateDebouncer();
+        debouncer.scheduleUpdate(
+          scheduleId,
+          schedule.messageId,
+          interaction.token,
+          guildId,
+          () => this.updateMainMessage(scheduleId, schedule.messageId!, interaction.token, env, guildId)
         );
       }
 

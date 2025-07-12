@@ -1,10 +1,10 @@
 /**
- * Discord API Interfaces
+ * Discord APIインターフェース
  *
  * Discord APIと連携するためのインターフェース定義
  */
 
-// Discord API Types
+// Discord API型
 export interface DiscordUser {
   readonly id: string;
   readonly username: string;
@@ -41,7 +41,7 @@ export interface DiscordChannel {
   readonly parent_id?: string;
 }
 
-// Discord Interaction Types
+// Discordインタラクション型
 export interface DiscordInteraction {
   readonly id: string;
   readonly type: number;
@@ -57,7 +57,7 @@ export interface DiscordInteraction {
 }
 
 export interface SlashCommandInteraction extends DiscordInteraction {
-  readonly type: 2; // APPLICATION_COMMAND
+  readonly type: 2; // アプリケーションコマンド
   readonly data: {
     readonly id: string;
     readonly name: string;
@@ -67,23 +67,23 @@ export interface SlashCommandInteraction extends DiscordInteraction {
 }
 
 export interface ButtonInteraction extends DiscordInteraction {
-  readonly type: 3; // MESSAGE_COMPONENT
+  readonly type: 3; // メッセージコンポーネント
   readonly data: {
     readonly custom_id: string;
-    readonly component_type: 2; // BUTTON
+    readonly component_type: 2; // ボタン
   };
   readonly message: DiscordMessage;
 }
 
 export interface ModalInteraction extends DiscordInteraction {
-  readonly type: 5; // MODAL_SUBMIT
+  readonly type: 5; // モーダル送信
   readonly data: {
     readonly custom_id: string;
     readonly components: ModalComponent[];
   };
 }
 
-// Discord Component Types
+// Discordコンポーネント型
 export interface SlashCommandOption {
   readonly type: number;
   readonly name: string;
@@ -116,7 +116,7 @@ export interface ActionRowComponent {
   readonly required?: boolean;
 }
 
-// Discord Message Types
+// Discordメッセージ型
 export interface DiscordMessage {
   readonly id: string;
   readonly channel_id: string;
@@ -191,7 +191,7 @@ export interface DiscordAttachment {
   readonly ephemeral?: boolean;
 }
 
-// Discord API Response Types
+// Discord APIレスポンス型
 export interface DiscordInteractionResponse {
   readonly type: number;
   readonly data?: {
@@ -209,7 +209,7 @@ export interface DiscordInteractionResponse {
   };
 }
 
-// Environment Configuration
+// 環境設定
 export interface DiscordEnvironment {
   readonly DISCORD_APPLICATION_ID: string;
   readonly DISCORD_PUBLIC_KEY: string;
@@ -218,7 +218,7 @@ export interface DiscordEnvironment {
   readonly DISCORD_CLIENT_SECRET?: string;
 }
 
-// API Service Interface
+// APIサービスインターフェース
 export interface DiscordApiService {
   sendWebhookMessage(webhookUrl: string, message: DiscordMessage): Promise<Response>;
   updateMessage(
@@ -232,14 +232,14 @@ export interface DiscordApiService {
   createInteractionResponse(response: DiscordInteractionResponse): DiscordInteractionResponse;
 }
 
-// Error Types
+// エラー型
 export interface DiscordApiError extends Error {
   readonly status: number;
   readonly statusText: string;
   readonly response?: Response;
 }
 
-// Webhook Types
+// Webhook型
 export interface WebhookMessage {
   readonly content?: string;
   readonly username?: string;

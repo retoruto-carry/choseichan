@@ -1,5 +1,5 @@
 /**
- * Application Layer Error Types
+ * アプリケーション層エラー型
  *
  * アプリケーション層のエラー定義
  * ユースケースの実行で発生するエラーを管理
@@ -28,7 +28,7 @@ export abstract class ApplicationError extends Error {
   }
 }
 
-// Use Case Errors
+// ユースケースエラー
 export class UseCaseValidationError extends ApplicationError {
   readonly code = 'USE_CASE_VALIDATION_ERROR';
   readonly statusCode = 400;
@@ -59,7 +59,7 @@ export class ConcurrencyError extends ApplicationError {
   }
 }
 
-// Data Transfer Errors
+// データ転送エラー
 export class MappingError extends ApplicationError {
   readonly code = 'MAPPING_ERROR';
   readonly statusCode = 500;
@@ -78,7 +78,7 @@ export class SerializationError extends ApplicationError {
   }
 }
 
-// External Service Errors
+// 外部サービスエラー
 export class ExternalServiceError extends ApplicationError {
   readonly code = 'EXTERNAL_SERVICE_ERROR';
   readonly statusCode = 502;
@@ -101,7 +101,7 @@ export class RateLimitError extends ApplicationError {
   }
 }
 
-// Integration Errors
+// 統合エラー
 export class IntegrationError extends ApplicationError {
   readonly code = 'INTEGRATION_ERROR';
   readonly statusCode = 502;
@@ -115,7 +115,7 @@ export class IntegrationError extends ApplicationError {
   }
 }
 
-// Configuration Errors
+// 設定エラー
 export class ConfigurationError extends ApplicationError {
   readonly code = 'CONFIGURATION_ERROR';
   readonly statusCode = 500;
@@ -125,7 +125,7 @@ export class ConfigurationError extends ApplicationError {
   }
 }
 
-// Timeout Errors
+// タイムアウトエラー
 export class TimeoutError extends ApplicationError {
   readonly code = 'TIMEOUT_ERROR';
   readonly statusCode = 504;
@@ -135,7 +135,7 @@ export class TimeoutError extends ApplicationError {
   }
 }
 
-// Error Factory Functions
+// エラーファクトリ関数
 export function createUseCaseValidationError(message: string, useCase?: string): UseCaseValidationError {
   return new UseCaseValidationError(message, useCase);
 }
@@ -176,7 +176,7 @@ export function createTimeoutError(operation: string, timeout: number): TimeoutE
   return new TimeoutError(operation, timeout);
 }
 
-// Type Guards
+// 型ガード
 export function isApplicationError(error: unknown): error is ApplicationError {
   return error instanceof ApplicationError;
 }

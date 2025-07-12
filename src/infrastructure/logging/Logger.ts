@@ -1,5 +1,5 @@
 /**
- * Structured Logging System
+ * 構造化ログシステム
  *
  * Clean Architectureに適したログシステム
  * Cloudflare Workersでの実行を想定した軽量なロガー
@@ -135,7 +135,7 @@ export function resetLogger(): void {
   loggerInstance = null;
 }
 
-// Decorator for automatic logging
+// 自動ログ記録用デコレーター
 export function LogExecution(operation?: string) {
   return <T extends Record<string, (...args: unknown[]) => Promise<unknown>>>(
     target: T,
@@ -186,7 +186,7 @@ export function LogExecution(operation?: string) {
   };
 }
 
-// Performance measurement utilities
+// パフォーマンス測定ユーティリティ
 export class PerformanceLogger {
   private static measurements = new Map<string, number>();
 
@@ -221,7 +221,7 @@ export class PerformanceLogger {
   }
 }
 
-// Audit logging for important business events
+// 重要なビジネスイベントの監査ログ
 export class AuditLogger {
   private static logger = getLogger();
 

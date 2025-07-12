@@ -1,12 +1,12 @@
 /**
- * Application Layer Interfaces
+ * アプリケーション層インターフェース
  *
  * アプリケーション層で使用されるインターフェース
  */
 
 import type { Response, Result, Schedule, User } from './core';
 
-// DTOs (Data Transfer Objects)
+// DTO (データ転送オブジェクト)
 export interface ScheduleDto {
   readonly id: string;
   readonly guildId: string;
@@ -21,15 +21,15 @@ export interface ScheduleDto {
   }[];
   readonly createdBy: User;
   readonly authorId: string;
-  readonly deadline?: string; // ISO string
+  readonly deadline?: string; // ISO文字列
   readonly reminderTimings?: readonly string[];
   readonly reminderMentions?: readonly string[];
   readonly remindersSent?: readonly string[];
   readonly status: 'open' | 'closed';
   readonly notificationSent: boolean;
   readonly totalResponses: number;
-  readonly createdAt: string; // ISO string
-  readonly updatedAt: string; // ISO string
+  readonly createdAt: string; // ISO文字列
+  readonly updatedAt: string; // ISO文字列
 }
 
 export interface ResponseDto {
@@ -39,7 +39,7 @@ export interface ResponseDto {
   readonly displayName?: string;
   readonly dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
   readonly comment?: string;
-  readonly updatedAt: string; // ISO string
+  readonly updatedAt: string; // ISO文字列
 }
 
 export interface ScheduleSummaryDto {
@@ -62,12 +62,12 @@ export interface ScheduleSummaryDto {
   };
 }
 
-// Use Case Request/Response Types
+// ユースケース リクエスト/レスポンス型
 export interface CreateScheduleRequest {
   readonly title: string;
   readonly description?: string;
-  readonly dates: readonly string[]; // ISO datetime strings
-  readonly deadline?: string; // ISO datetime string
+  readonly dates: readonly string[]; // ISO日時文字列
+  readonly deadline?: string; // ISO日時文字列
   readonly reminderTimings?: readonly string[];
   readonly reminderMentions?: readonly string[];
   readonly guildId: string;
@@ -120,7 +120,7 @@ export interface DeleteScheduleRequest {
   readonly deletedBy: User;
 }
 
-// Response Types
+// レスポンス型
 export interface ScheduleResponse {
   readonly schedule: ScheduleDto;
 }
@@ -139,7 +139,7 @@ export interface ResponseSubmissionResponse {
   readonly schedule: ScheduleDto;
 }
 
-// Service Interfaces
+// サービスインターフェース
 export interface NotificationService {
   sendDeadlineReminder(schedule: ScheduleDto, message: string): Promise<void>;
   sendClosureNotification(schedule: ScheduleDto): Promise<void>;
@@ -167,7 +167,7 @@ export interface ResponseService {
   ): Promise<Result<readonly ResponseDto[]>>;
 }
 
-// Reminder Types
+// リマインダー型
 export interface ReminderInfo {
   readonly scheduleId: string;
   readonly guildId: string;
@@ -185,7 +185,7 @@ export interface DeadlineCheckResult {
   }[];
 }
 
-// Event Types
+// イベント型
 export interface DomainEvent {
   readonly eventType: string;
   readonly aggregateId: string;
@@ -224,7 +224,7 @@ export interface ResponseSubmittedEvent extends DomainEvent {
   };
 }
 
-// Validation Types
+// バリデーション型
 export interface ValidationRule<T> {
   validate(value: T): Result<T, ValidationError>;
 }
@@ -239,7 +239,7 @@ export interface Validator<T> {
   validate(value: T): Result<T, ValidationError[]>;
 }
 
-// Mappers
+// マッパー
 export interface Mapper<TSource, TTarget> {
   map(source: TSource): TTarget;
   mapArray(sources: readonly TSource[]): readonly TTarget[];

@@ -1,5 +1,5 @@
 /**
- * Application Constants
+ * アプリケーション定数
  *
  * アプリケーション全体で使用する定数を型安全に定義
  * Clean Architectureの各層で使用できる共通定数

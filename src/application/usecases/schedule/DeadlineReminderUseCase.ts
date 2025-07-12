@@ -1,5 +1,5 @@
 /**
- * Deadline Reminder Use Case
+ * 締切リマインダーユースケース
  *
  * 締切リマインダーのユースケース
  */
@@ -58,11 +58,11 @@ export class DeadlineReminderUseCase {
         if (schedule?.deadline) {
           const deadlineTime = schedule.deadline.getTime();
 
-          // Check which reminders need to be sent
+          // 送信する必要があるリマインダーをチェック
           if (schedule.status === 'open' && deadlineTime > now.getTime()) {
             const remindersSent = schedule.remindersSent || [];
 
-            // Use custom timings if available, otherwise use defaults
+            // カスタムタイミングがあれば使用、そうでなければデフォルトを使用
             const isCustom = schedule.reminderTimings && schedule.reminderTimings.length > 0;
             const timings = isCustom
               ? schedule.reminderTimings
@@ -78,9 +78,9 @@ export class DeadlineReminderUseCase {
             for (const timing of timings || []) {
               const reminderTime = deadlineTime - timing.hours * 60 * 60 * 1000;
 
-              // Check if this reminder should be sent now
+              // このリマインダーを今送信すべきかチェック
               if (now.getTime() >= reminderTime && !remindersSent.includes(timing.type)) {
-                // Skip if reminder is too old based on its type
+                // リマインダーの種類に基づいて古すぎる場合はスキップ
                 const timeSinceReminder = now.getTime() - reminderTime;
                 const threshold =
                   'isCustom' in timing && timing.isCustom
@@ -102,7 +102,7 @@ export class DeadlineReminderUseCase {
             }
           }
 
-          // Check if it's past deadline but still open
+          // 締切を過ぎているがまだオープンかチェック
           if (schedule.status === 'open' && deadlineTime <= now.getTime()) {
             const timeSinceDeadline = now.getTime() - deadlineTime;
             const CLOSURE_THRESHOLD_MS = 8 * 60 * 60 * 1000;
