@@ -327,6 +327,7 @@ export class EditModalController {
         guildId,
         editorUserId: userId,
         deadline: newDeadline ? newDeadline.toISOString() : null,
+        messageId: schedule.messageId, // messageIdを保持
       };
 
       // Reset reminders if deadline is being changed
@@ -374,14 +375,25 @@ export class EditModalController {
           editorUserId: userId,
           reminderTimings: timings,
           reminderMentions: mentions,
+          messageId: schedule.messageId, // messageIdを保持
         });
       }
 
       // Update main message in background
       if (env.ctx && schedule.messageId) {
+        this.logger.info('Updating main message after deadline change', {
+          scheduleId,
+          messageId: schedule.messageId,
+          hasToken: !!interaction.token,
+        });
         env.ctx.waitUntil(
           this.updateMainMessage(scheduleId, schedule.messageId, interaction.token, env, guildId)
         );
+      } else {
+        this.logger.warn('Cannot update main message', {
+          hasCtx: !!env.ctx,
+          hasMessageId: !!schedule.messageId,
+        });
       }
 
       const message = newDeadline
@@ -456,6 +468,7 @@ export class EditModalController {
         editorUserId: userId,
         reminderTimings: timings,
         reminderMentions: mentions,
+        messageId: scheduleResult.schedule.messageId, // messageIdを保持
       });
 
       if (!updateResult.success) {
@@ -493,6 +506,10 @@ export class EditModalController {
   ): Promise<void> {
     try {
       if (!messageId || !env.DISCORD_APPLICATION_ID) {
+        this.logger.warn('Missing requirements for message update', {
+          hasMessageId: !!messageId,
+          hasApplicationId: !!env.DISCORD_APPLICATION_ID,
+        });
         return;
       }
 
@@ -502,6 +519,14 @@ export class EditModalController {
         guildId
       );
       if (!scheduleResult.success || !scheduleResult.schedule) {
+        this.logger.error(
+          'Failed to get schedule for message update',
+          new Error('Schedule not found'),
+          {
+            scheduleId,
+            guildId,
+          }
+        );
         return;
       }
 
@@ -514,11 +539,22 @@ export class EditModalController {
       }
 
       // Update the message using ScheduleMainMessageBuilder
-      const messageData = ScheduleMainMessageBuilder.createMainMessage(
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
         summaryResult.summary,
         scheduleResult.schedule,
         false // showDetails - keep simple view
       );
+
+      const messageData = {
+        embeds: [embed],
+        components,
+      };
+
+      this.logger.info('Attempting to update message', {
+        messageId,
+        applicationId: env.DISCORD_APPLICATION_ID,
+        tokenLength: interactionToken.length,
+      });
 
       await updateOriginalMessage(
         env.DISCORD_APPLICATION_ID,
@@ -526,6 +562,11 @@ export class EditModalController {
         messageData,
         messageId
       );
+
+      this.logger.info('Successfully updated main message', {
+        scheduleId,
+        messageId,
+      });
     } catch (error) {
       this.logger.error(
         'Error updating main message:',
