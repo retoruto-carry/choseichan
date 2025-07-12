@@ -169,9 +169,11 @@ npm run db:shell -- --command="SELECT COUNT(*) FROM schedules"
 - **テスト**: Vitest (461テスト - 100%パス)
 - **コード品質**: Biome
 
+詳細なアーキテクチャについては [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を参照してください。
 
 ## 📖 ドキュメント
 
+- [アーキテクチャ](docs/ARCHITECTURE.md) - システム設計の詳細
 - [デプロイガイド](docs/DEPLOY.md) - 詳細なセットアップ手順
 - [Queuesデプロイガイド](docs/QUEUES_DEPLOYMENT.md) - Cloudflare Queuesの設定と運用
 - [開発者向けガイド](CLAUDE.md) - AI アシスタント向けの開発ガイド
