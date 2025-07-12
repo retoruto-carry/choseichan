@@ -10,10 +10,51 @@ describe('ModalController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    // Create a complete mock container with all required properties
     mockContainer = {
-      getScheduleService: vi.fn(),
-      getResponseService: vi.fn(),
-      getNotificationService: vi.fn(),
+      infrastructureServices: {
+        repositoryFactory: {
+          getScheduleRepository: vi.fn(),
+          getResponseRepository: vi.fn(),
+        },
+        discordApiService: {
+          sendWebhookMessage: vi.fn(),
+          updateMessage: vi.fn(),
+          deleteMessage: vi.fn(),
+          getGuildMember: vi.fn(),
+          createInteractionResponse: vi.fn(),
+        },
+      },
+      applicationServices: {
+        createScheduleUseCase: {
+          execute: vi.fn().mockResolvedValue({
+            success: true,
+            schedule: { id: 'schedule-123' },
+          }),
+        },
+        updateScheduleUseCase: { execute: vi.fn() },
+        closeScheduleUseCase: { execute: vi.fn() },
+        reopenScheduleUseCase: { execute: vi.fn() },
+        deleteScheduleUseCase: { execute: vi.fn() },
+        getScheduleUseCase: { execute: vi.fn() },
+        findSchedulesUseCase: { execute: vi.fn() },
+        getScheduleSummaryUseCase: { execute: vi.fn() },
+        deadlineReminderUseCase: { execute: vi.fn() },
+        processReminderUseCase: { execute: vi.fn() },
+        processDeadlineRemindersUseCase: null,
+        submitResponseUseCase: { execute: vi.fn() },
+        updateResponseUseCase: { execute: vi.fn() },
+        getResponseUseCase: { execute: vi.fn() },
+      },
+      get createScheduleUseCase() {
+        return this.applicationServices.createScheduleUseCase;
+      },
+      get updateScheduleUseCase() {
+        return this.applicationServices.updateScheduleUseCase;
+      },
+      get submitResponseUseCase() {
+        return this.applicationServices.submitResponseUseCase;
+      },
     } as unknown as DependencyContainer;
 
     mockEnv = {
@@ -62,15 +103,6 @@ describe('ModalController', () => {
         guild_id: 'guild-456',
         channel_id: 'channel-789',
       };
-
-      // Mock the create schedule use case
-      const mockCreateScheduleUseCase = {
-        execute: vi.fn().mockResolvedValue({ id: 'schedule-123' }),
-      };
-
-      (mockContainer as any).getScheduleService = vi.fn().mockReturnValue({
-        createSchedule: mockCreateScheduleUseCase,
-      });
 
       const result = await controller.handleModalSubmit(mockInteraction as any, mockEnv);
 

@@ -86,7 +86,7 @@ describe('DependencyContainer', () => {
       const containerWithoutNotification = new DependencyContainer(envWithoutCredentials);
       expect(
         containerWithoutNotification.applicationServices.processDeadlineRemindersUseCase
-      ).toBeDefined();
+      ).toBeNull();
     });
   });
 

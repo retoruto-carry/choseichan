@@ -38,7 +38,7 @@ export interface ApplicationServices {
   getScheduleSummaryUseCase: GetScheduleSummaryUseCase;
   deadlineReminderUseCase: DeadlineReminderUseCase;
   processReminderUseCase: ProcessReminderUseCase;
-  processDeadlineRemindersUseCase: ProcessDeadlineRemindersUseCase;
+  processDeadlineRemindersUseCase: ProcessDeadlineRemindersUseCase | null;
 
   // Response Use Cases
   submitResponseUseCase: SubmitResponseUseCase;
@@ -142,9 +142,7 @@ export class DependencyContainer {
       getScheduleSummaryUseCase,
       deadlineReminderUseCase,
       processReminderUseCase,
-      processDeadlineRemindersUseCase: processDeadlineRemindersUseCase || (() => {
-        throw new Error('ProcessDeadlineRemindersUseCase is not initialized');
-      })(),
+      processDeadlineRemindersUseCase,
 
       // Response Use Cases
       submitResponseUseCase,
