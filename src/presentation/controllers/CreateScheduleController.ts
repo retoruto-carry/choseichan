@@ -213,19 +213,21 @@ export class CreateScheduleController {
       return;
     }
 
-    const timingsDisplay = schedule.reminderTimings.join(', ');
+    const timingsDisplay = schedule.reminderTimings
+      .map((timing) => this.formatReminderTiming(timing))
+      .join('/');
     const mentionDisplay =
       schedule.reminderMentions?.map((m: string) => `\`${m}\``).join(' ') || '`@here`';
 
     await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interactionToken, {
-      content: `⏰ 締切前リマインダーを設定しました！\n締切の ${timingsDisplay} 前に ${mentionDisplay} にリマインダーを送信します。`,
+      content: `⏰ 締切前リマインダーを設定しました！\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーを送信します。`,
       components: [
         {
           type: 1, // ACTION_ROW
           components: [
             {
               type: 2, // BUTTON
-              style: 2, // SECONDARY
+              style: 1, // PRIMARY (青)
               label: 'リマインダー編集',
               custom_id: createEditReminderButtonId(schedule.id),
               emoji: { name: '⚙️' },
@@ -235,6 +237,28 @@ export class CreateScheduleController {
       ],
       flags: InteractionResponseFlags.EPHEMERAL,
     });
+  }
+
+  /**
+   * リマインダータイミングを日本語表示に変換
+   */
+  private formatReminderTiming(timing: string): string {
+    const match = timing.match(/^(\d+)([dhm])$/);
+    if (!match) return timing;
+
+    const value = parseInt(match[1]);
+    const unit = match[2];
+
+    switch (unit) {
+      case 'd':
+        return `${value}日前`;
+      case 'h':
+        return `${value}時間前`;
+      case 'm':
+        return `${value}分前`;
+      default:
+        return timing;
+    }
   }
 
   private createErrorResponse(message: string): Response {
