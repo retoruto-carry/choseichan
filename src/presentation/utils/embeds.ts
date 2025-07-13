@@ -52,7 +52,7 @@ export function createScheduleEmbed(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
-      text: `作成：${schedule.createdBy.username}`,
+      text: `作成：${schedule.createdBy.displayName || schedule.createdBy.username}`,
     },
     timestamp:
       schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt,
@@ -90,7 +90,7 @@ export function createScheduleEmbedWithTable(
               : status === 'maybe'
                 ? STATUS_EMOJI.maybe
                 : STATUS_EMOJI.no;
-          return `${statusEmoji} ${ur.username}`;
+          return `${statusEmoji} ${ur.displayName || ur.username}`;
         })
         .filter((r): r is string => r !== null);
 
@@ -128,7 +128,7 @@ export function createScheduleEmbedWithTable(
     color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
     fields: dateFields.slice(0, 25), // Discord's limit
     footer: {
-      text: `作成：${schedule.createdBy.username}`,
+      text: `作成：${schedule.createdBy.displayName || schedule.createdBy.username}`,
     },
     timestamp: schedule.updatedAt,
   };

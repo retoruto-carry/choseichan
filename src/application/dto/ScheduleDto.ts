@@ -9,6 +9,7 @@ export interface CreateScheduleRequest {
   channelId: string;
   authorId: string;
   authorUsername: string;
+  authorDisplayName?: string;
   title: string;
   description?: string;
   dates: Array<{

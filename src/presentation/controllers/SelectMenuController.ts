@@ -9,6 +9,7 @@ import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
+import { getDisplayName } from '../../utils/discord';
 import { createErrorResponse } from '../utils/responses';
 
 export class SelectMenuController {
@@ -32,7 +33,7 @@ export class SelectMenuController {
       const selectedValue = interaction.data.values?.[0] || 'none';
       const guildId = interaction.guild_id || 'default';
       const userId = interaction.member?.user.id || interaction.user?.id || '';
-      const username = interaction.member?.user.username || interaction.user?.username || 'Unknown';
+      const username = getDisplayName(interaction);
 
       // スケジュール取得
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
@@ -76,6 +77,7 @@ export class SelectMenuController {
         scheduleId,
         userId,
         username,
+        displayName: username, // username is already the display name from getDisplayName()
         responses: currentResponses,
         guildId,
       });

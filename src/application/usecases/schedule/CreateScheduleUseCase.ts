@@ -38,7 +38,7 @@ export class CreateScheduleUseCase {
       }
 
       // 2. ドメインオブジェクトの構築
-      const user = User.create(request.authorId, request.authorUsername);
+      const user = User.create(request.authorId, request.authorUsername, request.authorDisplayName);
 
       const dates = request.dates.map((dateData) =>
         ScheduleDate.create(dateData.id, dateData.datetime)

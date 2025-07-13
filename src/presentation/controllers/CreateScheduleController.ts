@@ -12,6 +12,7 @@ import { DependencyContainer } from '../../infrastructure/factories/DependencyCo
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseUserInputDate } from '../../utils/date';
+import { getDisplayName, getUserId } from '../../utils/discord';
 import { generateId } from '../../utils/id';
 import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
@@ -32,8 +33,8 @@ export class CreateScheduleController {
   async handleCreateScheduleModal(interaction: ModalInteraction, env: Env): Promise<Response> {
     try {
       const guildId = interaction.guild_id || 'default';
-      const authorId = interaction.member?.user.id || interaction.user?.id || '';
-      const username = interaction.member?.user.username || interaction.user?.username || '';
+      const authorId = getUserId(interaction) || '';
+      const username = getDisplayName(interaction);
 
       if (!authorId) {
         return this.createErrorResponse('ユーザー情報を取得できませんでした。');
@@ -81,6 +82,7 @@ export class CreateScheduleController {
         channelId: interaction.channel_id || '',
         authorId: authorId,
         authorUsername: username,
+        authorDisplayName: username, // username is already the display name from getDisplayName()
         title,
         description,
         dates: scheduleDates,

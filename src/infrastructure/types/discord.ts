@@ -26,6 +26,7 @@ export interface DiscordUser {
   username: string;
   discriminator: string;
   avatar?: string;
+  global_name?: string;
 }
 
 export interface CommandInteraction {
@@ -41,6 +42,7 @@ export interface CommandInteraction {
   member?: {
     user: DiscordUser;
     roles: string[];
+    nick?: string;
   };
   user?: DiscordUser;
   token: string;
@@ -66,6 +68,7 @@ export interface ButtonInteraction {
   member?: {
     user: DiscordUser;
     roles: string[];
+    nick?: string;
   };
   user?: DiscordUser;
   token: string;
@@ -99,6 +102,7 @@ export interface ModalInteraction {
   member?: {
     user: DiscordUser;
     roles: string[];
+    nick?: string;
   };
   user?: DiscordUser;
   token: string;

@@ -7,6 +7,19 @@ import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastruct
 import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';
 
+// Mock the discord utils
+vi.mock('../../utils/discord', () => ({
+  getDisplayName: vi.fn(
+    (interaction: any) =>
+      interaction.member?.user?.username || interaction.user?.username || 'Unknown'
+  ),
+}));
+
+vi.mock('../utils/discord', () => ({
+  sendFollowupMessage: vi.fn(),
+  updateOriginalMessage: vi.fn(),
+}));
+
 describe('VoteController', () => {
   let controller: VoteController;
   let mockContainer: DependencyContainer;
@@ -345,6 +358,7 @@ describe('VoteController', () => {
         scheduleId: 'schedule-123',
         userId: 'user-456',
         username: 'Responder',
+        displayName: 'Responder',
         responses: [
           { dateId: 'date-1', status: 'ok' },
           { dateId: 'date-2', status: 'maybe' },

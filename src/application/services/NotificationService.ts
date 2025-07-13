@@ -273,7 +273,7 @@ export class NotificationService {
               name: '基本情報',
               value: [
                 `参加者数: ${responses.length}人`,
-                `作成者: ${schedule.createdBy.username}`,
+                `作成者: ${schedule.createdBy.displayName || schedule.createdBy.username}`,
                 `作成日: ${new Date(schedule.createdAt).toLocaleDateString('ja-JP')}`,
               ].join('\n'),
               inline: false,
@@ -288,7 +288,7 @@ export class NotificationService {
                   const status = response.dateStatuses[date.id];
                   if (!status) return null;
                   const statusEmoji = status === 'ok' ? '✅' : status === 'maybe' ? '❓' : '❌';
-                  return `${statusEmoji} ${response.username}`;
+                  return `${statusEmoji} ${response.displayName || response.username}`;
                 })
                 .filter(Boolean);
 

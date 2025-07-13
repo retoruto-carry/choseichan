@@ -14,6 +14,7 @@ import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
+import { getDisplayName } from '../../utils/discord';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { sendFollowupMessage, updateOriginalMessage } from '../utils/discord';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
@@ -224,7 +225,7 @@ export class VoteController {
       const [scheduleId] = params;
       const guildId = interaction.guild_id || 'default';
       const userId = interaction.member?.user.id || interaction.user?.id || '';
-      const username = interaction.member?.user.username || interaction.user?.username || 'Unknown';
+      const username = getDisplayName(interaction);
 
       // Get schedule using Clean Architecture
       const scheduleResult = await this.dependencyContainer.getScheduleUseCase.execute(
@@ -265,6 +266,7 @@ export class VoteController {
         scheduleId,
         userId,
         username,
+        displayName: username, // username is already the display name from getDisplayName()
         responses,
         guildId,
       });

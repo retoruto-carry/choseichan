@@ -133,7 +133,7 @@ export class ScheduleMainMessageBuilder {
 
     // 新規作成時のみcontentを追加
     const content = isNewlyCreated
-      ? `${targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`
+      ? `${targetSchedule.createdBy.displayName || targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`
       : undefined;
 
     return { embed, components, content };
