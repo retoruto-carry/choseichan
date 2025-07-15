@@ -12,7 +12,7 @@ import {
   type MessageUpdateService,
   MessageUpdateType,
 } from '../../domain/services/MessageUpdateService';
-import type { MessageUpdateQueuePort } from '../../infrastructure/ports/MessageUpdateQueuePort';
+import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 
 export class MessageUpdateServiceImpl implements MessageUpdateService {
   constructor(private readonly queuePort: MessageUpdateQueuePort) {}

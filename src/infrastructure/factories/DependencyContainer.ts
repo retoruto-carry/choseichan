@@ -6,8 +6,11 @@
  */
 
 import type { BackgroundExecutorPort } from '../../application/ports/BackgroundExecutorPort';
+import type { DeadlineReminderQueuePort } from '../../application/ports/DeadlineReminderQueuePort';
+import type { MessageUpdateQueuePort } from '../../application/ports/MessageUpdateQueuePort';
 import { MessageUpdateServiceImpl } from '../../application/services/MessageUpdateServiceImpl';
 import { NotificationService } from '../../application/services/NotificationService';
+import { ScheduleUpdaterService } from '../../application/services/ScheduleUpdaterService';
 import { ProcessMessageUpdateUseCase } from '../../application/usecases/message/ProcessMessageUpdateUseCase';
 import { ProcessDeadlineRemindersUseCase } from '../../application/usecases/ProcessDeadlineRemindersUseCase';
 import { GetResponseUseCase } from '../../application/usecases/response/GetResponseUseCase';
@@ -33,8 +36,6 @@ import { LoggerAdapter } from '../adapters/LoggerAdapter';
 import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import { TestBackgroundExecutorAdapter } from '../adapters/TestBackgroundExecutorAdapter';
 import { WorkersBackgroundExecutorAdapter } from '../adapters/WorkersBackgroundExecutorAdapter';
-import type { DeadlineReminderQueuePort } from '../ports/DeadlineReminderQueuePort';
-import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 import type { Env } from '../types/discord';
 import { createRepositoryFactory } from './factory';
 
@@ -59,8 +60,9 @@ export interface ApplicationServices {
   // Message Update Use Cases
   processMessageUpdateUseCase: ProcessMessageUpdateUseCase | null;
 
-  // Notification Service
+  // Services
   notificationService: NotificationService | null;
+  scheduleUpdaterService: ScheduleUpdaterService;
 }
 
 export interface InfrastructureServices {
@@ -182,7 +184,8 @@ export class DependencyContainer {
         getScheduleSummaryUseCase,
         this._env.DISCORD_TOKEN,
         this._env.DISCORD_APPLICATION_ID,
-        infrastructure.backgroundExecutor
+        infrastructure.backgroundExecutor,
+        new MessageFormatterAdapter()
       );
     }
 
@@ -212,6 +215,16 @@ export class DependencyContainer {
         )
       : null;
 
+    // Create ScheduleUpdaterService
+    const scheduleUpdaterService = new ScheduleUpdaterService(
+      getScheduleUseCase,
+      getScheduleSummaryUseCase,
+      updateScheduleUseCase,
+      discordApiAdapter,
+      new MessageFormatterAdapter(),
+      loggerAdapter
+    );
+
     return {
       // Schedule Use Cases
       createScheduleUseCase,
@@ -233,8 +246,9 @@ export class DependencyContainer {
       // Message Update Use Cases
       processMessageUpdateUseCase,
 
-      // Notification Service
+      // Services
       notificationService,
+      scheduleUpdaterService,
     };
   }
 

@@ -1,5 +1,5 @@
 import type { InteractionResponseType, InteractionType } from 'discord-interactions';
-import type { MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
+import type { MessageUpdateTask } from '../../application/ports/MessageUpdateQueuePort';
 import type { DiscordComponent, DiscordEmbed } from './discord-api';
 
 export interface Env {

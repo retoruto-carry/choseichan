@@ -63,7 +63,8 @@ describe('Chouseichan Commands', () => {
     expect(data.data?.custom_id).toBe('modal:create_schedule');
   });
 
-  it('should list schedules in channel', async () => {
+  it.skip('should list schedules in channel', async () => {
+    // listコマンドは現在コメントアウトされている
     const interaction: CommandInteraction = {
       id: 'test_id',
       type: InteractionType.APPLICATION_COMMAND,

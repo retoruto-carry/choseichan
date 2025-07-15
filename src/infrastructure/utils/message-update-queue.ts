@@ -4,9 +4,9 @@
  * Cloudflare Queuesのバッチ処理を行うエントリーポイント
  */
 
+import type { MessageUpdateTask } from '../../application/ports/MessageUpdateQueuePort';
 import { DependencyContainer } from '../factories/DependencyContainer';
 import { getLogger } from '../logging/Logger';
-import type { MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 import type { Env } from '../types/discord';
 
 const logger = getLogger();

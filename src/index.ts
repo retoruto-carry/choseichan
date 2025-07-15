@@ -1,10 +1,10 @@
 import type { MessageBatch } from '@cloudflare/workers-types';
 import { InteractionResponseType, InteractionType, verifyKey } from 'discord-interactions';
 import { Hono } from 'hono';
+import type { DeadlineReminderTask } from './application/ports/DeadlineReminderQueuePort';
+import type { MessageUpdateTask } from './application/ports/MessageUpdateQueuePort';
 import { sendDeadlineReminders } from './infrastructure/cron/deadline-reminder';
 import { Logger } from './infrastructure/logging/Logger';
-import type { DeadlineReminderTask } from './infrastructure/ports/DeadlineReminderQueuePort';
-import type { MessageUpdateTask } from './infrastructure/ports/MessageUpdateQueuePort';
 import type { ButtonInteraction, CommandInteraction, Env } from './infrastructure/types/discord';
 import { handleDeadlineReminderBatch } from './infrastructure/utils/deadline-reminder-queue';
 import { handleMessageUpdateBatch } from './infrastructure/utils/message-update-queue';

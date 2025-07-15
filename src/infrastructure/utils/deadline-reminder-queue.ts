@@ -4,11 +4,12 @@
  * 締切リマインダーのキューコンシューマー
  */
 
+import type { DeadlineReminderTask } from '../../application/ports/DeadlineReminderQueuePort';
 import { NotificationService } from '../../application/services/NotificationService';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
+import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import { DependencyContainer } from '../factories/DependencyContainer';
-import type { DeadlineReminderTask } from '../ports/DeadlineReminderQueuePort';
 import type { Env } from '../types/discord';
 
 export async function handleDeadlineReminderBatch(
@@ -33,7 +34,8 @@ export async function handleDeadlineReminderBatch(
     container.getScheduleSummaryUseCase,
     discordToken,
     applicationId,
-    container.infrastructureServices.backgroundExecutor
+    container.infrastructureServices.backgroundExecutor,
+    new MessageFormatterAdapter()
   );
 
   // Process all tasks in the batch

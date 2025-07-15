@@ -7,7 +7,7 @@
 import type {
   DeadlineReminderQueuePort,
   DeadlineReminderTask,
-} from '../ports/DeadlineReminderQueuePort';
+} from '../../application/ports/DeadlineReminderQueuePort';
 
 export class DeadlineReminderQueueAdapter implements DeadlineReminderQueuePort {
   constructor(private queue: Queue<DeadlineReminderTask>) {}

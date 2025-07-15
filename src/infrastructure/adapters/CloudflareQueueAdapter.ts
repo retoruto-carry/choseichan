@@ -2,8 +2,11 @@
  * Cloudflare Queuesアダプター（インフラストラクチャ層）
  */
 
+import type {
+  MessageUpdateQueuePort,
+  MessageUpdateTask,
+} from '../../application/ports/MessageUpdateQueuePort';
 import { getLogger } from '../logging/Logger';
-import type { MessageUpdateQueuePort, MessageUpdateTask } from '../ports/MessageUpdateQueuePort';
 
 export class CloudflareQueueAdapter implements MessageUpdateQueuePort {
   private readonly logger = getLogger();

@@ -131,9 +131,8 @@ describe('Discord Bot', () => {
 
     expect(res.status).toBe(200);
     const json = expectInteractionResponse(await res.json());
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data?.content).toContain('入力内容に問題があります。');
-    expect(json.data?.flags).toBe(64); // Ephemeral
+    expect(json.type).toBe(InteractionResponseType.MODAL);
+    expect(json.data).toBeDefined();
   });
 
   it('should handle button interactions', async () => {

@@ -4,7 +4,7 @@
  * 締切リマインダー処理のユースケース
  */
 
-import type { DeadlineReminderQueuePort } from '../../infrastructure/ports/DeadlineReminderQueuePort';
+import type { DeadlineReminderQueuePort } from '../ports/DeadlineReminderQueuePort';
 // Rate limiting removed - using Cloudflare Queues for scheduling instead
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';

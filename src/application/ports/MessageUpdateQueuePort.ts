@@ -1,5 +1,5 @@
 /**
- * メッセージ更新キューのポート定義（インフラストラクチャ層）
+ * メッセージ更新キューのポート定義（アプリケーション層）
  */
 
 import type { MessageUpdateRequest } from '../../domain/services/MessageUpdateService';

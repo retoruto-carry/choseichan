@@ -25,6 +25,7 @@ import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { EnvironmentAdapter } from '../adapters/EnvironmentAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
+import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import { TestBackgroundExecutorAdapter } from '../adapters/TestBackgroundExecutorAdapter';
 import { WorkersBackgroundExecutorAdapter } from '../adapters/WorkersBackgroundExecutorAdapter';
 // Infrastructure
@@ -81,6 +82,12 @@ function registerInfrastructureServices(container: IDIContainer, env: Env): void
       ? new WorkersBackgroundExecutorAdapter(env.ctx)
       : new TestBackgroundExecutorAdapter();
   });
+
+  // Message Formatter (Singleton)
+  container.registerSingleton(
+    SERVICE_TOKENS.MESSAGE_FORMATTER,
+    () => new MessageFormatterAdapter()
+  );
 }
 
 function registerApplicationServices(container: IDIContainer, env: Env): void {
@@ -102,7 +109,8 @@ function registerApplicationServices(container: IDIContainer, env: Env): void {
         c.resolve(SERVICE_TOKENS.GET_SCHEDULE_SUMMARY_USE_CASE),
         discordToken,
         applicationId,
-        c.resolve(SERVICE_TOKENS.BACKGROUND_EXECUTOR)
+        c.resolve(SERVICE_TOKENS.BACKGROUND_EXECUTOR),
+        c.resolve(SERVICE_TOKENS.MESSAGE_FORMATTER)
       );
     });
   }

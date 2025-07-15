@@ -10,12 +10,12 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
-import { ScheduleMainMessageBuilder } from '../../presentation/builders/ScheduleMainMessageBuilder';
 import { formatDate } from '../../utils/date';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
+import type { IMessageFormatterPort } from '../ports/MessageFormatterPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 
 interface DiscordMessage {
@@ -40,7 +40,8 @@ export class NotificationService {
     private getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
     private discordToken: string,
     private applicationId: string,
-    private backgroundExecutor: BackgroundExecutorPort
+    private backgroundExecutor: BackgroundExecutorPort,
+    private messageFormatter: IMessageFormatterPort
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
@@ -330,11 +331,9 @@ export class NotificationService {
       }
 
       // 締切済みスケジュールなので投票ボタンのみ非表示、その他のボタンは表示
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
+      const { embed, components } = this.messageFormatter.formatScheduleMessage(
         summaryResult.summary,
-        undefined,
-        false, // 簡易表示
-        false // 投票ボタン非表示（締切済み、編集・更新・詳細ボタンは表示）
+        false // 投票ボタン非表示（締切済み）
       );
 
       await this.discordApi.updateMessage(

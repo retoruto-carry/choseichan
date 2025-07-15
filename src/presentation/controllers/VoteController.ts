@@ -11,6 +11,7 @@ import { NotificationService } from '../../application/services/NotificationServ
 import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
 import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
+import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFormatterAdapter';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
@@ -416,7 +417,8 @@ export class VoteController {
         this.dependencyContainer.getScheduleSummaryUseCase,
         discordToken,
         applicationId,
-        this.dependencyContainer.infrastructureServices.backgroundExecutor
+        this.dependencyContainer.infrastructureServices.backgroundExecutor,
+        new MessageFormatterAdapter()
       );
 
       // Send summary message

@@ -145,7 +145,13 @@ describe('NotificationService', () => {
       mockGetScheduleSummaryUseCase,
       mockToken,
       mockAppId,
-      mockBackgroundExecutor
+      mockBackgroundExecutor,
+      {
+        formatScheduleMessage: vi.fn().mockReturnValue({
+          embed: { title: 'Test Schedule' },
+          components: [],
+        }),
+      }
     );
   });
 

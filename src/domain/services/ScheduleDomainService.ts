@@ -5,7 +5,7 @@
  * エンティティ単体では表現できないドメインの知識を含む
  */
 
-import { BUSINESS_CONSTANTS } from '../../constants/ApplicationConstants';
+import { BUSINESS_CONSTANTS } from '../constants/BusinessConstants';
 import type { Response } from '../entities/Response';
 import type { Schedule } from '../entities/Schedule';
 import type { ScheduleDate } from '../entities/ScheduleDate';

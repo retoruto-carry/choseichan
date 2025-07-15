@@ -199,6 +199,7 @@ export const SERVICE_TOKENS = {
   DISCORD_API_ADAPTER: Symbol('DiscordApiAdapter'),
   ENVIRONMENT_ADAPTER: Symbol('EnvironmentAdapter'),
   BACKGROUND_EXECUTOR: Symbol('BackgroundExecutor'),
+  MESSAGE_FORMATTER: Symbol('MessageFormatter'),
 
   // Application Services
   NOTIFICATION_SERVICE: Symbol('NotificationService'),
