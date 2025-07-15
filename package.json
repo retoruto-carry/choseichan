@@ -17,7 +17,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check . && tsc --noEmit",
-    "register": "node scripts/register-commands.js",
+    "register": "tsx scripts/register-commands.ts",
     "db:migrate:remote": "wrangler d1 migrations apply chouseichan-db --remote",
     "db:migrate:local": "wrangler d1 migrations apply chouseichan-db --local",
     "db:migrate:create": "wrangler d1 migrations create chouseichan-db",

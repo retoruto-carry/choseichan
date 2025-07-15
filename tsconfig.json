@@ -20,5 +20,5 @@
     }
   },
   "include": ["src/**/*", "tests/**/*", "vitest-env.d.ts", "worker-configuration.d.ts"],
-  "exclude": ["node_modules", "dist", "tests/legacy-tests/**/*"]
+  "exclude": ["node_modules", "dist"]
 }
