@@ -28,7 +28,6 @@ interface ScheduleRow {
   total_responses: number;
   created_at: number;
   updated_at: number;
-  expires_at: number;
 }
 
 interface ScheduleDateRow {
@@ -42,11 +41,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
   async save(schedule: DomainSchedule): Promise<void> {
     const guildId = schedule.guildId || 'default';
 
-    // Calculate expiration time
-    const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
-    const expiresAt =
-      Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) +
-      TIME_CONSTANTS.SIX_MONTHS_SECONDS;
+    // No expiration time needed - removed expires_at field
 
     try {
       // Start transaction
@@ -64,8 +59,8 @@ export class D1ScheduleRepository implements IScheduleRepository {
             created_by_id, created_by_username, author_id,
             deadline, reminder_timings, reminder_mentions, reminders_sent,
             status, notification_sent, total_responses,
-            created_at, updated_at, expires_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             channel_id = excluded.channel_id,
             message_id = excluded.message_id,
@@ -78,8 +73,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
             status = excluded.status,
             notification_sent = excluded.notification_sent,
             total_responses = excluded.total_responses,
-            updated_at = excluded.updated_at,
-            expires_at = excluded.expires_at
+            updated_at = excluded.updated_at
         `)
           .bind(
             schedule.id,
@@ -99,8 +93,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
             schedule.notificationSent ? 1 : 0,
             schedule.totalResponses,
             Math.floor(schedule.createdAt.getTime() / 1000),
-            Math.floor(schedule.updatedAt.getTime() / 1000),
-            expiresAt
+            Math.floor(schedule.updatedAt.getTime() / 1000)
           ),
 
         // Insert schedule dates
@@ -144,7 +137,6 @@ export class D1ScheduleRepository implements IScheduleRepository {
           s.total_responses,
           s.created_at,
           s.updated_at,
-          s.expires_at,
           sd.date_id,
           sd.datetime,
           sd.display_order
@@ -179,7 +171,6 @@ export class D1ScheduleRepository implements IScheduleRepository {
         total_responses: firstRow.total_responses,
         created_at: firstRow.created_at,
         updated_at: firstRow.updated_at,
-        expires_at: firstRow.expires_at,
       };
 
       // 日付データを抽出（date_idがnullでない場合のみ）

@@ -90,8 +90,7 @@ describe('D1ResponseRepository', () => {
         'user-456',
         'RespondentUser',
         null, // displayName
-        expect.any(Number), // updatedAt
-        expect.any(Number) // expiresAt
+        expect.any(Number) // updatedAt
       );
 
       // Verify date status inserts

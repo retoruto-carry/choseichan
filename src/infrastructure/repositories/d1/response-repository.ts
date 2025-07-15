@@ -23,16 +23,13 @@ export class D1ResponseRepository implements IResponseRepository {
   ) {}
 
   async save(response: DomainResponse, guildId: string = 'default'): Promise<void> {
-    // Get schedule to determine expiration time
+    // Check if schedule exists
     const schedule = await this.scheduleRepository.findById(response.scheduleId, guildId);
     if (!schedule) {
       throw new RepositoryError('Schedule not found', 'NOT_FOUND');
     }
 
-    const baseTime = schedule.deadline ? schedule.deadline.getTime() : schedule.createdAt.getTime();
-    const expiresAt =
-      Math.floor(baseTime / TIME_CONSTANTS.MILLISECONDS_PER_SECOND) +
-      TIME_CONSTANTS.SIX_MONTHS_SECONDS;
+    // No expiration time needed - removed expires_at field
 
     try {
       // First, insert or update the response
@@ -40,13 +37,12 @@ export class D1ResponseRepository implements IResponseRepository {
         .prepare(`
         INSERT INTO responses (
           schedule_id, guild_id, user_id, username, display_name, 
-          updated_at, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(schedule_id, user_id) DO UPDATE SET
           username = excluded.username,
           display_name = excluded.display_name,
-          updated_at = excluded.updated_at,
-          expires_at = excluded.expires_at
+          updated_at = excluded.updated_at
         RETURNING id
       `)
         .bind(
@@ -55,8 +51,7 @@ export class D1ResponseRepository implements IResponseRepository {
           response.userId,
           response.username,
           response.displayName || null,
-          Math.floor(response.updatedAt.getTime() / 1000),
-          expiresAt
+          Math.floor(response.updatedAt.getTime() / 1000)
         )
         .first<{ id: number }>();
 

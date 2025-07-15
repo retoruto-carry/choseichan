@@ -59,7 +59,6 @@ export interface D1ScheduleRow {
   total_responses: number;
   created_at: number;
   updated_at: number;
-  expires_at: number;
   date_id?: string;
   datetime?: string;
   display_order?: number;

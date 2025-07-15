@@ -139,7 +139,6 @@ describe('DependencyContainer', () => {
         getResponseRepository: vi.fn(),
         beginTransaction: vi.fn(),
         initialize: vi.fn(),
-        cleanupExpiredData: vi.fn(),
       };
 
       container.replaceInfrastructureService('repositoryFactory', mockRepositoryFactory);

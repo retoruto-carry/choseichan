@@ -103,35 +103,7 @@ export class D1RepositoryFactory implements IRepositoryFactory {
   }
 
   /**
-   * 期限切れデータのクリーンアップ
+   * Note: expires_at fields were removed - no automatic cleanup needed
+   * Manual schedule management should be done through application logic
    */
-  async cleanupExpiredData(): Promise<void> {
-    try {
-      const now = Math.floor(Date.now() / 1000);
-
-      // Delete expired schedules (cascade will handle related tables)
-      await this.db
-        .prepare(`
-        DELETE FROM schedules WHERE expires_at < ?
-      `)
-        .bind(now)
-        .run();
-
-      // Delete orphaned expired responses
-      await this.db
-        .prepare(`
-        DELETE FROM responses WHERE expires_at < ?
-      `)
-        .bind(now)
-        .run();
-
-      logger.info('期限切れデータのクリーンアップが完了しました');
-    } catch (error) {
-      logger.error(
-        '期限切れデータのクリーンアップに失敗しました',
-        error instanceof Error ? error : new Error(String(error))
-      );
-      throw new TransactionError('Cleanup failed', error as Error);
-    }
-  }
 }

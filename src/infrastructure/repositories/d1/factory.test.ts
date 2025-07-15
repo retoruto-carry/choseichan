@@ -95,25 +95,7 @@ describe('D1RepositoryFactory', () => {
     });
   });
 
-  describe('cleanupExpiredData', () => {
-    it('should cleanup expired schedules and responses', async () => {
-      await factory.cleanupExpiredData();
-
-      // Verify cleanup queries were executed
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM schedules WHERE expires_at < ?')
-      );
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM responses WHERE expires_at < ?')
-      );
-    });
-
-    it('should handle cleanup errors', async () => {
-      mockDb._mockStatement.run.mockRejectedValueOnce(new Error('Database error'));
-
-      await expect(factory.cleanupExpiredData()).rejects.toThrow(TransactionError);
-    });
-  });
+  // Note: cleanupExpiredData removed - expires_at fields no longer exist
 });
 
 describe('D1Transaction', () => {
