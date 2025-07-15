@@ -9,7 +9,7 @@ import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
-import { getDisplayName } from '../../utils/discord';
+import { getDisplayName } from '../utils/discord-helpers';
 import { createErrorResponse } from '../utils/responses';
 
 export class SelectMenuController {

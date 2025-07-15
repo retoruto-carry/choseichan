@@ -1,6 +1,6 @@
 /**
- * Discord API レスポンス用の型定義
- * data: any の代替として使用
+ * Discord API レスポンスの型安全な定義
+ * Discord API仕様に準拠した厳密な型定義
  */
 
 export interface DiscordEmbed {

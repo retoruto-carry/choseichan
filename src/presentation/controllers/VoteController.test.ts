@@ -8,7 +8,7 @@ import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';
 
 // Mock the discord utils
-vi.mock('../../utils/discord', () => ({
+vi.mock('../utils/discord-helpers', () => ({
   getDisplayName: vi.fn(
     (interaction: any) =>
       interaction.member?.user?.username || interaction.user?.username || 'Unknown'

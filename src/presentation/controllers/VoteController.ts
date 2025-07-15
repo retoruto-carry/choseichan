@@ -15,9 +15,9 @@ import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFo
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
-import { getDisplayName } from '../../utils/discord';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { sendFollowupMessage, updateOriginalMessage } from '../utils/discord';
+import { getDisplayName } from '../utils/discord-helpers';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
 import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
 

@@ -148,9 +148,13 @@ export class DependencyContainer {
     const scheduleRepository = infrastructure.repositoryFactory.getScheduleRepository();
     const responseRepository = infrastructure.repositoryFactory.getResponseRepository();
 
+    // Create Adapters
+    const loggerAdapter = new LoggerAdapter();
+    const discordApiAdapter = new DiscordApiAdapter();
+
     // Create base use cases
-    const createScheduleUseCase = new CreateScheduleUseCase(scheduleRepository);
-    const updateScheduleUseCase = new UpdateScheduleUseCase(scheduleRepository);
+    const createScheduleUseCase = new CreateScheduleUseCase(scheduleRepository, loggerAdapter);
+    const updateScheduleUseCase = new UpdateScheduleUseCase(scheduleRepository, loggerAdapter);
     const closeScheduleUseCase = new CloseScheduleUseCase(scheduleRepository);
     const deleteScheduleUseCase = new DeleteScheduleUseCase(scheduleRepository, responseRepository);
     const getScheduleUseCase = new GetScheduleUseCase(scheduleRepository, responseRepository);
@@ -168,9 +172,6 @@ export class DependencyContainer {
     const updateResponseUseCase = new UpdateResponseUseCase(scheduleRepository, responseRepository);
     const getResponseUseCase = new GetResponseUseCase(responseRepository);
 
-    // Create Adapters
-    const loggerAdapter = new LoggerAdapter();
-    const discordApiAdapter = new DiscordApiAdapter();
     const environmentAdapter = new EnvironmentAdapter(this._env);
 
     // Create NotificationService if credentials are available

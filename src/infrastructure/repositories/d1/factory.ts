@@ -9,9 +9,12 @@ import type {
   IScheduleRepository,
   ITransaction,
 } from '../../../domain/repositories/interfaces';
+import { getLogger } from '../../logging/Logger';
 import { TransactionError } from '../errors';
 import { D1ResponseRepository } from './response-repository';
 import { D1ScheduleRepository } from './schedule-repository';
+
+const logger = getLogger();
 
 /**
  * D1トランザクション実装
@@ -94,9 +97,8 @@ export class D1RepositoryFactory implements IRepositoryFactory {
    * データベースの初期化（マイグレーション実行）
    */
   async initialize(): Promise<void> {
-    // This would typically run migrations, but for now we assume
-    // migrations are handled by wrangler d1 migrations
-    console.log('D1 database initialized');
+    // マイグレーションはwrangler d1 migrationsで管理
+    logger.info('D1データベースを初期化しました');
   }
 
   /**
@@ -122,9 +124,12 @@ export class D1RepositoryFactory implements IRepositoryFactory {
         .bind(now)
         .run();
 
-      console.log('Expired data cleanup completed');
+      logger.info('期限切れデータのクリーンアップが完了しました');
     } catch (error) {
-      console.error('Failed to cleanup expired data:', error);
+      logger.error(
+        '期限切れデータのクリーンアップに失敗しました',
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw new TransactionError('Cleanup failed', error as Error);
     }
   }

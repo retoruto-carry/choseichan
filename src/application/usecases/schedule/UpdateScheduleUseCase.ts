@@ -12,6 +12,7 @@ import type { IScheduleRepository } from '../../../domain/repositories/interface
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import type { ScheduleResponse, UpdateScheduleRequest } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
+import type { ILogger } from '../../ports/LoggerPort';
 
 export interface UpdateScheduleUseCaseResult {
   success: boolean;
@@ -20,7 +21,10 @@ export interface UpdateScheduleUseCaseResult {
 }
 
 export class UpdateScheduleUseCase {
-  constructor(private readonly scheduleRepository: IScheduleRepository) {}
+  constructor(
+    private readonly scheduleRepository: IScheduleRepository,
+    private readonly logger: ILogger
+  ) {}
 
   async execute(request: UpdateScheduleRequest): Promise<UpdateScheduleUseCaseResult> {
     try {
@@ -118,7 +122,15 @@ export class UpdateScheduleUseCase {
         success: true,
         schedule: response,
       };
-    } catch (_error) {
+    } catch (error) {
+      this.logger.error(
+        'スケジュール更新中にエラーが発生しました',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          scheduleId: request.scheduleId,
+          operation: 'updateSchedule',
+        }
+      );
       return {
         success: false,
         errors: [ERROR_MESSAGES.INTERNAL_ERROR],

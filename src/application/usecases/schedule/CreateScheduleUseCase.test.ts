@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import type { CreateScheduleRequest } from '../../dto/ScheduleDto';
+import type { ILogger } from '../../ports/LoggerPort';
 import { CreateScheduleUseCase } from './CreateScheduleUseCase';
 
 // Mock Repository Implementation
@@ -88,10 +89,17 @@ class MockScheduleRepository implements IScheduleRepository {
 describe('CreateScheduleUseCase', () => {
   let useCase: CreateScheduleUseCase;
   let mockRepository: MockScheduleRepository;
+  let mockLogger: ILogger;
 
   beforeEach(() => {
     mockRepository = new MockScheduleRepository();
-    useCase = new CreateScheduleUseCase(mockRepository);
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+    useCase = new CreateScheduleUseCase(mockRepository, mockLogger);
   });
 
   describe('Valid Schedule Creation', () => {

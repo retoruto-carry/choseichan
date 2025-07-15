@@ -30,11 +30,15 @@ export interface ErrorResponse {
   };
 }
 
+export interface ErrorHandlerOptions {
+  isProduction?: boolean;
+}
+
 export class ErrorHandler {
   /**
    * エラーをDiscordレスポンスに変換
    */
-  static handleError(error: unknown): ErrorResponse {
+  static handleError(error: unknown, options?: ErrorHandlerOptions): ErrorResponse {
     // ドメインエラーの処理
     if (isDomainError(error)) {
       return ErrorHandler.handleDomainError(error);
@@ -51,7 +55,7 @@ export class ErrorHandler {
     }
 
     // 予期しないエラーの処理
-    return ErrorHandler.handleUnexpectedError(error);
+    return ErrorHandler.handleUnexpectedError(error, options);
   }
 
   /**
@@ -317,11 +321,14 @@ export class ErrorHandler {
   /**
    * 予期しないエラーの処理
    */
-  private static handleUnexpectedError(error: unknown): ErrorResponse {
+  private static handleUnexpectedError(
+    error: unknown,
+    options?: ErrorHandlerOptions
+  ): ErrorResponse {
     const message = error instanceof Error ? error.message : '不明なエラー';
 
     // 本番環境では詳細なエラー情報を隠す
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = options?.isProduction ?? false;
     const content = isProduction
       ? '❌ 予期しないエラーが発生しました。しばらく待ってから再試行してください'
       : `❌ エラーが発生しました: ${message}`;

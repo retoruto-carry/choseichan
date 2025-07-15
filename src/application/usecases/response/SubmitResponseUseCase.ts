@@ -110,9 +110,7 @@ export class SubmitResponseUseCase {
       };
       await this.responseRepository.save(domainResponse, request.guildId);
 
-      // 10. レスポンスの構築
-      // 注: total_responsesの更新はデータベーストリガーで自動的に行われるため、
-      // アプリケーション層での手動更新は不要（競合状態を防ぐため）
+      // total_responsesはDBトリガーで自動更新（競合防止）
       const responseDto = this.buildResponseDto(response);
 
       return {

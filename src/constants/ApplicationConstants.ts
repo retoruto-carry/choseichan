@@ -130,6 +130,8 @@ export const NOTIFICATION_CONSTANTS = {
     '[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています',
 
   // リマインダー設定
+  DEFAULT_REMINDER_TIMINGS: ['3d', '1d', '8h'] as const,
+  DEFAULT_REMINDER_MENTIONS: ['@here'] as const,
   DEFAULT_BATCH_SIZE: 20,
   DEFAULT_BATCH_DELAY_MS: 100,
   MAX_BATCH_SIZE: 50,

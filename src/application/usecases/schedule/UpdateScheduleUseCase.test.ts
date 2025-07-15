@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import type { UpdateScheduleRequest } from '../../dto/ScheduleDto';
+import type { ILogger } from '../../ports/LoggerPort';
 import { UpdateScheduleUseCase } from './UpdateScheduleUseCase';
 
 describe('UpdateScheduleUseCase', () => {
   let useCase: UpdateScheduleUseCase;
   let mockScheduleRepository: IScheduleRepository;
+  let mockLogger: ILogger;
 
   // Set dates in the future to avoid validation errors
   const futureDate1 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
@@ -51,7 +53,14 @@ describe('UpdateScheduleUseCase', () => {
       updateReminders: vi.fn(),
     } as any;
 
-    useCase = new UpdateScheduleUseCase(mockScheduleRepository);
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    useCase = new UpdateScheduleUseCase(mockScheduleRepository, mockLogger);
   });
 
   describe('execute', () => {

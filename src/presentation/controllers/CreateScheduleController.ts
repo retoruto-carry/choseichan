@@ -7,17 +7,17 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { ERROR_MESSAGES } from '../../constants/ApplicationConstants';
+import { ERROR_MESSAGES, NOTIFICATION_CONSTANTS } from '../../constants/ApplicationConstants';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseUserInputDate } from '../../utils/date';
-import { getDisplayName, getUserId } from '../../utils/discord';
 import { generateId } from '../../utils/id';
 import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 import { createEditReminderButtonId } from '../utils/button-id';
 import { getOriginalMessage, sendFollowupMessage } from '../utils/discord';
+import { getDisplayName, getUserId } from '../utils/discord-helpers';
 
 export class CreateScheduleController {
   private readonly logger = getLogger();
@@ -72,8 +72,8 @@ export class CreateScheduleController {
       let reminderMentions: string[] | undefined;
 
       if (deadlineDate) {
-        reminderTimings = ['3d', '1d', '8h'];
-        reminderMentions = ['@here'];
+        reminderTimings = [...NOTIFICATION_CONSTANTS.DEFAULT_REMINDER_TIMINGS];
+        reminderMentions = [...NOTIFICATION_CONSTANTS.DEFAULT_REMINDER_MENTIONS];
       }
 
       // Create schedule using Clean Architecture

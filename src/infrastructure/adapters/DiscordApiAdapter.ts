@@ -6,7 +6,10 @@
  */
 
 import type { IDiscordApiPort } from '../../application/ports/DiscordApiPort';
+import { getLogger } from '../logging/Logger';
 import { DiscordApiService } from '../services/DiscordApiService';
+
+const logger = getLogger();
 
 export class DiscordApiAdapter implements IDiscordApiPort {
   private discordApiService = new DiscordApiService();
@@ -49,8 +52,8 @@ export class DiscordApiAdapter implements IDiscordApiPort {
     });
 
     if (!response.ok) {
-      // 検索エラーの場合は空配列を返す（エラーを投げない）
-      console.error(`Failed to search guild members: ${response.status}`);
+      // 検索エラー時は空配列を返す（ユーザー検索の失敗を許容し、アプリケーションの継続性を保つ）
+      logger.warn('ギルドメンバー検索に失敗しました', { status: response.status });
       return [];
     }
 

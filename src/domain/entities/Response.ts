@@ -114,6 +114,8 @@ export class Response {
 
   /**
    * ステータスを更新
+   * @param newStatuses 新しい日程別ステータスのMap（dateId => ResponseStatus）
+   * @returns 更新された新しいResponseインスタンス（イミュータブル）
    */
   updateStatuses(newStatuses: Map<string, ResponseStatus>): Response {
     return new Response(

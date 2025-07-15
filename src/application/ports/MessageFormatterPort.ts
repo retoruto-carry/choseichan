@@ -57,7 +57,7 @@ export interface IMessageFormatterPort {
 }
 
 /**
- * 後方互換性のためのエイリアス
+ * メッセージフォーマッターの標準インターフェース
  */
 export interface IMessageFormatter extends IMessageFormatterPort {}
 

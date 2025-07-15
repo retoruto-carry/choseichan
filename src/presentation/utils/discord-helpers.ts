@@ -6,7 +6,7 @@ import type {
   ButtonInteraction,
   CommandInteraction,
   ModalInteraction,
-} from '../infrastructure/types/discord';
+} from '../../infrastructure/types/discord';
 
 /**
  * インタラクションからユーザーの表示名を取得

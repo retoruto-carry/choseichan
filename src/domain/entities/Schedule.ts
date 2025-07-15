@@ -237,6 +237,11 @@ export class Schedule {
     return this._deadline ? this._deadline < currentTime : false;
   }
 
+  /**
+   * 指定されたユーザーがこのスケジュールを編集可能かチェック
+   * @param userId チェック対象のユーザーID
+   * @returns 作成者と一致する場合のみtrue
+   */
   canBeEditedBy(userId: string): boolean {
     return this._authorId === userId;
   }
@@ -316,15 +321,9 @@ export class Schedule {
   }
 
   updateDeadline(deadline: Date | null | undefined): Schedule {
-    // 締切日時に基づいてステータスを更新（旧実装の動作を再現）
-    let newStatus = this._status;
-    if (!deadline || deadline > new Date()) {
-      // 締切がない、または未来の場合は open にする
-      newStatus = ScheduleStatus.OPEN;
-    } else {
-      // 締切が過去の場合は closed にする
-      newStatus = ScheduleStatus.CLOSED;
-    }
+    // 締切が過去ならクローズ、それ以外はオープン
+    const newStatus =
+      !deadline || deadline > new Date() ? ScheduleStatus.OPEN : ScheduleStatus.CLOSED;
 
     return new Schedule(
       this._id,
@@ -342,14 +341,14 @@ export class Schedule {
       deadline === null ? undefined : deadline,
       this._reminderTimings,
       this._reminderMentions,
-      [], // remindersSent をリセット
+      [], // リマインダー送信履歴をリセット
       this._notificationSent,
       this._totalResponses
     );
   }
 
   addDate(date: ScheduleDate): Schedule {
-    // 重複チェック
+    // 日付の重複を防止
     if (this._dates.some((d) => d.equals(date))) {
       throw new Error('Date already exists in schedule');
     }
@@ -489,7 +488,7 @@ export class Schedule {
       this._deadline,
       this._reminderTimings,
       this._reminderMentions,
-      [], // Reset remindersSent
+      [], // リマインダー送信履歴をリセット
       this._notificationSent,
       this._totalResponses
     );

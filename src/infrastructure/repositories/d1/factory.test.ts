@@ -5,6 +5,16 @@ import { D1RepositoryFactory } from './factory';
 import { D1ResponseRepository } from './response-repository';
 import { D1ScheduleRepository } from './schedule-repository';
 
+// Mock Logger
+vi.mock('../../logging/Logger', () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  }),
+}));
+
 // Mock D1Database
 const createMockD1Database = () => {
   const mockStatement = {
@@ -80,21 +90,13 @@ describe('D1RepositoryFactory', () => {
   });
 
   describe('initialize', () => {
-    it('should log initialization', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      await factory.initialize();
-
-      expect(consoleSpy).toHaveBeenCalledWith('D1 database initialized');
-
-      consoleSpy.mockRestore();
+    it('should complete without errors', async () => {
+      await expect(factory.initialize()).resolves.not.toThrow();
     });
   });
 
   describe('cleanupExpiredData', () => {
     it('should cleanup expired schedules and responses', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       await factory.cleanupExpiredData();
 
       // Verify cleanup queries were executed
@@ -104,24 +106,12 @@ describe('D1RepositoryFactory', () => {
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM responses WHERE expires_at < ?')
       );
-
-      expect(consoleSpy).toHaveBeenCalledWith('Expired data cleanup completed');
-
-      consoleSpy.mockRestore();
     });
 
     it('should handle cleanup errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockDb._mockStatement.run.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(factory.cleanupExpiredData()).rejects.toThrow(TransactionError);
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to cleanup expired data:',
-        expect.any(Error)
-      );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 });
