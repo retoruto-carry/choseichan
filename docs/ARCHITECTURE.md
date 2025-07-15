@@ -51,7 +51,12 @@ src/
 │   ├── repositories/     # D1 リポジトリ実装
 │   ├── services/         # Discord API通信
 │   ├── adapters/         # Port実装（Adapter）
-│   └── factories/        # DependencyContainer (DI)
+│   ├── types/            # インフラ固有の型定義
+│   └── utils/            # Queueハンドラー等のユーティリティ
+│
+├── di/                    # 依存性注入（最外層）
+│   ├── DependencyContainer.ts  # DI コンテナ
+│   └── factory.ts             # リポジトリファクトリ
 │
 └── presentation/          # UI層（Application/Infrastructureに依存）
     ├── controllers/      # VoteController など
@@ -174,10 +179,10 @@ export class LoggerAdapter implements ILogger {
 
 ### DependencyContainer
 
-全ての依存関係を管理する中央集権的なコンテナ：
+全ての依存関係を管理する中央集権的なコンテナ（専用のDI層に配置）：
 
 ```typescript
-// src/infrastructure/factories/DependencyContainer.ts
+// src/di/DependencyContainer.ts
 export class DependencyContainer {
   private static instance: DependencyContainer;
   private repositories: Map<string, any> = new Map();
@@ -508,14 +513,34 @@ export class SomeUseCase {
 - Dependency Injectionによる依存関係の逆転
 - イベント駆動アーキテクチャの活用（必要に応じて）
 
+## 最近の改善
+
+### アーキテクチャ品質向上（2025年7月実施）
+
+#### Clean Architecture違反の修正
+- **Domain層のクロス依存解消**: Domain層テストからPresentation層への不適切なインポートを削除
+- **DI層の分離**: DependencyContainerをInfrastructure層から独立したDI層に移動
+- **型安全性の強化**: 全ての`any`型を適切な型定義に置換
+
+#### コード品質改善
+- **定数の抽出**: マジックナンバーを適切な定数定義として抽出
+- **未使用インポート削除**: 不要なインポートを全て削除
+- **エラーハンドリング統一**: 統一的なエラー処理パターンを全層に適用
+
+#### テスト品質向上
+- **型安全なテスト**: 非nullアサーション（`!`）を型ガードに置換
+- **独立性確保**: 各テストで独立したモックインスタンスを使用
+- **カバレッジ維持**: 全461テストが100%パス（4テストはスキップ）
+
 ## アーキテクチャ利点
 
 ### Clean Architecture 実装
 - 🔄 ドメインロジックの独立性
-- 🧪 高いテスタビリティ（450+ テスト 100%合格）
+- 🧪 高いテスタビリティ（461テスト 100%合格）
 - 🔧 変更の局所化
 - 📈 拡張性とメンテナンス性
 - 🛡️ Port/Adapterパターンによる技術詳細の抽象化
+- 🎯 専用DI層による依存関係の明確化
 
 ### 今後の拡張指針
 
@@ -631,7 +656,7 @@ this.logger.error('Database operation failed', error, {
 - 統一されたコードスタイル
 
 ### テスト戦略
-- 450+ テスト（100% 合格）
+- 461テスト（100% 合格、4テストスキップ）
 - 単体テスト: 各レイヤーにco-located
 - 統合テスト: `/tests/integration/`
 - テストヘルパー: `/tests/helpers/`

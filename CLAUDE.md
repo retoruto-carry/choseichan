@@ -46,6 +46,7 @@ src/
 │   ├── services/          # ScheduleDomainService など
 │   ├── repositories/      # インターフェース定義
 │   ├── constants/         # ビジネス定数
+│   ├── errors/            # ドメイン例外
 │   └── utils/             # ドメイン専用ユーティリティ
 │
 ├── application/           # ユースケース（Domainに依存）
@@ -54,7 +55,9 @@ src/
 │   ├── services/         # アプリケーションサービス
 │   ├── ports/            # Infrastructure抽象化Interface
 │   ├── types/            # Application層専用型定義
-│   └── constants/        # アプリケーション定数
+│   ├── constants/        # アプリケーション定数
+│   ├── errors/           # アプリケーション例外
+│   └── mappers/          # DTO変換
 │
 ├── infrastructure/        # 外部技術（Domain/Applicationに依存）
 │   ├── repositories/     # D1 リポジトリ実装
@@ -63,7 +66,12 @@ src/
 │   ├── types/            # インフラ固有の型定義
 │   ├── constants/        # インフラ定数（Discord制限等）
 │   ├── utils/            # Queueハンドラー等のユーティリティ
-│   └── factories/        # DependencyContainer (DI)
+│   ├── errors/           # インフラ例外
+│   └── cron/             # 定期実行処理
+│
+├── di/                    # 依存性注入（最外層）
+│   ├── DependencyContainer.ts  # DI コンテナ
+│   └── factory.ts             # リポジトリファクトリ
 │
 └── presentation/          # UI層（Application/Infrastructureに依存）
     ├── controllers/      # VoteController など

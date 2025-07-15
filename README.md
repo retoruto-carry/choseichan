@@ -162,7 +162,7 @@ npm run db:shell -- --command="SELECT COUNT(*) FROM schedules"
 - **アーキテクチャ**: Clean Architecture (Onion Architecture)
 - **データベース**: Cloudflare D1 (SQLite)
 - **キュー**: Cloudflare Queues (メッセージ更新・締切リマインダーの最適化)
-- **テスト**: Vitest (461テスト - 100%パス)
+- **テスト**: Vitest (461テスト - 100%パス、4テストスキップ)
 - **コード品質**: Biome
 
 詳細なアーキテクチャについては [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) を参照してください。
