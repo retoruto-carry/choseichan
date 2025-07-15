@@ -13,7 +13,7 @@ Discord内で日程調整を行うボット。Clean Architecture（Onion Archite
 npm run dev
 
 # テスト実行
-npm test                    # 全テスト（461テスト - 100%パス）
+npm test                    # 全テスト（473テスト - 100%パス）
 npm test -- <file>          # 特定ファイルのテスト
 npm run test:ui             # UIでテスト実行
 npm run test:coverage       # カバレッジ計測
@@ -99,10 +99,12 @@ src/
 ## データベース（D1）
 
 ### テーブル構造
-- `schedules`: 日程調整マスタ（6ヶ月でTTL）
-- `schedule_dates`: 日程候補（正規化）
-- `responses`: 回答マスタ
-- `response_date_status`: 各日程への回答状態
+- `schedules`: 日程調整マスタ（`expires_at`フィールドあり、現在未使用）
+- `schedule_dates`: 日程候補（スケジュール別に分離管理）
+- `responses`: 回答マスタ（ユーザー回答情報）
+- `response_date_status`: 各日程への回答状態（日程別の○△×保存）
+
+**Note**: `expires_at`フィールドは定義されているが、自動削除機能は未実装。手動クリーンアップ関数のみ存在。
 
 ### トランザクション処理
 ```typescript
@@ -138,10 +140,12 @@ export interface D1DatabaseConfig {
 
 ### 締切リマインダーQueue
 Discord APIレート制限に対応：
-- リマインダー送信: バッチで処理（最大20件/バッチ）
-- 自動締切処理: スケジュールを自動でクローズ
-- サマリー送信: 締切後の結果を通知
-- タスクタイプ: `send_reminder`, `close_schedule`, `send_summary`
+- **リマインダー形式**: 柔軟な時間指定（例：`3d`, `1d`, `8h`, `30m`）
+- **リマインダー送信**: バッチで処理（最大20件/バッチ）
+- **自動締切処理**: スケジュールを自動でクローズ
+- **サマリー送信**: 締切後の結果を通知
+- **タスクタイプ**: `send_reminder`, `close_schedule`, `send_summary`
+- **デフォルト設定**: `3d`, `1d`, `8h` （ユーザーカスタマイズ可能）
 
 ## 開発プロセス - TDD (Test-Driven Development)
 
