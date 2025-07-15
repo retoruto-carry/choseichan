@@ -393,14 +393,16 @@ export class VoteController {
   private async sendClosureNotifications(
     scheduleId: string,
     guildId: string,
-    env: Env
+    _env: Env
   ): Promise<void> {
     try {
       // Get NotificationService from DependencyContainer
       const notificationService = this.dependencyContainer.applicationServices.notificationService;
 
       if (!notificationService) {
-        throw new Error('NotificationService is not available - Discord credentials may not be configured');
+        throw new Error(
+          'NotificationService is not available - Discord credentials may not be configured'
+        );
       }
 
       // Send summary message
