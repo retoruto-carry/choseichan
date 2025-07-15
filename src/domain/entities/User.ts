@@ -5,6 +5,8 @@
  * 不変なユーザー情報を表現
  */
 
+import { BUSINESS_CONSTANTS } from '../constants/BusinessConstants';
+
 export interface UserId {
   readonly value: string;
 }
@@ -27,8 +29,10 @@ export class User {
     if (!username || !username.trim()) {
       throw new Error('ユーザー名は必須です');
     }
-    if (username.length > 100) {
-      throw new Error('ユーザー名は100文字以内で入力してください');
+    if (username.length > BUSINESS_CONSTANTS.MAX_USERNAME_LENGTH) {
+      throw new Error(
+        `ユーザー名は${BUSINESS_CONSTANTS.MAX_USERNAME_LENGTH}文字以内で入力してください`
+      );
     }
 
     return new User({ value: id }, { value: username }, displayName);

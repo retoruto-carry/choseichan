@@ -2,17 +2,17 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
 import type { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
+import { parseUserInputDate } from '../../domain/utils/date';
+import { generateId } from '../../domain/utils/id';
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
-import { parseUserInputDate } from '../../utils/date';
-import { generateId } from '../../utils/id';
 import { CreateScheduleController } from './CreateScheduleController';
 
 // Mock dependencies
-vi.mock('../../utils/id', () => ({
+vi.mock('../../domain/utils/id', () => ({
   generateId: vi.fn(),
 }));
 
-vi.mock('../../utils/date', () => ({
+vi.mock('../../domain/utils/date', () => ({
   formatDate: vi.fn(),
   parseUserInputDate: vi.fn(),
 }));

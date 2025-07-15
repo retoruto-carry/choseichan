@@ -127,10 +127,11 @@ export interface IRepositoryFactory {
 
 /**
  * データベース接続設定
+ * 具体的な実装詳細はInfrastructure層で定義
  */
 export interface DatabaseConfig {
-  type: 'd1';
-  d1Database: D1Database;
+  type: string;
+  [key: string]: unknown;
 }
 
 /**

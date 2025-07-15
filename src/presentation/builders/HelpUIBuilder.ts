@@ -2,7 +2,7 @@
  * ヘルプメッセージのUIを構築するビルダー
  */
 
-import { DISCORD_CONSTANTS } from '../../constants/ApplicationConstants';
+import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
 
 export class HelpUIBuilder {
   /**
@@ -12,7 +12,7 @@ export class HelpUIBuilder {
     return {
       title: '📚 調整ちゃん - 使い方',
       description: 'Discord上で簡単に日程調整ができるボットです',
-      color: DISCORD_CONSTANTS.COLORS.INFO,
+      color: DISCORD_API_CONSTANTS.COLORS.INFO,
       fields: [
         {
           name: '📝 日程調整を作成',

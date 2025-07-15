@@ -5,8 +5,8 @@
  */
 
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { formatDate } from '../../utils/date';
 import { EMBED_COLORS } from '../constants/ui';
+import { formatDate } from '../utils/date-formatter';
 
 export class CommandUIBuilder {
   /**

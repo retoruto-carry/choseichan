@@ -1,0 +1,45 @@
+/**
+ * Discord API関連定数
+ *
+ * Infrastructure層で使用するDiscord API固有の定数
+ */
+
+// Discord API制限
+export const DISCORD_API_CONSTANTS = {
+  // Embed制限
+  MAX_EMBED_FIELDS: 25,
+  MAX_EMBED_DESCRIPTION_LENGTH: 4096,
+  MAX_EMBED_TITLE_LENGTH: 256,
+  MAX_EMBED_FIELD_NAME_LENGTH: 256,
+  MAX_EMBED_FIELD_VALUE_LENGTH: 1024,
+  MAX_MESSAGE_CONTENT_LENGTH: 2000,
+  MAX_COMPONENTS_PER_ROW: 5,
+  MAX_ACTION_ROWS: 5,
+
+  // レート制限
+  WEBHOOK_RATE_LIMIT_PER_MINUTE: 30,
+  MESSAGE_RATE_LIMIT_PER_SECOND: 5,
+
+  // インタラクションタイムアウト
+  INTERACTION_TOKEN_VALID_MINUTES: 15,
+  INITIAL_RESPONSE_TIMEOUT_SECONDS: 3,
+  FOLLOWUP_RESPONSE_TIMEOUT_SECONDS: 3,
+
+  // メッセージフラグ
+  FLAGS: {
+    EPHEMERAL: 64,
+  },
+
+  // 色（Discord埋め込みメッセージ用）
+  COLORS: {
+    SUCCESS: 0x00ff00,
+    ERROR: 0xff0000,
+    WARNING: 0xffaa00,
+    INFO: 0x0099ff,
+    NEUTRAL: 0x99aab5,
+    PRIMARY: 0x5865f2,
+  },
+} as const;
+
+export type DiscordColor =
+  (typeof DISCORD_API_CONSTANTS.COLORS)[keyof typeof DISCORD_API_CONSTANTS.COLORS];

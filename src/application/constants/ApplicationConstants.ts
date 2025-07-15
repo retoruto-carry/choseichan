@@ -1,11 +1,11 @@
 /**
- * アプリケーション定数
+ * アプリケーション層定数
  *
- * アプリケーション全体で使用する定数を型安全に定義
- * Clean Architectureの各層で使用できる共通定数
+ * Application層で使用する定数
+ * UI表示メッセージ、バリデーション、通知設定など
  */
 
-// 時間関連定数
+// 時間関連定数（共通で使用）
 export const TIME_CONSTANTS = {
   // ミリ秒
   MILLISECONDS_PER_SECOND: 1000,
@@ -30,43 +30,6 @@ export const TIME_CONSTANTS = {
   API_TIMEOUT_MS: 5 * 1000, // 5秒
 } as const;
 
-// Discord関連定数
-export const DISCORD_CONSTANTS = {
-  // API制限
-  MAX_EMBED_FIELDS: 25,
-  MAX_EMBED_DESCRIPTION_LENGTH: 4096,
-  MAX_EMBED_TITLE_LENGTH: 256,
-  MAX_EMBED_FIELD_NAME_LENGTH: 256,
-  MAX_EMBED_FIELD_VALUE_LENGTH: 1024,
-  MAX_MESSAGE_CONTENT_LENGTH: 2000,
-  MAX_COMPONENTS_PER_ROW: 5,
-  MAX_ACTION_ROWS: 5,
-
-  // レート制限
-  WEBHOOK_RATE_LIMIT_PER_MINUTE: 30,
-  MESSAGE_RATE_LIMIT_PER_SECOND: 5,
-
-  // インタラクションタイムアウト
-  INTERACTION_TOKEN_VALID_MINUTES: 15,
-  INITIAL_RESPONSE_TIMEOUT_SECONDS: 3,
-  FOLLOWUP_RESPONSE_TIMEOUT_SECONDS: 3,
-
-  // メッセージフラグ
-  FLAGS: {
-    EPHEMERAL: 64,
-  },
-
-  // 色（Discord埋め込みメッセージ用）
-  COLORS: {
-    SUCCESS: 0x00ff00,
-    ERROR: 0xff0000,
-    WARNING: 0xffaa00,
-    INFO: 0x0099ff,
-    NEUTRAL: 0x99aab5,
-    PRIMARY: 0x5865f2,
-  },
-} as const;
-
 // バリデーション定数
 export const VALIDATION_CONSTANTS = {
   // 正規表現
@@ -80,22 +43,6 @@ export const VALIDATION_CONSTANTS = {
     REMINDER_TIMING: /^(\d+)([dhm])$/,
     ISO_DATE: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
   },
-
-  // 長さ制限
-  MIN_TITLE_LENGTH: 1,
-  MAX_TITLE_LENGTH: 100,
-  MIN_DESCRIPTION_LENGTH: 0,
-  MAX_DESCRIPTION_LENGTH: 2000,
-  MIN_USERNAME_LENGTH: 1,
-  MAX_USERNAME_LENGTH: 80,
-  MIN_COMMENT_LENGTH: 0,
-  MAX_COMMENT_LENGTH: 1000,
-
-  // 数量制限
-  MIN_DATES_COUNT: 1,
-  MAX_DATES_COUNT: 50,
-  MIN_RESPONSES_COUNT: 0,
-  MAX_RESPONSES_COUNT: 200,
 } as const;
 
 // 成功メッセージ定数
@@ -146,9 +93,6 @@ export const NOTIFICATION_CONSTANTS = {
     USERNAME: /^@(.+)$/,
   },
 } as const;
-
-// 定数の型定義
-export type DiscordColor = (typeof DISCORD_CONSTANTS.COLORS)[keyof typeof DISCORD_CONSTANTS.COLORS];
 
 // 定数用ユーティリティ関数
 export const Constants = {

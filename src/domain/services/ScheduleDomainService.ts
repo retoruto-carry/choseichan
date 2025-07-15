@@ -149,8 +149,10 @@ export class ScheduleDomainService {
     // タイトルチェック
     if (!data.title || !data.title.trim()) {
       errors.push('タイトルは必須です');
-    } else if (data.title.length > 100) {
-      errors.push('タイトルは100文字以内で入力してください');
+    } else if (data.title.length > BUSINESS_CONSTANTS.MAX_SCHEDULE_TITLE_LENGTH) {
+      errors.push(
+        `タイトルは${BUSINESS_CONSTANTS.MAX_SCHEDULE_TITLE_LENGTH}文字以内で入力してください`
+      );
     }
 
     // 日程チェック
@@ -198,14 +200,21 @@ export class ScheduleDomainService {
     if (data.title !== undefined) {
       if (!data.title.trim()) {
         errors.push('タイトルは必須です');
-      } else if (data.title.length > 100) {
-        errors.push('タイトルは100文字以内で入力してください');
+      } else if (data.title.length > BUSINESS_CONSTANTS.MAX_SCHEDULE_TITLE_LENGTH) {
+        errors.push(
+          `タイトルは${BUSINESS_CONSTANTS.MAX_SCHEDULE_TITLE_LENGTH}文字以内で入力してください`
+        );
       }
     }
 
     // 説明チェック
-    if (data.description !== undefined && data.description.length > 500) {
-      errors.push('説明は500文字以内で入力してください');
+    if (
+      data.description !== undefined &&
+      data.description.length > BUSINESS_CONSTANTS.MAX_SCHEDULE_DESCRIPTION_LENGTH
+    ) {
+      errors.push(
+        `説明は${BUSINESS_CONSTANTS.MAX_SCHEDULE_DESCRIPTION_LENGTH}文字以内で入力してください`
+      );
     }
 
     // 締切チェック

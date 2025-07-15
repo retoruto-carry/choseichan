@@ -10,7 +10,7 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
-import { formatDate } from '../../utils/date';
+import { formatDate } from '../../presentation/utils/date-formatter';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';

@@ -5,7 +5,7 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
-import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
+import { MessageUpdateType } from '../../application/types/MessageUpdateType';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';

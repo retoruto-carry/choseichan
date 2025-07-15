@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, parseUserInputDate } from './date';
+import { formatDate } from '../../presentation/utils/date-formatter';
+import { parseUserInputDate } from './date';
 
 describe('Date Utilities', () => {
   describe('formatDate', () => {

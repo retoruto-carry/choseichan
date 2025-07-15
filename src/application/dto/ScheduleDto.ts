@@ -4,6 +4,8 @@
  * アプリケーション層とプレゼンテーション層間のデータ転送用オブジェクト
  */
 
+import type { ResponseDto } from './ResponseDto';
+
 export interface CreateScheduleRequest {
   guildId: string;
   channelId: string;
@@ -102,11 +104,4 @@ export interface ScheduleSummaryResponse {
   };
 }
 
-export interface ResponseDto {
-  scheduleId: string;
-  userId: string;
-  username: string;
-  displayName?: string;
-  dateStatuses: Record<string, 'ok' | 'maybe' | 'ng'>;
-  updatedAt: string; // ISO文字列
-}
+// ResponseDto is defined in ResponseDto.ts - import from there if needed

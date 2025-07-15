@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
-import { DISCORD_CONSTANTS } from '../../constants/ApplicationConstants';
+import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
@@ -102,7 +102,7 @@ export class CommandController {
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
             data: {
               content: 'このチャンネルには進行中の日程調整がありません。',
-              flags: DISCORD_CONSTANTS.FLAGS.EPHEMERAL,
+              flags: DISCORD_API_CONSTANTS.FLAGS.EPHEMERAL,
             },
           }),
           { headers: { 'Content-Type': 'application/json' } }
@@ -117,7 +117,7 @@ export class CommandController {
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
             embeds: [embed],
-            flags: DISCORD_CONSTANTS.FLAGS.EPHEMERAL,
+            flags: DISCORD_API_CONSTANTS.FLAGS.EPHEMERAL,
           },
         }),
         { headers: { 'Content-Type': 'application/json' } }
@@ -143,7 +143,7 @@ export class CommandController {
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           content: message,
-          flags: DISCORD_CONSTANTS.FLAGS.EPHEMERAL,
+          flags: DISCORD_API_CONSTANTS.FLAGS.EPHEMERAL,
         },
       }),
       { headers: { 'Content-Type': 'application/json' } }

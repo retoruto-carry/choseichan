@@ -7,11 +7,7 @@
 
 import { InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { NotificationService } from '../../application/services/NotificationService';
-import { MessageUpdateType } from '../../domain/services/MessageUpdateService';
-import { DiscordApiAdapter } from '../../infrastructure/adapters/DiscordApiAdapter';
-import { LoggerAdapter } from '../../infrastructure/adapters/LoggerAdapter';
-import { MessageFormatterAdapter } from '../../infrastructure/adapters/MessageFormatterAdapter';
+import { MessageUpdateType } from '../../application/types/MessageUpdateType';
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
@@ -400,26 +396,12 @@ export class VoteController {
     env: Env
   ): Promise<void> {
     try {
-      // Create NotificationService with Clean Architecture dependencies
-      // Ensure Discord credentials are available
-      const discordToken = env.DISCORD_TOKEN ?? '';
-      const applicationId = env.DISCORD_APPLICATION_ID ?? '';
+      // Get NotificationService from DependencyContainer
+      const notificationService = this.dependencyContainer.applicationServices.notificationService;
 
-      if (!discordToken || !applicationId) {
-        throw new Error('Discord credentials are not configured');
+      if (!notificationService) {
+        throw new Error('NotificationService is not available - Discord credentials may not be configured');
       }
-
-      const notificationService = new NotificationService(
-        new LoggerAdapter(),
-        new DiscordApiAdapter(),
-        this.dependencyContainer.infrastructureServices.repositoryFactory.getScheduleRepository(),
-        this.dependencyContainer.infrastructureServices.repositoryFactory.getResponseRepository(),
-        this.dependencyContainer.getScheduleSummaryUseCase,
-        discordToken,
-        applicationId,
-        this.dependencyContainer.infrastructureServices.backgroundExecutor,
-        new MessageFormatterAdapter()
-      );
 
       // Send summary message
       await notificationService.sendSummaryMessage(scheduleId, guildId);

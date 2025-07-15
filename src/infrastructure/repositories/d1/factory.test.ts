@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DatabaseConfig } from '../../../domain/repositories/interfaces';
+import type { D1DatabaseConfig } from '../../types/database';
 import { TransactionError } from '../errors';
 import { D1RepositoryFactory } from './factory';
 import { D1ResponseRepository } from './response-repository';
@@ -32,7 +32,7 @@ const createMockD1Database = () => {
 describe('D1RepositoryFactory', () => {
   let factory: D1RepositoryFactory;
   let mockDb: ReturnType<typeof createMockD1Database>;
-  let config: DatabaseConfig;
+  let config: D1DatabaseConfig;
 
   beforeEach(() => {
     mockDb = createMockD1Database();
@@ -51,7 +51,7 @@ describe('D1RepositoryFactory', () => {
     });
 
     it('should throw error with invalid config', () => {
-      const invalidConfig: DatabaseConfig = {
+      const invalidConfig: D1DatabaseConfig = {
         type: 'kv' as any,
         d1Database: null as any,
       };
@@ -118,7 +118,7 @@ describe('D1RepositoryFactory', () => {
 
 describe('D1Transaction', () => {
   let mockDb: ReturnType<typeof createMockD1Database>;
-  let config: DatabaseConfig;
+  let config: D1DatabaseConfig;
   let factory: D1RepositoryFactory;
 
   beforeEach(() => {

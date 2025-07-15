@@ -2,14 +2,15 @@
  * D1実装のリポジトリファクトリ
  */
 
+import type { D1Database } from '@cloudflare/workers-types';
 import type {
-  DatabaseConfig,
   IRepositoryFactory,
   IResponseRepository,
   IScheduleRepository,
   ITransaction,
 } from '../../../domain/repositories/interfaces';
 import { getLogger } from '../../logging/Logger';
+import type { D1DatabaseConfig } from '../../types/database';
 import { TransactionError } from '../errors';
 import { D1ResponseRepository } from './response-repository';
 import { D1ScheduleRepository } from './schedule-repository';
@@ -71,7 +72,7 @@ export class D1RepositoryFactory implements IRepositoryFactory {
   private responseRepository: IResponseRepository;
   private db: D1Database;
 
-  constructor(config: DatabaseConfig) {
+  constructor(config: D1DatabaseConfig) {
     if (config.type !== 'd1' || !config.d1Database) {
       throw new Error('Invalid configuration for D1 repository factory');
     }

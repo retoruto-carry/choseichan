@@ -5,7 +5,7 @@
  */
 
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { createButtonId } from '../../utils/id';
+import { createButtonId } from '../utils/button-helpers';
 
 export class ScheduleEditUIBuilder {
   /**

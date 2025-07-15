@@ -2,7 +2,7 @@
  * D1実装のスケジュールリポジトリ
  */
 
-import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
+import { TIME_CONSTANTS } from '../../../application/constants/ApplicationConstants';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import { RepositoryError } from '../errors';

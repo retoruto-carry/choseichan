@@ -4,8 +4,9 @@
  * 投票UIの構築専用クラス
  */
 
-import type { ResponseDto, ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { DISCORD_CONSTANTS } from '../../constants/ApplicationConstants';
+import type { ResponseDto } from '../../application/dto/ResponseDto';
+import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
 import type { DiscordModalData } from '../../infrastructure/types/discord-api';
 
 export class VoteUIBuilder {
@@ -72,7 +73,7 @@ export class VoteUIBuilder {
     const components = [];
 
     // Create input for each date (up to Discord's limit)
-    const maxDates = Math.min(schedule.dates.length, DISCORD_CONSTANTS.MAX_ACTION_ROWS);
+    const maxDates = Math.min(schedule.dates.length, DISCORD_API_CONSTANTS.MAX_ACTION_ROWS);
 
     for (let i = 0; i < maxDates; i++) {
       const date = schedule.dates[i];

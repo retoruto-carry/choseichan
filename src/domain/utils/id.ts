@@ -1,6 +1,12 @@
 /**
- * セキュアなID生成関数
+ * Domain層のID生成ユーティリティ
+ *
+ * ビジネスロジックで使用するID生成機能
  * Cloudflare Workers環境でも動作する暗号学的に安全なID生成
+ */
+
+/**
+ * セキュアなID生成関数
  * @returns ユニークなID文字列
  */
 export function generateId(): string {
@@ -28,19 +34,4 @@ export function generateId(): string {
     .join('');
 
   return `${timestamp}-${randomStr}`;
-}
-
-export function parseButtonId(customId: string): {
-  action: string;
-  params: string[];
-} {
-  const parts = customId.split(':');
-  return {
-    action: parts[0],
-    params: parts.slice(1),
-  };
-}
-
-export function createButtonId(action: string, ...params: string[]): string {
-  return [action, ...params].join(':');
 }

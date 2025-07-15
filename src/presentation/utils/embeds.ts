@@ -1,11 +1,10 @@
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
-import type { DomainSchedule } from '../../domain/types/DomainTypes';
-import { formatDate } from '../../utils/date';
-import { createButtonId } from '../../utils/id';
 import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
+import { createButtonId } from './button-helpers';
+import { formatDate } from './date-formatter';
 
 export function createScheduleEmbed(
-  schedule: DomainSchedule | ScheduleResponse,
+  schedule: ScheduleResponse,
   totalResponses?: number,
   summary?: ScheduleSummaryResponse
 ) {
@@ -37,8 +36,7 @@ export function createScheduleEmbed(
   const descriptionParts = [schedule.description || '', ''];
 
   if (schedule.deadline) {
-    const deadlineStr =
-      schedule.deadline instanceof Date ? schedule.deadline.toISOString() : schedule.deadline;
+    const deadlineStr = schedule.deadline || '';
     descriptionParts.push(`⏰ **締切：** ${formatDate(deadlineStr)}`);
   }
 
@@ -54,8 +52,7 @@ export function createScheduleEmbed(
     footer: {
       text: `作成：${schedule.createdBy.displayName || schedule.createdBy.username}`,
     },
-    timestamp:
-      schedule.createdAt instanceof Date ? schedule.createdAt.toISOString() : schedule.createdAt,
+    timestamp: schedule.createdAt,
   };
 }
 
@@ -135,7 +132,7 @@ export function createScheduleEmbedWithTable(
 }
 
 export function createSimpleScheduleComponents(
-  schedule: DomainSchedule | ScheduleResponse,
+  schedule: ScheduleResponse,
   showDetails: boolean = false
 ) {
   const components = [];

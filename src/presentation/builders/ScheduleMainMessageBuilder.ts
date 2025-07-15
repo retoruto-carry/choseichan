@@ -6,7 +6,7 @@
  */
 
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
-import { createButtonId } from '../../utils/id';
+import { createButtonId } from '../utils/button-helpers';
 import { createScheduleEmbed, createScheduleEmbedWithTable } from '../utils/embeds';
 
 export class ScheduleMainMessageBuilder {

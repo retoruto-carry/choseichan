@@ -2,7 +2,7 @@
  * D1実装のレスポンスリポジトリ
  */
 
-import { TIME_CONSTANTS } from '../../../constants/ApplicationConstants';
+import { TIME_CONSTANTS } from '../../../application/constants/ApplicationConstants';
 import type {
   IResponseRepository,
   IScheduleRepository,

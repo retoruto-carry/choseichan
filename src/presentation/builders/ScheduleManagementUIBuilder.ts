@@ -6,9 +6,9 @@
 
 import type { APIEmbed } from 'discord-api-types/v10';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
-import { createButtonId } from '../../utils/id';
 import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
-import { formatDateTime } from '../utils/date-formatter';
+import { createButtonId } from '../utils/button-helpers';
+import { formatDate } from '../utils/date-formatter';
 
 export class ScheduleManagementUIBuilder {
   /**
@@ -21,7 +21,7 @@ export class ScheduleManagementUIBuilder {
     // 締切と回答者数を最初に表示
     let headerText = '';
     if (schedule.deadline) {
-      headerText += `⏰ 締切: ${formatDateTime(schedule.deadline)}\n`;
+      headerText += `⏰ 締切: ${formatDate(schedule.deadline)}\n`;
     }
     if (responses.length > 0) {
       headerText += `回答者: ${responses.length}人`;

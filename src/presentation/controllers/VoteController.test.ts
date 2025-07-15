@@ -1,6 +1,7 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResponseDto, ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ResponseDto } from '../../application/dto/ResponseDto';
+import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
 import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';

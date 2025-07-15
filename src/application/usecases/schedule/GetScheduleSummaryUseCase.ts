@@ -8,7 +8,8 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../../domain/repositories/interfaces';
-import type { ResponseDto, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
+import type { ResponseDto } from '../../dto/ResponseDto';
+import type { ScheduleSummaryResponse } from '../../dto/ScheduleDto';
 import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetScheduleSummaryUseCaseResult {

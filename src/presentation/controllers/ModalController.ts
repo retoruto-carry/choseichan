@@ -9,7 +9,7 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
-import { parseButtonId } from '../../utils/id';
+import { parseButtonId } from '../utils/button-helpers';
 import { createCreateScheduleController } from './CreateScheduleController';
 import { createEditModalController } from './EditModalController';
 

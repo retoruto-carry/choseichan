@@ -44,26 +44,31 @@ src/
 ├── domain/                 # ビジネスロジック（依存なし）
 │   ├── entities/          # Schedule, Response など
 │   ├── services/          # ScheduleDomainService など
-│   └── repositories/      # インターフェース定義
+│   ├── repositories/      # インターフェース定義
+│   ├── constants/         # ビジネス定数
+│   └── utils/             # ドメイン専用ユーティリティ
 │
 ├── application/           # ユースケース（Domainに依存）
 │   ├── usecases/         # 14個のユースケース実装
 │   ├── dto/              # データ転送オブジェクト
 │   ├── services/         # アプリケーションサービス
 │   ├── ports/            # Infrastructure抽象化Interface
-│   └── types/            # Application層専用型定義
+│   ├── types/            # Application層専用型定義
+│   └── constants/        # アプリケーション定数
 │
 ├── infrastructure/        # 外部技術（Domain/Applicationに依存）
 │   ├── repositories/     # D1 リポジトリ実装
 │   ├── services/         # Discord API通信
 │   ├── adapters/         # Port実装（Logger, DiscordApi等）
-│   ├── ports/            # インフラ固有のインターフェース
+│   ├── types/            # インフラ固有の型定義
+│   ├── constants/        # インフラ定数（Discord制限等）
 │   ├── utils/            # Queueハンドラー等のユーティリティ
 │   └── factories/        # DependencyContainer (DI)
 │
 └── presentation/          # UI層（Application/Infrastructureに依存）
     ├── controllers/      # VoteController など
-    └── builders/         # Discord UI構築
+    ├── builders/         # Discord UI構築
+    └── utils/            # プレゼンテーション層ユーティリティ
 ```
 
 ### 重要な設計原則
@@ -73,6 +78,8 @@ src/
 3. **リポジトリパターン**: D1データベースアクセスを抽象化
 4. **非同期処理**: Cloudflare Queuesでメッセージ更新・締切リマインダーを最適化
 5. **Port/Adapterパターン**: 環境依存の処理を抽象化（BackgroundExecutor等）
+6. **レイヤー間の独立性**: 各層は適切な定数・型・ユーティリティを持つ
+7. **Clean Architecture違反の禁止**: 層間の不正な参照は徹底排除
 
 ## Cloudflare Workers 特有の制約
 
@@ -96,6 +103,21 @@ await db.batch([
   db.prepare('INSERT INTO schedules...').bind(...),
   db.prepare('INSERT INTO schedule_dates...').bind(...)
 ]);
+```
+
+### データベース設定の抽象化
+```typescript
+// Domain層: 抽象的なデータベース設定
+export interface DatabaseConfig {
+  type: string;
+  [key: string]: unknown;
+}
+
+// Infrastructure層: 具体的なD1設定
+export interface D1DatabaseConfig {
+  type: 'd1';
+  d1Database: D1Database;
+}
 ```
 
 ## 非同期処理システム（Cloudflare Queues）
@@ -149,6 +171,7 @@ canBeClosed(currentDate: Date = new Date()): boolean {
 - **D1モック**: `better-sqlite3`でインメモリDB
 - **DependencyContainer**: 各テストで独立インスタンス
 - **カバレッジ目標**: 80%以上（ビジネスロジックは100%）
+- **テスト件数**: 461テスト（100%パス）
 
 ### テストの種類と配置
 - **Unit Tests**: 各レイヤーと同じディレクトリに配置 (`*.test.ts`)
@@ -206,6 +229,8 @@ npm run format
 - **any型の最小化**: 適切な型定義を使用
 - **非nullアサーション禁止**: テストでも型ガードを使用
 - **コメントは日本語**: ビジネスロジックの説明は日本語で
+- **Clean Architecture遵守**: 各層の責務を明確に分離
+- **マジックナンバー禁止**: 定数として定義して使用
 
 ### Type Checking
 ```bash
@@ -270,6 +295,17 @@ npm run check  # biome check && tsc --noEmit
 
 4. **リントエラー: Import順序**
    - Biomeの自動修正を実行: `npm run lint:fix`
+
+5. **Clean Architecture違反エラー**
+   - Domain層からApplication/Infrastructure層への参照は禁止
+   - Presentation層からDomain層への直接参照は禁止
+   - Application層でType定義を作成して間接参照に変更
+
+6. **ユーティリティの配置エラー**
+   - Domain層: `src/domain/utils/` (他に依存しないもの)
+   - Application層: アプリケーション固有ユーティリティ
+   - Infrastructure層: `src/infrastructure/utils/` (外部サービス関連)
+   - Presentation層: `src/presentation/utils/` (UI関連)
 
 ## Discord API 制限
 
