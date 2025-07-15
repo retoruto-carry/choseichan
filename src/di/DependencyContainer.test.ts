@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
-import type { Env } from '../types/discord';
+import type { CreateScheduleUseCase } from '../application/usecases/schedule/CreateScheduleUseCase';
+import type { Env } from '../infrastructure/types/discord';
 import { DependencyContainer } from './DependencyContainer';
 
 // Mock the factory module

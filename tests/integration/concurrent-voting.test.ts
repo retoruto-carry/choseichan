@@ -5,7 +5,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DependencyContainer } from '../../src/infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../../src/di/DependencyContainer';
 import type { Env } from '../../src/infrastructure/types/discord';
 import type { D1Database } from '../helpers/d1-database';
 import {

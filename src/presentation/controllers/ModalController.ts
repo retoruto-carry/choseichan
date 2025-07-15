@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { parseButtonId } from '../utils/button-helpers';

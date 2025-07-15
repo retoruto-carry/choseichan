@@ -10,6 +10,7 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
+import type { DiscordMessage } from '../../infrastructure/types/discord-api';
 import { formatDate } from '../../presentation/utils/date-formatter';
 import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
@@ -17,14 +18,6 @@ import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
 import type { IMessageFormatterPort } from '../ports/MessageFormatterPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
-
-interface DiscordMessage {
-  content: string;
-  embeds?: object[];
-  message_reference?: {
-    message_id: string;
-  };
-}
 
 const _STATUS_EMOJI = {
   open: '🟢',
@@ -262,7 +255,7 @@ export class NotificationService {
       mentionText = `${resolvedMentions.join(' ')} `;
     }
 
-    const message: any = {
+    const message: DiscordMessage = {
       content: `${mentionText}📅 日程調整「${schedule.title}」が締め切られました！`,
       embeds: [
         {

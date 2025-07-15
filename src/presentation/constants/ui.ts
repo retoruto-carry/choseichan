@@ -18,3 +18,9 @@ export const EMBED_COLORS = {
   INFO: 0x3498db, // Blue
   WARNING: 0xf39c12, // Orange
 } as const;
+
+// List display limits
+export const LIST_LIMITS = {
+  DEFAULT_SCHEDULE_LIMIT: 10,
+  MAX_DISCORD_EMBED_FIELDS: 25,
+} as const;

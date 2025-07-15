@@ -2,8 +2,8 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResponseDto } from '../../application/dto/ResponseDto';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { DependencyContainer } from '../../di/DependencyContainer';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
-import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
 import type { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { VoteController } from './VoteController';

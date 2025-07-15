@@ -5,7 +5,7 @@
  */
 
 import type { MessageUpdateTask } from '../../application/ports/MessageUpdateQueuePort';
-import { DependencyContainer } from '../factories/DependencyContainer';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../logging/Logger';
 import type { Env } from '../types/discord';
 

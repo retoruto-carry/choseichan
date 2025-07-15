@@ -5,6 +5,7 @@
 import { TIME_CONSTANTS } from '../../../application/constants/ApplicationConstants';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
+import type { D1ScheduleRow } from '../../types/database';
 import { RepositoryError } from '../errors';
 
 // Database row types
@@ -158,7 +159,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
       if (!result.results || result.results.length === 0) return null;
 
       // 最初の行からスケジュール情報を取得
-      const firstRow = result.results[0] as any;
+      const firstRow = result.results[0] as unknown as D1ScheduleRow;
       const scheduleRow: ScheduleRow = {
         id: firstRow.id,
         guild_id: firstRow.guild_id,
@@ -183,12 +184,18 @@ export class D1ScheduleRepository implements IScheduleRepository {
 
       // 日付データを抽出（date_idがnullでない場合のみ）
       const dateRows: ScheduleDateRow[] = result.results
-        .filter((row: any) => row.date_id)
-        .map((row: any) => ({
-          date_id: row.date_id,
-          datetime: row.datetime,
-          display_order: row.display_order,
-        }));
+        .filter((row) => {
+          const r = row as unknown as D1ScheduleRow;
+          return r.date_id && r.datetime;
+        })
+        .map((row) => {
+          const r = row as unknown as D1ScheduleRow;
+          return {
+            date_id: r.date_id as string,
+            datetime: r.datetime as string,
+            display_order: r.display_order || 0,
+          };
+        });
 
       return this.mapRowToSchedule(scheduleRow, dateRows);
     } catch (error) {

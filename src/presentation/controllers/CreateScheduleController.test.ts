@@ -2,9 +2,9 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CreateScheduleUseCase } from '../../application/usecases/schedule/CreateScheduleUseCase';
 import type { GetScheduleSummaryUseCase } from '../../application/usecases/schedule/GetScheduleSummaryUseCase';
+import type { DependencyContainer } from '../../di/DependencyContainer';
 import { parseUserInputDate } from '../../domain/utils/date';
 import { generateId } from '../../domain/utils/id';
-import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { CreateScheduleController } from './CreateScheduleController';
 
 // Mock dependencies

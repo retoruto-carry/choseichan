@@ -6,10 +6,10 @@
 
 import type { DeadlineReminderTask } from '../../application/ports/DeadlineReminderQueuePort';
 import { NotificationService } from '../../application/services/NotificationService';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
 import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
-import { DependencyContainer } from '../factories/DependencyContainer';
 import type { Env } from '../types/discord';
 
 export async function handleDeadlineReminderBatch(

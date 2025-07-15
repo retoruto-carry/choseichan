@@ -8,9 +8,10 @@
 import { InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
 import { MessageUpdateType } from '../../application/types/MessageUpdateType';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
+import type { DiscordComponent } from '../../infrastructure/types/discord-api';
 import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { sendFollowupMessage, updateOriginalMessage } from '../utils/discord';
 import { getDisplayName } from '../utils/discord-helpers';
@@ -85,7 +86,7 @@ export class VoteController {
 
       // Discord制限: 1メッセージあたり最大5個のセレクトメニュー
       // 5個ずつのグループに分割
-      const componentGroups: any[][] = [];
+      const componentGroups: DiscordComponent[][] = [];
       for (let i = 0; i < selectMenus.length; i += 5) {
         componentGroups.push(selectMenus.slice(i, i + 5));
       }

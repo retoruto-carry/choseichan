@@ -1,6 +1,6 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import type { DependencyContainer } from '../../di/DependencyContainer';
 import { parseButtonIdToComponents } from '../utils/button-id';
 import { ButtonInteractionController } from './ButtonInteractionController';
 

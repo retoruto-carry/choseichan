@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import type { DependencyContainer } from '../../di/DependencyContainer';
 import { ModalController } from './ModalController';
 
 describe('ModalController', () => {

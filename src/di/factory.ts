@@ -2,10 +2,10 @@
  * データベースタイプに応じたリポジトリファクトリを作成
  */
 
-import type { IRepositoryFactory } from '../../domain/repositories/interfaces';
-import { D1RepositoryFactory } from '../repositories/d1/factory';
-import type { D1DatabaseConfig } from '../types/database';
-import type { Env } from '../types/discord';
+import type { IRepositoryFactory } from '../domain/repositories/interfaces';
+import { D1RepositoryFactory } from '../infrastructure/repositories/d1/factory';
+import type { D1DatabaseConfig } from '../infrastructure/types/database';
+import type { Env } from '../infrastructure/types/discord';
 
 /**
  * 環境変数からデータベース設定を作成

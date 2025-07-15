@@ -6,11 +6,12 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { CommandInteraction, Env } from '../../infrastructure/types/discord';
 import { CommandUIBuilder } from '../builders/CommandUIBuilder';
+import { LIST_LIMITS } from '../constants/ui';
 
 export class CommandController {
   private readonly logger = getLogger();
@@ -86,7 +87,7 @@ export class CommandController {
       const schedulesResult = await this.dependencyContainer.findSchedulesUseCase.findByChannel(
         channelId,
         guildId,
-        10
+        LIST_LIMITS.DEFAULT_SCHEDULE_LIMIT
       );
 
       if (!schedulesResult.success) {

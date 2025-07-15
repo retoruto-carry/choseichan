@@ -13,6 +13,7 @@ import type {
   DomainScheduleDate,
   DomainScheduleSummary,
 } from '../../../domain/types/DomainTypes';
+import type { D1ResponseRow, D1ResponseStatusRow } from '../../types/database';
 import { RepositoryError } from '../errors';
 
 export class D1ResponseRepository implements IResponseRepository {
@@ -143,7 +144,7 @@ export class D1ResponseRepository implements IResponseRepository {
       }
 
       // 次に、すべてのレスポンスの日付ステータスを一度に取得
-      const responseIds = responseResult.results.map((row: any) => row.id);
+      const responseIds = responseResult.results.map((row) => (row as unknown as D1ResponseRow).id);
       const placeholders = responseIds.map(() => '?').join(',');
 
       const statusResult = await this.db
@@ -157,19 +158,19 @@ export class D1ResponseRepository implements IResponseRepository {
 
       // ステータスマップを作成
       const statusMap = new Map<string, Record<string, DomainResponseStatus>>();
-      for (const row of statusResult.results as any[]) {
+      for (const row of statusResult.results as unknown as D1ResponseStatusRow[]) {
         if (!statusMap.has(row.response_id)) {
           statusMap.set(row.response_id, {});
         }
         const responseStatuses = statusMap.get(row.response_id);
         if (responseStatuses) {
-          responseStatuses[row.date_id] = row.status;
+          responseStatuses[row.date_id] = row.status as DomainResponseStatus;
         }
       }
 
       // DomainResponseオブジェクトを構築
       const responses: DomainResponse[] = [];
-      for (const row of responseResult.results as any[]) {
+      for (const row of responseResult.results as unknown as D1ResponseRow[]) {
         const response = this.mapRowToResponse(row, []);
         if (response) {
           // ステータスマップから日付ステータスを設定

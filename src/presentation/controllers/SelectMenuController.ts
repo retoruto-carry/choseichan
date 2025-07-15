@@ -6,7 +6,7 @@
 
 import { InteractionResponseType } from 'discord-interactions';
 import { MessageUpdateType } from '../../application/types/MessageUpdateType';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { getDisplayName } from '../utils/discord-helpers';

@@ -4,10 +4,10 @@
  * インフラストラクチャ層の公開インターフェース
  */
 
-export type { ApplicationServices, InfrastructureServices } from './factories/DependencyContainer';
-export { DependencyContainer } from './factories/DependencyContainer';
+export type { ApplicationServices, InfrastructureServices } from '../di/DependencyContainer';
+export { DependencyContainer } from '../di/DependencyContainer';
 // Factories
-export { createDatabaseConfig, createRepositoryFactory } from './factories/factory';
+export { createDatabaseConfig, createRepositoryFactory } from '../di/factory';
 export { D1RepositoryFactory } from './repositories/d1/factory';
 export { D1ResponseRepository } from './repositories/d1/response-repository';
 

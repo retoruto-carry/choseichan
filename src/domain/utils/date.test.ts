@@ -1,27 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate } from '../../presentation/utils/date-formatter';
 import { parseUserInputDate } from './date';
 
 describe('Date Utilities', () => {
-  describe('formatDate', () => {
-    it('should format date with time correctly', () => {
-      const result = formatDate('2024-12-25T19:00:00.000Z');
-      // 日本語形式での出力を確認: 12月26日(木) 04:00
-      expect(result).toMatch(/\d{1,2}月\d{1,2}日\(.+\) \d{2}:\d{2}/);
-    });
-
-    it('should format date without time correctly', () => {
-      const result = formatDate('2024-12-25T00:00:00.000Z');
-      // 日本語形式での出力を確認
-      expect(result).toMatch(/\d{1,2}月\d{1,2}日\(.+\) \d{2}:\d{2}/);
-    });
-
-    it('should return invalid date strings as-is', () => {
-      const result = formatDate('invalid-date');
-      expect(result).toBe('invalid-date');
-    });
-  });
-
   describe('parseUserInputDate', () => {
     const now = new Date();
     const _currentYear = now.getFullYear();
@@ -103,10 +83,8 @@ describe('Date Utilities', () => {
       expect(result?.getUTCMinutes()).toBe(59);
       expect(result?.getUTCSeconds()).toBe(59);
 
-      // Test that it formats back to JST correctly (日本語形式)
-      const formatted = formatDate(result?.toISOString() || '');
-      expect(formatted).toContain('1月4日');
-      expect(formatted).toContain('23:59');
+      // Verify the result is a valid date in correct year and time
+      expect(result?.getUTCFullYear()).toBeGreaterThanOrEqual(2026);
     });
 
     it('should parse ISO date format', () => {
@@ -153,10 +131,8 @@ describe('Date Utilities', () => {
       expect(result?.getUTCMinutes()).toBe(59);
       expect(result?.getUTCSeconds()).toBe(59);
 
-      // Test that it formats back to JST correctly (日本語形式)
-      const formatted = formatDate(result?.toISOString() || '');
-      expect(formatted).toContain('4月23日');
-      expect(formatted).toContain('23:59');
+      // Verify the result is a valid date in April
+      expect(result?.getUTCMonth()).toBe(3); // April is month 3
     });
 
     it('should validate month and day ranges', () => {

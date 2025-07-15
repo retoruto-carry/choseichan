@@ -11,9 +11,9 @@ import {
   NOTIFICATION_CONSTANTS,
 } from '../../application/constants/ApplicationConstants';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { parseUserInputDate } from '../../domain/utils/date';
 import { generateId } from '../../domain/utils/id';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';

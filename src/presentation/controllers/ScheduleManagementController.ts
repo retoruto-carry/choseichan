@@ -7,7 +7,7 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { DependencyContainer } from '../../infrastructure/factories/DependencyContainer';
+import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';

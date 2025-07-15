@@ -1,3 +1,4 @@
+import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
 import type { Env } from '../../infrastructure/types/discord';
 import type { DiscordComponent } from '../../infrastructure/types/discord-api';
 
@@ -23,7 +24,7 @@ export async function sendFollowupMessage(
       body: JSON.stringify({
         content,
         components,
-        flags: 64, // Ephemeral
+        flags: DISCORD_API_CONSTANTS.FLAGS.EPHEMERAL, // Ephemeral
       }),
     });
 
