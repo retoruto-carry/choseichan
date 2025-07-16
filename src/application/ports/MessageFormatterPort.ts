@@ -5,7 +5,7 @@
  * プレゼンテーション層の実装詳細から独立
  */
 
-import type { ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { ScheduleSummaryResponseDto } from '../dto/ScheduleDto';
 
 /**
  * Discord Embedオブジェクト（簡略化）
@@ -51,7 +51,7 @@ export interface IMessageFormatterPort {
    * スケジュールメッセージ（EmbedとComponents）を作成
    */
   formatScheduleMessage(
-    summary: ScheduleSummaryResponse,
+    summary: ScheduleSummaryResponseDto,
     showVoteButton: boolean
   ): { embed: object; components: object[] };
 }

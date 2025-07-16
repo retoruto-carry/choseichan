@@ -18,8 +18,8 @@ import {
 import type { DomainResponse, DomainResponseStatus } from '../../../domain/types/DomainTypes';
 import type {
   ResponseDto,
-  ResponseSubmissionResult,
-  UpdateResponseRequest,
+  ResponseSubmissionResultDto,
+  UpdateResponseRequestDto,
 } from '../../dto/ResponseDto';
 import { ResponseMapper, ScheduleMapper } from '../../mappers/DomainMappers';
 
@@ -29,7 +29,7 @@ export class UpdateResponseUseCase {
     private readonly responseRepository: IResponseRepository
   ) {}
 
-  async execute(request: UpdateResponseRequest): Promise<ResponseSubmissionResult> {
+  async execute(request: UpdateResponseRequestDto): Promise<ResponseSubmissionResultDto> {
     try {
       // 1. データの基本検証
       const basicValidation = this.validateBasicData(request);
@@ -145,7 +145,7 @@ export class UpdateResponseUseCase {
     }
   }
 
-  private validateBasicData(request: UpdateResponseRequest): {
+  private validateBasicData(request: UpdateResponseRequestDto): {
     isValid: boolean;
     errors: string[];
   } {

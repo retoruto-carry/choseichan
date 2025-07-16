@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
-import type { UpdateScheduleRequest } from '../../dto/ScheduleDto';
+import type { UpdateScheduleRequestDto } from '../../dto/ScheduleDto';
 import type { ILogger } from '../../ports/LoggerPort';
 import { UpdateScheduleUseCase } from './UpdateScheduleUseCase';
 
@@ -68,7 +68,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -88,7 +88,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -106,7 +106,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
       const deadline = futureDeadline.toISOString();
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -130,7 +130,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleWithDeadline);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -150,7 +150,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -167,7 +167,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -190,7 +190,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(scheduleWithReminders);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -221,7 +221,7 @@ describe('UpdateScheduleUseCase', () => {
         },
       ];
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -239,7 +239,7 @@ describe('UpdateScheduleUseCase', () => {
         scheduleId: '',
         guildId: '',
         editorUserId: '',
-      } as UpdateScheduleRequest;
+      } as UpdateScheduleRequestDto;
 
       const result = await useCase.execute(request);
 
@@ -251,7 +251,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should validate empty title', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -268,7 +268,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should validate empty dates', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -284,7 +284,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should return error when schedule not found', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(null);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -301,7 +301,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should return error when user is not authorized', async () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'other-user-456', // Different user
@@ -320,7 +320,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -340,7 +340,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
 
       const futureDeadline = new Date(Date.now() + 86400000); // 24 hours later
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -359,7 +359,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(closedSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce();
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -376,7 +376,7 @@ describe('UpdateScheduleUseCase', () => {
     it('should handle repository errors', async () => {
       vi.mocked(mockScheduleRepository.findById).mockRejectedValueOnce(new Error('Database error'));
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',
@@ -393,7 +393,7 @@ describe('UpdateScheduleUseCase', () => {
       vi.mocked(mockScheduleRepository.findById).mockResolvedValueOnce(mockSchedule);
       vi.mocked(mockScheduleRepository.save).mockResolvedValueOnce(undefined);
 
-      const request: UpdateScheduleRequest = {
+      const request: UpdateScheduleRequestDto = {
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         editorUserId: 'user-123',

@@ -5,13 +5,13 @@
  */
 
 import type { ResponseDto } from '../../application/dto/ResponseDto';
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 
 export class VoteUIBuilder {
   /**
    * 投票セレクトメニューを作成
    */
-  createVoteSelectMenus(schedule: ScheduleResponse, userResponse: ResponseDto | null) {
+  createVoteSelectMenus(schedule: ScheduleResponseDto, userResponse: ResponseDto | null) {
     return schedule.dates.map((date) => {
       const existingStatus = userResponse?.dateStatuses?.[date.id];
 

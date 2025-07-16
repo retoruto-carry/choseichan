@@ -6,7 +6,7 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
-import type { ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { ScheduleSummaryResponseDto } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
@@ -130,7 +130,7 @@ describe('NotificationService', () => {
             scores: {},
           },
         },
-      } as ScheduleSummaryResponse,
+      } as ScheduleSummaryResponseDto,
     });
 
     mockBackgroundExecutor = {
@@ -205,7 +205,7 @@ describe('NotificationService', () => {
       const scheduleId = 'test-schedule';
       const guildId = 'guild123';
 
-      const mockSummaryResponse: ScheduleSummaryResponse = {
+      const mockSummaryResponse: ScheduleSummaryResponseDto = {
         schedule: {
           id: scheduleId,
           guildId: guildId,

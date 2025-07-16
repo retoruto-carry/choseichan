@@ -10,7 +10,7 @@ import {
   ERROR_MESSAGES,
   NOTIFICATION_CONSTANTS,
 } from '../../application/constants/ApplicationConstants';
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import { DependencyContainer } from '../../di/DependencyContainer';
 import { parseUserInputDate } from '../../domain/utils/date';
 import { generateId } from '../../domain/utils/id';
@@ -207,7 +207,7 @@ export class CreateScheduleController {
    * 締切通知設定のフォローアップメッセージを送信
    */
   async sendReminderFollowup(
-    schedule: ScheduleResponse,
+    schedule: ScheduleResponseDto,
     interactionToken: string,
     env: Env
   ): Promise<void> {

@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseType } from 'discord-interactions';
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import { MessageUpdateType } from '../../application/types/MessageUpdateType';
 import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
@@ -495,7 +495,7 @@ export class VoteController {
    * 回答メッセージを作成
    */
   private createResponseMessage(
-    schedule: ScheduleResponse,
+    schedule: ScheduleResponseDto,
     responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }>,
     username: string
   ): string {

@@ -12,7 +12,7 @@ import type {
 } from '../../domain/repositories/interfaces';
 import type { DiscordMessage } from '../../infrastructure/types/discord-api';
 import { formatDate } from '../../presentation/utils/date-formatter';
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../dto/ScheduleDto';
+import type { ScheduleResponseDto, ScheduleSummaryResponseDto } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
@@ -56,7 +56,7 @@ export class NotificationService {
   }
 
   async sendDeadlineReminder(
-    schedule: Schedule | ScheduleResponse,
+    schedule: Schedule | ScheduleResponseDto,
     customMessage: string = '締切が1時間以内'
   ): Promise<void> {
     if (!schedule.deadline) return;
@@ -106,14 +106,14 @@ export class NotificationService {
     await this.sendChannelMessage(schedule.channelId, message);
   }
 
-  private async getNonRespondents(_summary: ScheduleSummaryResponse): Promise<string[]> {
+  private async getNonRespondents(_summary: ScheduleSummaryResponseDto): Promise<string[]> {
     // 実際の実装では、チャンネルメンバーを取得し
     // 回答者と比較します
     return [];
   }
 
   private createReminderMessage(
-    schedule: Schedule | ScheduleResponse,
+    schedule: Schedule | ScheduleResponseDto,
     nonRespondents: string[]
   ): object {
     // 締切が設定されていない場合は早期リターン
@@ -348,7 +348,7 @@ export class NotificationService {
     }
   }
 
-  sendPRMessage(schedule: Schedule | ScheduleResponse): void {
+  sendPRMessage(schedule: Schedule | ScheduleResponseDto): void {
     const message: DiscordMessage = {
       content: `[PR] 画像を貼るだけでリンク集/個人HPを作ろう！[ピクページ](https://piku.page/)\n\n> 調整ちゃんは無料で運営されています`,
     };

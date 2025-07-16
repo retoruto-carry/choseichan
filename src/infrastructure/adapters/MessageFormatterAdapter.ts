@@ -5,13 +5,13 @@
  * ScheduleMainMessageBuilderを使用してUI構築を統一
  */
 
-import type { ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleSummaryResponseDto } from '../../application/dto/ScheduleDto';
 import type { IMessageFormatterPort } from '../../application/ports/MessageFormatterPort';
 import { ScheduleMainMessageBuilder } from '../../presentation/builders/ScheduleMainMessageBuilder';
 
 export class MessageFormatterAdapter implements IMessageFormatterPort {
   formatScheduleMessage(
-    summary: ScheduleSummaryResponse,
+    summary: ScheduleSummaryResponseDto,
     showVoteButton: boolean
   ): { embed: object; components: object[] } {
     // 統一されたScheduleMainMessageBuilderを使用

@@ -4,7 +4,7 @@
  * コマンド関連のUI構築専用クラス
  */
 
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import { EMBED_COLORS } from '../constants/ui';
 import { formatDate } from '../utils/date-formatter';
 
@@ -82,7 +82,7 @@ export class CommandUIBuilder {
   /**
    * スケジュール一覧エンベッドを作成
    */
-  createScheduleListEmbed(schedules: ScheduleResponse[]) {
+  createScheduleListEmbed(schedules: ScheduleResponseDto[]) {
     return {
       title: '📋 日程調整一覧',
       color: EMBED_COLORS.INFO,

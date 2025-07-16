@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import { DependencyContainer } from '../../di/DependencyContainer';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { ButtonInteraction, Env } from '../../infrastructure/types/discord';
@@ -465,7 +465,7 @@ export class ScheduleManagementController {
   }
 
   private async handleDiscordMessageDeletion(
-    schedule: ScheduleResponse,
+    schedule: ScheduleResponseDto,
     interaction: ButtonInteraction,
     env?: Env
   ): Promise<void> {

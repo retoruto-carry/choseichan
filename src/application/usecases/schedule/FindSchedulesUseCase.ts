@@ -6,24 +6,24 @@
 
 import type { Schedule } from '../../../domain/entities/Schedule';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
-import type { ScheduleResponse } from '../../dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface FindSchedulesByChannelUseCaseResult {
   success: boolean;
-  schedules?: ScheduleResponse[];
+  schedules?: ScheduleResponseDto[];
   errors?: string[];
 }
 
 export interface FindSchedulesByDeadlineRangeUseCaseResult {
   success: boolean;
-  schedules?: ScheduleResponse[];
+  schedules?: ScheduleResponseDto[];
   errors?: string[];
 }
 
 export interface FindScheduleByMessageIdUseCaseResult {
   success: boolean;
-  schedule?: ScheduleResponse;
+  schedule?: ScheduleResponseDto;
   errors?: string[];
 }
 
@@ -141,7 +141,7 @@ export class FindSchedulesUseCase {
     }
   }
 
-  private buildScheduleResponse(schedule: Schedule): ScheduleResponse {
+  private buildScheduleResponse(schedule: Schedule): ScheduleResponseDto {
     return {
       id: schedule.id,
       guildId: schedule.guildId,

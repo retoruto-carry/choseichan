@@ -10,13 +10,13 @@ import { ScheduleDate } from '../../../domain/entities/ScheduleDate';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import { ERROR_MESSAGES } from '../../constants/ApplicationConstants';
-import type { ScheduleResponse, UpdateScheduleRequest } from '../../dto/ScheduleDto';
+import type { ScheduleResponseDto, UpdateScheduleRequestDto } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 import type { ILogger } from '../../ports/LoggerPort';
 
 export interface UpdateScheduleUseCaseResult {
   success: boolean;
-  schedule?: ScheduleResponse;
+  schedule?: ScheduleResponseDto;
   errors?: string[];
 }
 
@@ -26,7 +26,7 @@ export class UpdateScheduleUseCase {
     private readonly logger: ILogger
   ) {}
 
-  async execute(request: UpdateScheduleRequest): Promise<UpdateScheduleUseCaseResult> {
+  async execute(request: UpdateScheduleRequestDto): Promise<UpdateScheduleUseCaseResult> {
     try {
       // 1. データの基本検証
       const basicValidation = this.validateBasicData(request);
@@ -138,7 +138,7 @@ export class UpdateScheduleUseCase {
     }
   }
 
-  private validateBasicData(request: UpdateScheduleRequest): {
+  private validateBasicData(request: UpdateScheduleRequestDto): {
     isValid: boolean;
     errors: string[];
   } {
@@ -175,7 +175,7 @@ export class UpdateScheduleUseCase {
     };
   }
 
-  private buildResponse(schedule: Schedule): ScheduleResponse {
+  private buildResponse(schedule: Schedule): ScheduleResponseDto {
     const primitives = schedule.toPrimitives();
 
     return {

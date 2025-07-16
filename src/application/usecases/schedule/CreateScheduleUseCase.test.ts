@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
-import type { CreateScheduleRequest } from '../../dto/ScheduleDto';
+import type { CreateScheduleRequestDto } from '../../dto/ScheduleDto';
 import type { ILogger } from '../../ports/LoggerPort';
 import { CreateScheduleUseCase } from './CreateScheduleUseCase';
 
@@ -104,7 +104,7 @@ describe('スケジュール作成ユースケース', () => {
 
   describe('有効なスケジュール作成', () => {
     it('有効なスケジュールを正常に作成する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -135,7 +135,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('オプションフィールドなしでスケジュールを作成する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -156,7 +156,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('リポジトリにスケジュールを保存する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -178,7 +178,7 @@ describe('スケジュール作成ユースケース', () => {
 
   describe('バリデーションエラー', () => {
     it('ギルドIDがないリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: '',
         channelId: 'channel123',
         authorId: 'user123',
@@ -194,7 +194,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('チャンネルIDがないリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: '',
         authorId: 'user123',
@@ -210,7 +210,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('作成者情報がないリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: '',
@@ -227,7 +227,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('タイトルがないリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -243,7 +243,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('日程がないリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -259,7 +259,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('任意の日付形式を受け入れる', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -275,7 +275,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('無効な締切形式のリクエストを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -292,7 +292,7 @@ describe('スケジュール作成ユースケース', () => {
     });
 
     it('複数のバリデーションエラーを収集する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: '',
         channelId: '',
         authorId: '',
@@ -310,7 +310,7 @@ describe('スケジュール作成ユースケース', () => {
 
   describe('ドメインバリデーション', () => {
     it('過去の締切を持つスケジュールを拒否する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -332,7 +332,7 @@ describe('スケジュール作成ユースケース', () => {
         datetime: `2024-12-${(i % 30) + 1} 10:00`,
       }));
 
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -350,7 +350,7 @@ describe('スケジュール作成ユースケース', () => {
     it('タイトルが長すぎるスケジュールを拒否する', async () => {
       const longTitle = 'a'.repeat(101);
 
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -373,7 +373,7 @@ describe('スケジュール作成ユースケース', () => {
         .spyOn(mockRepository, 'save')
         .mockRejectedValue(new Error('Database error'));
 
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -392,7 +392,7 @@ describe('スケジュール作成ユースケース', () => {
 
   describe('Response Building', () => {
     it('正しいレスポンス構造を構築する', async () => {
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',
@@ -440,7 +440,7 @@ describe('スケジュール作成ユースケース', () => {
     it('ISO日付文字列変換を処理する', async () => {
       const _deadlineString = '2024-12-01T10:00:00.000Z';
 
-      const request: CreateScheduleRequest = {
+      const request: CreateScheduleRequestDto = {
         guildId: 'guild123',
         channelId: 'channel123',
         authorId: 'user123',

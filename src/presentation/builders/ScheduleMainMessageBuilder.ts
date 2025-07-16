@@ -5,13 +5,16 @@
  * 一貫したUIを提供するための統一Builder
  */
 
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
+import type {
+  ScheduleResponseDto,
+  ScheduleSummaryResponseDto,
+} from '../../application/dto/ScheduleDto';
 import { createButtonId } from '../utils/button-helpers';
 import { createScheduleEmbed, createScheduleEmbedWithTable } from '../utils/embeds';
 
 export interface ScheduleMainMessageOptions {
-  summary?: ScheduleSummaryResponse;
-  schedule?: ScheduleResponse;
+  summary?: ScheduleSummaryResponseDto;
+  schedule?: ScheduleResponseDto;
   showDetails?: boolean;
   showVoteButtons?: boolean;
   isNewlyCreated?: boolean;
@@ -25,8 +28,8 @@ export class ScheduleMainMessageBuilder {
    * @param showDetails 詳細表示フラグ
    */
   static createMainEmbed(
-    summary?: ScheduleSummaryResponse,
-    schedule?: ScheduleResponse,
+    summary?: ScheduleSummaryResponseDto,
+    schedule?: ScheduleResponseDto,
     showDetails: boolean = false
   ) {
     if (showDetails && summary) {
@@ -51,7 +54,7 @@ export class ScheduleMainMessageBuilder {
    * @param showVoteButton 投票ボタン表示フラグ
    */
   static createMainComponents(
-    schedule: ScheduleResponse,
+    schedule: ScheduleResponseDto,
     showDetails: boolean = false,
     showVoteButton: boolean = true
   ) {

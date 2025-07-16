@@ -4,14 +4,14 @@
  * スケジュール編集のUI構築専用クラス
  */
 
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import { createButtonId } from '../utils/button-helpers';
 
 export class ScheduleEditUIBuilder {
   /**
    * 基本情報編集モーダルを作成
    */
-  createEditInfoModal(schedule: ScheduleResponse, messageId: string) {
+  createEditInfoModal(schedule: ScheduleResponseDto, messageId: string) {
     return {
       custom_id: `modal:edit_info:${schedule.id}:${messageId}`,
       title: '日程調整の編集',
@@ -52,7 +52,7 @@ export class ScheduleEditUIBuilder {
   /**
    * 日程更新モーダルを作成
    */
-  createUpdateDatesModal(schedule: ScheduleResponse, messageId: string) {
+  createUpdateDatesModal(schedule: ScheduleResponseDto, messageId: string) {
     // 現在の日程を整形して表示
     const currentDates = schedule.dates.map((date) => date.datetime).join('\n');
 
@@ -110,7 +110,7 @@ export class ScheduleEditUIBuilder {
   /**
    * 日程削除選択コンポーネントを作成
    */
-  createRemoveDatesComponents(schedule: ScheduleResponse) {
+  createRemoveDatesComponents(schedule: ScheduleResponseDto) {
     return schedule.dates.map((date, idx) => ({
       type: 1,
       components: [
@@ -128,7 +128,7 @@ export class ScheduleEditUIBuilder {
   /**
    * 締切編集モーダルを作成
    */
-  createEditDeadlineModal(schedule: ScheduleResponse, messageId: string) {
+  createEditDeadlineModal(schedule: ScheduleResponseDto, messageId: string) {
     // Format current deadline for display
     const currentDeadline = schedule.deadline
       ? new Date(schedule.deadline)
@@ -202,7 +202,7 @@ export class ScheduleEditUIBuilder {
   /**
    * リマインダー編集モーダルを作成
    */
-  createEditReminderModal(schedule: ScheduleResponse) {
+  createEditReminderModal(schedule: ScheduleResponseDto) {
     // Current reminder settings
     const currentTimings = schedule.reminderTimings?.join(', ') || '3d, 1d, 8h';
     const currentMentions = schedule.reminderMentions?.join(', ') || '@here';

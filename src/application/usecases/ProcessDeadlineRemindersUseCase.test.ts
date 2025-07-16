@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ScheduleResponse } from '../dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../dto/ScheduleDto';
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';
 import { ProcessDeadlineRemindersUseCase } from './ProcessDeadlineRemindersUseCase';
@@ -15,7 +15,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
   let mockNotificationService: any;
   let mockEnv: IEnvironmentPort;
 
-  const mockSchedule: ScheduleResponse = {
+  const mockSchedule: ScheduleResponseDto = {
     id: 'schedule-123',
     guildId: 'guild-123',
     channelId: 'channel-123',

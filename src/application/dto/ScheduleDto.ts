@@ -6,7 +6,7 @@
 
 import type { ResponseDto } from './ResponseDto';
 
-export interface CreateScheduleRequest {
+export interface CreateScheduleRequestDto {
   guildId: string;
   channelId: string;
   authorId: string;
@@ -23,7 +23,7 @@ export interface CreateScheduleRequest {
   reminderMentions?: string[];
 }
 
-export interface UpdateScheduleRequest {
+export interface UpdateScheduleRequestDto {
   scheduleId: string;
   guildId: string;
   editorUserId: string;
@@ -40,7 +40,7 @@ export interface UpdateScheduleRequest {
   reminderStates?: Record<string, never>; // 締切変更時にリマインダー状態をリセットするための空オブジェクト
 }
 
-export interface AddDatesRequest {
+export interface AddDatesRequestDto {
   scheduleId: string;
   guildId: string;
   editorUserId: string;
@@ -50,13 +50,13 @@ export interface AddDatesRequest {
   }>;
 }
 
-export interface CloseScheduleRequest {
+export interface CloseScheduleRequestDto {
   scheduleId: string;
   guildId: string;
   editorUserId: string;
 }
 
-export interface ScheduleResponse {
+export interface ScheduleResponseDto {
   id: string;
   guildId: string;
   channelId: string;
@@ -84,8 +84,8 @@ export interface ScheduleResponse {
   updatedAt: string; // ISO文字列
 }
 
-export interface ScheduleSummaryResponse {
-  schedule: ScheduleResponse;
+export interface ScheduleSummaryResponseDto {
+  schedule: ScheduleResponseDto;
   responses: ResponseDto[];
   responseCounts: Record<string, { yes: number; maybe: number; no: number }>;
   totalResponseUsers: number;

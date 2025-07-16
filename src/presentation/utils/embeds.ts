@@ -1,12 +1,15 @@
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
+import type {
+  ScheduleResponseDto,
+  ScheduleSummaryResponseDto,
+} from '../../application/dto/ScheduleDto';
 import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
 import { createButtonId } from './button-helpers';
 import { formatDate } from './date-formatter';
 
 export function createScheduleEmbed(
-  schedule: ScheduleResponse,
+  schedule: ScheduleResponseDto,
   totalResponses?: number,
-  summary?: ScheduleSummaryResponse
+  summary?: ScheduleSummaryResponseDto
 ) {
   // 最有力候補を判定
   const bestDateId = summary?.bestDateId || summary?.statistics?.optimalDates?.optimalDateId;
@@ -57,7 +60,7 @@ export function createScheduleEmbed(
 }
 
 export function createScheduleEmbedWithTable(
-  summary: ScheduleSummaryResponse,
+  summary: ScheduleSummaryResponseDto,
   showDetails: boolean = false
 ) {
   const schedule = summary.schedule;
@@ -132,7 +135,7 @@ export function createScheduleEmbedWithTable(
 }
 
 export function createSimpleScheduleComponents(
-  schedule: ScheduleResponse,
+  schedule: ScheduleResponseDto,
   showDetails: boolean = false
 ) {
   const components = [];

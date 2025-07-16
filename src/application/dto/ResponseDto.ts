@@ -4,7 +4,7 @@
  * 回答関連のデータ転送用オブジェクト
  */
 
-export interface SubmitResponseRequest {
+export interface SubmitResponseRequestDto {
   scheduleId: string;
   guildId: string;
   userId: string;
@@ -16,7 +16,7 @@ export interface SubmitResponseRequest {
   }>;
 }
 
-export interface UpdateResponseRequest {
+export interface UpdateResponseRequestDto {
   scheduleId: string;
   guildId: string;
   userId: string;
@@ -26,13 +26,13 @@ export interface UpdateResponseRequest {
   }>;
 }
 
-export interface GetResponseRequest {
+export interface GetResponseRequestDto {
   scheduleId: string;
   guildId: string;
   userId?: string; // 指定しない場合は全ユーザーの回答を取得
 }
 
-export interface ResponseSubmissionResult {
+export interface ResponseSubmissionResultDto {
   success: boolean;
   response: ResponseDto;
   isNewResponse: boolean;
@@ -48,7 +48,7 @@ export interface ResponseDto {
   updatedAt: string; // ISO string
 }
 
-export interface ResponseStatistics {
+export interface ResponseStatisticsDto {
   totalUsers: number;
   responsesByDate: Record<
     string,

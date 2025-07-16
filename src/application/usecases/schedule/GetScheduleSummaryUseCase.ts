@@ -9,12 +9,12 @@ import type {
   IScheduleRepository,
 } from '../../../domain/repositories/interfaces';
 import type { ResponseDto } from '../../dto/ResponseDto';
-import type { ScheduleSummaryResponse } from '../../dto/ScheduleDto';
+import type { ScheduleSummaryResponseDto } from '../../dto/ScheduleDto';
 import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetScheduleSummaryUseCaseResult {
   success: boolean;
-  summary?: ScheduleSummaryResponse;
+  summary?: ScheduleSummaryResponseDto;
   errors?: string[];
 }
 
@@ -52,7 +52,7 @@ export class GetScheduleSummaryUseCase {
       const responseCounts = this.calculateResponseCounts(schedule.dates, responsesDtos);
       const statistics = this.calculateStatistics(schedule.dates, responsesDtos);
 
-      const summary: ScheduleSummaryResponse = {
+      const summary: ScheduleSummaryResponseDto = {
         schedule: {
           id: schedule.id,
           guildId: schedule.guildId,

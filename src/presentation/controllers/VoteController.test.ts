@@ -1,7 +1,7 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResponseDto } from '../../application/dto/ResponseDto';
-import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
+import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
 import type { DependencyContainer } from '../../di/DependencyContainer';
 import type { MessageUpdateService } from '../../domain/services/MessageUpdateService';
 import type { ButtonInteraction, Env, ModalInteraction } from '../../infrastructure/types/discord';
@@ -28,7 +28,7 @@ describe('VoteController', () => {
   let mockEnv: Env;
   let mockMessageUpdateService: MessageUpdateService;
 
-  const mockSchedule: ScheduleResponse = {
+  const mockSchedule: ScheduleResponseDto = {
     id: 'schedule-123',
     guildId: 'guild-123',
     channelId: 'channel-123',

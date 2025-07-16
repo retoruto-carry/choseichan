@@ -8,7 +8,11 @@ import type { Response } from '../../../domain/entities/Response';
 import type { IResponseRepository } from '../../../domain/repositories/interfaces';
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
 import type { DomainResponse } from '../../../domain/types/DomainTypes';
-import type { GetResponseRequest, ResponseDto, ResponseStatistics } from '../../dto/ResponseDto';
+import type {
+  GetResponseRequestDto,
+  ResponseDto,
+  ResponseStatisticsDto,
+} from '../../dto/ResponseDto';
 import { ResponseMapper } from '../../mappers/DomainMappers';
 
 export interface GetResponseUseCaseResult {
@@ -20,7 +24,7 @@ export interface GetResponseUseCaseResult {
 export interface GetAllResponsesUseCaseResult {
   success: boolean;
   responses?: ResponseDto[];
-  statistics?: ResponseStatistics;
+  statistics?: ResponseStatisticsDto;
   errors?: string[];
 }
 
@@ -30,7 +34,7 @@ export class GetResponseUseCase {
   /**
    * 特定ユーザーのレスポンスを取得
    */
-  async execute(request: GetResponseRequest): Promise<GetResponseUseCaseResult> {
+  async execute(request: GetResponseRequestDto): Promise<GetResponseUseCaseResult> {
     try {
       // 1. データの基本検証
       const basicValidation = this.validateBasicData(request);
@@ -83,7 +87,7 @@ export class GetResponseUseCase {
   /**
    * スケジュールの全レスポンスを取得（統計情報付き）
    */
-  async getAllResponses(request: GetResponseRequest): Promise<GetAllResponsesUseCaseResult> {
+  async getAllResponses(request: GetResponseRequestDto): Promise<GetAllResponsesUseCaseResult> {
     try {
       // 1. データの基本検証
       const basicValidation = this.validateBasicData(request);
@@ -105,7 +109,7 @@ export class GetResponseUseCase {
       const responses = responseEntities.map((r: Response) => this.buildResponseDto(r));
 
       // 4. 統計情報の計算
-      let statistics: ResponseStatistics | undefined;
+      let statistics: ResponseStatisticsDto | undefined;
 
       if (responses.length > 0) {
         // 日程IDの抽出（最初のレスポンスから）
@@ -181,7 +185,10 @@ export class GetResponseUseCase {
     }
   }
 
-  private validateBasicData(request: GetResponseRequest): { isValid: boolean; errors: string[] } {
+  private validateBasicData(request: GetResponseRequestDto): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {

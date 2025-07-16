@@ -11,7 +11,7 @@ import {
   createTestResponseData,
   createTestScheduleData,
 } from '../../../../tests/test-utils/MockRepositoryFactory';
-import type { SubmitResponseRequest } from '../../dto/ResponseDto';
+import type { SubmitResponseRequestDto } from '../../dto/ResponseDto';
 import { SubmitResponseUseCase } from './SubmitResponseUseCase';
 
 describe('SubmitResponseUseCase', () => {
@@ -30,7 +30,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -70,7 +70,7 @@ describe('SubmitResponseUseCase', () => {
       });
       await mockResponseRepository.save(existingResponse, 'guild123');
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -94,7 +94,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -114,7 +114,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -145,7 +145,7 @@ describe('SubmitResponseUseCase', () => {
 
   describe('Validation Errors', () => {
     it('should reject request with missing schedule ID', async () => {
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: '',
         guildId: 'guild123',
         userId: 'user456',
@@ -160,7 +160,7 @@ describe('SubmitResponseUseCase', () => {
     });
 
     it('should reject request with missing user information', async () => {
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: '',
@@ -176,7 +176,7 @@ describe('SubmitResponseUseCase', () => {
     });
 
     it('should reject request with no date statuses', async () => {
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -191,7 +191,7 @@ describe('SubmitResponseUseCase', () => {
     });
 
     it('should reject request with invalid date status', async () => {
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -208,7 +208,7 @@ describe('SubmitResponseUseCase', () => {
 
   describe('Business Logic Validation', () => {
     it('should reject response for non-existent schedule', async () => {
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'non-existent-schedule',
         guildId: 'guild123',
         userId: 'user456',
@@ -226,7 +226,7 @@ describe('SubmitResponseUseCase', () => {
       const closedSchedule = createTestScheduleData({ status: 'closed' });
       await mockScheduleRepository.save(closedSchedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -245,7 +245,7 @@ describe('SubmitResponseUseCase', () => {
       const expiredSchedule = createTestScheduleData({ deadline: pastDeadline });
       await mockScheduleRepository.save(expiredSchedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -263,7 +263,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -281,7 +281,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -306,7 +306,7 @@ describe('SubmitResponseUseCase', () => {
         .spyOn(mockScheduleRepository, 'findById')
         .mockRejectedValue(new Error('Database error'));
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -329,7 +329,7 @@ describe('SubmitResponseUseCase', () => {
         .spyOn(mockResponseRepository, 'save')
         .mockRejectedValue(new Error('Save error'));
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',
@@ -350,7 +350,7 @@ describe('SubmitResponseUseCase', () => {
       const schedule = createTestScheduleData();
       await mockScheduleRepository.save(schedule);
 
-      const request: SubmitResponseRequest = {
+      const request: SubmitResponseRequestDto = {
         scheduleId: 'test-schedule-1',
         guildId: 'guild123',
         userId: 'user456',

@@ -13,7 +13,7 @@ import type {
 import { ResponseDomainService } from '../../../domain/services/ResponseDomainService';
 import type { DomainResponse, DomainSchedule } from '../../../domain/types/DomainTypes';
 import type { ResponseDto } from '../../dto/ResponseDto';
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../../dto/ScheduleDto';
+import type { ScheduleResponseDto, ScheduleSummaryResponseDto } from '../../dto/ScheduleDto';
 import {
   mapDomainResponseToEntity,
   mapDomainScheduleToEntity,
@@ -22,13 +22,13 @@ import {
 
 export interface GetScheduleUseCaseResult {
   success: boolean;
-  schedule?: ScheduleResponse;
+  schedule?: ScheduleResponseDto;
   errors?: string[];
 }
 
 export interface GetScheduleSummaryUseCaseResult {
   success: boolean;
-  summary?: ScheduleSummaryResponse;
+  summary?: ScheduleSummaryResponseDto;
   errors?: string[];
 }
 
@@ -151,7 +151,7 @@ export class GetScheduleUseCase {
       });
 
       // 9. サマリーレスポンスの構築
-      const summary: ScheduleSummaryResponse = {
+      const summary: ScheduleSummaryResponseDto = {
         schedule: this.buildScheduleResponse(schedule),
         responses: responseEntities.map((r) => this.buildResponseDto(r)),
         responseCounts,
@@ -177,7 +177,7 @@ export class GetScheduleUseCase {
     }
   }
 
-  private buildScheduleResponse(schedule: DomainSchedule): ScheduleResponse {
+  private buildScheduleResponse(schedule: DomainSchedule): ScheduleResponseDto {
     return {
       id: schedule.id,
       guildId: schedule.guildId,

@@ -9,19 +9,19 @@ import type { Schedule } from '../../../domain/entities/Schedule';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import { ScheduleDomainService } from '../../../domain/services/ScheduleDomainService';
 import { ERROR_MESSAGES } from '../../constants/ApplicationConstants';
-import type { CloseScheduleRequest, ScheduleResponse } from '../../dto/ScheduleDto';
+import type { CloseScheduleRequestDto, ScheduleResponseDto } from '../../dto/ScheduleDto';
 import { ScheduleMapper } from '../../mappers/DomainMappers';
 
 export interface CloseScheduleUseCaseResult {
   success: boolean;
-  schedule?: ScheduleResponse;
+  schedule?: ScheduleResponseDto;
   errors?: string[];
 }
 
 export class CloseScheduleUseCase {
   constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
-  async execute(request: CloseScheduleRequest): Promise<CloseScheduleUseCaseResult> {
+  async execute(request: CloseScheduleRequestDto): Promise<CloseScheduleUseCaseResult> {
     try {
       // 1. データの基本検証
       const basicValidation = this.validateBasicData(request);
@@ -92,7 +92,10 @@ export class CloseScheduleUseCase {
     }
   }
 
-  private validateBasicData(request: CloseScheduleRequest): { isValid: boolean; errors: string[] } {
+  private validateBasicData(request: CloseScheduleRequestDto): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.scheduleId?.trim()) {
@@ -113,7 +116,7 @@ export class CloseScheduleUseCase {
     };
   }
 
-  private buildResponse(schedule: Schedule): ScheduleResponse {
+  private buildResponse(schedule: Schedule): ScheduleResponseDto {
     const primitives = schedule.toPrimitives();
 
     return {

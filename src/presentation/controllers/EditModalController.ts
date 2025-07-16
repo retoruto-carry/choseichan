@@ -6,7 +6,7 @@
  */
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
-import type { UpdateScheduleRequest } from '../../application/dto/ScheduleDto';
+import type { UpdateScheduleRequestDto } from '../../application/dto/ScheduleDto';
 import { DependencyContainer } from '../../di/DependencyContainer';
 import { parseUserInputDate } from '../../domain/utils/date';
 import { generateId } from '../../domain/utils/id';
@@ -322,7 +322,7 @@ export class EditModalController {
       }
 
       // Update schedule with new deadline (and reset reminders if deadline changed)
-      const updateData: UpdateScheduleRequest = {
+      const updateData: UpdateScheduleRequestDto = {
         scheduleId,
         guildId,
         editorUserId: userId,

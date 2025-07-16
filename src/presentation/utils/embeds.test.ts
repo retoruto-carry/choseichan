@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
+import type {
+  ScheduleResponseDto,
+  ScheduleSummaryResponseDto,
+} from '../../application/dto/ScheduleDto';
 import { EMBED_COLORS } from '../constants/ui';
 import {
   createScheduleEmbed,
@@ -17,7 +20,7 @@ vi.mock('./date-formatter', () => ({
 }));
 
 describe('embeds', () => {
-  const mockSchedule: ScheduleResponse = {
+  const mockSchedule: ScheduleResponseDto = {
     id: 'schedule123',
     guildId: 'guild123',
     channelId: 'channel123',
@@ -41,7 +44,7 @@ describe('embeds', () => {
     updatedAt: '2024-12-20T00:00:00.000Z',
   };
 
-  const mockSummary: ScheduleSummaryResponse = {
+  const mockSummary: ScheduleSummaryResponseDto = {
     schedule: mockSchedule,
     responses: [
       {

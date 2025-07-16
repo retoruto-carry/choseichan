@@ -4,7 +4,10 @@
  * スケジュール管理のUI構築専用クラス
  */
 
-import type { ScheduleResponse, ScheduleSummaryResponse } from '../../application/dto/ScheduleDto';
+import type {
+  ScheduleResponseDto,
+  ScheduleSummaryResponseDto,
+} from '../../application/dto/ScheduleDto';
 import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
 import { createButtonId } from '../utils/button-helpers';
 
@@ -12,7 +15,7 @@ export class ScheduleManagementUIBuilder {
   /**
    * 回答状況テーブル用のEmbedを作成
    */
-  createResponseTableEmbed(summary: ScheduleSummaryResponse) {
+  createResponseTableEmbed(summary: ScheduleSummaryResponseDto) {
     const { schedule, responses, responseCounts, bestDateId } = summary;
 
     return {
@@ -56,7 +59,7 @@ export class ScheduleManagementUIBuilder {
   /**
    * スケジュール用のコンポーネントを作成（旧形式）
    */
-  createScheduleComponents(schedule: ScheduleResponse, showDetails: boolean = false) {
+  createScheduleComponents(schedule: ScheduleResponseDto, showDetails: boolean = false) {
     const components = [];
 
     // 回答するボタン（開いている時のみ）
@@ -123,7 +126,7 @@ export class ScheduleManagementUIBuilder {
   createEditMenuComponents(
     scheduleId: string,
     originalMessageId: string,
-    schedule: ScheduleResponse
+    schedule: ScheduleResponseDto
   ) {
     return [
       {
@@ -181,7 +184,7 @@ export class ScheduleManagementUIBuilder {
   /**
    * 一覧表示用のEmbedを作成
    */
-  createScheduleListEmbed(schedules: ScheduleResponse[], _guildId: string) {
+  createScheduleListEmbed(schedules: ScheduleResponseDto[], _guildId: string) {
     if (schedules.length === 0) {
       return {
         title: '📅 日程調整一覧',
