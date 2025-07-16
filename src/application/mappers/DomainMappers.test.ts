@@ -33,7 +33,7 @@ describe('DomainMappers', () => {
         updatedAt: new Date('2024-01-02T15:30:00Z'),
       });
 
-      const result = DomainMappers.scheduleToResponse(schedule);
+      const result = DomainMappers.scheduleToResponseDto(schedule);
 
       expect(result).toEqual({
         id: 'schedule-123',
@@ -75,7 +75,7 @@ describe('DomainMappers', () => {
         authorId: 'user-123',
       });
 
-      const result = DomainMappers.scheduleToResponse(schedule);
+      const result = DomainMappers.scheduleToResponseDto(schedule);
 
       expect(result.description).toBeUndefined();
       expect(result.messageId).toBeUndefined();
@@ -99,7 +99,7 @@ describe('DomainMappers', () => {
         status: ScheduleStatus.CLOSED,
       });
 
-      const result = DomainMappers.scheduleToResponse(schedule);
+      const result = DomainMappers.scheduleToResponseDto(schedule);
 
       expect(result.status).toBe('closed');
     });
@@ -219,7 +219,7 @@ describe('DomainMappers', () => {
         authorId: 'user-123',
       });
 
-      const result = DomainMappers.scheduleToResponse(schedule);
+      const result = DomainMappers.scheduleToResponseDto(schedule);
 
       expect(result.title).toBe(longTitle);
       expect(result.description).toBe(longDescription);
@@ -259,7 +259,7 @@ describe('DomainMappers', () => {
         authorId: 'user-123',
       });
 
-      const result = DomainMappers.scheduleToResponse(schedule);
+      const result = DomainMappers.scheduleToResponseDto(schedule);
 
       expect(result.dates).toHaveLength(20);
       expect(result.dates[0]).toEqual({ id: 'date-0', datetime: '2024-12-1 19:00' });

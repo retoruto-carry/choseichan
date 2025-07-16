@@ -68,7 +68,7 @@ export function mapDomainResponseToEntity(data: DomainResponse): Response {
 /**
  * ScheduleエンティティをScheduleResponseDto DTOに変換
  */
-export function mapScheduleToResponse(schedule: Schedule): ScheduleResponseDto {
+export function mapScheduleToResponseDto(schedule: Schedule): ScheduleResponseDto {
   const primitives = schedule.toPrimitives();
 
   return {
@@ -123,8 +123,8 @@ export function mapResponseToDto(response: Response): ResponseDto {
  * Clean Architecture のユースケースで使用
  */
 export class ScheduleMapper {
-  static scheduleToResponse(schedule: Schedule): ScheduleResponseDto {
-    return mapScheduleToResponse(schedule);
+  static scheduleToResponseDto(schedule: Schedule): ScheduleResponseDto {
+    return mapScheduleToResponseDto(schedule);
   }
 
   static toDomain(data: DomainSchedule): Schedule {
@@ -151,8 +151,8 @@ export class ResponseMapper {
  * テストで使用
  */
 export class DomainMappers {
-  static scheduleToResponse(schedule: Schedule): ScheduleResponseDto {
-    return mapScheduleToResponse(schedule);
+  static scheduleToResponseDto(schedule: Schedule): ScheduleResponseDto {
+    return mapScheduleToResponseDto(schedule);
   }
 
   static responseToDto(response: Response): ResponseDto {
