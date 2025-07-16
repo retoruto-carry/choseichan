@@ -113,7 +113,7 @@ export class ScheduleMainMessageBuilder {
   }
 
   /**
-   * メインメッセージの完全なUI作成（名前付き引数版）
+   * メインメッセージのUI作成
    */
   static createMainMessage(options: ScheduleMainMessageOptions) {
     const {
@@ -136,10 +136,7 @@ export class ScheduleMainMessageBuilder {
       showVoteButtons
     );
 
-    // 新規作成時のみcontentを追加
-    const content = isNewlyCreated
-      ? `${targetSchedule.createdBy.displayName || targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`
-      : undefined;
+    const content = `${targetSchedule.createdBy.displayName || targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`;
 
     return { embed, components, content };
   }
