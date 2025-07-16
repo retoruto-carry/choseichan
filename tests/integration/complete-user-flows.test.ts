@@ -1,5 +1,5 @@
 /**
- * Complete User Flows Integration Tests
+ * 完全ユーザーフロー統合テスト
  *
  * エンドツーエンドのユーザーフローをテスト
  * - スケジュール作成から締切まで
@@ -28,7 +28,7 @@ import {
   type D1Database,
 } from '../helpers/d1-database';
 
-describe('Complete User Flows Integration', () => {
+describe('完全ユーザーフロー統合', () => {
   let db: D1Database;
   let env: Env;
   let container: DependencyContainer;

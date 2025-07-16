@@ -78,7 +78,7 @@ export class MockScheduleRepository implements IScheduleRepository {
     }
   }
 
-  // Helper methods for testing
+  // テスト用ヘルパーメソッド
   clear() {
     this.schedules.clear();
   }
@@ -133,7 +133,7 @@ export class MockResponseRepository implements IResponseRepository {
     const responses = await this.findByScheduleId(scheduleId, guildId);
     if (responses.length === 0) return null;
 
-    // Mock implementation - in real implementation this would calculate from actual data
+    // モック実装 - 実際の実装では実データから計算される
     const mockSchedule: DomainSchedule = {
       id: scheduleId,
       guildId,
@@ -186,7 +186,7 @@ export class MockResponseRepository implements IResponseRepository {
     };
   }
 
-  // Helper methods for testing
+  // テスト用ヘルパーメソッド
   clear() {
     this.responses.clear();
   }
@@ -219,14 +219,14 @@ export class MockRepositoryFactory implements IRepositoryFactory {
   }
 
   async beginTransaction() {
-    // Mock implementation - no actual transaction needed for tests
+    // モック実装 - テストでは実際のトランザクションは不要
     return {
       async commit() {},
       async rollback() {},
     };
   }
 
-  // Helper methods for testing
+  // テスト用ヘルパーメソッド
   clearAll() {
     this.scheduleRepository.clear();
     this.responseRepository.clear();

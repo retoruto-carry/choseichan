@@ -1,5 +1,5 @@
 /**
- * Dependency Injection Container
+ * 依存性注入コンテナ
  *
  * アプリケーション全体の依存関係を管理
  * Clean Architectureの依存性の注入を実現
@@ -17,7 +17,7 @@ import { GetResponseUseCase } from '../application/usecases/response/GetResponse
 import { SubmitResponseUseCase } from '../application/usecases/response/SubmitResponseUseCase';
 import { UpdateResponseUseCase } from '../application/usecases/response/UpdateResponseUseCase';
 import { CloseScheduleUseCase } from '../application/usecases/schedule/CloseScheduleUseCase';
-// Application Layer Use Cases
+// アプリケーション層ユースケース
 import { CreateScheduleUseCase } from '../application/usecases/schedule/CreateScheduleUseCase';
 import { DeadlineReminderUseCase } from '../application/usecases/schedule/DeadlineReminderUseCase';
 import { DeleteScheduleUseCase } from '../application/usecases/schedule/DeleteScheduleUseCase';
@@ -40,7 +40,7 @@ import type { Env } from '../infrastructure/types/discord';
 import { createRepositoryFactory } from './factory';
 
 export interface ApplicationServices {
-  // Schedule Use Cases
+  // スケジュール関連ユースケース
   createScheduleUseCase: CreateScheduleUseCase;
   updateScheduleUseCase: UpdateScheduleUseCase;
   closeScheduleUseCase: CloseScheduleUseCase;
@@ -52,15 +52,15 @@ export interface ApplicationServices {
   processReminderUseCase: ProcessReminderUseCase;
   processDeadlineRemindersUseCase: ProcessDeadlineRemindersUseCase | null;
 
-  // Response Use Cases
+  // 回答関連ユースケース
   submitResponseUseCase: SubmitResponseUseCase;
   updateResponseUseCase: UpdateResponseUseCase;
   getResponseUseCase: GetResponseUseCase;
 
-  // Message Update Use Cases
+  // メッセージ更新ユースケース
   processMessageUpdateUseCase: ProcessMessageUpdateUseCase | null;
 
-  // Services
+  // サービス
   notificationService: NotificationService | null;
   scheduleUpdaterService: ScheduleUpdaterService;
 }
@@ -148,11 +148,11 @@ export class DependencyContainer {
     const scheduleRepository = infrastructure.repositoryFactory.getScheduleRepository();
     const responseRepository = infrastructure.repositoryFactory.getResponseRepository();
 
-    // Create Adapters
+    // アダプター作成
     const loggerAdapter = new LoggerAdapter();
     const discordApiAdapter = new DiscordApiAdapter();
 
-    // Create base use cases
+    // 基本ユースケース作成
     const createScheduleUseCase = new CreateScheduleUseCase(scheduleRepository, loggerAdapter);
     const updateScheduleUseCase = new UpdateScheduleUseCase(scheduleRepository, loggerAdapter);
     const closeScheduleUseCase = new CloseScheduleUseCase(scheduleRepository);
@@ -174,7 +174,7 @@ export class DependencyContainer {
 
     const environmentAdapter = new EnvironmentAdapter(this._env);
 
-    // Create NotificationService if credentials are available
+    // 認証情報が利用可能な場合、通知サービスを作成
     let notificationService: NotificationService | null = null;
     if (this._env.DISCORD_TOKEN && this._env.DISCORD_APPLICATION_ID) {
       notificationService = new NotificationService(
@@ -190,7 +190,7 @@ export class DependencyContainer {
       );
     }
 
-    // Create composite use case
+    // 複合ユースケース作成
     const processDeadlineRemindersUseCase = notificationService
       ? new ProcessDeadlineRemindersUseCase(
           loggerAdapter,
@@ -205,7 +205,7 @@ export class DependencyContainer {
         )
       : null;
 
-    // Create message update use case
+    // メッセージ更新ユースケース作成
     const processMessageUpdateUseCase = this._env.DISCORD_TOKEN
       ? new ProcessMessageUpdateUseCase(
           loggerAdapter,
@@ -216,7 +216,7 @@ export class DependencyContainer {
         )
       : null;
 
-    // Create ScheduleUpdaterService
+    // スケジュール更新サービス作成
     const scheduleUpdaterService = new ScheduleUpdaterService(
       getScheduleUseCase,
       getScheduleSummaryUseCase,
@@ -227,7 +227,7 @@ export class DependencyContainer {
     );
 
     return {
-      // Schedule Use Cases
+      // スケジュール関連ユースケース
       createScheduleUseCase,
       updateScheduleUseCase,
       closeScheduleUseCase,
@@ -239,21 +239,21 @@ export class DependencyContainer {
       processReminderUseCase,
       processDeadlineRemindersUseCase,
 
-      // Response Use Cases
+      // 回答関連ユースケース
       submitResponseUseCase,
       updateResponseUseCase,
       getResponseUseCase,
 
-      // Message Update Use Cases
+      // メッセージ更新ユースケース
       processMessageUpdateUseCase,
 
-      // Services
+      // サービス
       notificationService,
       scheduleUpdaterService,
     };
   }
 
-  // Schedule Use Cases便利アクセサー
+  // スケジュール関連ユースケース便利アクセサー
   get createScheduleUseCase() {
     return this._applicationServices.createScheduleUseCase;
   }
@@ -285,7 +285,7 @@ export class DependencyContainer {
     return this._applicationServices.processDeadlineRemindersUseCase;
   }
 
-  // Response Use Cases便利アクセサー
+  // 回答関連ユースケース便利アクセサー
   get submitResponseUseCase() {
     return this._applicationServices.submitResponseUseCase;
   }
@@ -296,12 +296,12 @@ export class DependencyContainer {
     return this._applicationServices.getResponseUseCase;
   }
 
-  // Message Update Use Cases便利アクセサー
+  // メッセージ更新ユースケース便利アクセサー
   get processMessageUpdateUseCase() {
     return this._applicationServices.processMessageUpdateUseCase;
   }
 
-  // Domain Services便利アクセサー
+  // ドメインサービス便利アクセサー
   get messageUpdateService() {
     return this._domainServices.messageUpdateService;
   }

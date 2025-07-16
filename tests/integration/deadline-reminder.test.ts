@@ -1,5 +1,5 @@
 /**
- * Deadline Reminder Integration Tests
+ * 締切リマインダー統合テスト
  *
  * 締切リマインダー機能の統合テスト
  */
@@ -15,7 +15,7 @@ import {
   createTestEnv,
 } from '../helpers/d1-database';
 
-describe('Deadline Reminder Integration', () => {
+describe('締切リマインダー統合', () => {
   let container: DependencyContainer;
   let env: Env;
   let db: D1Database;

@@ -1,5 +1,5 @@
 /**
- * Discord Interaction Flows Integration Tests
+ * Discordインタラクションフロー統合テスト
  *
  * Discord webhookから最終レスポンスまでの完全フローをテスト
  * - コマンド実行 → コントローラー → レスポンス
@@ -27,7 +27,7 @@ import {
   type D1Database,
 } from '../helpers/d1-database';
 
-describe('Discord Interaction Flows Integration', () => {
+describe('Discordインタラクションフロー統合', () => {
   let db: D1Database;
   let env: Env;
   let container: DependencyContainer;
@@ -35,7 +35,7 @@ describe('Discord Interaction Flows Integration', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Setup test database
+    // テストデータベースセットアップ
     db = createTestD1Database();
     await applyMigrations(db);
 

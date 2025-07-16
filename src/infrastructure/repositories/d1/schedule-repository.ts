@@ -7,7 +7,7 @@ import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/D
 import type { D1ScheduleRow } from '../../types/database';
 import { RepositoryError } from '../errors';
 
-// Database row types
+// データベース行の型定義
 interface ScheduleRow {
   id: string;
   guild_id: string;
@@ -40,17 +40,15 @@ export class D1ScheduleRepository implements IScheduleRepository {
   async save(schedule: DomainSchedule): Promise<void> {
     const guildId = schedule.guildId || 'default';
 
-    // No expiration time needed - removed expires_at field
-
     try {
-      // Start transaction
+      // トランザクション開始
       const tx = await this.db.batch([
-        // Delete existing schedule dates if updating
+        // 更新時は既存のスケジュール日程を削除
         this.db
           .prepare('DELETE FROM schedule_dates WHERE schedule_id = ?')
           .bind(schedule.id),
 
-        // Insert or update schedule
+        // スケジュールの挿入または更新
         this.db
           .prepare(`
           INSERT INTO schedules (
@@ -95,7 +93,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
             Math.floor(schedule.updatedAt.getTime() / 1000)
           ),
 
-        // Insert schedule dates
+        // スケジュール日程の挿入
         ...schedule.dates.map((date, index) =>
           this.db
             .prepare(`
@@ -209,7 +207,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         .bind(guildId, channelId, limit)
         .all();
 
-      // Optimize: Execute date queries in parallel instead of sequentially
+      // 最適化: 日程クエリを順次ではなく並列で実行
       const scheduleRows = result.results as unknown as ScheduleRow[];
       const dateQueries = scheduleRows.map((row) =>
         this.db
@@ -270,7 +268,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
         .bind(...params)
         .all();
 
-      // Optimize: Execute date queries in parallel instead of sequentially
+      // 最適化: 日程クエリを順次ではなく並列で実行
       const scheduleRows = result.results as unknown as ScheduleRow[];
       const dateQueries = scheduleRows.map((row) =>
         this.db
@@ -306,7 +304,7 @@ export class D1ScheduleRepository implements IScheduleRepository {
 
   async delete(scheduleId: string, guildId: string = 'default'): Promise<void> {
     try {
-      // Cascading delete will handle related tables
+      // カスケード削除により関連テーブルも処理される
       await this.db
         .prepare(`
         DELETE FROM schedules 

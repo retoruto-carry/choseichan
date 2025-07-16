@@ -1,5 +1,5 @@
 /**
- * Schedule Domain Entity Unit Tests
+ * スケジュールドメインエンティティ単体テスト
  *
  * ドメインエンティティのユニットテスト
  * ビジネスロジックと不変性の検証
@@ -10,7 +10,7 @@ import { Schedule, ScheduleStatus } from './Schedule';
 import { ScheduleDate } from './ScheduleDate';
 import { User } from './User';
 
-describe('Schedule Domain Entity', () => {
+describe('スケジュールドメインエンティティ', () => {
   let validUser: User;
   let validDates: ScheduleDate[];
 
@@ -22,8 +22,8 @@ describe('Schedule Domain Entity', () => {
     ];
   });
 
-  describe('Schedule Creation', () => {
-    it('should create a valid schedule with required fields', () => {
+  describe('スケジュール作成', () => {
+    it('必須フィールドで有効なスケジュールを作成する', () => {
       const schedule = Schedule.create({
         id: 'schedule1',
         guildId: 'guild123',
@@ -50,7 +50,7 @@ describe('Schedule Domain Entity', () => {
       expect(schedule.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should create schedule with deadline', () => {
+    it('締切付きスケジュールを作成する', () => {
       const deadline = new Date('2024-12-15 23:59:59');
 
       const schedule = Schedule.create({
@@ -67,7 +67,7 @@ describe('Schedule Domain Entity', () => {
       expect(schedule.deadline).toEqual(deadline);
     });
 
-    it('should create schedule with reminder settings', () => {
+    it('リマインダー設定付きスケジュールを作成する', () => {
       const reminderTimings = ['1d', '8h', '30m'];
       const reminderMentions = ['@here', '@everyone'];
 
@@ -88,7 +88,7 @@ describe('Schedule Domain Entity', () => {
       expect(schedule.remindersSent).toBeUndefined();
     });
 
-    it('should throw error for invalid title', () => {
+    it('無効なタイトルでエラーをスローする', () => {
       expect(() => {
         Schedule.create({
           id: 'schedule1',

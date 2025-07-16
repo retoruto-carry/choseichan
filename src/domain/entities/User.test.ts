@@ -1,5 +1,5 @@
 /**
- * User Domain Entity Unit Tests
+ * ユーザードメインエンティティ単体テスト
  *
  * ユーザーエンティティのユニットテスト
  */
@@ -7,9 +7,9 @@
 import { describe, expect, it } from 'vitest';
 import { User } from './User';
 
-describe('User Domain Entity', () => {
-  describe('User Creation', () => {
-    it('should create a valid user with required fields', () => {
+describe('ユーザードメインエンティティ', () => {
+  describe('ユーザー作成', () => {
+    it('必須フィールドで有効なユーザーを作成する', () => {
       const user = User.create('user123', 'testuser');
 
       expect(user.id).toBe('user123');

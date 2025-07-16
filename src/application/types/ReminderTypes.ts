@@ -1,5 +1,5 @@
 /**
- * Reminder Type Definitions
+ * リマインダー型定義
  *
  * リマインダー関連の型定義
  */

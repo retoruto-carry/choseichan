@@ -1,5 +1,5 @@
 /**
- * Response Data Transfer Objects
+ * レスポンスデータ転送オブジェクト
  *
  * 回答関連のデータ転送用オブジェクト
  */

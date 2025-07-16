@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { expectInteractionResponse } from '../tests/helpers/interaction-schemas';
 import app from './index';
 
-// Mock Discord signature
+// Discord署名のモック
 function createDiscordRequest(body: any, _publicKey: string, privateKey: Uint8Array): Request {
   const timestamp = Date.now().toString();
   const bodyString = JSON.stringify(body);
@@ -24,7 +24,7 @@ function createDiscordRequest(body: any, _publicKey: string, privateKey: Uint8Ar
   });
 }
 
-describe('Discord Bot', () => {
+describe('Discordボット', () => {
   let publicKey: string;
   let privateKey: Uint8Array;
 
@@ -35,7 +35,7 @@ describe('Discord Bot', () => {
     privateKey = keyPair.secretKey;
   });
 
-  it('should respond to root endpoint', async () => {
+  it('ルートエンドポイントにレスポンスする', async () => {
     const env = {
       DISCORD_PUBLIC_KEY: publicKey,
       DISCORD_APPLICATION_ID: 'test_app_id',
@@ -51,7 +51,7 @@ describe('Discord Bot', () => {
     expect(json.service).toBe('Discord Choseisan Bot');
   });
 
-  it('should respond to PING interaction', async () => {
+  it('PINGインタラクションにレスポンスする', async () => {
     const mockExecutionContext = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),

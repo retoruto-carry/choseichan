@@ -1,5 +1,5 @@
 /**
- * Schedule Operations Integration Tests
+ * スケジュール操作統合テスト
  *
  * スケジュール操作の統合テスト
  */
@@ -15,7 +15,7 @@ import {
   createTestEnv,
 } from '../helpers/d1-database';
 
-describe('Schedule Operations', () => {
+describe('スケジュール操作', () => {
   let container: DependencyContainer;
   let env: Env;
   let db: D1Database;

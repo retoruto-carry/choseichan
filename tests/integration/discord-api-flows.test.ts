@@ -1,5 +1,5 @@
 /**
- * Discord API Response Flows Integration Tests
+ * Discord APIレスポンスフロー統合テスト
  *
  * Discord APIとの通信フローをテスト
  * - レート制限処理
@@ -26,7 +26,7 @@ import {
   type D1Database,
 } from '../helpers/d1-database';
 
-describe('Discord API Response Flows Integration', () => {
+describe('Discord APIレスポンスフロー統合', () => {
   let db: D1Database;
   let env: Env;
   let container: DependencyContainer;

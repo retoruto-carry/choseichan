@@ -1,5 +1,5 @@
 /**
- * CreateScheduleUseCase Unit Tests
+ * スケジュール作成ユースケース単体テスト
  *
  * スケジュール作成ユースケースのユニットテスト
  * DIパターンを使用したモック依存関係のテスト
@@ -12,7 +12,7 @@ import type { CreateScheduleRequest } from '../../dto/ScheduleDto';
 import type { ILogger } from '../../ports/LoggerPort';
 import { CreateScheduleUseCase } from './CreateScheduleUseCase';
 
-// Mock Repository Implementation
+// モックリポジトリ実装
 class MockScheduleRepository implements IScheduleRepository {
   private schedules: Map<string, DomainSchedule> = new Map();
 
@@ -86,7 +86,7 @@ class MockScheduleRepository implements IScheduleRepository {
   }
 }
 
-describe('CreateScheduleUseCase', () => {
+describe('スケジュール作成ユースケース', () => {
   let useCase: CreateScheduleUseCase;
   let mockRepository: MockScheduleRepository;
   let mockLogger: ILogger;
@@ -102,8 +102,8 @@ describe('CreateScheduleUseCase', () => {
     useCase = new CreateScheduleUseCase(mockRepository, mockLogger);
   });
 
-  describe('Valid Schedule Creation', () => {
-    it('should create a valid schedule successfully', async () => {
+  describe('有効なスケジュール作成', () => {
+    it('有効なスケジュールを正常に作成する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -134,7 +134,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.schedule?.reminderMentions).toEqual(['@here', '@everyone']);
     });
 
-    it('should create schedule without optional fields', async () => {
+    it('オプションフィールドなしでスケジュールを作成する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -155,7 +155,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.schedule?.reminderMentions).toEqual(['@here']);
     });
 
-    it('should save schedule to repository', async () => {
+    it('リポジトリにスケジュールを保存する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -176,8 +176,8 @@ describe('CreateScheduleUseCase', () => {
     });
   });
 
-  describe('Validation Errors', () => {
-    it('should reject request with missing guild ID', async () => {
+  describe('バリデーションエラー', () => {
+    it('ギルドIDがないリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: '',
         channelId: 'channel123',
@@ -193,7 +193,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('Guild IDが必要です');
     });
 
-    it('should reject request with missing channel ID', async () => {
+    it('チャンネルIDがないリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: '',
@@ -209,7 +209,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('Channel IDが必要です');
     });
 
-    it('should reject request with missing author information', async () => {
+    it('作成者情報がないリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -226,7 +226,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('作成者名が必要です');
     });
 
-    it('should reject request with missing title', async () => {
+    it('タイトルがないリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -242,7 +242,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('タイトルが必要です');
     });
 
-    it('should reject request with no dates', async () => {
+    it('日程がないリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -258,7 +258,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('日程候補が必要です');
     });
 
-    it('should accept any date format', async () => {
+    it('任意の日付形式を受け入れる', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -274,7 +274,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.schedule?.dates[0].datetime).toBe('クリスマスイブの夕方');
     });
 
-    it('should reject request with invalid deadline format', async () => {
+    it('無効な締切形式のリクエストを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -291,7 +291,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('締切日時の形式が正しくありません');
     });
 
-    it('should collect multiple validation errors', async () => {
+    it('複数のバリデーションエラーを収集する', async () => {
       const request: CreateScheduleRequest = {
         guildId: '',
         channelId: '',
@@ -308,8 +308,8 @@ describe('CreateScheduleUseCase', () => {
     });
   });
 
-  describe('Domain Validation', () => {
-    it('should reject schedule with past deadline', async () => {
+  describe('ドメインバリデーション', () => {
+    it('過去の締切を持つスケジュールを拒否する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -326,7 +326,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('締切は未来の日時で設定してください');
     });
 
-    it('should reject schedule with too many dates', async () => {
+    it('日程が多すぎるスケジュールを拒否する', async () => {
       const manyDates = Array.from({ length: 51 }, (_, i) => ({
         id: `date${i}`,
         datetime: `2024-12-${(i % 30) + 1} 10:00`,
@@ -347,7 +347,7 @@ describe('CreateScheduleUseCase', () => {
       expect(result.errors).toContain('日程候補は50個以内で入力してください');
     });
 
-    it('should reject schedule with too long title', async () => {
+    it('タイトルが長すぎるスケジュールを拒否する', async () => {
       const longTitle = 'a'.repeat(101);
 
       const request: CreateScheduleRequest = {
@@ -366,8 +366,8 @@ describe('CreateScheduleUseCase', () => {
     });
   });
 
-  describe('Repository Errors', () => {
-    it('should handle repository save errors', async () => {
+  describe('リポジトリエラー', () => {
+    it('リポジトリ保存エラーを処理する', async () => {
       // Mock repository to throw error
       const saveSpy = vi
         .spyOn(mockRepository, 'save')
@@ -391,7 +391,7 @@ describe('CreateScheduleUseCase', () => {
   });
 
   describe('Response Building', () => {
-    it('should build correct response structure', async () => {
+    it('正しいレスポンス構造を構築する', async () => {
       const request: CreateScheduleRequest = {
         guildId: 'guild123',
         channelId: 'channel123',
@@ -437,7 +437,7 @@ describe('CreateScheduleUseCase', () => {
       expect(schedule.updatedAt).toBeDefined();
     });
 
-    it('should handle ISO date string conversion', async () => {
+    it('ISO日付文字列変換を処理する', async () => {
       const _deadlineString = '2024-12-01T10:00:00.000Z';
 
       const request: CreateScheduleRequest = {

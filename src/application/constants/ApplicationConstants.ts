@@ -18,7 +18,6 @@ export const TIME_CONSTANTS = {
   SECONDS_PER_HOUR: 60 * 60,
   SECONDS_PER_DAY: 24 * 60 * 60,
 
-  // TTL (生存時間) 設定 - Note: expires_at fields removed
   ONE_WEEK_SECONDS: 7 * 24 * 60 * 60,
   ONE_DAY_SECONDS: 24 * 60 * 60,
   ONE_HOUR_SECONDS: 60 * 60,

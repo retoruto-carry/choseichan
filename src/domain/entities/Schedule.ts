@@ -152,7 +152,7 @@ export class Schedule {
     });
   }
 
-  // Getters
+  // ゲッター
   get id(): string {
     return this._id.value;
   }

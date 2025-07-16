@@ -1,5 +1,5 @@
 /**
- * Message Update Types
+ * メッセージ更新型定義
  *
  * Application層でのメッセージ更新に関する型定義
  * Infrastructure層への依存を解消

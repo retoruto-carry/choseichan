@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ValidationService } from './ValidationService';
 
-describe('ValidationService', () => {
-  describe('validateDate', () => {
-    it('should validate valid future dates', () => {
+describe('バリデーションサービス', () => {
+  describe('日付バリデーション', () => {
+    it('有効な将来日付を適切にバリデーションする', () => {
       const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       const result = ValidationService.validateDate(futureDate);
 
@@ -11,7 +11,7 @@ describe('ValidationService', () => {
       expect(result.sanitizedValue).toBeInstanceOf(Date);
     });
 
-    it('should reject past dates', () => {
+    it('過去の日付を拒否する', () => {
       const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const result = ValidationService.validateDate(pastDate);
 
@@ -19,14 +19,14 @@ describe('ValidationService', () => {
       expect(result.error).toContain('過去の日付');
     });
 
-    it('should reject invalid date formats', () => {
+    it('無効な日付形式を拒否する', () => {
       const result = ValidationService.validateDate('invalid-date');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('無効な日付形式');
     });
 
-    it('should reject empty dates', () => {
+    it('空の日付を拒否する', () => {
       const result = ValidationService.validateDate('');
 
       expect(result.isValid).toBe(false);
@@ -34,8 +34,8 @@ describe('ValidationService', () => {
     });
   });
 
-  describe('validateDiscordId', () => {
-    it('should validate valid Discord IDs', () => {
+  describe('Discord IDバリデーション', () => {
+    it('有効なDiscord IDをバリデーションする', () => {
       const validId = '123456789012345678';
       const result = ValidationService.validateDiscordId(validId);
 
@@ -43,14 +43,14 @@ describe('ValidationService', () => {
       expect(result.sanitizedValue).toBe(validId);
     });
 
-    it('should reject too short IDs', () => {
+    it('短すぎるIDを拒否する', () => {
       const result = ValidationService.validateDiscordId('123456');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('無効なID形式');
     });
 
-    it('should reject non-numeric IDs', () => {
+    it('非数値IDを拒否する', () => {
       const result = ValidationService.validateDiscordId('12345678901234567a');
 
       expect(result.isValid).toBe(false);
@@ -58,22 +58,22 @@ describe('ValidationService', () => {
     });
   });
 
-  describe('validateScheduleTitle', () => {
-    it('should validate valid titles', () => {
+  describe('スケジュールタイトルバリデーション', () => {
+    it('有効なタイトルをバリデーションする', () => {
       const result = ValidationService.validateScheduleTitle('テストスケジュール');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('テストスケジュール');
     });
 
-    it('should reject empty titles', () => {
+    it('空のタイトルを拒否する', () => {
       const result = ValidationService.validateScheduleTitle('');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('テキストが空');
     });
 
-    it('should reject too long titles', () => {
+    it('長すぎるタイトルを拒否する', () => {
       const longTitle = 'a'.repeat(101);
       const result = ValidationService.validateScheduleTitle(longTitle);
 
@@ -81,7 +81,7 @@ describe('ValidationService', () => {
       expect(result.error).toContain('100文字以内');
     });
 
-    it('should sanitize HTML tags', () => {
+    it('HTMLタグをサニタイズする', () => {
       const result = ValidationService.validateScheduleTitle('Test <script>alert("xss")</script>');
 
       expect(result.isValid).toBe(true);
@@ -89,50 +89,50 @@ describe('ValidationService', () => {
     });
   });
 
-  describe('validateReminderTiming', () => {
-    it('should validate minute timings', () => {
+  describe('リマインダータイミングバリデーション', () => {
+    it('分単位のタイミングをバリデーションする', () => {
       const result = ValidationService.validateReminderTiming('30m');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('30m');
     });
 
-    it('should validate hour timings', () => {
+    it('時間単位のタイミングをバリデーションする', () => {
       const result = ValidationService.validateReminderTiming('8h');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('8h');
     });
 
-    it('should validate day timings', () => {
+    it('日単位のタイミングをバリデーションする', () => {
       const result = ValidationService.validateReminderTiming('3d');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('3d');
     });
 
-    it('should reject invalid formats', () => {
+    it('無効な形式を拒否する', () => {
       const result = ValidationService.validateReminderTiming('invalid');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('無効なリマインダータイミング');
     });
 
-    it('should reject out of range minutes', () => {
+    it('範囲外の分を拒否する', () => {
       const result = ValidationService.validateReminderTiming('2000m');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('1-1440の範囲');
     });
 
-    it('should reject out of range hours', () => {
+    it('範囲外の時間を拒否する', () => {
       const result = ValidationService.validateReminderTiming('200h');
 
       expect(result.isValid).toBe(false);
       expect(result.error).toContain('1-168の範囲');
     });
 
-    it('should reject out of range days', () => {
+    it('範囲外の日数を拒否する', () => {
       const result = ValidationService.validateReminderTiming('50d');
 
       expect(result.isValid).toBe(false);
@@ -140,36 +140,36 @@ describe('ValidationService', () => {
     });
   });
 
-  describe('validateResponseStatus', () => {
-    it('should validate ok status', () => {
+  describe('回答ステータスバリデーション', () => {
+    it('OKステータスをバリデーションする', () => {
       const result = ValidationService.validateResponseStatus('ok');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('ok');
     });
 
-    it('should validate maybe status', () => {
+    it('未定ステータスをバリデーションする', () => {
       const result = ValidationService.validateResponseStatus('maybe');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('maybe');
     });
 
-    it('should validate ng status', () => {
+    it('NGステータスをバリデーションする', () => {
       const result = ValidationService.validateResponseStatus('ng');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('ng');
     });
 
-    it('should handle case insensitive input', () => {
+    it('大文字小文字を区別しない入力を処理する', () => {
       const result = ValidationService.validateResponseStatus('OK');
 
       expect(result.isValid).toBe(true);
       expect(result.sanitizedValue).toBe('ok');
     });
 
-    it('should reject invalid statuses', () => {
+    it('無効なステータスを拒否する', () => {
       const result = ValidationService.validateResponseStatus('invalid');
 
       expect(result.isValid).toBe(false);
@@ -177,8 +177,8 @@ describe('ValidationService', () => {
     });
   });
 
-  describe('validateMultiple', () => {
-    it('should pass when all validations succeed', () => {
+  describe('複数バリデーション', () => {
+    it('全てのバリデーションが成功した場合にパスする', () => {
       const result = ValidationService.validateMultiple([
         () => ValidationService.validateDiscordId('123456789012345678'),
         () => ValidationService.validateScheduleTitle('Test Title'),
@@ -189,7 +189,7 @@ describe('ValidationService', () => {
       expect(result.sanitizedValue).toHaveLength(3);
     });
 
-    it('should fail when any validation fails', () => {
+    it('いずれかのバリデーションが失敗した場合に失敗する', () => {
       const result = ValidationService.validateMultiple([
         () => ValidationService.validateDiscordId('123456789012345678'),
         () => ValidationService.validateScheduleTitle(''), // This will fail

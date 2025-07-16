@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { ResponseStatus, ResponseStatusValue } from './ResponseStatus';
 
-describe('ResponseStatus', () => {
-  describe('create', () => {
-    it('should create status with OK value', () => {
+describe('回答ステータス', () => {
+  describe('作成', () => {
+    it('OK値でステータスを作成する', () => {
       const status = ResponseStatus.create(ResponseStatusValue.OK);
       expect(status.value).toBe(ResponseStatusValue.OK);
     });
 
-    it('should create status with MAYBE value', () => {
+    it('未定値でステータスを作成する', () => {
       const status = ResponseStatus.create(ResponseStatusValue.MAYBE);
       expect(status.value).toBe(ResponseStatusValue.MAYBE);
     });
