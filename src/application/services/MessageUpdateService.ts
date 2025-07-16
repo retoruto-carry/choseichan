@@ -8,13 +8,13 @@
  */
 
 import {
+  type MessageUpdateService as IMessageUpdateService,
   type MessageUpdateRequest,
-  type MessageUpdateService,
   MessageUpdateType,
 } from '../../domain/services/MessageUpdateService';
 import type { MessageUpdateQueuePort } from '../ports/MessageUpdateQueuePort';
 
-export class MessageUpdateServiceImpl implements MessageUpdateService {
+export class MessageUpdateService implements IMessageUpdateService {
   constructor(private readonly queuePort: MessageUpdateQueuePort) {}
 
   async scheduleUpdate(request: MessageUpdateRequest): Promise<void> {

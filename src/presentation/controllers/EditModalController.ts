@@ -7,9 +7,8 @@
 
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import type { UpdateScheduleRequestDto } from '../../application/dto/ScheduleDto';
+import { DateParserService } from '../../application/services/DateParserService';
 import { DependencyContainer } from '../../di/DependencyContainer';
-import { parseUserInputDate } from '../../domain/utils/date';
-import { generateId } from '../../domain/utils/id';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
@@ -19,7 +18,10 @@ import { updateOriginalMessage } from '../utils/discord';
 export class EditModalController {
   private readonly logger = getLogger();
 
-  constructor(private readonly dependencyContainer: DependencyContainer) {}
+  constructor(
+    private readonly dependencyContainer: DependencyContainer,
+    private readonly dateParserService: DateParserService = new DateParserService()
+  ) {}
 
   /**
    * 基本情報編集モーダル処理
@@ -141,7 +143,7 @@ export class EditModalController {
         // 既存の日程候補と文字列が一致する場合、既存のIDを保持
         const existingDate = existingDates.find((d) => d.datetime === trimmedDatetime);
         return {
-          id: existingDate?.id || generateId(),
+          id: existingDate?.id || this.dateParserService.generateUniqueId(),
           datetime: trimmedDatetime,
         };
       });
@@ -228,7 +230,7 @@ export class EditModalController {
 
       // Add new dates to existing ones
       const newDates = parsedDates.map((datetime: string) => ({
-        id: generateId(),
+        id: this.dateParserService.generateUniqueId(),
         datetime: datetime.trim(),
       }));
 
@@ -310,7 +312,7 @@ export class EditModalController {
       const deadlineInput = interaction.data.components[0].components[0].value;
       let newDeadline = null;
       if (deadlineInput.trim()) {
-        newDeadline = parseUserInputDate(deadlineInput.trim());
+        newDeadline = this.dateParserService.parseUserDate(deadlineInput.trim());
 
         if (!newDeadline) {
           return this.createErrorResponse('締切日の形式が正しくありません。例: 2025/12/31 23:59');

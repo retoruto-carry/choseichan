@@ -123,12 +123,8 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
   const descriptionParts = [schedule.description || '', ''];
 
   if (schedule.deadline) {
-    // Handle both Date and string types
-    const deadlineStr =
-      (schedule.deadline as unknown) instanceof Date
-        ? (schedule.deadline as unknown as Date).toISOString()
-        : (schedule.deadline as string);
-    descriptionParts.push(`⏰ **締切：** ${formatDate(deadlineStr)}`);
+    // deadline is always a string in DTOs
+    descriptionParts.push(`⏰ **締切：** ${formatDate(schedule.deadline)}`);
   }
 
   descriptionParts.push(`**回答者：** ${userResponses.length}人`);

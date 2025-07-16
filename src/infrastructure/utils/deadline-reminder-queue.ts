@@ -10,12 +10,14 @@ import { DependencyContainer } from '../../di/DependencyContainer';
 import { DiscordMessageService } from '../../presentation/services/DiscordMessageService';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
+import { getLogger } from '../logging/Logger';
 import type { Env } from '../types/discord';
 
 export async function handleDeadlineReminderBatch(
   batch: MessageBatch<DeadlineReminderTask>,
   env: Env
 ): Promise<void> {
+  const logger = getLogger();
   const container = new DependencyContainer(env);
 
   // Ensure Discord credentials are available
@@ -86,9 +88,15 @@ export async function handleDeadlineReminderBatch(
           }
         }
       } catch (error) {
-        console.error(`Error processing deadline reminder task:`, error, {
-          task,
-        });
+        logger.error(
+          'Error processing deadline reminder task',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            taskType: task.type,
+            scheduleId: task.scheduleId,
+            guildId: task.guildId,
+          }
+        );
         // エラーをスローしないことで、他のタスクの処理を継続
       }
     })

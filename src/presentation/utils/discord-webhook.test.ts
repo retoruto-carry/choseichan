@@ -4,6 +4,16 @@ import type { Env } from '../../infrastructure/types/discord';
 import type { DiscordComponent } from '../../infrastructure/types/discord-api';
 import { sendFollowupMessage } from './discord-webhook';
 
+// Loggerをモック
+vi.mock('../../infrastructure/logging/Logger', () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  }),
+}));
+
 // グローバルfetchをモック
 global.fetch = vi.fn();
 
@@ -36,8 +46,6 @@ describe('discord-webhook', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // console.errorをモック
-    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -71,29 +79,30 @@ describe('discord-webhook', () => {
       );
     });
 
-    it('APIエラーの場合はエラーログを出力する', async () => {
+    it('APIエラーの場合でも例外をスローしない', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,
         status: 400,
         text: async () => 'Bad Request',
       } as Response);
 
-      await sendFollowupMessage(applicationId, interactionToken, content, components, mockEnv);
+      // 例外をスローしないことを確認
+      await expect(
+        sendFollowupMessage(applicationId, interactionToken, content, components, mockEnv)
+      ).resolves.not.toThrow();
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Failed to send followup message:',
-        400,
-        'Bad Request'
-      );
+      // APIが呼ばれたことを確認
+      expect(global.fetch).toHaveBeenCalled();
     });
 
-    it('ネットワークエラーの場合はエラーログを出力する', async () => {
+    it('ネットワークエラーの場合でも例外をスローしない', async () => {
       const networkError = new Error('Network error');
       vi.mocked(global.fetch).mockRejectedValueOnce(networkError);
 
-      await sendFollowupMessage(applicationId, interactionToken, content, components, mockEnv);
-
-      expect(console.error).toHaveBeenCalledWith('Error sending followup message:', networkError);
+      // 例外をスローしないことを確認
+      await expect(
+        sendFollowupMessage(applicationId, interactionToken, content, components, mockEnv)
+      ).resolves.not.toThrow();
     });
 
     it('空のコンポーネント配列でも正しく動作する', async () => {

@@ -8,7 +8,7 @@
 import type { BackgroundExecutorPort } from '../application/ports/BackgroundExecutorPort';
 import type { DeadlineReminderQueuePort } from '../application/ports/DeadlineReminderQueuePort';
 import type { MessageUpdateQueuePort } from '../application/ports/MessageUpdateQueuePort';
-import { MessageUpdateServiceImpl } from '../application/services/MessageUpdateServiceImpl';
+import { MessageUpdateService } from '../application/services/MessageUpdateService';
 import { NotificationService } from '../application/services/NotificationService';
 import { ScheduleUpdaterService } from '../application/services/ScheduleUpdaterService';
 import { ProcessMessageUpdateUseCase } from '../application/usecases/message/ProcessMessageUpdateUseCase';
@@ -27,7 +27,7 @@ import { GetScheduleUseCase } from '../application/usecases/schedule/GetSchedule
 import { ProcessReminderUseCase } from '../application/usecases/schedule/ProcessReminderUseCase';
 import { UpdateScheduleUseCase } from '../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../domain/repositories/interfaces';
-import type { MessageUpdateService } from '../domain/services/MessageUpdateService';
+import type { MessageUpdateService as IMessageUpdateService } from '../domain/services/MessageUpdateService';
 import { CloudflareQueueAdapter } from '../infrastructure/adapters/CloudflareQueueAdapter';
 import { DeadlineReminderQueueAdapter } from '../infrastructure/adapters/DeadlineReminderQueueAdapter';
 import { DiscordApiAdapter } from '../infrastructure/adapters/DiscordApiAdapter';
@@ -73,7 +73,7 @@ export interface InfrastructureServices {
 }
 
 export interface DomainServices {
-  messageUpdateService: MessageUpdateService;
+  messageUpdateService: IMessageUpdateService;
 }
 
 export class DependencyContainer {
@@ -132,9 +132,7 @@ export class DependencyContainer {
   }
 
   private createDomainServices(infrastructure: InfrastructureServices): DomainServices {
-    const messageUpdateService = new MessageUpdateServiceImpl(
-      infrastructure.messageUpdateQueuePort
-    );
+    const messageUpdateService = new MessageUpdateService(infrastructure.messageUpdateQueuePort);
 
     return {
       messageUpdateService,

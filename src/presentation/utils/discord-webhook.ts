@@ -1,6 +1,9 @@
 import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
+import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env } from '../../infrastructure/types/discord';
 import type { DiscordComponent } from '../../infrastructure/types/discord-api';
+
+const logger = getLogger();
 
 /**
  * Send a followup message using webhook
@@ -29,9 +32,24 @@ export async function sendFollowupMessage(
     });
 
     if (!response.ok) {
-      console.error('Failed to send followup message:', response.status, await response.text());
+      logger.error(
+        'Failed to send followup message',
+        new Error(`HTTP ${response.status}: ${await response.text()}`),
+        {
+          status: response.status,
+          applicationId,
+          hasToken: !!interactionToken,
+        }
+      );
     }
   } catch (error) {
-    console.error('Error sending followup message:', error);
+    logger.error(
+      'Error sending followup message',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        applicationId,
+        hasToken: !!interactionToken,
+      }
+    );
   }
 }

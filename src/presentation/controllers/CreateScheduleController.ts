@@ -11,9 +11,8 @@ import {
   NOTIFICATION_CONSTANTS,
 } from '../../application/constants/ApplicationConstants';
 import type { ScheduleResponseDto } from '../../application/dto/ScheduleDto';
+import { DateParserService } from '../../application/services/DateParserService';
 import { DependencyContainer } from '../../di/DependencyContainer';
-import { parseUserInputDate } from '../../domain/utils/date';
-import { generateId } from '../../domain/utils/id';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
@@ -24,7 +23,10 @@ import { getDisplayName, getUserId } from '../utils/discord-helpers';
 export class CreateScheduleController {
   private readonly logger = getLogger();
 
-  constructor(private readonly dependencyContainer: DependencyContainer) {}
+  constructor(
+    private readonly dependencyContainer: DependencyContainer,
+    private readonly dateParserService: DateParserService = new DateParserService()
+  ) {}
 
   /**
    * スケジュール作成モーダル処理
@@ -52,14 +54,14 @@ export class CreateScheduleController {
       }
 
       const scheduleDates = dates.map((date: string) => ({
-        id: generateId(),
+        id: this.dateParserService.generateUniqueId(),
         datetime: date.trim(),
       }));
 
       // 締切をパース
       let deadlineDate: string | undefined;
       if (deadlineStr?.trim()) {
-        const parsedDate = parseUserInputDate(deadlineStr);
+        const parsedDate = this.dateParserService.parseUserDate(deadlineStr);
         if (!parsedDate) {
           return this.createErrorResponse(ERROR_MESSAGES.INVALID_DEADLINE_FORMAT);
         }
