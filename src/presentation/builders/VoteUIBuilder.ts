@@ -6,8 +6,6 @@
 
 import type { ResponseDto } from '../../application/dto/ResponseDto';
 import type { ScheduleResponse } from '../../application/dto/ScheduleDto';
-import { DISCORD_API_CONSTANTS } from '../../infrastructure/constants/DiscordConstants';
-import type { DiscordModalData } from '../../infrastructure/types/discord-api';
 
 export class VoteUIBuilder {
   /**
@@ -61,53 +59,5 @@ export class VoteUIBuilder {
         ],
       };
     });
-  }
-
-  /**
-   * 投票モーダルを作成
-   */
-  createVoteModal(
-    schedule: ScheduleResponse,
-    currentResponses: Array<{ dateId: string; status: string }>
-  ): DiscordModalData {
-    const components = [];
-
-    // Create input for each date (up to Discord's limit)
-    const maxDates = Math.min(schedule.dates.length, DISCORD_API_CONSTANTS.MAX_ACTION_ROWS);
-
-    for (let i = 0; i < maxDates; i++) {
-      const date = schedule.dates[i];
-      const existingResponse = currentResponses.find((r) => r.dateId === date.id);
-      const currentValue = existingResponse
-        ? existingResponse.status === 'available'
-          ? '○'
-          : existingResponse.status === 'maybe'
-            ? '△'
-            : '×'
-        : '';
-
-      components.push({
-        type: 1,
-        components: [
-          {
-            type: 4,
-            custom_id: `vote_${date.id}`,
-            label: date.datetime,
-            style: 1,
-            min_length: 0,
-            max_length: 10,
-            placeholder: '○、△、× のいずれかを入力',
-            value: currentValue,
-            required: false,
-          },
-        ],
-      });
-    }
-
-    return {
-      title: schedule.title,
-      custom_id: `vote:${schedule.id}`,
-      components,
-    };
   }
 }

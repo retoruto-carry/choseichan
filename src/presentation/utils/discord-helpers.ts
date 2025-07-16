@@ -36,5 +36,5 @@ export function getDisplayName(
 export function getUserId(
   interaction: CommandInteraction | ButtonInteraction | ModalInteraction
 ): string | undefined {
-  return interaction.member?.user.id || interaction.user?.id;
+  return interaction.member?.user?.id || interaction.user?.id;
 }

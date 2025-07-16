@@ -115,7 +115,6 @@ describe('VoteController', () => {
 
     // Mock UIBuilder
     mockUIBuilder = {
-      createVoteModal: vi.fn(),
       createVoteSelectMenus: vi.fn(),
     } as any;
 
