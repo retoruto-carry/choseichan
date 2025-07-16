@@ -16,6 +16,15 @@ export interface DateResponses {
   readonly value: Record<string, ResponseStatus>;
 }
 
+export interface ResponseCreateParams {
+  readonly id: string;
+  readonly scheduleId: string;
+  readonly user: User;
+  readonly dateStatuses: Map<string, ResponseStatus>;
+  readonly createdAt?: Date;
+  readonly updatedAt?: Date;
+}
+
 export class Response {
   private constructor(
     private readonly _id: string,
@@ -26,14 +35,7 @@ export class Response {
     private readonly _updatedAt: Date
   ) {}
 
-  static create(params: {
-    id: string;
-    scheduleId: string;
-    user: User;
-    dateStatuses: Map<string, ResponseStatus>;
-    createdAt?: Date;
-    updatedAt?: Date;
-  }): Response {
+  static create(params: ResponseCreateParams): Response {
     if (!params.id?.trim()) {
       throw new Error('回答IDは必須です');
     }

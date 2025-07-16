@@ -223,6 +223,76 @@ canBeClosed(currentDate: Date = new Date()): boolean {
 
 ## コード品質管理
 
+### 名前付き引数パターン
+
+関数やメソッドの可読性と保守性を向上させるため、以下の場合は名前付き引数パターン（options object pattern）を使用する：
+
+#### 使用すべきケース
+1. **3つ以上のパラメータを持つ関数**
+2. **boolean型のパラメータが複数ある関数**
+3. **オプションパラメータが多い関数**
+4. **呼び出し時に引数の意味が分かりにくい関数**
+
+#### 実装例
+```typescript
+// ❌ 避けるべき書き方（位置引数）
+createMainMessage(summary, undefined, true, true, false, true);
+
+// ✅ 推奨する書き方（名前付き引数）
+interface ScheduleMainMessageOptions {
+  readonly summary?: ScheduleSummaryResponse;
+  readonly schedule?: ScheduleResponse;
+  readonly showDetails?: boolean;
+  readonly showVoteButtons?: boolean;
+  readonly isNewlyCreated?: boolean;
+}
+
+createMainMessage({
+  summary: summaryResult.summary,
+  showDetails: true,
+  showVoteButtons: true,
+});
+```
+
+#### ドメインエンティティでの実装例
+```typescript
+// Schedule.create の名前付き引数実装
+export interface ScheduleCreateParams {
+  // 必須パラメータ
+  readonly id: string;
+  readonly guildId: string;
+  readonly channelId: string;
+  readonly title: string;
+  readonly dates: readonly ScheduleDate[];
+  readonly createdBy: User;
+  readonly authorId: string;
+
+  // オプションパラメータ
+  readonly messageId?: string;
+  readonly description?: string;
+  readonly deadline?: Date;
+  readonly reminderTimings?: readonly string[];
+  readonly reminderMentions?: readonly string[];
+  readonly remindersSent?: readonly string[];
+  readonly status?: ScheduleStatus;
+  readonly notificationSent?: boolean;
+  readonly totalResponses?: number;
+  readonly createdAt?: Date;
+  readonly updatedAt?: Date;
+}
+
+static create(params: ScheduleCreateParams): Schedule {
+  // バリデーションと実装
+}
+```
+
+#### ベストプラクティス
+- **readonly修飾子**: 不変性を保つため `readonly` を使用
+- **インターフェース定義**: 専用のパラメータインターフェースを作成
+- **必須/オプション分類**: コメントで明確に区別
+- **配列の不変性**: `readonly string[]` など読み取り専用配列を使用
+- **ネストの最小化**: 過度なネストは避け、フラットな構造を優先
+
 ### Linting (Biome)
 ```bash
 # リントチェック

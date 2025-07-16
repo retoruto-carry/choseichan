@@ -16,7 +16,6 @@ import { parseUserInputDate } from '../../domain/utils/date';
 import { generateId } from '../../domain/utils/id';
 import { getLogger } from '../../infrastructure/logging/Logger';
 import type { Env, ModalInteraction } from '../../infrastructure/types/discord';
-import { ScheduleCreationUIBuilder } from '../builders/ScheduleCreationUIBuilder';
 import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 import { createEditReminderButtonId } from '../utils/button-id';
 import { getOriginalMessage, sendFollowupMessage } from '../utils/discord';
@@ -25,10 +24,7 @@ import { getDisplayName, getUserId } from '../utils/discord-helpers';
 export class CreateScheduleController {
   private readonly logger = getLogger();
 
-  constructor(
-    private readonly dependencyContainer: DependencyContainer,
-    private readonly uiBuilder: ScheduleCreationUIBuilder
-  ) {}
+  constructor(private readonly dependencyContainer: DependencyContainer) {}
 
   /**
    * スケジュール作成モーダル処理
@@ -283,6 +279,5 @@ export class CreateScheduleController {
 
 export function createCreateScheduleController(env: Env): CreateScheduleController {
   const container = new DependencyContainer(env);
-  const uiBuilder = new ScheduleCreationUIBuilder();
-  return new CreateScheduleController(container, uiBuilder);
+  return new CreateScheduleController(container);
 }

@@ -38,6 +38,30 @@ export enum ScheduleStatus {
   CLOSED = 'closed',
 }
 
+export interface ScheduleCreateParams {
+  // 必須パラメータ
+  readonly id: string;
+  readonly guildId: string;
+  readonly channelId: string;
+  readonly title: string;
+  readonly dates: readonly ScheduleDate[];
+  readonly createdBy: User;
+  readonly authorId: string;
+
+  // オプションパラメータ
+  readonly messageId?: string;
+  readonly description?: string;
+  readonly deadline?: Date;
+  readonly reminderTimings?: readonly string[];
+  readonly reminderMentions?: readonly string[];
+  readonly remindersSent?: readonly string[];
+  readonly status?: ScheduleStatus;
+  readonly notificationSent?: boolean;
+  readonly totalResponses?: number;
+  readonly createdAt?: Date;
+  readonly updatedAt?: Date;
+}
+
 export class Schedule {
   private constructor(
     private readonly _id: ScheduleId,
@@ -60,63 +84,44 @@ export class Schedule {
     private readonly _totalResponses?: number
   ) {}
 
-  static create(data: {
-    id: string;
-    guildId: string;
-    channelId: string;
-    title: string;
-    dates: ScheduleDate[];
-    createdBy: User;
-    authorId: string;
-    messageId?: string;
-    description?: string;
-    deadline?: Date;
-    reminderTimings?: string[];
-    reminderMentions?: string[];
-    remindersSent?: string[];
-    status?: ScheduleStatus;
-    notificationSent?: boolean;
-    totalResponses?: number;
-    createdAt?: Date;
-    updatedAt?: Date;
-  }): Schedule {
-    if (!data.id.trim()) {
+  static create(params: ScheduleCreateParams): Schedule {
+    if (!params.id.trim()) {
       throw new Error('Schedule ID cannot be empty');
     }
-    if (!data.guildId.trim()) {
+    if (!params.guildId.trim()) {
       throw new Error('Guild ID cannot be empty');
     }
-    if (!data.channelId.trim()) {
+    if (!params.channelId.trim()) {
       throw new Error('Channel ID cannot be empty');
     }
-    if (!data.title.trim()) {
+    if (!params.title.trim()) {
       throw new Error('Title cannot be empty');
     }
-    if (data.dates.length === 0) {
+    if (params.dates.length === 0) {
       throw new Error('Schedule must have at least one date');
     }
 
     const now = new Date();
 
     return new Schedule(
-      { value: data.id },
-      { value: data.guildId },
-      { value: data.channelId },
-      { value: data.title },
-      data.dates,
-      data.createdBy,
-      data.authorId,
-      data.status || ScheduleStatus.OPEN,
-      data.createdAt || now,
-      data.updatedAt || now,
-      data.messageId ? { value: data.messageId } : undefined,
-      data.description ? { value: data.description } : undefined,
-      data.deadline,
-      data.reminderTimings || ['3d', '1d', '8h'],
-      data.reminderMentions || ['@here'],
-      data.remindersSent,
-      data.notificationSent || false,
-      data.totalResponses || 0
+      { value: params.id },
+      { value: params.guildId },
+      { value: params.channelId },
+      { value: params.title },
+      [...params.dates], // 不変性を保つためコピー
+      params.createdBy,
+      params.authorId,
+      params.status || ScheduleStatus.OPEN,
+      params.createdAt || now,
+      params.updatedAt || now,
+      params.messageId ? { value: params.messageId } : undefined,
+      params.description ? { value: params.description } : undefined,
+      params.deadline,
+      params.reminderTimings ? [...params.reminderTimings] : ['3d', '1d', '8h'],
+      params.reminderMentions ? [...params.reminderMentions] : ['@here'],
+      params.remindersSent ? [...params.remindersSent] : undefined,
+      params.notificationSent || false,
+      params.totalResponses || 0
     );
   }
 
