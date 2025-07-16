@@ -116,13 +116,7 @@ export class ScheduleMainMessageBuilder {
    * メインメッセージのUI作成
    */
   static createMainMessage(options: ScheduleMainMessageOptions) {
-    const {
-      summary,
-      schedule,
-      showDetails = false,
-      showVoteButtons = true,
-      isNewlyCreated = false,
-    } = options;
+    const { summary, schedule, showDetails = false, showVoteButtons = true } = options;
 
     const targetSchedule = schedule || summary?.schedule;
     if (!targetSchedule) {
