@@ -6,11 +6,24 @@ import { EMBED_COLORS, STATUS_EMOJI } from '../constants/ui';
 import { createButtonId } from './button-helpers';
 import { formatDate } from './date-formatter';
 
-export function createScheduleEmbed(
-  schedule: ScheduleResponseDto,
-  totalResponses?: number,
-  summary?: ScheduleSummaryResponseDto
-) {
+export interface CreateScheduleEmbedOptions {
+  readonly schedule: ScheduleResponseDto;
+  readonly totalResponses?: number;
+  readonly summary?: ScheduleSummaryResponseDto;
+}
+
+export interface CreateScheduleEmbedWithTableOptions {
+  readonly summary: ScheduleSummaryResponseDto;
+  readonly showDetails?: boolean;
+}
+
+export interface CreateSimpleScheduleComponentsOptions {
+  readonly schedule: ScheduleResponseDto;
+  readonly showDetails?: boolean;
+}
+
+export function createScheduleEmbed(options: CreateScheduleEmbedOptions) {
+  const { schedule, totalResponses, summary } = options;
   // 最有力候補を判定
   const bestDateId = summary?.bestDateId || summary?.statistics?.optimalDates?.optimalDateId;
   const hasResponses = summary?.responses && summary.responses.length > 0;
@@ -59,10 +72,8 @@ export function createScheduleEmbed(
   };
 }
 
-export function createScheduleEmbedWithTable(
-  summary: ScheduleSummaryResponseDto,
-  showDetails: boolean = false
-) {
+export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTableOptions) {
+  const { summary, showDetails = false } = options;
   const schedule = summary.schedule;
   const responseCounts = summary.responseCounts;
   const bestDateId = summary.bestDateId || summary.statistics?.optimalDates?.optimalDateId;
@@ -134,10 +145,8 @@ export function createScheduleEmbedWithTable(
   };
 }
 
-export function createSimpleScheduleComponents(
-  schedule: ScheduleResponseDto,
-  showDetails: boolean = false
-) {
+export function createSimpleScheduleComponents(options: CreateSimpleScheduleComponentsOptions) {
+  const { schedule, showDetails = false } = options;
   const components = [];
 
   // 回答するボタン（開いている時のみ）

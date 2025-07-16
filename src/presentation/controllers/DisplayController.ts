@@ -47,11 +47,11 @@ export class DisplayController {
       const showDetails = !isShowingDetails;
 
       // 更新されたembedとコンポーネントを作成
-      const embed = createScheduleEmbedWithTable(summaryResult.summary, showDetails);
-      const components = createSimpleScheduleComponents(
-        summaryResult.summary.schedule,
-        showDetails
-      );
+      const embed = createScheduleEmbedWithTable({ summary: summaryResult.summary, showDetails });
+      const components = createSimpleScheduleComponents({
+        schedule: summaryResult.summary.schedule,
+        showDetails,
+      });
 
       return new Response(
         JSON.stringify({

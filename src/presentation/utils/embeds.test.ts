@@ -92,7 +92,7 @@ describe('embeds', () => {
 
   describe('createScheduleEmbed', () => {
     it('基本的なスケジュールEmbedを作成できる', () => {
-      const embed = createScheduleEmbed(mockSchedule);
+      const embed = createScheduleEmbed({ schedule: mockSchedule });
 
       expect(embed.title).toBe('📅 テストスケジュール');
       expect(embed.description).toContain('テスト説明');
@@ -105,27 +105,31 @@ describe('embeds', () => {
 
     it('締切がない場合は締切情報を表示しない', () => {
       const scheduleWithoutDeadline = { ...mockSchedule, deadline: undefined };
-      const embed = createScheduleEmbed(scheduleWithoutDeadline);
+      const embed = createScheduleEmbed({ schedule: scheduleWithoutDeadline });
 
       expect(embed.description).not.toContain('⏰ **締切：**');
     });
 
     it('説明がない場合でも正しく動作する', () => {
       const scheduleWithoutDescription = { ...mockSchedule, description: undefined };
-      const embed = createScheduleEmbed(scheduleWithoutDescription);
+      const embed = createScheduleEmbed({ schedule: scheduleWithoutDescription });
 
       expect(embed.description).not.toContain('テスト説明');
       expect(embed.description).toContain('⏰ **締切：**');
     });
 
     it('回答者数を表示できる', () => {
-      const embed = createScheduleEmbed(mockSchedule, 5);
+      const embed = createScheduleEmbed({ schedule: mockSchedule, totalResponses: 5 });
 
       expect(embed.description).toContain('**回答者：** 5人');
     });
 
     it('サマリー情報を使って集計を表示できる', () => {
-      const embed = createScheduleEmbed(mockSchedule, 2, mockSummary);
+      const embed = createScheduleEmbed({
+        schedule: mockSchedule,
+        totalResponses: 2,
+        summary: mockSummary,
+      });
 
       expect(embed.fields[0].name).toBe('1. **2024-12-25 19:00**');
       expect(embed.fields[0].value).toBe('**集計：** ✅ 1人 ❔ 0人 ❌ 1人');
@@ -135,7 +139,7 @@ describe('embeds', () => {
 
     it('閉じたスケジュールは色が変わる', () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      const embed = createScheduleEmbed(closedSchedule);
+      const embed = createScheduleEmbed({ schedule: closedSchedule });
 
       expect(embed.color).toBe(EMBED_COLORS.CLOSED);
     });
@@ -145,7 +149,7 @@ describe('embeds', () => {
         ...mockSchedule,
         createdBy: { ...mockSchedule.createdBy, displayName: undefined },
       };
-      const embed = createScheduleEmbed(scheduleWithoutDisplayName);
+      const embed = createScheduleEmbed({ schedule: scheduleWithoutDisplayName });
 
       expect(embed.footer?.text).toBe('作成：testuser');
     });
@@ -156,7 +160,7 @@ describe('embeds', () => {
         datetime: `2024-12-${i + 1} 19:00`,
       }));
       const scheduleWithManyDates = { ...mockSchedule, dates: manyDates };
-      const embed = createScheduleEmbed(scheduleWithManyDates);
+      const embed = createScheduleEmbed({ schedule: scheduleWithManyDates });
 
       expect(embed.fields).toHaveLength(25);
     });
@@ -164,7 +168,7 @@ describe('embeds', () => {
 
   describe('createScheduleEmbedWithTable', () => {
     it('基本的なテーブル形式のEmbedを作成できる', () => {
-      const embed = createScheduleEmbedWithTable(mockSummary);
+      const embed = createScheduleEmbedWithTable({ summary: mockSummary });
 
       expect(embed.title).toBe('📅 テストスケジュール');
       expect(embed.description).toContain('テスト説明');
@@ -176,7 +180,7 @@ describe('embeds', () => {
     });
 
     it('詳細表示モードで各ユーザーの回答を表示する', () => {
-      const embed = createScheduleEmbedWithTable(mockSummary, true);
+      const embed = createScheduleEmbedWithTable({ summary: mockSummary, showDetails: true });
 
       expect(embed.fields[0].name).toBe('1. **2024-12-25 19:00**');
       expect(embed.fields[0].value).toContain('**集計：** ✅ 1人 ❔ 0人 ❌ 1人');
@@ -196,7 +200,10 @@ describe('embeds', () => {
           date2: { yes: 0, maybe: 0, no: 0 },
         },
       };
-      const embed = createScheduleEmbedWithTable(summaryWithNoResponses, true);
+      const embed = createScheduleEmbedWithTable({
+        summary: summaryWithNoResponses,
+        showDetails: true,
+      });
 
       expect(embed.fields[0].value).toBe('**集計：** ✅ 0人 ❔ 0人 ❌ 0人');
     });
@@ -210,7 +217,7 @@ describe('embeds', () => {
         ...mockSummary,
         schedule: scheduleWithDateDeadline,
       };
-      const embed = createScheduleEmbedWithTable(summaryWithDateDeadline);
+      const embed = createScheduleEmbedWithTable({ summary: summaryWithDateDeadline });
 
       expect(embed.description).toContain('⏰ **締切：** formatted:');
     });
@@ -232,7 +239,7 @@ describe('embeds', () => {
           },
         },
       };
-      const embed = createScheduleEmbedWithTable(summaryWithStatistics);
+      const embed = createScheduleEmbedWithTable({ summary: summaryWithStatistics });
 
       expect(embed.fields[0].name).toBe('⭐ 1. **2024-12-25 19:00**');
     });
@@ -240,7 +247,7 @@ describe('embeds', () => {
 
   describe('createSimpleScheduleComponents', () => {
     it('開いているスケジュールのコンポーネントを作成できる', () => {
-      const components = createSimpleScheduleComponents(mockSchedule);
+      const components = createSimpleScheduleComponents({ schedule: mockSchedule });
 
       expect(components).toHaveLength(1);
       expect(components[0].type).toBe(1);
@@ -272,7 +279,7 @@ describe('embeds', () => {
 
     it('閉じたスケジュールは回答ボタンを表示しない', () => {
       const closedSchedule = { ...mockSchedule, status: 'closed' as const };
-      const components = createSimpleScheduleComponents(closedSchedule);
+      const components = createSimpleScheduleComponents({ schedule: closedSchedule });
 
       const buttons = components[0].components;
       expect(buttons).toHaveLength(2);
@@ -280,7 +287,10 @@ describe('embeds', () => {
     });
 
     it('詳細表示モードでは簡易表示ボタンを表示する', () => {
-      const components = createSimpleScheduleComponents(mockSchedule, true);
+      const components = createSimpleScheduleComponents({
+        schedule: mockSchedule,
+        showDetails: true,
+      });
 
       const buttons = components[0].components;
       expect(buttons[1]).toEqual({

@@ -20,21 +20,27 @@ export interface ScheduleMainMessageOptions {
   isNewlyCreated?: boolean;
 }
 
+export interface CreateMainEmbedOptions {
+  readonly summary?: ScheduleSummaryResponseDto;
+  readonly schedule?: ScheduleResponseDto;
+  readonly showDetails?: boolean;
+}
+
+export interface CreateMainComponentsOptions {
+  readonly schedule: ScheduleResponseDto;
+  readonly showDetails?: boolean;
+  readonly showVoteButton?: boolean;
+}
+
 export class ScheduleMainMessageBuilder {
   /**
    * メインメッセージのEmbed作成
-   * @param summary スケジュール概要（詳細表示時）
-   * @param schedule スケジュール情報（簡易表示時）
-   * @param showDetails 詳細表示フラグ
    */
-  static createMainEmbed(
-    summary?: ScheduleSummaryResponseDto,
-    schedule?: ScheduleResponseDto,
-    showDetails: boolean = false
-  ) {
+  static createMainEmbed(options: CreateMainEmbedOptions) {
+    const { summary, schedule, showDetails = false } = options;
     if (showDetails && summary) {
       // 詳細表示（投票状況含む）
-      return createScheduleEmbedWithTable(summary, showDetails);
+      return createScheduleEmbedWithTable({ summary, showDetails });
     } else {
       // 簡易表示（基本情報のみ・回答者数表示・簡易投票状況）
       const targetSchedule = schedule || summary?.schedule;
@@ -43,21 +49,15 @@ export class ScheduleMainMessageBuilder {
       }
       // summaryがある場合は回答者数とsummary情報を渡す
       const totalResponses = summary?.responses?.length;
-      return createScheduleEmbed(targetSchedule, totalResponses, summary);
+      return createScheduleEmbed({ schedule: targetSchedule, totalResponses, summary });
     }
   }
 
   /**
    * メインメッセージのコンポーネント作成
-   * @param schedule スケジュール情報
-   * @param showDetails 詳細表示フラグ
-   * @param showVoteButton 投票ボタン表示フラグ
    */
-  static createMainComponents(
-    schedule: ScheduleResponseDto,
-    showDetails: boolean = false,
-    showVoteButton: boolean = true
-  ) {
+  static createMainComponents(options: CreateMainComponentsOptions) {
+    const { schedule, showDetails = false, showVoteButton = true } = options;
     const components = [];
     const firstRowButtons = [];
 
@@ -126,12 +126,12 @@ export class ScheduleMainMessageBuilder {
       throw new Error('schedule or summary must be provided');
     }
 
-    const embed = ScheduleMainMessageBuilder.createMainEmbed(summary, schedule, showDetails);
-    const components = ScheduleMainMessageBuilder.createMainComponents(
-      targetSchedule,
+    const embed = ScheduleMainMessageBuilder.createMainEmbed({ summary, schedule, showDetails });
+    const components = ScheduleMainMessageBuilder.createMainComponents({
+      schedule: targetSchedule,
       showDetails,
-      showVoteButtons
-    );
+      showVoteButton: showVoteButtons,
+    });
 
     const content = `${targetSchedule.createdBy.displayName || targetSchedule.createdBy.username}さんによって、日程調整「${targetSchedule.title}」が作成されました！📅`;
 

@@ -1,9 +1,29 @@
-export async function updateOriginalMessage(
-  applicationId: string,
-  token: string,
-  data: import('../../infrastructure/types/discord-api').DiscordMessageData,
-  messageId?: string
-): Promise<void> {
+export interface UpdateOriginalMessageOptions {
+  readonly applicationId: string;
+  readonly token: string;
+  readonly data: import('../../infrastructure/types/discord-api').DiscordMessageData;
+  readonly messageId?: string;
+}
+
+export interface GetOriginalMessageOptions {
+  readonly applicationId: string;
+  readonly token: string;
+}
+
+export interface DeleteMessageOptions {
+  readonly applicationId: string;
+  readonly token: string;
+  readonly messageId: string;
+}
+
+export interface SendFollowupMessageOptions {
+  readonly applicationId: string;
+  readonly token: string;
+  readonly data: import('../../infrastructure/types/discord-api').DiscordMessageData;
+}
+
+export async function updateOriginalMessage(options: UpdateOriginalMessageOptions): Promise<void> {
+  const { applicationId, token, data, messageId } = options;
   const url = messageId
     ? `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`
     : `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/@original`;
@@ -23,9 +43,9 @@ export async function updateOriginalMessage(
 }
 
 export async function getOriginalMessage(
-  applicationId: string,
-  token: string
+  options: GetOriginalMessageOptions
 ): Promise<{ id?: string }> {
+  const { applicationId, token } = options;
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/@original`;
 
   const response = await fetch(url, {
@@ -42,11 +62,8 @@ export async function getOriginalMessage(
   return response.json();
 }
 
-export async function deleteMessage(
-  applicationId: string,
-  token: string,
-  messageId: string
-): Promise<void> {
+export async function deleteMessage(options: DeleteMessageOptions): Promise<void> {
+  const { applicationId, token, messageId } = options;
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`;
 
   const response = await fetch(url, {
@@ -62,11 +79,8 @@ export async function deleteMessage(
   }
 }
 
-export async function sendFollowupMessage(
-  applicationId: string,
-  token: string,
-  data: import('../../infrastructure/types/discord-api').DiscordMessageData
-): Promise<unknown> {
+export async function sendFollowupMessage(options: SendFollowupMessageOptions): Promise<unknown> {
+  const { applicationId, token, data } = options;
   const url = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
 
   const response = await fetch(url, {

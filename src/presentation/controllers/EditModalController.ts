@@ -557,12 +557,12 @@ export class EditModalController {
         tokenLength: interactionToken.length,
       });
 
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interactionToken,
-        messageData,
-        messageId
-      );
+      await updateOriginalMessage({
+        applicationId: env.DISCORD_APPLICATION_ID,
+        token: interactionToken,
+        data: messageData,
+        messageId,
+      });
 
       this.logger.info('Successfully updated main message', {
         scheduleId,

@@ -16,6 +16,21 @@ import { VoteUIBuilder } from '../builders/VoteUIBuilder';
 import { sendFollowupMessage, updateOriginalMessage } from '../utils/discord';
 import { getDisplayName } from '../utils/discord-helpers';
 import { createScheduleEmbedWithTable, createSimpleScheduleComponents } from '../utils/embeds';
+
+export interface CreateResponseMessageOptions {
+  readonly schedule: ScheduleResponseDto;
+  readonly responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }>;
+  readonly username: string;
+}
+
+export interface UpdateMainMessageOptions {
+  readonly scheduleId: string;
+  readonly messageId: string;
+  readonly interactionToken: string;
+  readonly env: Env;
+  readonly guildId: string;
+}
+
 import { createEphemeralResponse, createErrorResponse } from '../utils/responses';
 
 export class VoteController {
@@ -98,10 +113,14 @@ export class VoteController {
       if (componentGroups.length > 1 && env.DISCORD_APPLICATION_ID) {
         const sendFollowups = async () => {
           for (let i = 1; i < componentGroups.length; i++) {
-            await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interaction.token, {
-              content: `📝 **${schedule.title}** の回答（続き ${i + 1}/${componentGroups.length}）`,
-              components: componentGroups[i],
-              flags: 64, // Ephemeral
+            await sendFollowupMessage({
+              applicationId: env.DISCORD_APPLICATION_ID,
+              token: interaction.token,
+              data: {
+                content: `📝 **${schedule.title}** の回答（続き ${i + 1}/${componentGroups.length}）`,
+                components: componentGroups[i],
+                flags: 64, // Ephemeral
+              },
             });
           }
         };
@@ -183,8 +202,11 @@ export class VoteController {
       }
 
       // Update the message with new state
-      const embed = createScheduleEmbedWithTable(summaryResult.summary, showDetails);
-      const components = createSimpleScheduleComponents(scheduleResult.schedule, showDetails);
+      const embed = createScheduleEmbedWithTable({ summary: summaryResult.summary, showDetails });
+      const components = createSimpleScheduleComponents({
+        schedule: scheduleResult.schedule,
+        showDetails,
+      });
 
       return new Response(
         JSON.stringify({
@@ -274,7 +296,7 @@ export class VoteController {
       }
 
       // Send response message
-      const responseContent = this.createResponseMessage(schedule, responses, username);
+      const responseContent = this.createResponseMessage({ schedule, responses, username });
 
       // Update main message using MessageUpdateService
       if (schedule.messageId && schedule.channelId) {
@@ -434,13 +456,8 @@ export class VoteController {
   /**
    * メインメッセージを更新
    */
-  private async updateMainMessage(
-    scheduleId: string,
-    messageId: string,
-    interactionToken: string,
-    env: Env,
-    guildId: string
-  ): Promise<void> {
+  private async updateMainMessage(options: UpdateMainMessageOptions): Promise<void> {
+    const { scheduleId, messageId, interactionToken, env, guildId } = options;
     try {
       if (!env.DISCORD_APPLICATION_ID) {
         return;
@@ -464,18 +481,24 @@ export class VoteController {
       }
 
       // Update the message
-      const embed = createScheduleEmbedWithTable(summaryResult.summary, false);
-      const components = createSimpleScheduleComponents(scheduleResult.schedule, false);
+      const embed = createScheduleEmbedWithTable({
+        summary: summaryResult.summary,
+        showDetails: false,
+      });
+      const components = createSimpleScheduleComponents({
+        schedule: scheduleResult.schedule,
+        showDetails: false,
+      });
 
-      await updateOriginalMessage(
-        env.DISCORD_APPLICATION_ID,
-        interactionToken,
-        {
+      await updateOriginalMessage({
+        applicationId: env.DISCORD_APPLICATION_ID,
+        token: interactionToken,
+        data: {
           embeds: [embed],
           components,
         },
-        messageId
-      );
+        messageId,
+      });
     } catch (error) {
       this.logger.error(
         'Error updating main message',
@@ -494,11 +517,8 @@ export class VoteController {
   /**
    * 回答メッセージを作成
    */
-  private createResponseMessage(
-    schedule: ScheduleResponseDto,
-    responses: Array<{ dateId: string; status: 'ok' | 'maybe' | 'ng' }>,
-    username: string
-  ): string {
+  private createResponseMessage(options: CreateResponseMessageOptions): string {
+    const { schedule, responses, username } = options;
     const lines = [`✅ ${username} さんの回答を受け付けました！\n`];
 
     // Add response summary

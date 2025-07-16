@@ -484,7 +484,11 @@ export class ScheduleManagementController {
               return;
             }
 
-            await deleteMessage(applicationId, interaction.token, messageId);
+            await deleteMessage({
+              applicationId,
+              token: interaction.token,
+              messageId,
+            });
           } catch (error) {
             this.logger.error(
               'Failed to delete main Discord message:',

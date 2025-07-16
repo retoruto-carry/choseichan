@@ -139,10 +139,10 @@ export class CreateScheduleController {
           (async () => {
             try {
               // メッセージIDを保存
-              const message = await getOriginalMessage(
-                env.DISCORD_APPLICATION_ID,
-                interaction.token
-              );
+              const message = await getOriginalMessage({
+                applicationId: env.DISCORD_APPLICATION_ID,
+                token: interaction.token,
+              });
 
               if (message?.id) {
                 await this.dependencyContainer.updateScheduleUseCase.execute({
@@ -221,23 +221,27 @@ export class CreateScheduleController {
     const mentionDisplay =
       schedule.reminderMentions?.map((m: string) => `\`${m}\``).join(' ') || '`@here`';
 
-    await sendFollowupMessage(env.DISCORD_APPLICATION_ID, interactionToken, {
-      content: `**🔔 リマインダーが自動設定されました**\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーが送信されます。`,
-      components: [
-        {
-          type: 1, // ACTION_ROW
-          components: [
-            {
-              type: 2, // BUTTON
-              style: 2, // SECONDARY (グレー/NEUTRAL)
-              label: 'リマインダーを編集',
-              custom_id: createEditReminderButtonId(schedule.id),
-              emoji: { name: '⏰' },
-            },
-          ],
-        },
-      ],
-      flags: InteractionResponseFlags.EPHEMERAL,
+    await sendFollowupMessage({
+      applicationId: env.DISCORD_APPLICATION_ID,
+      token: interactionToken,
+      data: {
+        content: `**🔔 リマインダーが自動設定されました**\n締切の ${timingsDisplay} に ${mentionDisplay} にリマインダーが送信されます。`,
+        components: [
+          {
+            type: 1, // ACTION_ROW
+            components: [
+              {
+                type: 2, // BUTTON
+                style: 2, // SECONDARY (グレー/NEUTRAL)
+                label: 'リマインダーを編集',
+                custom_id: createEditReminderButtonId(schedule.id),
+                emoji: { name: '⏰' },
+              },
+            ],
+          },
+        ],
+        flags: InteractionResponseFlags.EPHEMERAL,
+      },
     });
   }
 

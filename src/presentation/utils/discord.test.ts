@@ -26,7 +26,7 @@ describe('Discord Utilities', () => {
       const messageId = 'msg789';
       const data = { content: 'Updated message' };
 
-      await updateOriginalMessage(applicationId, token, data, messageId);
+      await updateOriginalMessage({ applicationId, token, data, messageId });
 
       expect(global.fetch).toHaveBeenCalledWith(
         `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/${messageId}`,
@@ -48,9 +48,14 @@ describe('Discord Utilities', () => {
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      await expect(updateOriginalMessage('app123', 'token456', {}, 'msg789')).rejects.toThrow(
-        'Failed to update message: 404 - Not Found'
-      );
+      await expect(
+        updateOriginalMessage({
+          applicationId: 'app123',
+          token: 'token456',
+          data: {},
+          messageId: 'msg789',
+        })
+      ).rejects.toThrow('Failed to update message: 404 - Not Found');
     });
 
     it('should handle complex data structures', async () => {
@@ -84,7 +89,12 @@ describe('Discord Utilities', () => {
         ],
       };
 
-      await updateOriginalMessage('app123', 'token456', complexData, 'msg789');
+      await updateOriginalMessage({
+        applicationId: 'app123',
+        token: 'token456',
+        data: complexData,
+        messageId: 'msg789',
+      });
 
       const [[, requestInit]] = (global.fetch as any).mock.calls;
       expect(JSON.parse(requestInit.body)).toEqual(complexData);
@@ -104,7 +114,7 @@ describe('Discord Utilities', () => {
       const applicationId = 'app123';
       const token = 'token456';
 
-      const result = await getOriginalMessage(applicationId, token);
+      const result = await getOriginalMessage({ applicationId, token });
 
       expect(global.fetch).toHaveBeenCalledWith(
         `https://discord.com/api/v10/webhooks/${applicationId}/${token}/messages/@original`,
@@ -125,9 +135,9 @@ describe('Discord Utilities', () => {
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      await expect(getOriginalMessage('app123', 'token456')).rejects.toThrow(
-        'Failed to get message: 403'
-      );
+      await expect(
+        getOriginalMessage({ applicationId: 'app123', token: 'token456' })
+      ).rejects.toThrow('Failed to get message: 403');
     });
 
     it('should return parsed JSON data', async () => {
@@ -154,7 +164,7 @@ describe('Discord Utilities', () => {
       };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      const result = await getOriginalMessage('app123', 'token456');
+      const result = await getOriginalMessage({ applicationId: 'app123', token: 'token456' });
 
       expect(result).toEqual(expectedData);
       expect(mockResponse.json).toHaveBeenCalledOnce();
