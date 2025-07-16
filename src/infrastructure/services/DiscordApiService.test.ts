@@ -58,7 +58,12 @@ describe('DiscordApiService', () => {
         embeds: [],
       };
 
-      await service.updateMessage('channel-123', 'message-123', messageData, 'bot-token');
+      await service.updateMessage({
+        channelId: 'channel-123',
+        messageId: 'message-123',
+        message: messageData,
+        botToken: 'bot-token',
+      });
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://discord.com/api/v10/channels/channel-123/messages/message-123',
@@ -83,7 +88,11 @@ describe('DiscordApiService', () => {
 
       vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
 
-      await service.deleteMessage('channel-123', 'message-123', 'bot-token');
+      await service.deleteMessage({
+        channelId: 'channel-123',
+        messageId: 'message-123',
+        botToken: 'bot-token',
+      });
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://discord.com/api/v10/channels/channel-123/messages/message-123',
@@ -116,7 +125,11 @@ describe('DiscordApiService', () => {
 
       vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
 
-      const result = await service.getGuildMember('guild-123', 'user-123', 'bot-token');
+      const result = await service.getGuildMember({
+        guildId: 'guild-123',
+        userId: 'user-123',
+        botToken: 'bot-token',
+      });
 
       expect(result).toEqual(mockMember);
       expect(global.fetch).toHaveBeenCalledWith(
@@ -137,8 +150,87 @@ describe('DiscordApiService', () => {
 
       vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
 
-      await expect(service.getGuildMember('guild-123', 'user-123', 'bot-token')).rejects.toThrow(
-        'Failed to fetch guild member: 404'
+      await expect(
+        service.getGuildMember({
+          guildId: 'guild-123',
+          userId: 'user-123',
+          botToken: 'bot-token',
+        })
+      ).rejects.toThrow('Failed to fetch guild member: 404');
+    });
+  });
+
+  describe('sendMessage', () => {
+    it('should send a message to a channel', async () => {
+      const mockResponse = {
+        ok: true,
+        json: async () => ({ id: 'message-456' }),
+      };
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
+
+      const result = await service.sendMessage({
+        channelId: 'channel-123',
+        message: { content: 'Hello, world!' },
+        botToken: 'bot-token',
+      });
+
+      expect(result).toEqual({ id: 'message-456' });
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://discord.com/api/v10/channels/channel-123/messages',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bot bot-token',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: 'Hello, world!' }),
+        }
+      );
+    });
+
+    it('should throw error when sending message fails', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 400,
+      };
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
+
+      await expect(
+        service.sendMessage({
+          channelId: 'channel-123',
+          message: { content: 'Hello, world!' },
+          botToken: 'bot-token',
+        })
+      ).rejects.toThrow('Failed to send message: 400');
+    });
+  });
+
+  describe('sendNotification', () => {
+    it('should send a notification to a channel', async () => {
+      const mockResponse = {
+        ok: true,
+      };
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(mockResponse as Response);
+
+      await service.sendNotification({
+        channelId: 'channel-123',
+        content: 'Test notification',
+        botToken: 'bot-token',
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://discord.com/api/v10/channels/channel-123/messages',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bot bot-token',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: 'Test notification' }),
+        }
       );
     });
   });

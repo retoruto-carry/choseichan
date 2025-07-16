@@ -5,7 +5,13 @@
  * infrastructure/services/DiscordApiService を使用
  */
 
-import type { IDiscordApiPort } from '../../application/ports/DiscordApiPort';
+import type {
+  IDiscordApiPort,
+  SearchGuildMembersOptions,
+  SendMessageOptions,
+  SendNotificationOptions,
+  UpdateMessageOptions,
+} from '../../application/ports/DiscordApiPort';
 import { getLogger } from '../logging/Logger';
 import { DiscordApiService } from '../services/DiscordApiService';
 
@@ -14,40 +20,44 @@ const logger = getLogger();
 export class DiscordApiAdapter implements IDiscordApiPort {
   private discordApiService = new DiscordApiService();
 
-  async updateMessage(
-    channelId: string,
-    messageId: string,
-    content: object,
-    token: string
-  ): Promise<void> {
-    await this.discordApiService.updateMessage(channelId, messageId, content, token);
+  async updateMessage(options: UpdateMessageOptions): Promise<void> {
+    await this.discordApiService.updateMessage({
+      channelId: options.channelId,
+      messageId: options.messageId,
+      message: options.message,
+      botToken: options.botToken,
+    });
   }
 
-  async sendMessage(channelId: string, content: object, token: string): Promise<{ id: string }> {
-    return await this.discordApiService.sendMessage(channelId, content, token);
+  async sendMessage(options: SendMessageOptions): Promise<{ id: string }> {
+    return await this.discordApiService.sendMessage({
+      channelId: options.channelId,
+      message: options.message,
+      botToken: options.botToken,
+    });
   }
 
-  async sendNotification(channelId: string, content: string, token: string): Promise<void> {
-    await this.discordApiService.sendNotification(channelId, content, token);
+  async sendNotification(options: SendNotificationOptions): Promise<void> {
+    await this.discordApiService.sendNotification({
+      channelId: options.channelId,
+      content: options.content,
+      botToken: options.botToken,
+    });
   }
 
-  async searchGuildMembers(
-    guildId: string,
-    query: string,
-    token: string,
-    limit: number = 5
-  ): Promise<
+  async searchGuildMembers(options: SearchGuildMembersOptions): Promise<
     Array<{
       user: { id: string; username: string; discriminator: string };
     }>
   > {
+    const { guildId, query, botToken, limit = 5 } = options;
     const url = `https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(
       query
     )}&limit=${limit}`;
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bot ${token}`,
+        Authorization: `Bot ${botToken}`,
       },
     });
 

@@ -61,15 +61,15 @@ export class ScheduleUpdaterService {
       const { embed, components } = this.messageFormatter.formatScheduleMessage(summary, false);
 
       // Discord APIを使ってメッセージを更新
-      await this.discordApi.updateMessage(
-        schedule.channelId,
-        targetMessageId,
-        {
+      await this.discordApi.updateMessage({
+        channelId: schedule.channelId,
+        messageId: targetMessageId,
+        message: {
           embeds: [embed],
           components,
         },
-        interactionToken
-      );
+        botToken: interactionToken,
+      });
 
       return true;
     } catch (error) {

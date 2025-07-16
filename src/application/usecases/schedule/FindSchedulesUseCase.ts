@@ -52,7 +52,7 @@ export class FindSchedulesUseCase {
         };
       }
 
-      const schedules = await this.scheduleRepository.findByChannel(channelId, guildId, limit);
+      const schedules = await this.scheduleRepository.findByChannel({ channelId, guildId, limit });
       const scheduleResponses = schedules.map((schedule) =>
         this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
       );
@@ -83,11 +83,11 @@ export class FindSchedulesUseCase {
         };
       }
 
-      const schedules = await this.scheduleRepository.findByDeadlineRange(
+      const schedules = await this.scheduleRepository.findByDeadlineRange({
         startTime,
         endTime,
-        guildId
-      );
+        guildId,
+      });
       const scheduleResponses = schedules.map((schedule) =>
         this.buildScheduleResponse(ScheduleMapper.toDomain(schedule))
       );

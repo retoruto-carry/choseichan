@@ -46,15 +46,15 @@ export class ProcessMessageUpdateUseCase {
       );
 
       // メッセージ更新を実行
-      await this.discordApiService.updateMessage(
-        task.channelId,
-        task.messageId,
-        {
+      await this.discordApiService.updateMessage({
+        channelId: task.channelId,
+        messageId: task.messageId,
+        message: {
           embeds: [embed],
           components,
         },
-        this.discordToken
-      );
+        botToken: this.discordToken,
+      });
 
       this.logger.info('Message updated successfully', {
         operation: 'process-message-update',

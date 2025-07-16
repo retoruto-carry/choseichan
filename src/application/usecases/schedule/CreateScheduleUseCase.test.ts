@@ -6,7 +6,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type {
+  FindByChannelOptions,
+  FindByDeadlineRangeOptions,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
 import type { DomainSchedule } from '../../../domain/types/DomainTypes';
 import type { CreateScheduleRequestDto } from '../../dto/ScheduleDto';
 import type { ILogger } from '../../ports/LoggerPort';
@@ -24,21 +28,15 @@ class MockScheduleRepository implements IScheduleRepository {
     return this.schedules.get(scheduleId) || null;
   }
 
-  async findByChannel(
-    channelId: string,
-    guildId: string,
-    limit?: number
-  ): Promise<DomainSchedule[]> {
+  async findByChannel(options: FindByChannelOptions): Promise<DomainSchedule[]> {
+    const { channelId, guildId, limit } = options;
     return Array.from(this.schedules.values())
       .filter((s) => s.channelId === channelId && s.guildId === guildId)
       .slice(0, limit || 100);
   }
 
-  async findByDeadlineRange(
-    startTime: Date,
-    endTime: Date,
-    guildId?: string
-  ): Promise<DomainSchedule[]> {
+  async findByDeadlineRange(options: FindByDeadlineRangeOptions): Promise<DomainSchedule[]> {
+    const { startTime, endTime, guildId } = options;
     return Array.from(this.schedules.values())
       .filter((s) => s.deadline && s.deadline >= startTime && s.deadline <= endTime)
       .filter((s) => !guildId || s.guildId === guildId);

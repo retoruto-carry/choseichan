@@ -24,6 +24,38 @@ export interface DiscordWebhookResponse {
   data: DiscordMessage;
 }
 
+// DiscordApiService用の名前付き引数インターフェース
+export interface SendMessageOptions {
+  readonly channelId: string;
+  readonly message: object;
+  readonly botToken: string;
+}
+
+export interface SendNotificationOptions {
+  readonly channelId: string;
+  readonly content: string;
+  readonly botToken: string;
+}
+
+export interface UpdateMessageOptions {
+  readonly channelId: string;
+  readonly messageId: string;
+  readonly message: DiscordMessage;
+  readonly botToken: string;
+}
+
+export interface DeleteMessageOptions {
+  readonly channelId: string;
+  readonly messageId: string;
+  readonly botToken: string;
+}
+
+export interface GetGuildMemberOptions {
+  readonly guildId: string;
+  readonly userId: string;
+  readonly botToken: string;
+}
+
 export interface IDiscordApiService {
   /**
    * Discord Webhookでメッセージを送信
@@ -33,32 +65,27 @@ export interface IDiscordApiService {
   /**
    * Discord メッセージを送信
    */
-  sendMessage(channelId: string, message: object, botToken: string): Promise<{ id: string }>;
+  sendMessage(options: SendMessageOptions): Promise<{ id: string }>;
 
   /**
    * Discord 通知を送信
    */
-  sendNotification(channelId: string, content: string, botToken: string): Promise<void>;
+  sendNotification(options: SendNotificationOptions): Promise<void>;
 
   /**
    * Discord メッセージを更新
    */
-  updateMessage(
-    channelId: string,
-    messageId: string,
-    message: DiscordMessage,
-    botToken: string
-  ): Promise<Response>;
+  updateMessage(options: UpdateMessageOptions): Promise<Response>;
 
   /**
    * Discord メッセージを削除
    */
-  deleteMessage(channelId: string, messageId: string, botToken: string): Promise<Response>;
+  deleteMessage(options: DeleteMessageOptions): Promise<Response>;
 
   /**
    * ギルドメンバー情報を取得
    */
-  getGuildMember(guildId: string, userId: string, botToken: string): Promise<APIGuildMember>;
+  getGuildMember(options: GetGuildMemberOptions): Promise<APIGuildMember>;
 
   /**
    * Discord Interaction Response を作成
@@ -79,7 +106,8 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async sendMessage(channelId: string, message: object, botToken: string): Promise<{ id: string }> {
+  async sendMessage(options: SendMessageOptions): Promise<{ id: string }> {
+    const { channelId, message, botToken } = options;
     const response = await fetch(`${this.baseUrl}/channels/${channelId}/messages`, {
       method: 'POST',
       headers: {
@@ -97,7 +125,8 @@ export class DiscordApiService implements IDiscordApiService {
     return { id: data.id };
   }
 
-  async sendNotification(channelId: string, content: string, botToken: string): Promise<void> {
+  async sendNotification(options: SendNotificationOptions): Promise<void> {
+    const { channelId, content, botToken } = options;
     await fetch(`${this.baseUrl}/channels/${channelId}/messages`, {
       method: 'POST',
       headers: {
@@ -108,12 +137,8 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async updateMessage(
-    channelId: string,
-    messageId: string,
-    message: DiscordMessage,
-    botToken: string
-  ): Promise<Response> {
+  async updateMessage(options: UpdateMessageOptions): Promise<Response> {
+    const { channelId, messageId, message, botToken } = options;
     return fetch(`${this.baseUrl}/channels/${channelId}/messages/${messageId}`, {
       method: 'PATCH',
       headers: {
@@ -124,7 +149,8 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async deleteMessage(channelId: string, messageId: string, botToken: string): Promise<Response> {
+  async deleteMessage(options: DeleteMessageOptions): Promise<Response> {
+    const { channelId, messageId, botToken } = options;
     return fetch(`${this.baseUrl}/channels/${channelId}/messages/${messageId}`, {
       method: 'DELETE',
       headers: {
@@ -133,7 +159,8 @@ export class DiscordApiService implements IDiscordApiService {
     });
   }
 
-  async getGuildMember(guildId: string, userId: string, botToken: string): Promise<APIGuildMember> {
+  async getGuildMember(options: GetGuildMemberOptions): Promise<APIGuildMember> {
+    const { guildId, userId, botToken } = options;
     const response = await fetch(`${this.baseUrl}/guilds/${guildId}/members/${userId}`, {
       headers: {
         Authorization: `Bot ${botToken}`,

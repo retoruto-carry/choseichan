@@ -159,9 +159,9 @@ describe('NotificationService', () => {
     it('should send reminder to channel', async () => {
       await notificationService.sendDeadlineReminder(mockSchedule);
 
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('⏰ 「Test Event」'),
           embeds: expect.arrayContaining([
             expect.objectContaining({
@@ -170,8 +170,8 @@ describe('NotificationService', () => {
             }),
           ]),
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
 
     it('should skip if no deadline', async () => {
@@ -259,14 +259,14 @@ describe('NotificationService', () => {
 
       expect(mockGetScheduleSummaryUseCase.execute).toHaveBeenCalledWith(scheduleId, guildId);
 
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('締め切られました'),
           embeds: expect.any(Array),
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
   });
 
@@ -316,16 +316,16 @@ describe('NotificationService', () => {
 
       notificationService.sendPRMessage(mockSchedule);
 
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('ピクページ'),
           message_reference: {
             message_id: 'message123',
           },
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
   });
 
@@ -368,40 +368,40 @@ describe('NotificationService', () => {
       await notificationService.sendDeadlineReminder(scheduleWithMentions, '回答締切まで残り1時間');
 
       // Check that guild members were searched
-      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
-        'guild123',
-        'TestUser1',
-        mockToken,
-        1
-      );
-      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
-        'guild123',
-        'TestUser2',
-        mockToken,
-        1
-      );
-      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith(
-        'guild123',
-        'nonexistent',
-        mockToken,
-        1
-      );
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith({
+        guildId: 'guild123',
+        query: 'TestUser1',
+        botToken: mockToken,
+        limit: 1,
+      });
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith({
+        guildId: 'guild123',
+        query: 'TestUser2',
+        botToken: mockToken,
+        limit: 1,
+      });
+      expect(mockDiscordApi.searchGuildMembers).toHaveBeenCalledWith({
+        guildId: 'guild123',
+        query: 'nonexistent',
+        botToken: mockToken,
+        limit: 1,
+      });
 
       // Check that message was sent with resolved mentions
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('<@123456789>'), // TestUser1's ID
         }),
-        mockToken
-      );
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+        botToken: mockToken,
+      });
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('<@987654321>'), // TestUser2's ID
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
 
     it('should handle @everyone and @here without resolution', async () => {
@@ -438,13 +438,13 @@ describe('NotificationService', () => {
       expect(mockDiscordApi.searchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains @everyone and @here
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('@everyone @here'),
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
 
     it('should handle already formatted mentions', async () => {
@@ -481,21 +481,21 @@ describe('NotificationService', () => {
       expect(mockDiscordApi.searchGuildMembers).not.toHaveBeenCalled();
 
       // Check that message contains the mentions as-is
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringContaining('<@123456789> <@987654321>'),
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
 
     it('should handle mixed mention formats', async () => {
       // Mock searchGuildMembers for mixed mentions
-      vi.mocked(mockDiscordApi.searchGuildMembers).mockImplementation(async (_guildId, query) => {
-        if (query === 'Alice') {
+      vi.mocked(mockDiscordApi.searchGuildMembers).mockImplementation(async (options) => {
+        if (options.query === 'Alice') {
           return [{ user: { id: '111111111', username: 'Alice', discriminator: '0001' } }];
-        } else if (query === 'Bob') {
+        } else if (options.query === 'Bob') {
           return [{ user: { id: '222222222', username: 'Bob', discriminator: '0002' } }];
         }
         return [];
@@ -537,15 +537,15 @@ describe('NotificationService', () => {
       );
 
       // Check that message contains all resolved mentions
-      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith(
-        'channel123',
-        expect.objectContaining({
+      expect(mockDiscordApi.sendMessage).toHaveBeenCalledWith({
+        channelId: 'channel123',
+        message: expect.objectContaining({
           content: expect.stringMatching(
             /@everyone.*<@111111111>.*<@333333333>.*<@222222222>.*@NonExistentUser/
           ),
         }),
-        mockToken
-      );
+        botToken: mockToken,
+      });
     });
   });
 });

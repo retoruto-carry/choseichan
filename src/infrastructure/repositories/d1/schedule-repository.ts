@@ -2,7 +2,11 @@
  * D1実装のスケジュールリポジトリ
  */
 
-import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
+import type {
+  FindByChannelOptions,
+  FindByDeadlineRangeOptions,
+  IScheduleRepository,
+} from '../../../domain/repositories/interfaces';
 import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import type { D1ScheduleRow } from '../../types/database';
 import { RepositoryError } from '../errors';
@@ -191,11 +195,8 @@ export class D1ScheduleRepository implements IScheduleRepository {
     }
   }
 
-  async findByChannel(
-    channelId: string,
-    guildId: string = 'default',
-    limit: number = 100
-  ): Promise<DomainSchedule[]> {
+  async findByChannel(options: FindByChannelOptions): Promise<DomainSchedule[]> {
+    const { channelId, guildId = 'default', limit = 100 } = options;
     try {
       const result = await this.db
         .prepare(`
@@ -241,11 +242,8 @@ export class D1ScheduleRepository implements IScheduleRepository {
     }
   }
 
-  async findByDeadlineRange(
-    startTime: Date,
-    endTime: Date,
-    guildId?: string
-  ): Promise<DomainSchedule[]> {
+  async findByDeadlineRange(options: FindByDeadlineRangeOptions): Promise<DomainSchedule[]> {
+    const { startTime, endTime, guildId } = options;
     try {
       const startTimestamp = Math.floor(startTime.getTime() / 1000);
       const endTimestamp = Math.floor(endTime.getTime() / 1000);

@@ -49,11 +49,11 @@ export class DeadlineReminderUseCase {
         justClosed: [],
       };
 
-      const schedules = await this.scheduleRepository.findByDeadlineRange(
-        oneWeekAgo,
-        threeDaysFromNow,
-        guildId
-      );
+      const schedules = await this.scheduleRepository.findByDeadlineRange({
+        startTime: oneWeekAgo,
+        endTime: threeDaysFromNow,
+        guildId,
+      });
 
       for (const schedule of schedules) {
         if (schedule?.deadline) {

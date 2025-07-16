@@ -185,7 +185,7 @@ export class NotificationService {
   }
 
   private async sendChannelMessage(channelId: string, message: object): Promise<void> {
-    await this.discordApi.sendMessage(channelId, message, this.discordToken);
+    await this.discordApi.sendMessage({ channelId, message, botToken: this.discordToken });
   }
 
   private async resolveUserMentions(mentions: string[], guildId: string): Promise<string[]> {
@@ -201,12 +201,12 @@ export class NotificationService {
         const searchQuery = mention.startsWith('@') ? mention.substring(1) : mention;
 
         try {
-          const searchResults = await this.discordApi.searchGuildMembers(
+          const searchResults = await this.discordApi.searchGuildMembers({
             guildId,
-            searchQuery,
-            this.discordToken,
-            1 // 最初の1件のみ取得
-          );
+            query: searchQuery,
+            botToken: this.discordToken,
+            limit: 1, // 最初の1件のみ取得
+          });
 
           if (searchResults.length > 0) {
             // 大文字小文字を無視して完全一致を確認
@@ -329,15 +329,15 @@ export class NotificationService {
         false // 投票ボタン非表示（締切済み）
       );
 
-      await this.discordApi.updateMessage(
-        schedule.channelId,
-        schedule.messageId,
-        {
+      await this.discordApi.updateMessage({
+        channelId: schedule.channelId,
+        messageId: schedule.messageId,
+        message: {
           embeds: [embed],
           components,
         },
-        this.discordToken
-      );
+        botToken: this.discordToken,
+      });
 
       this.logger.info(`Updated main message for closed schedule ${scheduleId}`);
     } catch (error) {

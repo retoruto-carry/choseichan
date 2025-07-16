@@ -5,6 +5,19 @@
 
 import type { DomainResponse, DomainSchedule, DomainScheduleSummary } from '../types/DomainTypes';
 
+// Named argument interfaces for repositories
+export interface FindByChannelOptions {
+  readonly channelId: string;
+  readonly guildId: string;
+  readonly limit?: number;
+}
+
+export interface FindByDeadlineRangeOptions {
+  readonly startTime: Date;
+  readonly endTime: Date;
+  readonly guildId?: string;
+}
+
 /**
  * スケジュールリポジトリのインターフェース
  */
@@ -22,12 +35,12 @@ export interface IScheduleRepository {
   /**
    * チャンネル内のスケジュール一覧を取得
    */
-  findByChannel(channelId: string, guildId: string, limit?: number): Promise<DomainSchedule[]>;
+  findByChannel(options: FindByChannelOptions): Promise<DomainSchedule[]>;
 
   /**
    * 締切が指定期間内のスケジュールを取得
    */
-  findByDeadlineRange(startTime: Date, endTime: Date, guildId?: string): Promise<DomainSchedule[]>;
+  findByDeadlineRange(options: FindByDeadlineRangeOptions): Promise<DomainSchedule[]>;
 
   /**
    * スケジュールを削除

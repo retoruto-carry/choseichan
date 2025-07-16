@@ -107,11 +107,11 @@ describe('FindSchedulesUseCase', () => {
         totalResponses: 10,
       });
 
-      expect(mockScheduleRepository.findByChannel).toHaveBeenCalledWith(
-        'channel-123',
-        'guild-123',
-        undefined
-      );
+      expect(mockScheduleRepository.findByChannel).toHaveBeenCalledWith({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+        limit: undefined,
+      });
     });
 
     it('should find schedules with limit', async () => {
@@ -125,11 +125,11 @@ describe('FindSchedulesUseCase', () => {
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(1);
-      expect(mockScheduleRepository.findByChannel).toHaveBeenCalledWith(
-        'channel-123',
-        'guild-123',
-        1
-      );
+      expect(mockScheduleRepository.findByChannel).toHaveBeenCalledWith({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+        limit: 1,
+      });
     });
 
     it('should return empty array when no schedules found', async () => {
@@ -220,11 +220,11 @@ describe('FindSchedulesUseCase', () => {
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(2);
-      expect(mockScheduleRepository.findByDeadlineRange).toHaveBeenCalledWith(
+      expect(mockScheduleRepository.findByDeadlineRange).toHaveBeenCalledWith({
         startTime,
         endTime,
-        undefined
-      );
+        guildId: undefined,
+      });
     });
 
     it('should find schedules with guild filter', async () => {
@@ -241,11 +241,11 @@ describe('FindSchedulesUseCase', () => {
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(1);
-      expect(mockScheduleRepository.findByDeadlineRange).toHaveBeenCalledWith(
+      expect(mockScheduleRepository.findByDeadlineRange).toHaveBeenCalledWith({
         startTime,
         endTime,
-        'guild-123'
-      );
+        guildId: 'guild-123',
+      });
     });
 
     it('should validate date range', async () => {

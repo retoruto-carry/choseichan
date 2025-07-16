@@ -202,7 +202,10 @@ describe('D1ScheduleRepository', () => {
 
       mockDb._mockResults.results = mockScheduleRows as any;
 
-      const results = await repository.findByChannel('channel-123', 'guild-123');
+      const results = await repository.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(results).toHaveLength(1);
       expect(results[0].id).toBe('schedule-1');
@@ -214,7 +217,7 @@ describe('D1ScheduleRepository', () => {
     it('should apply limit when specified', async () => {
       mockDb._mockResults.results = [] as any;
 
-      await repository.findByChannel('channel-123', 'guild-123', 5);
+      await repository.findByChannel({ channelId: 'channel-123', guildId: 'guild-123', limit: 5 });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('LIMIT'));
     });
@@ -227,7 +230,7 @@ describe('D1ScheduleRepository', () => {
 
       mockDb._mockResults.results = [] as any;
 
-      await repository.findByDeadlineRange(startTime, endTime, 'guild-123');
+      await repository.findByDeadlineRange({ startTime, endTime, guildId: 'guild-123' });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('deadline >= ? AND deadline <= ?')
@@ -240,7 +243,7 @@ describe('D1ScheduleRepository', () => {
 
       mockDb._mockResults.results = [] as any;
 
-      await repository.findByDeadlineRange(startTime, endTime);
+      await repository.findByDeadlineRange({ startTime, endTime });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('deadline >= ? AND deadline <= ?')
