@@ -2,7 +2,6 @@
  * D1実装のスケジュールリポジトリ
  */
 
-import { TIME_CONSTANTS } from '../../../application/constants/ApplicationConstants';
 import type { IScheduleRepository } from '../../../domain/repositories/interfaces';
 import type { DomainSchedule, DomainScheduleDate } from '../../../domain/types/DomainTypes';
 import type { D1ScheduleRow } from '../../types/database';

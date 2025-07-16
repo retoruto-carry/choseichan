@@ -91,7 +91,7 @@ describe('Discord Interaction Flows Integration', () => {
 
       // Verify modal response
       expect(commandResponse.status).toBe(200);
-      const commandData = await commandResponse.json() as any;
+      const commandData = (await commandResponse.json()) as any;
       expect(commandData.type).toBe(InteractionResponseType.MODAL);
       expect(commandData.data.title).toBe('日程調整を作成');
       expect(commandData.data.custom_id).toBe('modal:create_schedule');
@@ -166,7 +166,7 @@ describe('Discord Interaction Flows Integration', () => {
 
       // Verify schedule creation response
       expect(modalResponse.status).toBe(200);
-      const modalData = await modalResponse.json() as any;
+      const modalData = (await modalResponse.json()) as any;
       expect(modalData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
 
       if (modalData.data.embeds) {
@@ -281,7 +281,7 @@ describe('Discord Interaction Flows Integration', () => {
       const response = await modalController.handleModalSubmit(invalidModalInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.flags).toBe(64); // Ephemeral
       expect(data.data.content).toContain('日程候補を入力してください');
@@ -345,7 +345,7 @@ describe('Discord Interaction Flows Integration', () => {
       const response = await buttonController.handleButtonInteraction(buttonInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.flags).toBe(64); // Ephemeral
       expect(data.data.content).toContain('回答');
@@ -383,7 +383,7 @@ describe('Discord Interaction Flows Integration', () => {
       const response = await buttonController.handleButtonInteraction(closeButtonInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.content).toContain('締め切り');
 
@@ -428,7 +428,7 @@ describe('Discord Interaction Flows Integration', () => {
       );
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.flags).toBe(64); // Ephemeral
       expect(data.data.content).toContain('権限がありません');
@@ -580,7 +580,7 @@ describe('Discord Interaction Flows Integration', () => {
       const response = await commandController.handleChouseichanCommand(commandInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
       expect(data.data.title).toBe('日程調整を作成');
 
@@ -662,7 +662,7 @@ describe('Discord Interaction Flows Integration', () => {
 
       // Should still return a valid response even if API fails
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     });
   });

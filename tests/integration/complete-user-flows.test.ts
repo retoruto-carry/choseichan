@@ -89,7 +89,7 @@ describe('Complete User Flows Integration', () => {
       );
 
       expect(commandResponse.status).toBe(200);
-      const commandData = await commandResponse.json() as any;
+      const commandData = (await commandResponse.json()) as any;
       expect(commandData.type).toBe(InteractionResponseType.MODAL);
 
       // Step 2: Submit modal with valid data
@@ -301,7 +301,7 @@ describe('Complete User Flows Integration', () => {
       );
 
       expect(closeResponse.status).toBe(200);
-      const closeData = await closeResponse.json() as any;
+      const closeData = (await closeResponse.json()) as any;
       expect(closeData.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(closeData.data.content).toContain('締め切り');
 

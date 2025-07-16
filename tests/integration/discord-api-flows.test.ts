@@ -88,7 +88,7 @@ describe('Discord API Response Flows Integration', () => {
       const response = await commandController.handleChouseichanCommand(commandInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
       expect(data.data.title).toBe('日程調整を作成');
     });
@@ -115,7 +115,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Test that the mock is working properly
       const testResponse = await fetch('https://discord.com/api/test');
-      const testData = await testResponse.json() as any;
+      const testData = (await testResponse.json()) as any;
 
       expect(testResponse.ok).toBe(true);
       expect(testData.id).toBe('987654321');
@@ -176,7 +176,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still return a valid response
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
 
@@ -217,7 +217,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still return a response (fallback behavior)
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
 
@@ -250,7 +250,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still return a response despite network error
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
   });
@@ -318,7 +318,7 @@ describe('Discord API Response Flows Integration', () => {
       const response = await buttonController.handleButtonInteraction(buttonInteraction, env);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
       expect(data.data.flags).toBe(64); // Ephemeral
     });
@@ -379,7 +379,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still return valid response despite queue failure
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
   });
@@ -458,7 +458,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still work without waitUntil
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
   });
@@ -500,7 +500,7 @@ describe('Discord API Response Flows Integration', () => {
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('application/json');
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(typeof data).toBe('object');
       expect(data.type).toBeDefined();
       expect(data.data).toBeDefined();
@@ -542,7 +542,7 @@ describe('Discord API Response Flows Integration', () => {
 
       // Should still return a valid response
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.type).toBe(InteractionResponseType.MODAL);
     });
   });

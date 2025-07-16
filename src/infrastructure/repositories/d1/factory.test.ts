@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1DatabaseConfig } from '../../types/database';
-import { TransactionError } from '../errors';
 import { D1RepositoryFactory } from './factory';
 import { D1ResponseRepository } from './response-repository';
 import { D1ScheduleRepository } from './schedule-repository';
