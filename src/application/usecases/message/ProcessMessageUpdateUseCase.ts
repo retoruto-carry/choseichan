@@ -9,9 +9,9 @@
  * 4. **エラー分離**: メッセージ更新の失敗が投票処理に影響しない
  */
 
+import type { DiscordMessageService } from '../../../presentation/services/DiscordMessageService';
 import type { IDiscordApiPort } from '../../ports/DiscordApiPort';
 import type { ILogger } from '../../ports/LoggerPort';
-import type { IMessageFormatter } from '../../ports/MessageFormatterPort';
 import type { MessageUpdateTask } from '../../types/MessageUpdateTypes';
 import type { GetScheduleSummaryUseCase } from '../schedule/GetScheduleSummaryUseCase';
 
@@ -20,7 +20,7 @@ export class ProcessMessageUpdateUseCase {
     private readonly logger: ILogger,
     private readonly getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
     private readonly discordApiService: IDiscordApiPort,
-    private readonly messageFormatter: IMessageFormatter,
+    private readonly discordMessageService: DiscordMessageService,
     private readonly discordToken: string
   ) {}
 
@@ -39,8 +39,8 @@ export class ProcessMessageUpdateUseCase {
         throw new Error(`Failed to get schedule summary: ${task.scheduleId}`);
       }
 
-      // embedとcomponentsを作成（MessageFormatterを使用）
-      const { embed, components } = this.messageFormatter.formatScheduleMessage(
+      // embedとcomponentsを作成（DiscordMessageServiceを使用）
+      const { embed, components } = this.discordMessageService.formatScheduleMessage(
         summaryResult.summary,
         true
       );

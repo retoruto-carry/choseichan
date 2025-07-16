@@ -7,9 +7,9 @@
 import type { DeadlineReminderTask } from '../../application/ports/DeadlineReminderQueuePort';
 import { NotificationService } from '../../application/services/NotificationService';
 import { DependencyContainer } from '../../di/DependencyContainer';
+import { DiscordMessageService } from '../../presentation/services/DiscordMessageService';
 import { DiscordApiAdapter } from '../adapters/DiscordApiAdapter';
 import { LoggerAdapter } from '../adapters/LoggerAdapter';
-import { MessageFormatterAdapter } from '../adapters/MessageFormatterAdapter';
 import type { Env } from '../types/discord';
 
 export async function handleDeadlineReminderBatch(
@@ -35,7 +35,7 @@ export async function handleDeadlineReminderBatch(
     discordToken,
     applicationId,
     container.infrastructureServices.backgroundExecutor,
-    new MessageFormatterAdapter()
+    new DiscordMessageService()
   );
 
   // Process all tasks in the batch

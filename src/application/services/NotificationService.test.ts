@@ -6,6 +6,7 @@ import type {
   IResponseRepository,
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
+import type { DiscordMessageService } from '../../presentation/services/DiscordMessageService';
 import type { ScheduleSummaryResponseDto } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
@@ -24,6 +25,7 @@ describe('NotificationService', () => {
   let mockResponseRepository: IResponseRepository;
   let mockGetScheduleSummaryUseCase: GetScheduleSummaryUseCase;
   let mockBackgroundExecutor: BackgroundExecutorPort;
+  let mockDiscordMessageService: DiscordMessageService;
   const mockToken = 'test-discord-token';
   const mockAppId = 'test-app-id';
 
@@ -137,6 +139,13 @@ describe('NotificationService', () => {
       execute: vi.fn(),
     };
 
+    mockDiscordMessageService = {
+      formatScheduleMessage: vi.fn().mockReturnValue({
+        embed: { title: 'Test Schedule' },
+        components: [],
+      }),
+    } as unknown as DiscordMessageService;
+
     notificationService = new NotificationService(
       mockLogger,
       mockDiscordApi,
@@ -146,12 +155,7 @@ describe('NotificationService', () => {
       mockToken,
       mockAppId,
       mockBackgroundExecutor,
-      {
-        formatScheduleMessage: vi.fn().mockReturnValue({
-          embed: { title: 'Test Schedule' },
-          components: [],
-        }),
-      }
+      mockDiscordMessageService
     );
   });
 

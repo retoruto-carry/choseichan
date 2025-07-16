@@ -33,10 +33,10 @@ import { DeadlineReminderQueueAdapter } from '../infrastructure/adapters/Deadlin
 import { DiscordApiAdapter } from '../infrastructure/adapters/DiscordApiAdapter';
 import { EnvironmentAdapter } from '../infrastructure/adapters/EnvironmentAdapter';
 import { LoggerAdapter } from '../infrastructure/adapters/LoggerAdapter';
-import { MessageFormatterAdapter } from '../infrastructure/adapters/MessageFormatterAdapter';
 import { TestBackgroundExecutorAdapter } from '../infrastructure/adapters/TestBackgroundExecutorAdapter';
 import { WorkersBackgroundExecutorAdapter } from '../infrastructure/adapters/WorkersBackgroundExecutorAdapter';
 import type { Env } from '../infrastructure/types/discord';
+import { DiscordMessageService } from '../presentation/services/DiscordMessageService';
 import { createRepositoryFactory } from './factory';
 
 export interface ApplicationServices {
@@ -186,7 +186,7 @@ export class DependencyContainer {
         this._env.DISCORD_TOKEN,
         this._env.DISCORD_APPLICATION_ID,
         infrastructure.backgroundExecutor,
-        new MessageFormatterAdapter()
+        new DiscordMessageService()
       );
     }
 
@@ -211,7 +211,7 @@ export class DependencyContainer {
           loggerAdapter,
           getScheduleSummaryUseCase,
           discordApiAdapter,
-          new MessageFormatterAdapter(),
+          new DiscordMessageService(),
           this._env.DISCORD_TOKEN
         )
       : null;
@@ -222,7 +222,7 @@ export class DependencyContainer {
       getScheduleSummaryUseCase,
       updateScheduleUseCase,
       discordApiAdapter,
-      new MessageFormatterAdapter(),
+      new DiscordMessageService(),
       loggerAdapter
     );
 

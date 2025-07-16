@@ -1,20 +1,21 @@
 /**
- * Message Formatter Adapter
+ * Discord Message Service
  *
- * IMessageFormatter の Infrastructure 実装
- * ScheduleMainMessageBuilderを使用してUI構築を統一
+ * Discord固有のメッセージフォーマット処理を担当
+ * UIロジックをPresentation層に統一
  */
 
 import type { ScheduleSummaryResponseDto } from '../../application/dto/ScheduleDto';
-import type { IMessageFormatterPort } from '../../application/ports/MessageFormatterPort';
-import { ScheduleMainMessageBuilder } from '../../presentation/builders/ScheduleMainMessageBuilder';
+import { ScheduleMainMessageBuilder } from '../builders/ScheduleMainMessageBuilder';
 
-export class MessageFormatterAdapter implements IMessageFormatterPort {
+export class DiscordMessageService {
+  /**
+   * スケジュールメッセージ（EmbedとComponents）を作成
+   */
   formatScheduleMessage(
     summary: ScheduleSummaryResponseDto,
     showVoteButton: boolean
   ): { embed: object; components: object[] } {
-    // 統一されたScheduleMainMessageBuilderを使用
     const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
       summary,
       showDetails: false, // 投票後更新は簡易表示（詳細表示はボタンで切り替え）

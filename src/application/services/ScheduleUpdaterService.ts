@@ -1,6 +1,6 @@
+import type { DiscordMessageService } from '../../presentation/services/DiscordMessageService';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
-import type { IMessageFormatterPort } from '../ports/MessageFormatterPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 import type { GetScheduleUseCase } from '../usecases/schedule/GetScheduleUseCase';
 import type { UpdateScheduleUseCase } from '../usecases/schedule/UpdateScheduleUseCase';
@@ -14,7 +14,7 @@ export class ScheduleUpdaterService {
     private readonly getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
     private readonly updateScheduleUseCase: UpdateScheduleUseCase,
     private readonly discordApi: IDiscordApiPort,
-    private readonly messageFormatter: IMessageFormatterPort,
+    private readonly discordMessageService: DiscordMessageService,
     private readonly logger: ILogger
   ) {}
 
@@ -58,7 +58,10 @@ export class ScheduleUpdaterService {
 
       // 現在の状態（showDetails）を維持したいが、これは別途管理が必要
       // とりあえずシンプルな表示で更新
-      const { embed, components } = this.messageFormatter.formatScheduleMessage(summary, false);
+      const { embed, components } = this.discordMessageService.formatScheduleMessage(
+        summary,
+        false
+      );
 
       // Discord APIを使ってメッセージを更新
       await this.discordApi.updateMessage({

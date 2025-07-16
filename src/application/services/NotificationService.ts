@@ -11,12 +11,12 @@ import type {
   IScheduleRepository,
 } from '../../domain/repositories/interfaces';
 import type { DiscordMessage } from '../../infrastructure/types/discord-api';
+import type { DiscordMessageService } from '../../presentation/services/DiscordMessageService';
 import { formatDate } from '../../presentation/utils/date-formatter';
 import type { ScheduleResponseDto, ScheduleSummaryResponseDto } from '../dto/ScheduleDto';
 import type { BackgroundExecutorPort } from '../ports/BackgroundExecutorPort';
 import type { IDiscordApiPort } from '../ports/DiscordApiPort';
 import type { ILogger } from '../ports/LoggerPort';
-import type { IMessageFormatterPort } from '../ports/MessageFormatterPort';
 import type { GetScheduleSummaryUseCase } from '../usecases/schedule/GetScheduleSummaryUseCase';
 
 const _STATUS_EMOJI = {
@@ -34,7 +34,7 @@ export class NotificationService {
     private discordToken: string,
     private applicationId: string,
     private backgroundExecutor: BackgroundExecutorPort,
-    private messageFormatter: IMessageFormatterPort
+    private discordMessageService: DiscordMessageService
   ) {}
 
   async checkAndSendNotifications(): Promise<void> {
@@ -324,7 +324,7 @@ export class NotificationService {
       }
 
       // 締切済みスケジュールなので投票ボタンのみ非表示、その他のボタンは表示
-      const { embed, components } = this.messageFormatter.formatScheduleMessage(
+      const { embed, components } = this.discordMessageService.formatScheduleMessage(
         summaryResult.summary,
         false // 投票ボタン非表示（締切済み）
       );
