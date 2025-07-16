@@ -142,7 +142,7 @@ export class NotificationService {
               },
             ],
             footer: {
-              text: `ID: ${schedule.id}`,
+              text: `作成者: ${schedule.createdBy.displayName || schedule.createdBy.username}`,
             },
             timestamp: new Date().toISOString(),
           },
@@ -176,7 +176,7 @@ export class NotificationService {
             },
           ],
           footer: {
-            text: `ID: ${schedule.id}`,
+            text: `作成者: ${schedule.createdBy.displayName || schedule.createdBy.username}`,
           },
           timestamp: new Date().toISOString(),
         },

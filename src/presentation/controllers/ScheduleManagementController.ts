@@ -44,12 +44,11 @@ export class ScheduleManagementController {
       }
 
       // 統一UIBuilderを使用（詳細表示・投票ボタン表示）
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
-        summaryResult.summary,
-        undefined,
-        true, // 詳細表示
-        true // 投票ボタン表示
-      );
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        showDetails: true,
+        showVoteButtons: true,
+      });
 
       return new Response(
         JSON.stringify({
@@ -147,12 +146,12 @@ export class ScheduleManagementController {
         return this.createErrorResponse('日程調整が見つかりません。');
       }
 
-      // 詳細表示用UI構築
-      const embed = this.uiBuilder.createDetailedInfoEmbed(summaryResult.summary);
-      const components = this.uiBuilder.createScheduleComponents(
-        summaryResult.summary.schedule,
-        true
-      );
+      // 統一されたScheduleMainMessageBuilderを使用（詳細表示）
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        showDetails: true,
+        showVoteButtons: true,
+      });
 
       return new Response(
         JSON.stringify({
@@ -309,12 +308,11 @@ export class ScheduleManagementController {
       }
 
       // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
-        summaryResult.summary,
-        undefined,
-        false, // 簡易表示
-        true // 投票ボタン表示
-      );
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        showDetails: false,
+        showVoteButtons: true,
+      });
 
       return new Response(
         JSON.stringify({
@@ -357,12 +355,11 @@ export class ScheduleManagementController {
       }
 
       // 統一UIBuilderを使用（簡易表示・投票ボタン表示）
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
-        summaryResult.summary,
-        undefined,
-        false, // 簡易表示
-        true // 投票ボタン表示
-      );
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        showDetails: false,
+        showVoteButtons: true,
+      });
 
       return new Response(
         JSON.stringify({

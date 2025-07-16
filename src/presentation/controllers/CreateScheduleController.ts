@@ -130,13 +130,12 @@ export class CreateScheduleController {
       }
 
       // 統一UIBuilderを使用（簡易表示・投票ボタン表示・新規作成）
-      const { embed, components, content } = ScheduleMainMessageBuilder.createMainMessage(
-        summaryResult.summary,
-        undefined,
-        false, // 簡易表示
-        true, // 投票ボタン表示
-        true // 新規作成フラグ
-      );
+      const { embed, components, content } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        showDetails: false,
+        showVoteButtons: true,
+        isNewlyCreated: true,
+      });
 
       // バックグラウンドでメッセージIDを保存
       if (env.ctx) {

@@ -73,7 +73,7 @@ export class ScheduleCreationUIBuilder {
       color: schedule.status === 'open' ? EMBED_COLORS.OPEN : EMBED_COLORS.CLOSED,
       fields,
       footer: {
-        text: `ID: ${schedule.id}`,
+        text: `作成者: ${schedule.createdBy.displayName || schedule.createdBy.username}`,
       },
     };
   }

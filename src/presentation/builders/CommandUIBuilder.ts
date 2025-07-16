@@ -88,7 +88,7 @@ export class CommandUIBuilder {
       color: EMBED_COLORS.INFO,
       fields: schedules.slice(0, 10).map((schedule) => ({
         name: `${schedule.status === 'open' ? '🟢' : '🔴'} ${schedule.title}`,
-        value: `ID: ${schedule.id}\n作成者: ${schedule.createdBy?.username || 'Unknown'}\n作成日: ${formatDate(schedule.createdAt)}`,
+        value: `作成者: ${schedule.createdBy?.username || 'Unknown'}\n作成日: ${formatDate(schedule.createdAt)}`,
         inline: false,
       })),
       footer: {

@@ -539,11 +539,12 @@ export class EditModalController {
       }
 
       // Update the message using ScheduleMainMessageBuilder
-      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage(
-        summaryResult.summary,
-        scheduleResult.schedule,
-        false // showDetails - keep simple view
-      );
+      const { embed, components } = ScheduleMainMessageBuilder.createMainMessage({
+        summary: summaryResult.summary,
+        schedule: scheduleResult.schedule,
+        showDetails: false, // keep simple view
+        showVoteButtons: true,
+      });
 
       const messageData = {
         embeds: [embed],

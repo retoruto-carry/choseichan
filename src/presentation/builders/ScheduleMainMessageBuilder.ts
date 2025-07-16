@@ -9,6 +9,14 @@ import type { ScheduleResponse, ScheduleSummaryResponse } from '../../applicatio
 import { createButtonId } from '../utils/button-helpers';
 import { createScheduleEmbed, createScheduleEmbedWithTable } from '../utils/embeds';
 
+export interface ScheduleMainMessageOptions {
+  summary?: ScheduleSummaryResponse;
+  schedule?: ScheduleResponse;
+  showDetails?: boolean;
+  showVoteButtons?: boolean;
+  isNewlyCreated?: boolean;
+}
+
 export class ScheduleMainMessageBuilder {
   /**
    * メインメッセージのEmbed作成
@@ -105,20 +113,17 @@ export class ScheduleMainMessageBuilder {
   }
 
   /**
-   * メインメッセージの完全なUI作成（Embed + Components）
-   * @param summary スケジュール概要（詳細表示時）
-   * @param schedule スケジュール情報（簡易表示時）
-   * @param showDetails 詳細表示フラグ
-   * @param showVoteButton 投票ボタン表示フラグ
-   * @param isNewlyCreated 新規作成フラグ
+   * メインメッセージの完全なUI作成（名前付き引数版）
    */
-  static createMainMessage(
-    summary?: ScheduleSummaryResponse,
-    schedule?: ScheduleResponse,
-    showDetails: boolean = false,
-    showVoteButton: boolean = true,
-    isNewlyCreated: boolean = false
-  ) {
+  static createMainMessage(options: ScheduleMainMessageOptions) {
+    const {
+      summary,
+      schedule,
+      showDetails = false,
+      showVoteButtons = true,
+      isNewlyCreated = false,
+    } = options;
+
     const targetSchedule = schedule || summary?.schedule;
     if (!targetSchedule) {
       throw new Error('schedule or summary must be provided');
@@ -128,7 +133,7 @@ export class ScheduleMainMessageBuilder {
     const components = ScheduleMainMessageBuilder.createMainComponents(
       targetSchedule,
       showDetails,
-      showVoteButton
+      showVoteButtons
     );
 
     // 新規作成時のみcontentを追加
