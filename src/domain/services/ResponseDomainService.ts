@@ -19,6 +19,13 @@ export interface UserResponseData {
   status: ResponseStatus;
 }
 
+export interface CreateOrUpdateResponseParams {
+  readonly scheduleId: string;
+  readonly user: User;
+  readonly responseData: UserResponseData[];
+  readonly existingResponse?: Response;
+}
+
 export class ResponseDomainService {
   /**
    * レスポンスの有効性を検証
@@ -62,12 +69,8 @@ export class ResponseDomainService {
   /**
    * ユーザーの回答を作成・更新
    */
-  static createOrUpdateResponse(
-    scheduleId: string,
-    user: User,
-    responseData: UserResponseData[],
-    existingResponse?: Response
-  ): Response {
+  static createOrUpdateResponse(params: CreateOrUpdateResponseParams): Response {
+    const { scheduleId, user, responseData, existingResponse } = params;
     // 日程ステータスのマップを作成
     const dateStatuses: Record<string, ResponseStatus> = {};
     responseData.forEach((data) => {

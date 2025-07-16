@@ -125,11 +125,11 @@ describe('ResponseDomainService', () => {
         { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.MAYBE) },
       ];
 
-      const response = ResponseDomainService.createOrUpdateResponse(
-        'schedule-123',
-        testUser,
-        responseData
-      );
+      const response = ResponseDomainService.createOrUpdateResponse({
+        scheduleId: 'schedule-123',
+        user: testUser,
+        responseData,
+      });
 
       expect(response.scheduleId).toBe('schedule-123');
       expect(response.user.id).toBe('user-123');
@@ -144,12 +144,12 @@ describe('ResponseDomainService', () => {
         { dateId: 'date-2', status: ResponseStatus.create(ResponseStatusValue.NG) },
       ];
 
-      const updatedResponse = ResponseDomainService.createOrUpdateResponse(
-        'schedule-123',
-        testUser,
+      const updatedResponse = ResponseDomainService.createOrUpdateResponse({
+        scheduleId: 'schedule-123',
+        user: testUser,
         responseData,
-        existingResponse
-      );
+        existingResponse,
+      });
 
       expect(updatedResponse.scheduleId).toBe('schedule-123');
       expect(updatedResponse.getStatusForDate('date-1')?.value).toBe(ResponseStatusValue.NG);

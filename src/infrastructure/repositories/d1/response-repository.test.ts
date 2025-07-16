@@ -147,7 +147,11 @@ describe('D1ResponseRepository', () => {
       mockDb._mockStatement.first.mockResolvedValueOnce(mockResponseRow);
       mockDb._mockResults.results = mockStatusRows as any;
 
-      const result = await repository.findByUser('schedule-123', 'user-456', 'guild-123');
+      const result = await repository.findByUser({
+        scheduleId: 'schedule-123',
+        userId: 'user-456',
+        guildId: 'guild-123',
+      });
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe('user-456');
@@ -158,7 +162,11 @@ describe('D1ResponseRepository', () => {
     it('should return null when response not found', async () => {
       mockDb._mockStatement.first.mockResolvedValueOnce(null);
 
-      const result = await repository.findByUser('schedule-123', 'user-456', 'guild-123');
+      const result = await repository.findByUser({
+        scheduleId: 'schedule-123',
+        userId: 'user-456',
+        guildId: 'guild-123',
+      });
 
       expect(result).toBeNull();
     });
@@ -219,7 +227,11 @@ describe('D1ResponseRepository', () => {
 
   describe('delete', () => {
     it('should delete a response', async () => {
-      await repository.delete('schedule-123', 'user-456', 'guild-123');
+      await repository.delete({
+        scheduleId: 'schedule-123',
+        userId: 'user-456',
+        guildId: 'guild-123',
+      });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM responses'));
       expect(mockDb._mockStatement.bind).toHaveBeenCalledWith(
@@ -232,9 +244,13 @@ describe('D1ResponseRepository', () => {
     it('should handle delete errors', async () => {
       mockDb._mockStatement.run.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(repository.delete('schedule-123', 'user-456', 'guild-123')).rejects.toThrow(
-        RepositoryError
-      );
+      await expect(
+        repository.delete({
+          scheduleId: 'schedule-123',
+          userId: 'user-456',
+          guildId: 'guild-123',
+        })
+      ).rejects.toThrow(RepositoryError);
     });
   });
 

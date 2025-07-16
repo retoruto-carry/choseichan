@@ -67,7 +67,11 @@ export interface IResponseRepository {
   /**
    * 特定のユーザーのレスポンスを取得
    */
-  findByUser(scheduleId: string, userId: string, guildId: string): Promise<DomainResponse | null>;
+  findByUser(params: {
+    scheduleId: string;
+    userId: string;
+    guildId?: string;
+  }): Promise<DomainResponse | null>;
 
   /**
    * スケジュールの全レスポンスを取得
@@ -77,7 +81,7 @@ export interface IResponseRepository {
   /**
    * レスポンスを削除
    */
-  delete(scheduleId: string, userId: string, guildId: string): Promise<void>;
+  delete(params: { scheduleId: string; userId: string; guildId?: string }): Promise<void>;
 
   /**
    * スケジュールの全レスポンスを削除

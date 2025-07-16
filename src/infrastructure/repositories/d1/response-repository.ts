@@ -87,11 +87,15 @@ export class D1ResponseRepository implements IResponseRepository {
     }
   }
 
-  async findByUser(
-    scheduleId: string,
-    userId: string,
-    guildId: string = 'default'
-  ): Promise<DomainResponse | null> {
+  async findByUser({
+    scheduleId,
+    userId,
+    guildId = 'default',
+  }: {
+    scheduleId: string;
+    userId: string;
+    guildId?: string;
+  }): Promise<DomainResponse | null> {
     try {
       const responseRow = await this.db
         .prepare(`
@@ -179,7 +183,15 @@ export class D1ResponseRepository implements IResponseRepository {
     }
   }
 
-  async delete(scheduleId: string, userId: string, guildId: string = 'default'): Promise<void> {
+  async delete({
+    scheduleId,
+    userId,
+    guildId = 'default',
+  }: {
+    scheduleId: string;
+    userId: string;
+    guildId?: string;
+  }): Promise<void> {
     try {
       await this.db
         .prepare(`

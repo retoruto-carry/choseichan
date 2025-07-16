@@ -27,14 +27,23 @@ export interface FindScheduleByMessageIdUseCaseResult {
   errors?: string[];
 }
 
+export interface FindByChannelParams {
+  readonly channelId: string;
+  readonly guildId: string;
+  readonly limit?: number;
+}
+
+export interface FindByDeadlineRangeParams {
+  readonly startTime: Date;
+  readonly endTime: Date;
+  readonly guildId?: string;
+}
+
 export class FindSchedulesUseCase {
   constructor(private readonly scheduleRepository: IScheduleRepository) {}
 
-  async findByChannel(
-    channelId: string,
-    guildId: string,
-    limit?: number
-  ): Promise<FindSchedulesByChannelUseCaseResult> {
+  async findByChannel(params: FindByChannelParams): Promise<FindSchedulesByChannelUseCaseResult> {
+    const { channelId, guildId, limit } = params;
     try {
       if (!channelId?.trim() || !guildId?.trim()) {
         return {
@@ -63,10 +72,9 @@ export class FindSchedulesUseCase {
   }
 
   async findByDeadlineRange(
-    startTime: Date,
-    endTime: Date,
-    guildId?: string
+    params: FindByDeadlineRangeParams
   ): Promise<FindSchedulesByDeadlineRangeUseCaseResult> {
+    const { startTime, endTime, guildId } = params;
     try {
       if (!startTime || !endTime || startTime >= endTime) {
         return {

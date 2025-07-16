@@ -85,7 +85,10 @@ describe('FindSchedulesUseCase', () => {
         mockSchedule2,
       ]);
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(2);
@@ -114,7 +117,11 @@ describe('FindSchedulesUseCase', () => {
     it('should find schedules with limit', async () => {
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([mockSchedule1]);
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123', 1);
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+        limit: 1,
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(1);
@@ -128,7 +135,10 @@ describe('FindSchedulesUseCase', () => {
     it('should return empty array when no schedules found', async () => {
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([]);
 
-      const result = await useCase.findByChannel('channel-999', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-999',
+        guildId: 'guild-123',
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules).toEqual([]);
@@ -154,7 +164,10 @@ describe('FindSchedulesUseCase', () => {
       ];
 
       for (const { channelId, guildId, expectedError } of testCases) {
-        const result = await useCase.findByChannel(channelId, guildId);
+        const result = await useCase.findByChannel({
+          channelId,
+          guildId,
+        });
         expect(result.success).toBe(false);
         expect(result.errors).toBeDefined();
         expect(result.errors).toContain(expectedError);
@@ -166,7 +179,10 @@ describe('FindSchedulesUseCase', () => {
         new Error('Database error')
       );
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(result.success).toBe(false);
       expect(result.errors?.[0]).toContain('スケジュールの検索に失敗しました');
@@ -176,7 +192,10 @@ describe('FindSchedulesUseCase', () => {
     it('should format dates correctly', async () => {
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([mockSchedule1]);
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(result.schedules?.[0].deadline).toBe('2024-01-19T00:00:00.000Z');
       expect(result.schedules?.[0].createdAt).toBe('2024-01-01T00:00:00.000Z');
@@ -194,7 +213,10 @@ describe('FindSchedulesUseCase', () => {
         mockSchedule2,
       ]);
 
-      const result = await useCase.findByDeadlineRange(startTime, endTime);
+      const result = await useCase.findByDeadlineRange({
+        startTime,
+        endTime,
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(2);
@@ -211,7 +233,11 @@ describe('FindSchedulesUseCase', () => {
 
       vi.mocked(mockScheduleRepository.findByDeadlineRange).mockResolvedValueOnce([mockSchedule1]);
 
-      const result = await useCase.findByDeadlineRange(startTime, endTime, 'guild-123');
+      const result = await useCase.findByDeadlineRange({
+        startTime,
+        endTime,
+        guildId: 'guild-123',
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules).toHaveLength(1);
@@ -250,7 +276,10 @@ describe('FindSchedulesUseCase', () => {
       ];
 
       for (const { startTime, endTime, expectedError } of testCases) {
-        const result = await useCase.findByDeadlineRange(startTime, endTime);
+        const result = await useCase.findByDeadlineRange({
+          startTime,
+          endTime,
+        });
         expect(result.success).toBe(false);
         expect(result.errors).toBeDefined();
         expect(result.errors).toContain(expectedError);
@@ -264,10 +293,10 @@ describe('FindSchedulesUseCase', () => {
         scheduleWithoutDeadline,
       ]);
 
-      const result = await useCase.findByDeadlineRange(
-        new Date('2024-01-01'),
-        new Date('2024-12-31')
-      );
+      const result = await useCase.findByDeadlineRange({
+        startTime: new Date('2024-01-01'),
+        endTime: new Date('2024-12-31'),
+      });
 
       expect(result.success).toBe(true);
       expect(result.schedules?.[0].deadline).toBeUndefined();
@@ -278,10 +307,10 @@ describe('FindSchedulesUseCase', () => {
         new Error('Database connection lost')
       );
 
-      const result = await useCase.findByDeadlineRange(
-        new Date('2024-01-01'),
-        new Date('2024-12-31')
-      );
+      const result = await useCase.findByDeadlineRange({
+        startTime: new Date('2024-01-01'),
+        endTime: new Date('2024-12-31'),
+      });
 
       expect(result.success).toBe(false);
       expect(result.errors?.[0]).toContain('締切範囲でのスケジュール検索に失敗しました');
@@ -399,7 +428,10 @@ describe('FindSchedulesUseCase', () => {
 
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([fullSchedule]);
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(result.schedules?.[0]).toMatchObject({
         description: 'Full description',
@@ -423,7 +455,10 @@ describe('FindSchedulesUseCase', () => {
 
       vi.mocked(mockScheduleRepository.findByChannel).mockResolvedValueOnce([minimalSchedule]);
 
-      const result = await useCase.findByChannel('channel-123', 'guild-123');
+      const result = await useCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       const schedule = result.schedules?.[0];
       expect(schedule?.messageId).toBeUndefined();

@@ -55,11 +55,11 @@ export class UpdateResponseUseCase {
       }
 
       // 3. 既存レスポンスの取得
-      const existingResponseData = await this.responseRepository.findByUser(
-        request.scheduleId,
-        request.userId,
-        request.guildId
-      );
+      const existingResponseData = await this.responseRepository.findByUser({
+        scheduleId: request.scheduleId,
+        userId: request.userId,
+        guildId: request.guildId,
+      });
 
       if (!existingResponseData) {
         return {

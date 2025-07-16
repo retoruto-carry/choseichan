@@ -84,11 +84,11 @@ export class CommandController {
       }
 
       // スケジュール一覧取得
-      const schedulesResult = await this.dependencyContainer.findSchedulesUseCase.findByChannel(
+      const schedulesResult = await this.dependencyContainer.findSchedulesUseCase.findByChannel({
         channelId,
         guildId,
-        LIST_LIMITS.DEFAULT_SCHEDULE_LIMIT
-      );
+        limit: LIST_LIMITS.DEFAULT_SCHEDULE_LIMIT,
+      });
 
       if (!schedulesResult.success) {
         return this.createErrorResponse(

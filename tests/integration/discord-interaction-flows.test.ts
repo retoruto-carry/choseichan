@@ -184,7 +184,10 @@ describe('Discordインタラクションフロー統合', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const findSchedulesUseCase = container.applicationServices.findSchedulesUseCase;
-      const schedules = await findSchedulesUseCase.findByChannel('test-channel', 'test-guild');
+      const schedules = await findSchedulesUseCase.findByChannel({
+        channelId: 'test-channel',
+        guildId: 'test-guild',
+      });
 
       if (!schedules.success || schedules.schedules?.length === 0) {
         // If schedule creation failed, log the modal response to understand why

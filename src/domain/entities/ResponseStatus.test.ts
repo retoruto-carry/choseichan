@@ -62,14 +62,6 @@ describe('回答ステータス', () => {
     });
   });
 
-  describe('toEmoji', () => {
-    it('should return correct emoji for each status', () => {
-      expect(ResponseStatus.create(ResponseStatusValue.OK).toEmoji()).toBe('○');
-      expect(ResponseStatus.create(ResponseStatusValue.MAYBE).toEmoji()).toBe('△');
-      expect(ResponseStatus.create(ResponseStatusValue.NG).toEmoji()).toBe('×');
-    });
-  });
-
   describe('toString', () => {
     it('should return string value', () => {
       expect(ResponseStatus.create(ResponseStatusValue.OK).toString()).toBe('ok');

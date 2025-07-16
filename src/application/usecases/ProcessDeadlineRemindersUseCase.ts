@@ -55,7 +55,11 @@ export class ProcessDeadlineRemindersUseCase {
     const reminderBatchDelay = batchDelayEnv ? parseInt(batchDelayEnv) : 100;
 
     // Send reminders for upcoming deadlines
-    await this.processReminders(upcomingReminders, reminderBatchSize, reminderBatchDelay);
+    await this.processReminders({
+      reminders: upcomingReminders,
+      batchSize: reminderBatchSize,
+      batchDelay: reminderBatchDelay,
+    });
 
     // Send closure notifications
     await this.processClosures(justClosed);
@@ -85,11 +89,13 @@ export class ProcessDeadlineRemindersUseCase {
     };
   }
 
-  private async processReminders(
-    reminders: ReminderInfo[],
-    _batchSize: number,
-    _batchDelay: number
-  ): Promise<void> {
+  private async processReminders({
+    reminders,
+  }: {
+    reminders: ReminderInfo[];
+    batchSize: number;
+    batchDelay: number;
+  }): Promise<void> {
     if (!this.deadlineReminderQueue) {
       // Fallback: 直接処理（テスト環境など）
       await this.processRemindersDirectly(reminders);

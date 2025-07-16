@@ -83,17 +83,6 @@ export class ResponseStatus {
     return this._value === ResponseStatusValue.NG;
   }
 
-  toEmoji(): string {
-    switch (this._value) {
-      case ResponseStatusValue.OK:
-        return '○';
-      case ResponseStatusValue.MAYBE:
-        return '△';
-      case ResponseStatusValue.NG:
-        return '×';
-    }
-  }
-
   getScore(): number {
     switch (this._value) {
       case ResponseStatusValue.OK:

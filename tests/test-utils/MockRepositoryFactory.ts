@@ -100,12 +100,12 @@ export class MockResponseRepository implements IResponseRepository {
     this.responses.set(key, response);
   }
 
-  async findByUser(
-    scheduleId: string,
-    userId: string,
-    _guildId: string
-  ): Promise<DomainResponse | null> {
-    const key = `${scheduleId}:${userId}`;
+  async findByUser(params: {
+    scheduleId: string;
+    userId: string;
+    guildId?: string;
+  }): Promise<DomainResponse | null> {
+    const key = `${params.scheduleId}:${params.userId}`;
     return this.responses.get(key) || null;
   }
 
@@ -113,8 +113,8 @@ export class MockResponseRepository implements IResponseRepository {
     return Array.from(this.responses.values()).filter((r) => r.scheduleId === scheduleId);
   }
 
-  async delete(scheduleId: string, userId: string, _guildId: string): Promise<void> {
-    const key = `${scheduleId}:${userId}`;
+  async delete(params: { scheduleId: string; userId: string; guildId?: string }): Promise<void> {
+    const key = `${params.scheduleId}:${params.userId}`;
     this.responses.delete(key);
   }
 

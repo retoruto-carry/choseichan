@@ -49,11 +49,11 @@ export class GetResponseUseCase {
       }
 
       // 2. レスポンスの取得
-      const responseData = await this.responseRepository.findByUser(
-        request.scheduleId,
-        request.userId,
-        request.guildId
-      );
+      const responseData = await this.responseRepository.findByUser({
+        scheduleId: request.scheduleId,
+        userId: request.userId,
+        guildId: request.guildId,
+      });
 
       if (!responseData) {
         return {

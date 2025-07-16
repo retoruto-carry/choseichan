@@ -130,11 +130,11 @@ describe('SubmitResponseUseCase', () => {
       expect(result.success).toBe(true);
 
       // Verify response was saved
-      const savedResponse = await mockResponseRepository.findByUser(
-        'test-schedule-1',
-        'user456',
-        'guild123'
-      );
+      const savedResponse = await mockResponseRepository.findByUser({
+        scheduleId: 'test-schedule-1',
+        userId: 'user456',
+        guildId: 'guild123',
+      });
       expect(savedResponse).toBeDefined();
       expect(savedResponse?.dateStatuses).toEqual({
         date1: 'ok',

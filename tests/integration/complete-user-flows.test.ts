@@ -164,10 +164,10 @@ describe('完全ユーザーフロー統合', () => {
 
       // Step 3: Verify schedule was created
       const findSchedulesUseCase = container.applicationServices.findSchedulesUseCase;
-      const schedulesResult = await findSchedulesUseCase.findByChannel(
-        'test-channel',
-        'test-guild'
-      );
+      const schedulesResult = await findSchedulesUseCase.findByChannel({
+        channelId: 'test-channel',
+        guildId: 'test-guild',
+      });
 
       let scheduleId: string;
       if (

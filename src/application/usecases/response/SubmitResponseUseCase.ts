@@ -59,11 +59,11 @@ export class SubmitResponseUseCase {
       const scheduleEntity = ScheduleMapper.toDomain(schedule);
 
       // 4. 既存のレスポンスを取得
-      const existingResponseData = await this.responseRepository.findByUser(
-        request.scheduleId,
-        request.userId,
-        request.guildId
-      );
+      const existingResponseData = await this.responseRepository.findByUser({
+        scheduleId: request.scheduleId,
+        userId: request.userId,
+        guildId: request.guildId,
+      });
 
       const existingResponse = existingResponseData
         ? ResponseMapper.toDomain(existingResponseData)
@@ -91,12 +91,12 @@ export class SubmitResponseUseCase {
       }
 
       // 8. レスポンスの作成・更新
-      const response = ResponseDomainService.createOrUpdateResponse(
-        request.scheduleId,
+      const response = ResponseDomainService.createOrUpdateResponse({
+        scheduleId: request.scheduleId,
         user,
         responseData,
-        existingResponse
-      );
+        existingResponse,
+      });
 
       // 9. リポジトリへの保存
       const primitives = response.toPrimitives();

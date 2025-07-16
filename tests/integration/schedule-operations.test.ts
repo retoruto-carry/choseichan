@@ -320,10 +320,10 @@ describe('スケジュール操作', () => {
       expect(createResult.success).toBe(true);
 
       // Verify the schedule was created through all layers
-      const schedules = await container.applicationServices.findSchedulesUseCase.findByChannel(
-        'channel-123',
-        'guild-123'
-      );
+      const schedules = await container.applicationServices.findSchedulesUseCase.findByChannel({
+        channelId: 'channel-123',
+        guildId: 'guild-123',
+      });
 
       expect(schedules.success).toBe(true);
       expect(schedules.schedules).toBeDefined();

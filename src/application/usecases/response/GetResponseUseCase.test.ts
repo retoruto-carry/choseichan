@@ -79,11 +79,11 @@ describe('GetResponseUseCase', () => {
       });
       expect(result.response?.updatedAt).toBe('2024-01-02T00:00:00.000Z');
 
-      expect(mockResponseRepository.findByUser).toHaveBeenCalledWith(
-        'schedule-123',
-        'user-456',
-        'guild-123'
-      );
+      expect(mockResponseRepository.findByUser).toHaveBeenCalledWith({
+        scheduleId: 'schedule-123',
+        userId: 'user-456',
+        guildId: 'guild-123',
+      });
     });
 
     it('should return error when response not found', async () => {
