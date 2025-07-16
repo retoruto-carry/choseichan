@@ -13,7 +13,7 @@ Discord内で日程調整を行うボット。Clean Architecture（Onion Archite
 npm run dev
 
 # テスト実行
-npm test                    # 全テスト（473テスト - 100%パス）
+npm test                    # 全テスト（475テスト - 100%パス）
 npm test -- <file>          # 特定ファイルのテスト
 npm run test:ui             # UIでテスト実行
 npm run test:coverage       # カバレッジ計測
