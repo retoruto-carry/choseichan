@@ -258,6 +258,7 @@ export async function applyMigrations(db: D1Database): Promise<void> {
   const migrationFiles = [
     '0001_20240115_initial_schema.sql',
     '0003_20240117_foreign_key_optimization.sql',
+    '0004_remove-expires-at-fields.sql',
   ];
 
   for (const file of migrationFiles) {
