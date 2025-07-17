@@ -47,4 +47,4 @@ max_retries = 3
 
 # Cloudflare Workers Cron Triggers
 [triggers]
-crons = ["0 * * * *"]  # Run every hour
+crons = ["*/10 * * * *"]  # Run every 10 minutes
