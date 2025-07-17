@@ -6,7 +6,6 @@ export interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_APPLICATION_ID: string;
   DISCORD_TOKEN: string;
-  CRON_SECRET?: string;
   ctx?: ExecutionContext;
   // Rate limiting for cron jobs (optional)
   REMINDER_BATCH_SIZE?: string;

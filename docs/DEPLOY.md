@@ -5,7 +5,6 @@
 - Cloudflare アカウント
 - Discord Developer アカウント
 - Node.js 18+
-- GitHub アカウント（Cron Jobs用）
 
 ## 手順
 
@@ -110,13 +109,6 @@ wrangler secret put DISCORD_APPLICATION_ID
 
 wrangler secret put DISCORD_TOKEN
 # プロンプトが表示されたら Bot Token を入力
-
-# Cron Jobs用のシークレット生成と設定
-openssl rand -hex 32
-# 生成された文字列をコピー
-
-wrangler secret put CRON_SECRET
-# プロンプトが表示されたら生成した文字列を入力
 ```
 
 ### 8. デプロイ
@@ -148,16 +140,7 @@ https://discord-choseisan.<your-subdomain>.workers.dev
 node scripts/register-commands.js
 ```
 
-### 11. GitHub Actions（Cron Jobs）の設定
-
-1. GitHubリポジトリの Settings → Secrets and variables → Actions
-2. 以下のシークレットを追加:
-   - `DISCORD_TOKEN`: Bot Token
-   - `DISCORD_APPLICATION_ID`: Application ID
-   - `CRON_SECRET`: 手順7で生成した文字列
-   - `WORKER_URL`: デプロイしたWorkerのURL（例: `https://discord-choseisan.example.workers.dev`）
-
-### 12. 動作確認
+### 11. 動作確認
 
 Discord サーバーで以下を実行:
 
@@ -185,12 +168,6 @@ Discord サーバーで以下を実行:
 - wrangler.toml の database_id が正しいか確認
 - マイグレーションが正常に実行されたか確認
 - `wrangler d1 execute discord-choseisan-db --command "SELECT name FROM sqlite_master WHERE type='table';"` でテーブルを確認
-
-### Cron Jobsが動作しない
-
-- GitHub Secretsが正しく設定されているか確認
-- CRON_SECRETがWorkerとGitHub Actionsで一致しているか確認
-- GitHub ActionsのActionsタブで実行ログを確認
 
 ## 運用
 
@@ -244,5 +221,4 @@ npm run deploy
 ### セキュリティ
 
 - すべての認証情報はシークレットとして管理
-- CRON_SECRETによるCron Job実行の保護
 - 最小権限の原則に従ったBot権限設定

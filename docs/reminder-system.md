@@ -1,17 +1,17 @@
 # リマインダー・締切通知システム
 
-Discord調整ちゃんの締切リマインダーと通知システムの仕様と実装について説明します。
+Discord調整ちゃんの締切リマインダーと通知システムの仕槕と実装について説明します。
 
 ## 概要
 
-締切リマインダーシステムは、Cloudflare Workers Cronから定期的に実行され、日程調整の締切が近づいたときに自動的にリマインダーを送信します。
+締切リマインダーシステムは、Cloudflare Workersのネイティブcron triggersから10分ごとに実行され、日程調整の締切が近づいたときに自動的にリマインダーを送信します。
 
 ## アーキテクチャ
 
 ```
-Cloudflare Workers Cron
+Cloudflare Workers Native Cron Trigger
     ↓
-POST /cron/deadline-check (CRON_SECRET認証)
+scheduled() handler in index.ts
     ↓
 deadline-reminder.ts
     ↓
@@ -88,119 +88,117 @@ const members = await fetchGuildMembers(guildId);
 
 ## 実装詳細
 
-### KVストレージ構造
-```
-# スケジュール本体
-guild:{guildId}:schedule:{scheduleId}
+### D1データベース構造
+```sql
+-- スケジュールテーブル
+CREATE TABLE schedules (
+    id TEXT PRIMARY KEY,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    deadline DATETIME,
+    reminder_timings TEXT,
+    reminders_sent TEXT,
+    status TEXT CHECK(status IN ('open', 'closed')) DEFAULT 'open',
+    -- その他のカラム...
+);
 
-# 締切インデックス（効率的な検索用）
-guild:{guildId}:deadline:{timestamp}:{scheduleId}
-```
-
-### 締切インデックスの管理
-```typescript
-// 締切が更新されたとき
-if (existingSchedule?.deadline) {
-  const oldTimestamp = Math.floor(existingSchedule.deadline.getTime() / 1000);
-  const newTimestamp = schedule.deadline ? Math.floor(schedule.deadline.getTime() / 1000) : null;
-  
-  // 古いインデックスを削除
-  if (!schedule.deadline || oldTimestamp !== newTimestamp) {
-    await this.schedules.delete(`guild:${guildId}:deadline:${oldTimestamp}:${schedule.id}`);
-  }
-}
-
-// 新しいインデックスを作成
-if (schedule.deadline) {
-  const timestamp = Math.floor(schedule.deadline.getTime() / 1000);
-  await this.schedules.put(`guild:${guildId}:deadline:${timestamp}:${schedule.id}`, schedule.id);
-}
+-- 締切での検索を高速化するインデックス
+CREATE INDEX idx_schedules_deadline ON schedules(deadline) WHERE status = 'open';
 ```
 
 ### リマインダー送信のロジック
 ```typescript
-// 1. 時間枠の設定（過去1週間〜3日後）
-const now = new Date();
-const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+// DeadlineReminderUseCaseでのSQLクエリ
+const sql = `
+  SELECT id, guild_id, channel_id, message_id, title, deadline,
+         reminder_timings, reminders_sent, status
+  FROM schedules 
+  WHERE status = 'open' 
+    AND deadline IS NOT NULL
+    AND deadline BETWEEN ? AND ?
+  ORDER BY deadline ASC
+`;
 
-// 2. 全ギルドのスケジュールキーから unique なギルドIDを取得
-const scheduleKeys = await env.SCHEDULES.list({
-  prefix: 'guild:',
-  limit: 1000
-});
+const schedules = await db
+  .prepare(sql)
+  .bind(oneWeekAgo.toISOString(), threeDaysFromNow.toISOString())
+  .all();
+```
 
-const guildIds = new Set<string>();
-for (const key of scheduleKeys.keys) {
-  const parts = key.name.split(':');
-  if (parts[0] === 'guild' && parts[2] === 'schedule' && parts[1]) {
-    guildIds.add(parts[1]);
-  }
-}
+### リマインダー送信処理
+ProcessDeadlineRemindersUseCaseが中心となって処理します：
 
-// 3. 各ギルドの締切インデックスをチェック
-for (const guildId of guildIds) {
-  const deadlineKeys = await env.SCHEDULES.list({
-    prefix: `guild:${guildId}:deadline:`,
-    limit: 1000
-  });
+```typescript
+// 1. スケジュールを取得
+const schedulesResult = await this.deadlineReminderUseCase.execute();
+
+// 2. 各スケジュールを処理
+for (const schedule of schedulesResult.schedules) {
+  // リマインダー送信チェック
+  const timings = schedule.reminderTimings || ['3d', '1d', '8h'];
   
-  for (const key of deadlineKeys.keys) {
-    const parts = key.name.split(':');
-    const timestamp = parseInt(parts[3]) * 1000; // ミリ秒に変換
+  for (const timing of timings) {
+    const reminderTime = calculateReminderTime(schedule.deadline, timing);
     
-    // 時間枠内の締切のみ処理
-    if (timestamp >= oneWeekAgo.getTime() && timestamp <= threeDaysFromNow.getTime()) {
-      const scheduleId = parts[4];
-      const schedule = await storage.getSchedule(scheduleId, guildId);
-      
-      if (schedule && schedule.status === 'open') {
-        // リマインダー送信判定
-        const timings = schedule.reminderTimings || ['3d', '1d', '8h'];
-        
-        for (const timing of timings) {
-          const reminderTime = schedule.deadline.getTime() - (parseTimingToHours(timing) * 60 * 60 * 1000);
-          
-          if (now.getTime() >= reminderTime && !schedule.remindersSent?.includes(timing)) {
-            // 8時間以上遅れていない場合のみ送信
-            if (now.getTime() - reminderTime <= OLD_REMINDER_THRESHOLD_MS) {
-              await sendReminder(schedule, timing);
-            }
-          }
-        }
-        
-        // 締切を過ぎていたら自動クローズ
-        if (schedule.deadline.getTime() <= now.getTime()) {
-          await autoCloseSchedule(schedule);
-        }
-      }
+    if (shouldSendReminder(now, reminderTime) && !isReminderSent(schedule, timing)) {
+      // Cloudflare Queueを使用してリマインダー送信タスクをキュー
+      await this.deadlineReminderQueue?.send({
+        type: 'send_reminder',
+        scheduleId: schedule.id,
+        reminderType: timing
+      });
     }
+  }
+  
+  // 締切過ぎたスケジュールのクローズ
+  if (schedule.deadline <= now) {
+    await this.deadlineReminderQueue?.send({
+      type: 'close_schedule',
+      scheduleId: schedule.id
+    });
   }
 }
 ```
 
 ### レート制限対策
-Discord APIのレート制限を考慮したバッチ処理：
+Cloudflare Queuesを使用してDiscord APIのレート制限を回避：
+
 ```typescript
-// processBatches ユーティリティを使用
-await processBatches(upcomingReminders, async (reminderInfo) => {
-  try {
-    const { schedule, reminderType, message } = reminderInfo;
+// deadline-reminder-queue.ts
+export async function handleDeadlineReminderBatch(
+  batch: MessageBatch<DeadlineReminderTask>,
+  env: Env
+): Promise<void> {
+  const container = new DependencyContainer(env);
+  
+  for (const message of batch.messages) {
+    const task = message.body;
     
-    // リマインダーを送信
-    await notificationService.sendDeadlineReminder(schedule, message);
+    switch (task.type) {
+      case 'send_reminder':
+        await sendReminder(task.scheduleId, task.reminderType);
+        break;
+      case 'close_schedule':
+        await closeSchedule(task.scheduleId);
+        break;
+      case 'send_summary':
+        await sendSummary(task.scheduleId);
+        break;
+    }
     
-    // 送信済みとして記録
-    schedule.remindersSent = [...(schedule.remindersSent || []), reminderType];
-    await storage.saveSchedule(schedule);
-    
-  } catch (error) {
-    console.error(`Failed to send reminder for schedule ${reminderInfo.schedule.id}:`, error);
+    // メッセージをACK
+    message.ack();
   }
-}, {
-  batchSize: env.REMINDER_BATCH_SIZE || 20,
-  delayBetweenBatches: env.REMINDER_BATCH_DELAY || 100
-});
+}
+```
+
+Cloudflare Queuesの設定：
+```toml
+[[queues.consumers]]
+queue = "chouseichan-deadline-reminder-queue"
+max_batch_size = 20     # バッチサイズ
+max_batch_timeout = 10  # タイムアウト（秒）
+max_retries = 3         # リトライ回数
 ```
 
 ## セキュリティと制限
@@ -233,13 +231,10 @@ schedule.remindersSent = [...(schedule.remindersSent || []), timing];
 # Discord認証
 DISCORD_TOKEN=Bot_xxxx
 DISCORD_APPLICATION_ID=xxxx
+DISCORD_PUBLIC_KEY=xxxx
 
-# Cron認証
-CRON_SECRET=xxxx            # Cronエンドポイントの認証シークレット
-
-# レート制限設定
-REMINDER_BATCH_SIZE=20      # 一度に処理するリマインダー数（デフォルト: 20）
-REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒、デフォルト: 100）
+# D1 Databaseは wrangler.toml で設定
+# Cloudflare Queuesも wrangler.toml で設定
 ```
 
 ## テスト
@@ -257,9 +252,9 @@ REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒、デフォル�
 
 ### リマインダーが送信されない
 1. 締切が設定されているか確認
-2. Cloudflare Workers Cronトリガーが設定されているか確認
-3. CRON_SECRETが正しく設定されているか確認
-4. 環境変数（DISCORD_TOKEN, DISCORD_APPLICATION_ID）が正しく設定されているか確認
+2. wrangler.toml の cron トリガーが設定されているか確認
+3. 環境変数（DISCORD_TOKEN, DISCORD_APPLICATION_ID）が正しく設定されているか確認
+4. Cloudflare Queues が正しく設定されているか確認
 
 ### メンションが解決されない
 1. Botに必要な権限があるか確認（サーバーメンバー取得権限）
@@ -280,8 +275,17 @@ REMINDER_BATCH_DELAY=100    # バッチ間の遅延（ミリ秒、デフォル�
 
 Cloudflare Workers の wrangler.toml で設定：
 ```toml
-[[triggers.crons]]
-schedule = "*/30 * * * *"  # 30分ごとに実行
+[triggers]
+crons = ["*/10 * * * *"]  # 10分ごとに実行
 ```
 
-または Cloudflare ダッシュボードから手動で設定することも可能です。
+Workersの index.ts に scheduled ハンドラーを実装：
+```typescript
+export default {
+  fetch: app.fetch,
+  queue,
+  scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
+    await sendDeadlineReminders({ ...env, ctx });
+  },
+};
+```
