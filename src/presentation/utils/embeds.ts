@@ -102,8 +102,8 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
         const status = ur.dateStatuses[date.id];
         if (!status) return;
 
-        // 名前を斜体で小さく表示
-        const displayName = `*${ur.displayName || ur.username}*`;
+        // 名前の表示
+        const displayName = ur.displayName || ur.username;
 
         if (status === 'ok') {
           responsesByStatus.ok.push(displayName);
@@ -128,9 +128,9 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
       }
 
       if (responseLines.length > 0) {
-        fieldValue += `\n${responseLines.join(' ')}`;
+        fieldValue += `\n> ${responseLines.join(' ')}`;
       } else {
-        fieldValue += '\n回答なし';
+        fieldValue += '\n> 回答なし';
       }
     }
 

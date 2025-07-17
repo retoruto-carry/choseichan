@@ -184,15 +184,15 @@ describe('embeds', () => {
 
       expect(embed.fields[0].name).toBe('1. **2024-12-25 19:00**');
       expect(embed.fields[0].value).toContain('**集計：** ✅ 1人 ❔ 0人 ❌ 1人');
-      // 新しいフォーマット：状態別に改行、名前は斜体
-      expect(embed.fields[0].value).toContain('✅ *ユーザー1*');
-      expect(embed.fields[0].value).toContain('❌ *ユーザー2*');
+      // 新しいフォーマット：引用で控えめに表示
+      expect(embed.fields[0].value).toContain('> ✅ ユーザー1');
+      expect(embed.fields[0].value).toContain('❌ ユーザー2');
 
       expect(embed.fields[1].name).toBe('⭐ 2. **2024-12-26 20:00**');
       expect(embed.fields[1].value).toContain('**集計：** ✅ 1人 ❔ 1人 ❌ 0人');
-      // 順序固定：✅ → ❔ → ❌
-      expect(embed.fields[1].value).toContain('✅ *ユーザー2*');
-      expect(embed.fields[1].value).toContain('❔ *ユーザー1*');
+      // 順序固定：✅ → ❔ → ❌、引用で表示
+      expect(embed.fields[1].value).toContain('> ✅ ユーザー2');
+      expect(embed.fields[1].value).toContain('❔ ユーザー1');
     });
 
     it('詳細表示モードで回答がない日程も正しく表示する', () => {
