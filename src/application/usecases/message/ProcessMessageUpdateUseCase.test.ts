@@ -27,19 +27,30 @@ describe('ProcessMessageUpdateUseCase', () => {
       status: 'open' as const,
       createdBy: { id: 'user-123', username: 'TestUser', displayName: 'Test User' },
       totalResponses: 5,
+      guildId: 'guild-123',
+      channelId: 'channel-123',
+      authorId: 'user-123',
+      notificationSent: false,
+      createdAt: '2024-12-20T10:00:00.000Z',
+      updatedAt: '2024-12-20T10:00:00.000Z',
     },
     statistics: {
-      totalResponseUsers: 5,
-      dateStatistics: {
-        'date-1': {
-          yesCount: 3,
-          maybeCount: 1,
-          noCount: 1,
-          totalCount: 5,
+      overallParticipation: {
+        fullyAvailable: 3,
+        partiallyAvailable: 1,
+        unavailable: 1,
+      },
+      optimalDates: {
+        optimalDateId: 'date-1',
+        alternativeDateIds: [],
+        scores: {
+          'date-1': 3.5,
         },
       },
     },
     responses: [],
+    responseCounts: {},
+    totalResponseUsers: 0,
   };
 
   const mockEmbed = {
@@ -76,7 +87,7 @@ describe('ProcessMessageUpdateUseCase', () => {
       getGuildMember: vi.fn(),
       createInteractionResponse: vi.fn(),
       searchGuildMembers: vi.fn(),
-    };
+    } as any;
 
     mockDiscordMessageService = {
       formatScheduleMessage: vi.fn().mockReturnValue({

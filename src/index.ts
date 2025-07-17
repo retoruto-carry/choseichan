@@ -48,9 +48,9 @@ app.post('/cron/deadline-check', async (c) => {
       hasCtx: !!c.env.ctx,
     };
 
-    logger.info('Environment check for cron job', { 
+    logger.info('Environment check for cron job', {
       operation: 'deadline-check',
-      envInfo 
+      envInfo,
     });
 
     const missingVars = [];
@@ -59,16 +59,23 @@ app.post('/cron/deadline-check', async (c) => {
     if (!c.env.DB) missingVars.push('DB');
 
     if (missingVars.length > 0) {
-      logger.error('Missing required environment variables', new Error('Environment setup incomplete'), {
-        operation: 'deadline-check',
-        missingVars,
-        envInfo,
-      });
-      return c.json({ 
-        success: false, 
-        error: 'Configuration error',
-        details: `Missing environment variables: ${missingVars.join(', ')}`
-      }, 500);
+      logger.error(
+        'Missing required environment variables',
+        new Error('Environment setup incomplete'),
+        {
+          operation: 'deadline-check',
+          missingVars,
+          envInfo,
+        }
+      );
+      return c.json(
+        {
+          success: false,
+          error: 'Configuration error',
+          details: `Missing environment variables: ${missingVars.join(', ')}`,
+        },
+        500
+      );
     }
 
     logger.info('Starting deadline check cron job', { operation: 'deadline-check' });
@@ -86,11 +93,14 @@ app.post('/cron/deadline-check', async (c) => {
         errorStack: error instanceof Error ? error.stack : undefined,
       }
     );
-    return c.json({ 
-      success: false, 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500
+    );
   }
 });
 
@@ -191,4 +201,25 @@ export async function queue(
 export default {
   fetch: app.fetch,
   queue,
+  scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
+    logger.info('Scheduled cron job triggered', {
+      cron: event.cron,
+      scheduledTime: event.scheduledTime,
+    });
+
+    try {
+      await sendDeadlineReminders({ ...env, ctx });
+      logger.info('Scheduled deadline check completed successfully');
+    } catch (error) {
+      logger.error(
+        'Scheduled deadline check failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'scheduled-deadline-check',
+          errorMessage: error instanceof Error ? error.message : String(error),
+        }
+      );
+      throw error;
+    }
+  },
 };

@@ -44,3 +44,7 @@ queue = "chouseichan-deadline-reminder-queue"
 max_batch_size = 20
 max_batch_timeout = 10
 max_retries = 3
+
+# Cloudflare Workers Cron Triggers
+[triggers]
+crons = ["0 * * * *"]  # Run every hour

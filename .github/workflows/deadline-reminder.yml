@@ -1,4 +1,6 @@
-name: Deadline Reminder
+# DEPRECATED: This workflow is no longer needed as we use Cloudflare Workers native cron triggers
+# You can safely delete this file after confirming the native cron triggers work correctly
+name: Deadline Reminder (DEPRECATED)
 
 on:
   schedule:

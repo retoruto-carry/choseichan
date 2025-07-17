@@ -6,8 +6,7 @@ const logger = getLogger();
 
 export async function sendDeadlineReminders(env: Env): Promise<void> {
   try {
-    // Cron実行時は MESSAGE_UPDATE_QUEUE などが利用できないため、専用フラグを設定
-    const container = new DependencyContainer(env, { isCronExecution: true });
+    const container = new DependencyContainer(env);
 
     if (!container.processDeadlineRemindersUseCase) {
       logger.error(
@@ -21,7 +20,9 @@ export async function sendDeadlineReminders(env: Env): Promise<void> {
           hasDeadlineReminderQueue: !!env.DEADLINE_REMINDER_QUEUE,
         }
       );
-      throw new Error('ProcessDeadlineRemindersUseCase is not available - check environment configuration');
+      throw new Error(
+        'ProcessDeadlineRemindersUseCase is not available - check environment configuration'
+      );
     }
 
     await container.processDeadlineRemindersUseCase.execute();

@@ -5,11 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { D1RepositoryFactory } from '../infrastructure/repositories/d1/factory';
 import type { Env } from '../infrastructure/types/discord';
-import {
-  createDatabaseConfig,
-  createRepositoryFactory,
-  getRepositoryFactory,
-} from './factory';
+import { createDatabaseConfig, createRepositoryFactory, getRepositoryFactory } from './factory';
 
 vi.mock('../infrastructure/repositories/d1/factory');
 
@@ -93,6 +89,5 @@ describe('factory', () => {
         d1Database: mockEnv.DB,
       });
     });
-
   });
 });
