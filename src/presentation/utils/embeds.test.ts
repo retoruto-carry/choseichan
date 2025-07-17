@@ -131,7 +131,8 @@ describe('embeds', () => {
         summary: mockSummary,
       });
 
-      expect(embed.fields[0].name).toBe('1. **2024-12-25 19:00**');
+      // 複数の日程に⭐が付く（date1もalternativeDateIdsに含まれているため）
+      expect(embed.fields[0].name).toBe('⭐ 1. **2024-12-25 19:00**');
       expect(embed.fields[0].value).toBe('**集計：** ✅ 1人 ❔ 0人 ❌ 1人');
       expect(embed.fields[1].name).toBe('⭐ 2. **2024-12-26 20:00**');
       expect(embed.fields[1].value).toBe('**集計：** ✅ 1人 ❔ 1人 ❌ 0人');
@@ -182,7 +183,8 @@ describe('embeds', () => {
     it('詳細表示モードで各ユーザーの回答を表示する', () => {
       const embed = createScheduleEmbedWithTable({ summary: mockSummary, showDetails: true });
 
-      expect(embed.fields[0].name).toBe('1. **2024-12-25 19:00**');
+      // 複数の日程に⭐が付く（date1もalternativeDateIdsに含まれているため）
+      expect(embed.fields[0].name).toBe('⭐ 1. **2024-12-25 19:00**');
       expect(embed.fields[0].value).toContain('**集計：** ✅ 1人 ❔ 0人 ❌ 1人');
       // 新しいフォーマット：状態別に表示、順序固定
       expect(embed.fields[0].value).toContain('✅ ユーザー1');

@@ -24,13 +24,22 @@ export interface CreateSimpleScheduleComponentsOptions {
 
 export function createScheduleEmbed(options: CreateScheduleEmbedOptions) {
   const { schedule, totalResponses, summary } = options;
-  // 最有力候補を判定
-  const bestDateId = summary?.bestDateId || summary?.statistics?.optimalDates?.optimalDateId;
+  // 最有力候補を判定（複数可）
+  const optimalDates = summary?.statistics?.optimalDates;
+  const bestDateIds = new Set<string>();
+
+  if (optimalDates?.optimalDateId) {
+    bestDateIds.add(optimalDates.optimalDateId);
+  }
+  if (optimalDates?.alternativeDateIds) {
+    optimalDates.alternativeDateIds.forEach((id) => bestDateIds.add(id));
+  }
+
   const hasResponses = summary?.responses && summary.responses.length > 0;
 
   // 日程フィールドを作成
   const dateFields = schedule.dates.map((date, idx) => {
-    const isBest = date.id === bestDateId && hasResponses;
+    const isBest = bestDateIds.has(date.id) && hasResponses;
     const prefix = isBest ? '⭐ ' : '';
     const dateStr = date.datetime;
 
@@ -76,13 +85,24 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
   const { summary, showDetails = false } = options;
   const schedule = summary.schedule;
   const responseCounts = summary.responseCounts;
-  const bestDateId = summary.bestDateId || summary.statistics?.optimalDates?.optimalDateId;
+
+  // 最有力候補を判定（複数可）
+  const optimalDates = summary.statistics?.optimalDates;
+  const bestDateIds = new Set<string>();
+
+  if (optimalDates?.optimalDateId) {
+    bestDateIds.add(optimalDates.optimalDateId);
+  }
+  if (optimalDates?.alternativeDateIds) {
+    optimalDates.alternativeDateIds.forEach((id) => bestDateIds.add(id));
+  }
+
   const userResponses = summary.responses || [];
 
   // 日程リストを作成（番号付き）
   const dateFields = schedule.dates.map((date, idx) => {
     const count = responseCounts[date.id];
-    const isBest = date.id === bestDateId && userResponses.length > 0;
+    const isBest = bestDateIds.has(date.id) && userResponses.length > 0;
     // 日程候補は自由文字列なのでそのまま表示
     const dateStr = date.datetime;
 
