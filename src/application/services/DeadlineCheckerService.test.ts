@@ -102,9 +102,9 @@ describe('DeadlineCheckerService', () => {
 
       const result = await service.checkDeadlines(undefined, currentTime);
 
-      expect(result.upcomingReminders).toHaveLength(2);
+      expect(result.upcomingReminders).toHaveLength(1);
       const reminderTypes = result.upcomingReminders.map((r) => r.reminderType).sort();
-      expect(reminderTypes).toEqual(['1h', '8h']);
+      expect(reminderTypes).toEqual(['1h']); // 8hは7時間前に送るべきだったのでスキップされる
     });
 
     it('should return schedules past deadline', async () => {
@@ -138,7 +138,7 @@ describe('DeadlineCheckerService', () => {
   });
 
   describe('getSchedulesNeedingReminders', () => {
-    it('should skip schedules with no reminders configured', () => {
+    it('should use default reminders when no custom reminders configured', () => {
       const currentTime = new Date('2024-12-29T00:00:00Z');
       const schedule = createTestSchedule({
         deadline: new Date('2024-12-31T23:59:59Z'),
@@ -147,7 +147,8 @@ describe('DeadlineCheckerService', () => {
 
       const result = service.getSchedulesNeedingReminders(schedule, currentTime);
 
-      expect(result).toHaveLength(0);
+      expect(result).toHaveLength(1); // デフォルトの3dリマインダーが使用される
+      expect(result[0].reminderType).toBe('3d');
     });
 
     it('should handle schedules with custom mentions', () => {

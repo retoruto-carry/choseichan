@@ -5,10 +5,10 @@
  * ユースケースから呼び出される補助サービス
  */
 
-import { Schedule } from '../../domain/entities/Schedule';
+import type { Schedule } from '../../domain/entities/Schedule';
 import type { IScheduleRepository } from '../../domain/repositories/interfaces';
-import type { ILogger } from '../ports/LoggerPort';
 import { mapDomainScheduleToEntity } from '../mappers/DomainMappers';
+import type { ILogger } from '../ports/LoggerPort';
 
 export interface ReminderInfo {
   scheduleId: string;
@@ -90,7 +90,7 @@ export class DeadlineCheckerService {
   getSchedulesNeedingReminders(schedule: Schedule, currentTime: Date): ReminderInfo[] {
     const reminders: ReminderInfo[] = [];
     if (!schedule.deadline) return reminders;
-    
+
     const deadlineTime = schedule.deadline.getTime();
     const remindersSent = schedule.remindersSent || [];
 

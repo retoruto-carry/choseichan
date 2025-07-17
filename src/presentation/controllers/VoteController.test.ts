@@ -111,6 +111,13 @@ describe('VoteController', () => {
         },
       },
       messageUpdateService: mockMessageUpdateService,
+      applicationServices: {
+        notificationService: {
+          sendSummaryMessage: vi.fn().mockResolvedValue(undefined),
+          sendPRMessage: vi.fn().mockResolvedValue(undefined),
+          updateMainMessage: vi.fn().mockResolvedValue(undefined),
+        },
+      },
     } as any;
 
     // Mock UIBuilder

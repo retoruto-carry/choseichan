@@ -39,7 +39,7 @@ describe('ModalController', () => {
         findSchedulesUseCase: { execute: vi.fn() },
         getScheduleSummaryUseCase: { execute: vi.fn() },
         deadlineReminderUseCase: { execute: vi.fn() },
-        processReminderUseCase: { execute: vi.fn() },
+        reminderStateService: { markReminderSent: vi.fn() },
         processDeadlineRemindersUseCase: null,
         submitResponseUseCase: { execute: vi.fn() },
         updateResponseUseCase: { execute: vi.fn() },

@@ -10,7 +10,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
   let mockDeadlineReminderUseCase: any;
   let mockGetScheduleUseCase: any;
   let mockGetScheduleSummaryUseCase: any;
-  let mockProcessReminderUseCase: any;
+  let mockReminderStateService: any;
   let mockCloseScheduleUseCase: any;
   let mockNotificationService: any;
   let mockEnv: IEnvironmentPort;
@@ -97,7 +97,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       execute: vi.fn(),
     } as any;
 
-    mockProcessReminderUseCase = {
+    mockReminderStateService = {
       markReminderSent: vi.fn(),
     } as any;
 
@@ -117,7 +117,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       mockDeadlineReminderUseCase as any,
       mockGetScheduleUseCase as any,
       mockGetScheduleSummaryUseCase as any,
-      mockProcessReminderUseCase as any,
+      mockReminderStateService as any,
       mockCloseScheduleUseCase as any,
       mockNotificationService as any,
       mockEnv
@@ -158,7 +158,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         summary: mockSummary,
       });
 
-      vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
+      vi.mocked(mockReminderStateService.markReminderSent).mockResolvedValue({
         success: true,
       });
 
@@ -180,8 +180,8 @@ describe('ProcessDeadlineRemindersUseCase', () => {
       );
 
       // Verify reminder status was updated
-      expect(mockProcessReminderUseCase.markReminderSent).toHaveBeenCalledTimes(2);
-      expect(mockProcessReminderUseCase.markReminderSent).toHaveBeenCalledWith({
+      expect(mockReminderStateService.markReminderSent).toHaveBeenCalledTimes(2);
+      expect(mockReminderStateService.markReminderSent).toHaveBeenCalledWith({
         scheduleId: 'schedule-123',
         guildId: 'guild-123',
         reminderType: '1d',
@@ -225,7 +225,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         mockDeadlineReminderUseCase as any,
         mockGetScheduleUseCase as any,
         mockGetScheduleSummaryUseCase as any,
-        mockProcessReminderUseCase as any,
+        mockReminderStateService as any,
         mockCloseScheduleUseCase as any,
         mockNotificationService as any,
         envWithoutCreds
@@ -377,7 +377,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         summary: mockSummary,
       });
 
-      vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
+      vi.mocked(mockReminderStateService.markReminderSent).mockResolvedValue({
         success: true,
       });
 
@@ -413,7 +413,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         mockDeadlineReminderUseCase as any,
         mockGetScheduleUseCase as any,
         mockGetScheduleSummaryUseCase as any,
-        mockProcessReminderUseCase as any,
+        mockReminderStateService as any,
         mockCloseScheduleUseCase as any,
         mockNotificationService as any,
         customEnv
@@ -445,7 +445,7 @@ describe('ProcessDeadlineRemindersUseCase', () => {
         summary: mockSummary,
       });
 
-      vi.mocked(mockProcessReminderUseCase.markReminderSent).mockResolvedValue({
+      vi.mocked(mockReminderStateService.markReminderSent).mockResolvedValue({
         success: true,
       });
 

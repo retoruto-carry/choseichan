@@ -9,12 +9,12 @@ import type { DeadlineReminderQueuePort } from '../ports/DeadlineReminderQueuePo
 import type { IEnvironmentPort } from '../ports/EnvironmentPort';
 import type { ILogger } from '../ports/LoggerPort';
 import type { NotificationService } from '../services/NotificationService';
+import type { ReminderStateService } from '../services/ReminderStateService';
 import type { DeadlineCheckResult, ReminderInfo } from '../types/ReminderTypes';
 import type { CloseScheduleUseCase } from './schedule/CloseScheduleUseCase';
 import type { DeadlineReminderUseCase } from './schedule/DeadlineReminderUseCase';
 import type { GetScheduleSummaryUseCase } from './schedule/GetScheduleSummaryUseCase';
 import type { GetScheduleUseCase } from './schedule/GetScheduleUseCase';
-import type { ProcessReminderUseCase } from './schedule/ProcessReminderUseCase';
 
 export class ProcessDeadlineRemindersUseCase {
   constructor(
@@ -22,7 +22,7 @@ export class ProcessDeadlineRemindersUseCase {
     private readonly deadlineReminderUseCase: DeadlineReminderUseCase,
     private readonly getScheduleUseCase: GetScheduleUseCase,
     private readonly getScheduleSummaryUseCase: GetScheduleSummaryUseCase,
-    private readonly processReminderUseCase: ProcessReminderUseCase,
+    private readonly reminderStateService: ReminderStateService,
     private readonly closeScheduleUseCase: CloseScheduleUseCase,
     private readonly notificationService: NotificationService,
     private readonly env: IEnvironmentPort,
@@ -115,7 +115,7 @@ export class ProcessDeadlineRemindersUseCase {
     // リマインダー送信済みフラグの更新
     await Promise.allSettled(
       reminders.map((reminderInfo) =>
-        this.processReminderUseCase.markReminderSent({
+        this.reminderStateService.markReminderSent({
           scheduleId: reminderInfo.scheduleId,
           guildId: reminderInfo.guildId,
           reminderType: reminderInfo.reminderType,
@@ -141,7 +141,7 @@ export class ProcessDeadlineRemindersUseCase {
 
           await this.notificationService.sendDeadlineReminder(scheduleResult.schedule, message);
 
-          await this.processReminderUseCase.markReminderSent({
+          await this.reminderStateService.markReminderSent({
             scheduleId,
             guildId,
             reminderType,

@@ -17,13 +17,7 @@ vi.mock('../../domain/utils/date', () => ({
   parseUserInputDate: vi.fn(),
 }));
 
-vi.mock('../utils/embeds', () => ({
-  createScheduleEmbedWithTable: vi.fn().mockReturnValue({
-    title: 'Test Schedule',
-    description: 'Test Description',
-  }),
-  createSimpleScheduleComponents: vi.fn().mockReturnValue([{ type: 1, components: [] }]),
-}));
+// Embeds are now handled by ScheduleMainMessageBuilder, so no need to mock embeds directly
 
 vi.mock('../utils/components', () => ({
   createSimpleScheduleComponents: vi.fn().mockReturnValue([{ type: 1, components: [] }]),

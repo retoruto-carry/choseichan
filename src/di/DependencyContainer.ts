@@ -10,6 +10,7 @@ import type { DeadlineReminderQueuePort } from '../application/ports/DeadlineRem
 import type { MessageUpdateQueuePort } from '../application/ports/MessageUpdateQueuePort';
 import { MessageUpdateService } from '../application/services/MessageUpdateService';
 import { NotificationService } from '../application/services/NotificationService';
+import { ReminderStateService } from '../application/services/ReminderStateService';
 import { ScheduleUpdaterService } from '../application/services/ScheduleUpdaterService';
 import { ProcessMessageUpdateUseCase } from '../application/usecases/message/ProcessMessageUpdateUseCase';
 import { ProcessDeadlineRemindersUseCase } from '../application/usecases/ProcessDeadlineRemindersUseCase';
@@ -24,7 +25,6 @@ import { DeleteScheduleUseCase } from '../application/usecases/schedule/DeleteSc
 import { FindSchedulesUseCase } from '../application/usecases/schedule/FindSchedulesUseCase';
 import { GetScheduleSummaryUseCase } from '../application/usecases/schedule/GetScheduleSummaryUseCase';
 import { GetScheduleUseCase } from '../application/usecases/schedule/GetScheduleUseCase';
-import { ProcessReminderUseCase } from '../application/usecases/schedule/ProcessReminderUseCase';
 import { UpdateScheduleUseCase } from '../application/usecases/schedule/UpdateScheduleUseCase';
 import type { IRepositoryFactory } from '../domain/repositories/interfaces';
 import type { MessageUpdateService as IMessageUpdateService } from '../domain/services/MessageUpdateService';
@@ -49,7 +49,7 @@ export interface ApplicationServices {
   findSchedulesUseCase: FindSchedulesUseCase;
   getScheduleSummaryUseCase: GetScheduleSummaryUseCase;
   deadlineReminderUseCase: DeadlineReminderUseCase;
-  processReminderUseCase: ProcessReminderUseCase;
+  reminderStateService: ReminderStateService;
   processDeadlineRemindersUseCase: ProcessDeadlineRemindersUseCase | null;
 
   // 回答関連ユースケース
@@ -165,7 +165,7 @@ export class DependencyContainer {
       new LoggerAdapter(),
       scheduleRepository
     );
-    const processReminderUseCase = new ProcessReminderUseCase(scheduleRepository);
+    const reminderStateService = new ReminderStateService(scheduleRepository);
     const submitResponseUseCase = new SubmitResponseUseCase(scheduleRepository, responseRepository);
     const updateResponseUseCase = new UpdateResponseUseCase(scheduleRepository, responseRepository);
     const getResponseUseCase = new GetResponseUseCase(responseRepository);
@@ -195,7 +195,7 @@ export class DependencyContainer {
           deadlineReminderUseCase,
           getScheduleUseCase,
           getScheduleSummaryUseCase,
-          processReminderUseCase,
+          reminderStateService,
           closeScheduleUseCase,
           notificationService,
           environmentAdapter,
@@ -234,7 +234,7 @@ export class DependencyContainer {
       findSchedulesUseCase,
       getScheduleSummaryUseCase,
       deadlineReminderUseCase,
-      processReminderUseCase,
+      reminderStateService,
       processDeadlineRemindersUseCase,
 
       // 回答関連ユースケース
@@ -276,8 +276,8 @@ export class DependencyContainer {
   get deadlineReminderUseCase() {
     return this._applicationServices.deadlineReminderUseCase;
   }
-  get processReminderUseCase() {
-    return this._applicationServices.processReminderUseCase;
+  get reminderStateService() {
+    return this._applicationServices.reminderStateService;
   }
   get processDeadlineRemindersUseCase() {
     return this._applicationServices.processDeadlineRemindersUseCase;
