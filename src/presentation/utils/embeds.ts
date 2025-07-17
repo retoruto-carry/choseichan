@@ -128,9 +128,9 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
       }
 
       if (responseLines.length > 0) {
-        fieldValue += ` > ${responseLines.join(' ')}`;
+        fieldValue += `\n${responseLines.join(' ')}`;
       } else {
-        fieldValue += ' > 回答なし';
+        fieldValue += '\n回答なし';
       }
     }
 
