@@ -128,7 +128,7 @@ export function createScheduleEmbedWithTable(options: CreateScheduleEmbedWithTab
       }
 
       if (responseLines.length > 0) {
-        fieldValue += `\n${responseLines.join('\n')}`;
+        fieldValue += `\n${responseLines.join(' ')}`;
       } else {
         fieldValue += '\n回答なし';
       }
