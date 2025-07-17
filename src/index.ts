@@ -37,6 +37,24 @@ app.post('/cron/deadline-check', async (c) => {
   }
 
   try {
+    // 環境変数の検証
+    const missingVars = [];
+    if (!c.env.DISCORD_TOKEN) missingVars.push('DISCORD_TOKEN');
+    if (!c.env.DISCORD_APPLICATION_ID) missingVars.push('DISCORD_APPLICATION_ID');
+    if (!c.env.DB) missingVars.push('DB');
+
+    if (missingVars.length > 0) {
+      logger.error('Missing required environment variables', new Error('Environment setup incomplete'), {
+        operation: 'deadline-check',
+        missingVars,
+      });
+      return c.json({ 
+        success: false, 
+        error: 'Configuration error',
+        details: `Missing environment variables: ${missingVars.join(', ')}`
+      }, 500);
+    }
+
     logger.info('Starting deadline check cron job', { operation: 'deadline-check' });
     await sendDeadlineReminders(c.env);
     logger.info('Deadline check completed successfully', { operation: 'deadline-check' });
@@ -48,9 +66,15 @@ app.post('/cron/deadline-check', async (c) => {
       {
         operation: 'deadline-check',
         useCase: 'cron',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
       }
     );
-    return c.json({ success: false, error: 'Internal server error' }, 500);
+    return c.json({ 
+      success: false, 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 

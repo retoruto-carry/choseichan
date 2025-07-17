@@ -14,6 +14,9 @@ jobs:
     steps:
     - name: Trigger Worker
       run: |
+        echo "Triggering deadline check..."
+        echo "Worker URL: ${{ secrets.WORKER_URL }}" | sed 's/\(.*\/\/[^\/]*\).*/\1\/***/'
+        
         response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.WORKER_URL }}/cron/deadline-check" \
           -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
           -H "Content-Type: application/json" \
@@ -22,10 +25,17 @@ jobs:
         http_code=$(echo "$response" | tail -n1)
         body=$(echo "$response" | sed '$d')
         
+        echo "HTTP Status Code: $http_code"
+        
         if [ "$http_code" -ne 200 ]; then
           echo "Request failed with status code: $http_code"
-          echo "Response: $body"
+          echo "Response body: $body"
+          echo "Please check:"
+          echo "1. WORKER_URL is correctly set in GitHub Secrets"
+          echo "2. CRON_SECRET matches between GitHub Secrets and Cloudflare Workers"
+          echo "3. The worker is deployed and accessible"
           exit 1
         fi
         
+        echo "Response: $body"
         echo "Deadline check completed successfully"
