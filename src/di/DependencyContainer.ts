@@ -111,7 +111,14 @@ export class DependencyContainer {
 
   private createInfrastructureServices(env: Env): InfrastructureServices {
     const repositoryFactory = createRepositoryFactory(env);
-    const messageUpdateQueuePort = new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE);
+    
+    // MESSAGE_UPDATE_QUEUEが存在しない場合はnullアダプターを使用
+    const messageUpdateQueuePort = env.MESSAGE_UPDATE_QUEUE
+      ? new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE)
+      : {
+          send: async () => {},
+          sendBatch: async () => {},
+        } as MessageUpdateQueuePort;
 
     // BackgroundExecutor: Workers環境かどうかでアダプターを切り替え
     const backgroundExecutor = env.ctx

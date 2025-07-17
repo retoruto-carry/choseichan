@@ -37,7 +37,22 @@ app.post('/cron/deadline-check', async (c) => {
   }
 
   try {
-    // 環境変数の検証
+    // 環境変数の検証とデバッグ情報
+    const envInfo = {
+      hasDiscordToken: !!c.env.DISCORD_TOKEN,
+      hasDiscordAppId: !!c.env.DISCORD_APPLICATION_ID,
+      hasDB: !!c.env.DB,
+      hasMessageUpdateQueue: !!c.env.MESSAGE_UPDATE_QUEUE,
+      hasDeadlineReminderQueue: !!c.env.DEADLINE_REMINDER_QUEUE,
+      hasCronSecret: !!c.env.CRON_SECRET,
+      hasCtx: !!c.env.ctx,
+    };
+
+    logger.info('Environment check for cron job', { 
+      operation: 'deadline-check',
+      envInfo 
+    });
+
     const missingVars = [];
     if (!c.env.DISCORD_TOKEN) missingVars.push('DISCORD_TOKEN');
     if (!c.env.DISCORD_APPLICATION_ID) missingVars.push('DISCORD_APPLICATION_ID');
@@ -47,6 +62,7 @@ app.post('/cron/deadline-check', async (c) => {
       logger.error('Missing required environment variables', new Error('Environment setup incomplete'), {
         operation: 'deadline-check',
         missingVars,
+        envInfo,
       });
       return c.json({ 
         success: false, 
