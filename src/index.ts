@@ -27,7 +27,6 @@ app.get('/', (c) => {
   });
 });
 
-
 app.post('/interactions', async (c) => {
   const { DISCORD_PUBLIC_KEY } = c.env;
 
