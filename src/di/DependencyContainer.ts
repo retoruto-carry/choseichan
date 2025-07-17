@@ -82,10 +82,10 @@ export class DependencyContainer {
   private readonly _applicationServices: ApplicationServices;
   private readonly _env: Env;
 
-  constructor(env: Env) {
+  constructor(env: Env, options?: { isCronExecution?: boolean }) {
     this._env = env;
     // Infrastructure Services
-    this._infrastructureServices = this.createInfrastructureServices(env);
+    this._infrastructureServices = this.createInfrastructureServices(env, options);
 
     // Domain Services
     this._domainServices = this.createDomainServices(this._infrastructureServices);
@@ -109,15 +109,24 @@ export class DependencyContainer {
     return this._applicationServices;
   }
 
-  private createInfrastructureServices(env: Env): InfrastructureServices {
+  private createInfrastructureServices(env: Env, options?: { isCronExecution?: boolean }): InfrastructureServices {
     const repositoryFactory = createRepositoryFactory(env);
     
-    // MESSAGE_UPDATE_QUEUEが存在しない場合はnullアダプターを使用
-    const messageUpdateQueuePort = env.MESSAGE_UPDATE_QUEUE
+    // Cron実行時またはMESSAGE_UPDATE_QUEUEが存在しない場合はnullアダプターを使用
+    const messageUpdateQueuePort = env.MESSAGE_UPDATE_QUEUE && !options?.isCronExecution
       ? new CloudflareQueueAdapter(env.MESSAGE_UPDATE_QUEUE)
       : {
-          send: async () => {},
-          sendBatch: async () => {},
+          send: async () => {
+            // Cron実行時はログのみ出力
+            if (options?.isCronExecution) {
+              new LoggerAdapter().info('Skipping message update queue in cron execution');
+            }
+          },
+          sendBatch: async () => {
+            if (options?.isCronExecution) {
+              new LoggerAdapter().info('Skipping message update batch in cron execution');
+            }
+          },
         } as MessageUpdateQueuePort;
 
     // BackgroundExecutor: Workers環境かどうかでアダプターを切り替え
@@ -125,8 +134,8 @@ export class DependencyContainer {
       ? new WorkersBackgroundExecutorAdapter(env.ctx)
       : new TestBackgroundExecutorAdapter();
 
-    // DeadlineReminderQueue: 利用可能な場合のみ
-    const deadlineReminderQueue = env.DEADLINE_REMINDER_QUEUE
+    // DeadlineReminderQueue: Cron実行時は直接処理するためnull
+    const deadlineReminderQueue = env.DEADLINE_REMINDER_QUEUE && !options?.isCronExecution
       ? new DeadlineReminderQueueAdapter(env.DEADLINE_REMINDER_QUEUE)
       : undefined;
 
